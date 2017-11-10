@@ -1,0 +1,17 @@
+Features:
+    ☐ Improved type resolution algorithm.
+    ☐ In the case of ambiguity, show the method that would break the ambiguity.
+    ☐ Improved formatting of error messages.
+
+Bugs:
+    ☐ Interaction between cache and adding new methods.
+
+Documentation:
+    ☐ General documentation.
+    ☐ Examples.
+
+
+＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿
+Archive:
+ ✓ Union type. @done (17-11-10 17:04) @project(Features)
+ ✓ Julia naming. @done (17-11-10 15:02) @project(Features)
