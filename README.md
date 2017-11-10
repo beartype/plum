@@ -52,7 +52,7 @@ from plum import Dispatcher, Referentiable, Self
 
 class Kernel(Referentiable):
     dispatch = Dispatcher(in_class=Self)
-    
+
     @dispatch(Self)
     def __add__(self, other):
         return 'kernel'
@@ -70,12 +70,6 @@ stationary_kernel = StationaryKernel()
 
 
 ```
->>> kernel + 0
-Traceback (most recent call last):
-  File "<stdin>", line 1, in <module>
-  File "plum/function.py", line 144, in __call__
-    raise e
-plum.function.NotFoundLookupError: For function "__add__", signature (int) could not be resolved.
 >>> kernel + kernel
 'kernel'
 >>> kernel + stationary_kernel
