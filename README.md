@@ -4,7 +4,7 @@ Everybody likes multiple dispatch, just like everybody likes plums.
 
 
 ## Examples
-### Variable Arguments
+### Variable Types
 ```python
 from plum import dispatch
 
@@ -26,7 +26,7 @@ multiple arguments
 multiple arguments
 ```
 
-### Union Arguments
+### Union Types
 ```python
 from plum import dispatch
 
