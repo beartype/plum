@@ -8,21 +8,25 @@ Everybody likes multiple dispatch, just like everybody likes plums.
 ```python
 from plum import dispatch
 
+@dispatch(int)
+def f(x):
+    print('single argument')
+
 @dispatch(int, [int])
 def f(x, *xs):
-    print(x, xs)
+    print('multiple arguments')
 ```
 
 ```
 >>> f(1)
-(1, ())
+single argument
 >>> f(1, 2)
-(1, (2,))
+multiple arguments
 >>> f(1, 2, 3)
-(1, (2, 3))
+multiple arguments
 ```
 
-#### Union Arguments
+### Union Arguments
 ```python
 from plum import dispatch
 
