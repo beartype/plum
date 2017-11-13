@@ -1,5 +1,6 @@
 # Plum: Multiple Dispatch in Python
 
+[![build](https://travis-ci.org/wesselb/plum.svg?branch=master)](https://travis-ci.org/wesselb/plum)
 [![latest docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://plum-docs.readthedocs.io/en/latest)
 
 Everybody likes multiple dispatch, just like everybody likes plums.
