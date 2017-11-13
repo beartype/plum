@@ -9,7 +9,6 @@ venv
 
 # Documentation
 doc/_build
-doc/source
 
 # Other
 .DS_Store

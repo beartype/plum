@@ -1,6 +1,6 @@
 # Plum: Multiple Dispatch in Python
 
-|docs|
+[![latest docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://plum-docs.readthedocs.io/en/latest)
 
 Everybody likes multiple dispatch, just like everybody likes plums.
 
