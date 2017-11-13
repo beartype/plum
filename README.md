@@ -6,7 +6,6 @@
 
 Everybody likes multiple dispatch, just like everybody likes plums.
 
-
 ## Examples
 ### Variable Types
 ```python
