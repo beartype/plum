@@ -4,6 +4,6 @@ python:
 install:
   - pip install -r requirements.txt
 script:
-  - nosetests tests --with-coverage
+  - nosetests tests --with-coverage --cover-package=plum
 after_success:
   - coveralls

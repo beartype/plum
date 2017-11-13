@@ -16,4 +16,4 @@ init:
 	pip install -r requirements.txt
 
 test:
-	nosetests --with-coverage --cover-html
+	nosetests tests --with-coverage --cover-html --cover-package=plum
