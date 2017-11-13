@@ -10,10 +10,10 @@ Bugs:
 Documentation:
     ☐ General documentation.
     ☐ Examples.
-    ☐ Read the Docs.
 
 
 ＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿
 Archive:
+ ✓ Read the Docs. @done (17-11-13 15:43) @project(Documentation)
  ✓ Union type. @done (17-11-10 17:04) @project(Features)
  ✓ Julia naming. @done (17-11-10 15:02) @project(Features)

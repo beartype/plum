@@ -7,8 +7,9 @@ venv
 # Packaging
 *.egg-info
 
-# Documentation
+# Documentation and coverage
 doc/_build
+cover
 
 # Other
 .DS_Store
