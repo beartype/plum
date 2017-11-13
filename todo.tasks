@@ -2,6 +2,7 @@ Features:
     ☐ Improved type resolution algorithm.
     ☐ In the case of ambiguity, show the method that would break the ambiguity.
     ☐ Improved formatting of error messages.
+    ☐ Consider concrete classes and type variables.
 
 Bugs:
     ☐ Interaction between cache and adding new methods.
@@ -9,6 +10,7 @@ Bugs:
 Documentation:
     ☐ General documentation.
     ☐ Examples.
+    ☐ Read the Docs.
 
 
 ＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿

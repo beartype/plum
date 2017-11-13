@@ -1,5 +1,7 @@
 # Plum: Multiple Dispatch in Python
 
+|docs|
+
 Everybody likes multiple dispatch, just like everybody likes plums.
 
 

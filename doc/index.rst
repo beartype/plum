@@ -1,10 +1,10 @@
-Welcome to Plum's Documentation!
-================================
-
+Welcome to Plum
+===============
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
-   source/plum
+   readme
+   api
 
 
 Indices and Tables
