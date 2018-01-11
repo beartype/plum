@@ -1,7 +1,7 @@
 Plum: Multiple Dispatch in Python
 =================================
 
-|latest docs|
+|Build| |Coverage Status| |Latest Docs|
 
 Everybody likes multiple dispatch, just like everybody likes plums.
 
@@ -91,5 +91,9 @@ Inheritance
     >>> stationary_kernel + stationary_kernel
     'stationary kernel'
 
-.. |latest docs| image:: https://img.shields.io/badge/docs-latest-blue.svg
+.. |Build| image:: https://travis-ci.org/wesselb/plum.svg?branch=master
+   :target: https://travis-ci.org/wesselb/plum
+.. |Coverage Status| image:: https://coveralls.io/repos/github/wesselb/plum/badge.svg?branch=master
+   :target: https://coveralls.io/github/wesselb/plum?branch=master
+.. |Latest Docs| image:: https://img.shields.io/badge/docs-latest-blue.svg
    :target: https://plum-docs.readthedocs.io/en/latest
