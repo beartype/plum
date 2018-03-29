@@ -154,13 +154,21 @@ def test_inheritance():
     hammer = Hammer()
 
     yield eq, device + calc, 'unknown device'
+    yield eq, Device.__add__(device, calc), 'unknown device'
     yield eq, calc + device, 'unknown device'
+    yield eq, Calculator.__add__(calc, device), 'unknown device'
     yield eq, device + hammer, 'unknown device'
+    yield eq, Device.__add__(device, hammer), 'unknown device'
     yield eq, hammer + device, 'unknown device'
+    yield eq, Hammer.__add__(hammer, device), 'unknown device'
     yield eq, hammer + hammer, 'super hammer'
+    yield eq, Hammer.__add__(hammer, hammer), 'super hammer'
     yield eq, calc + calc, 'super calculator'
+    yield eq, Calculator.__add__(calc, calc), 'super calculator'
     yield eq, hammer + calc, 'destroyed calculator'
+    yield eq, Hammer.__add__(hammer, calc), 'destroyed calculator'
     yield eq, calc + hammer, 'destroyed calculator'
+    yield eq, Calculator.__add__(calc, hammer), 'destroyed calculator'
     yield eq, calc.compute(ComputableObject()), 'result'
 
 
