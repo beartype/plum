@@ -4,12 +4,16 @@ from __future__ import absolute_import, division, print_function
 
 import logging
 import types
+from sys import version_info
 
 from .tuple import Tuple
 from .type import as_type
 
 __all__ = ['Function', 'AmbiguousLookupError', 'NotFoundLookupError']
 log = logging.getLogger(__name__)
+
+# Check whether we're in Python 2 or 3.
+is_py2 = version_info < (3, 0)
 
 
 class AmbiguousLookupError(LookupError):
@@ -100,8 +104,8 @@ class Function(object):
 
     def __call__(self, *args, **kw_args):
         # Split off `self` in the case that the function is a method of a
-        # class.
-        if self._class:
+        # class. This is only necessary for Python 2.
+        if self._class and is_py2:
             args_self, args = args[:1], args[1:]
         else:
             args_self = tuple()
@@ -146,11 +150,23 @@ class Function(object):
             # Not in a class. Simply resolve.
             method = self.methods[self.resolve(signature)]
 
-        # Perform call to method.
-        return method(*(args_self + args), **kw_args)
+        # Reunite arguments.
+        args = args_self + args
+
+        # Perform call to method. If we're in a class, then prepend `self` if
+        # we're in Python 3.
+        if self._class and not is_py2:
+            return method(self, *args, **kw_args)
+        else:
+            return method(*args, **kw_args)
 
     def __get__(self, instance, cls=None):
-        return types.MethodType(self, instance, cls)
+        try:
+            # Python 2:
+            return types.MethodType(self, instance, cls)
+        except TypeError:
+            # Python 3:
+            return self
 
     @staticmethod
     def find_most_specific(signatures):
