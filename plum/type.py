@@ -8,7 +8,9 @@ from .resolvable import Reference, Promise
 from .util import multihash, Comparable
 
 __all__ = ['AbstractType', 'Type', 'Union', 'VarArgs', 'as_type', 'Self',
-           'PromisedType']
+           'PromisedType', 'Number']
+
+Number = {float, int}  #: Pure number type.
 
 
 class AbstractType(object):
@@ -128,4 +130,10 @@ class PromisedType(Type, Promise):
 
     @property
     def types(self):
-        return {self.resolve()}
+        obj = self.resolve()
+        if type(obj) == type:
+            return {obj}
+        elif type(obj) == set:
+            return obj
+        else:
+            raise RuntimeError('Unknown resolved object "{}".'.format(obj))
