@@ -77,11 +77,12 @@ class Function(object):
         # First, resolve any pending registrations.
         self._resolve_pending_registrations()
 
-        # Check whether the signature matches a method exactly or has been
-        # cached previously.
-        if signature in self._cache:
-            log.debug('Signature found in cache.')
-            return self._cache[signature]
+        # TODO: Fix cache issue.
+        # # Check whether the signature matches a method exactly or has been
+        # # cached previously.
+        # if signature in self._cache:
+        #     log.debug('Signature found in cache.')
+        #     return self._cache[signature]
 
         # Find the most specific applicable signature.
         candidates = [s for s in self.methods.keys() if signature <= s]
@@ -105,7 +106,7 @@ class Function(object):
 
     def __call__(self, *args, **kw_args):
         # Handle unbound calls in the case of Python 3.
-        if len(args) >= 1 and args[0] == UnboundCall:
+        if len(args) >= 1 and args[0] is UnboundCall:
             args = args[1:]
 
         # Split off `self` in the case that the function is a method of a
