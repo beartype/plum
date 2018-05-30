@@ -6,6 +6,7 @@ Features:
 
 Bugs:
     ☐ Interaction between cache and adding new methods.
+    ☐ Plum types in Union. @low
 
 Documentation:
     ☐ General documentation.
