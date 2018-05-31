@@ -4,7 +4,7 @@ from __future__ import absolute_import, division, print_function
 
 import logging
 
-__all__ = ['parametric', 'type_parameter']
+__all__ = ['parametric', 'type_parameter', 'Kind']
 log = logging.getLogger(__name__)
 
 
@@ -43,3 +43,15 @@ def type_parameter(x):
         x (instance): Instance of a parametric type.
     """
     return x._type_parameter
+
+
+@parametric
+class Kind(object):
+    """A parametric wrapper type for dispatch purposes."""
+
+    def __init__(self, *xs):
+        self.xs = xs
+
+    def get(self):
+        return self.xs[0] if len(self.xs) == 1 else self.xs
+

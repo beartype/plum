@@ -2,7 +2,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from . import parametric, type_parameter
+from . import parametric, type_parameter, Kind
 from . import eq, neq, lt, le, ge, gt, raises, call, ok
 
 
@@ -50,3 +50,10 @@ def test_argument():
     a = A(1)(5.)
 
     yield eq, a.x, 5.
+
+
+def test_kind():
+    yield eq, Kind(1), Kind(1)
+    yield neq, Kind(1), Kind(2)
+    yield eq, Kind(1)(1).get(), 1
+    yield eq, Kind(2)(1, 2).get(), (1, 2)
