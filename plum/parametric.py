@@ -4,7 +4,7 @@ from __future__ import absolute_import, division, print_function
 
 import logging
 
-__all__ = ['parametric']
+__all__ = ['parametric', 'type_parameter']
 log = logging.getLogger(__name__)
 
 
@@ -28,9 +28,18 @@ def parametric(Class):
                     return Class.__new__(cls)
 
                 name = Class.__name__ + '{' + ','.join(str(p) for p in ps) + '}'
-                subclasses[ps] = type(name,
-                                      (ParametricClass,),
-                                      {'__new__': __new__})
+                SubClass = type(name, (ParametricClass,), {'__new__': __new__})
+                SubClass._type_parameter = ps[0] if len(ps) == 1 else ps
+                subclasses[ps] = SubClass
             return subclasses[ps]
 
     return ParametricClass
+
+
+def type_parameter(x):
+    """Get the type parameter of an instance of a parametric type.
+
+    Args:
+        x (instance): Instance of a parametric type.
+    """
+    return x._type_parameter

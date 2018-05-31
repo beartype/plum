@@ -2,7 +2,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from . import parametric
+from . import parametric, type_parameter
 from . import eq, neq, lt, le, ge, gt, raises, call, ok
 
 
@@ -35,6 +35,10 @@ def test():
     # Test multiple type parameters and hashability.
     yield ok, A(1, 2) == A(1, 2)
     yield raises, TypeError, lambda: A({})
+
+    # Test type parameter extraction.
+    yield eq, type_parameter(A(1)()), 1
+    yield eq, type_parameter(A(1, 2)()), (1, 2)
 
 
 def test_argument():
