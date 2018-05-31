@@ -12,7 +12,7 @@ Everybody likes multiple dispatch, just like everybody likes plums.
 from plum import dispatch, parametric
 
 @parametric
-class A:
+class A(object):  # Must be a new-style class!
     pass
     
 @dispatch(A)
