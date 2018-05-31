@@ -12,7 +12,7 @@ def test():
     class Base2: pass
 
     @parametric
-    class A(Base1): pass
+    class A(Base1, object): pass
 
     yield ok, issubclass(A, Base1)
     yield ok, not issubclass(A, Base2)

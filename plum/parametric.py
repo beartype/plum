@@ -12,7 +12,14 @@ def parametric(Class):
     """A decorator for parametric classes."""
     subclasses = {}
 
+    if not issubclass(Class, object):
+        raise RuntimeError('To let {} be a parametric class, it must be a '
+                           'new-style class.')
+
     class ParametricClass(Class):
+        def __init__(self, p):
+            pass
+
         def __new__(cls, p):
             if p not in subclasses:
                 def __init__(self, *args, **kw_args):

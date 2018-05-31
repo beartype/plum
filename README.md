@@ -29,6 +29,14 @@ def f(x):
 ```
 
 ```python
+>>> A
+plum.parametric.parametric.<locals>.ParametricClass
+>>> A(1)
+plum.parametric.A{1}
+>>> issubclass(A(1), A)
+True
+>>> A(1)()
+<plum.parametric.A{1} at 0x<snip>>
 >>> f(A(1)())
 '1'
 >>> f(A(2)())
