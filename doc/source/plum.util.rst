@@ -1,5 +1,5 @@
-plum\.util module
-=================
+plum.util module
+================
 
 .. automodule:: plum.util
     :members:

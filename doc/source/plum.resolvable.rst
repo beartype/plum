@@ -1,5 +1,5 @@
-plum\.resolvable module
-=======================
+plum.resolvable module
+======================
 
 .. automodule:: plum.resolvable
     :members:

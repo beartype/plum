@@ -1,8 +1,9 @@
 language: python
 python:
   - 2.7
+  - 3.6
 install:
-  - pip install -r requirements.txt
+  - pip install --no-cache-dir -U -r requirements.txt | cat
 script:
   - nosetests tests --with-coverage --cover-package=plum
 after_success:

@@ -8,6 +8,46 @@ Everybody likes multiple dispatch, just like everybody likes plums.
 Examples
 --------
 
+Parametric Classes
+~~~~~~~~~~~~~~~~~~
+
+.. code:: python
+
+    from plum import dispatch, parametric
+
+    @parametric
+    class A(object):  # Must be a new-style class!
+        pass
+        
+    @dispatch(A)
+    def f(x):
+        return 'fallback'
+        
+    @dispatch(A(1))
+    def f(x):
+        return '1'
+        
+    @dispatch(A(2))
+    def f(x):
+        return '2'
+
+.. code:: python
+
+    >>> A
+    plum.parametric.parametric.<locals>.ParametricClass
+    >>> A(1)
+    plum.parametric.A{1}
+    >>> issubclass(A(1), A)
+    True
+    >>> A(1)()
+    <plum.parametric.A{1} at 0x<snip>>
+    >>> f(A(1)())
+    '1'
+    >>> f(A(2)())
+    '2'
+    >>> f(A(3)())
+    'fallback'
+
 Variable Types
 ~~~~~~~~~~~~~~
 

@@ -1,7 +1,7 @@
-plum.dispatcher module
+plum.parametric module
 ======================
 
-.. automodule:: plum.dispatcher
+.. automodule:: plum.parametric
     :members:
     :undoc-members:
     :show-inheritance:

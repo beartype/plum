@@ -1,5 +1,5 @@
-plum\.type module
-=================
+plum.type module
+================
 
 .. automodule:: plum.type
     :members:

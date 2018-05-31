@@ -1,5 +1,5 @@
-plum\.function module
-=====================
+plum.function module
+====================
 
 .. automodule:: plum.function
     :members:

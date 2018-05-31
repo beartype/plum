@@ -1,5 +1,5 @@
-plum\.tuple module
-==================
+plum.tuple module
+=================
 
 .. automodule:: plum.tuple
     :members:
