@@ -7,6 +7,37 @@
 Everybody likes multiple dispatch, just like everybody likes plums.
 
 ## Examples
+### Parametric Classes
+```python
+from plum import dispatch, parametric
+
+@parametric
+class A:
+    pass
+    
+@dispatch(A)
+def f(x):
+    return 'fallback'
+    
+@dispatch(A(1))
+def f(x):
+    return '1'
+    
+@dispatch(A(2))
+def f(x):
+    return '2'
+```
+
+```python
+>>> f(A(1)())
+'1'
+>>> f(A(2)())
+'2'
+>>> f(A(3)())
+'fallback'
+```
+
+
 ### Variable Types
 ```python
 from plum import dispatch
