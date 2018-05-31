@@ -3,7 +3,8 @@
 from __future__ import absolute_import, division, print_function
 
 from . import Tuple as Tu, Function, Self, Dispatcher, PromisedType, \
-    Referentiable, dispatch, NotFoundLookupError, AmbiguousLookupError
+    Referentiable, dispatch, NotFoundLookupError, AmbiguousLookupError, \
+    ResolutionError, Type
 from . import eq, neq, lt, le, ge, gt, raises, call
 
 
@@ -237,3 +238,10 @@ def test_varargs():
     yield eq, f(Num(), FP(), FP()), 'two numbers and more reals'
     yield eq, f(Num(), Num(), FP()), 'two numbers and more reals'
     yield raises, LookupError, lambda: f(FP(), FP())
+
+
+def test_corner_cases():
+    A = PromisedType()
+    yield raises, ResolutionError, lambda: A.resolve()
+    yield raises, ResolutionError, lambda: Self().resolve()
+    yield raises, TypeError, lambda: Tu([int], int)
