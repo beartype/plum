@@ -17,9 +17,6 @@ def parametric(Class):
                            'new-style class.')
 
     class ParametricClass(Class):
-        def __init__(self, p):
-            pass
-
         def __new__(cls, p):
             if p not in subclasses:
                 def __init__(self, *args, **kw_args):
