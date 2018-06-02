@@ -8,9 +8,7 @@ from .resolvable import Reference, Promise
 from .util import multihash, Comparable
 
 __all__ = ['AbstractType', 'Type', 'Union', 'VarArgs', 'as_type', 'Self',
-           'PromisedType', 'Number']
-
-Number = {float, int}  #: Pure number type.
+           'PromisedType']
 
 
 class AbstractType(object):
