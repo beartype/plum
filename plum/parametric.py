@@ -4,8 +4,22 @@ from __future__ import absolute_import, division, print_function
 
 import logging
 
+from .dispatcher import Dispatcher
+
 __all__ = ['parametric', 'type_parameter', 'Kind']
 log = logging.getLogger(__name__)
+
+dispatch = Dispatcher()
+
+
+@dispatch(object)
+def get_id(x):
+    return id(x)
+
+
+@dispatch({int, float, str})
+def get_id(x):
+    return x
 
 
 def parametric(Class):
@@ -18,10 +32,8 @@ def parametric(Class):
 
     class ParametricClass(Class):
         def __new__(cls, *ps):
-            try:
-                hash(ps)
-            except TypeError:
-                raise TypeError('Type parameters must be hashable.')
+            # Convert type parameters.
+            ps = tuple(get_id(p) for p in ps)
 
             if ps not in subclasses:
                 def __new__(cls, *args, **kw_args):
@@ -54,4 +66,3 @@ class Kind(object):
 
     def get(self):
         return self.xs[0] if len(self.xs) == 1 else self.xs
-

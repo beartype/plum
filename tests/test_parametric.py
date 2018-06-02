@@ -32,13 +32,17 @@ def test():
     yield ok, issubclass(type(a1), Base1)
     yield ok, not issubclass(type(a1), Base2)
 
-    # Test multiple type parameters and hashability.
+    # Test multiple type parameters
     yield ok, A(1, 2) == A(1, 2)
-    yield raises, TypeError, lambda: A({})
 
     # Test type parameter extraction.
     yield eq, type_parameter(A(1)()), 1
+    yield eq, type_parameter(A('1')()), '1'
+    yield eq, type_parameter(A(1.)()), 1.
     yield eq, type_parameter(A(1, 2)()), (1, 2)
+    yield eq, type_parameter(A(a1)()), id(a1)
+    yield eq, type_parameter(A(a1, a2)()), (id(a1), id(a2))
+    yield eq, type_parameter(A(1, a2)()), (1, id(a2))
 
 
 def test_argument():
