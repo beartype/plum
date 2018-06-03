@@ -2,10 +2,10 @@ Features:
     ☐ Improved type resolution algorithm.
     ☐ In the case of ambiguity, show the method that would break the ambiguity.
     ☐ Improved formatting of error messages.
-    ☐ Consider concrete classes and type variables.
+    ☐ More efficient caching strategy.
+    ☐ Concrete classes and type variables to perform diagonal dispatch.
 
 Bugs:
-    ☐ Interaction between cache and adding new methods.
     ☐ Plum types in Union. @low
 
 Documentation:
@@ -15,6 +15,7 @@ Documentation:
 
 ＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿
 Archive:
+ ✓ Interaction between cache and adding new methods. @done (18-06-03 11:51) @project(Bugs)
  ✓ Read the Docs. @done (17-11-13 15:43) @project(Documentation)
  ✓ Union type. @done (17-11-10 17:04) @project(Features)
  ✓ Julia naming. @done (17-11-10 15:02) @project(Features)

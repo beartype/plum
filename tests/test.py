@@ -3,9 +3,11 @@
 from __future__ import absolute_import, division, print_function
 
 from . import Tuple as Tu, Function, Self, Dispatcher, PromisedType, \
-    Referentiable, dispatch, NotFoundLookupError, AmbiguousLookupError, \
-    ResolutionError, Type
-from . import eq, neq, lt, le, ge, gt, raises, call
+    Referentiable, NotFoundLookupError, AmbiguousLookupError, \
+    ResolutionError, dispatch
+from . import eq, neq, lt, le, ge, gt, raises, call, benchmark
+
+# dispatch = Dispatcher()
 
 
 class Num(object):
@@ -245,3 +247,34 @@ def test_corner_cases():
     yield raises, ResolutionError, lambda: A.resolve()
     yield raises, ResolutionError, lambda: Self().resolve()
     yield raises, TypeError, lambda: Tu([int], int)
+
+
+def test_cache():
+    # Test performance.
+    dispatch = Dispatcher()
+
+    def f_native(x): return None
+
+    @dispatch(object)
+    def f(x): return 1
+
+    dur_native = benchmark(f_native, (1,))
+    dur_plum_first = benchmark(f, (1,), n=1)
+    dur_plum = benchmark(f, (1,))
+
+    # A cached call should not be more than 20 times slower than a native call.
+    yield le, dur_plum, 20 * dur_native, 'compare native'
+
+    # A first call should not be more than 200 times slower than a first call.
+    yield le, dur_plum_first, 200 * dur_plum, 'compare first'
+
+    # The cached call should be at least 20 times faster than a first call.
+    yield le, dur_plum, dur_plum_first / 20, 'cache performance'
+
+    # Test cache correctness.
+    yield eq, f(1), 1, 'cache correctness 1'
+
+    @dispatch(int)
+    def f(x): return 2
+
+    yield eq, f(1), 2, 'cache correctness 2'

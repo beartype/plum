@@ -49,20 +49,33 @@ class Function(object):
             signature (:class:`.tuple.Tuple`): Signature of the method.
             f (function): Function that implements the method.
         """
-
         self._pending_fs.append(f)
         self._pending_signatures.append(signature)
 
     def _resolve_pending_registrations(self):
+        any_registered = False
+
+        # Perform any pending registrations.
         for signature, f in zip(self._pending_signatures, self._pending_fs):
+            any_registered = True
+
+            # Check that a method with the same signature hasn't been defined
+            # already.
             if signature in self.methods:
                 raise RuntimeError('For function "{}", the method with '
                                    'signature {} has been defined multiple '
                                    'times.'.format(self._name, signature))
+
             log.debug('For function "{}", resolving registration with '
                       'signature {}.'.format(self._name, signature))
             self.methods[signature] = f
-        self._pending_signatures, self._pending_fs = [], []
+
+        if any_registered:
+            self._pending_signatures, self._pending_fs = [], []
+
+            # Clear cache.
+            # TODO: Do something more clever.
+            self._cache.clear()
 
     def resolve(self, signature):
         """Resolve a signature.
@@ -74,15 +87,7 @@ class Function(object):
             The most-specific signature among the signatures of all applicable
             methods.
         """
-        # First, resolve any pending registrations.
         self._resolve_pending_registrations()
-
-        # TODO: Fix cache issue.
-        # # Check whether the signature matches a method exactly or has been
-        # # cached previously.
-        # if signature in self._cache:
-        #     log.debug('Signature found in cache.')
-        #     return self._cache[signature]
 
         # Find the most specific applicable signature.
         candidates = [s for s in self.methods.keys() if signature <= s]
@@ -90,36 +95,39 @@ class Function(object):
                  ''.format(', '.join(map(str, candidates))))
         candidates = self.find_most_specific(candidates)
 
+        # If only a single candidate is left, the resolution has been
+        # successful.
         if len(candidates) > 1:
             raise AmbiguousLookupError(
                 'For function "{}", signature {} is ambiguous among the '
                 'following:\n  {}'.format(self._name, signature,
                                           '\n  '.join(map(str, candidates))))
         elif len(candidates) == 1:
-            # Cache the result before returning.
-            self._cache[signature] = candidates[0]
-            return self._cache[signature]
+            return candidates[0]
         else:
             raise NotFoundLookupError(
                 'For function "{}", signature {} could not be resolved.'
                 ''.format(self._name, signature))
 
     def __call__(self, *args, **kw_args):
+        self._resolve_pending_registrations()
+
         # Handle unbound calls in the case of Python 3.
-        if len(args) >= 1 and args[0] is UnboundCall:
+        if len(args) > 0 and args[0] is UnboundCall:
             args = args[1:]
 
-        # Split off `self` in the case that the function is a method of a
-        # class.
-        log.debug(args)
-        if self._class:
-            args_self, args = args[:1], args[1:]
-        else:
-            args_self = tuple()
+        # Get types of arguments for signatures.
+        sig_args = args[1:] if self._class else args  # Split off `self`.
+        sig_types = tuple(type(x) for x in sig_args)
+
+        # Attempt to use cache.
+        try:
+            return self._cache[sig_types](*args, **kw_args)
+        except KeyError:
+            pass
 
         # Look up the signature.
-        signature = Tuple(*tuple(type(x) for x in args))
-        log.info('Call with signature {}.'.format(signature))
+        signature = Tuple(*sig_types)
 
         if self._class:
             try:
@@ -157,8 +165,8 @@ class Function(object):
             # Not in a class. Simply resolve.
             method = self.methods[self.resolve(signature)]
 
-        # Reunite arguments.
-        args = args_self + args
+        # Cache lookup.
+        self._cache[sig_types] = method
 
         return method(*args, **kw_args)
 
@@ -180,28 +188,28 @@ class Function(object):
          Args:
             signatures (list of :class:`.tuple.Tuple`): List of signatures.
         """
-        cands = []
-        for s in signatures:
+        candidates = []
+        for signature in signatures:
             log.info('Iteration: candidates: [{}]; considering {}.'
-                     ''.format(', '.join(map(str, cands)), s))
+                     ''.format(', '.join(map(str, candidates)), signature))
 
             # If none of the candidates are comparable, then add the method as
             # a new candidate and continue.
-            if not any(c.is_comparable(s) for c in cands):
-                cands += [s]
+            if not any(c.is_comparable(signature) for c in candidates):
+                candidates += [signature]
                 continue
 
             # The signature under consideration is comparable with at least one
             # of the candidates. First, filter any strictly more general
             # candidates.
-            new_cands = [c for c in cands if not s < c]
+            new_candidates = [c for c in candidates if not signature < c]
 
             # If the signature under consideration is as specific as at least
             # one candidate, then and only then add it as a candidate.
-            if any(s <= c for c in cands):
-                cands = new_cands + [s]
+            if any(signature <= c for c in candidates):
+                candidates = new_candidates + [signature]
             else:
-                cands = new_cands
+                candidates = new_candidates
 
-        log.info('Reduced to [{}].'.format(', '.join(map(str, cands))))
-        return cands
+        log.info('Reduced to [{}].'.format(', '.join(map(str, candidates))))
+        return candidates
