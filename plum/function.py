@@ -42,6 +42,10 @@ class Function(object):
         self._pending_signatures = []
         self._pending_fs = []
 
+    def clear_cache(self):
+        """Clear cache."""
+        self._cache.clear()
+
     def register(self, signature, f):
         """Register a method.
 
@@ -75,7 +79,7 @@ class Function(object):
 
             # Clear cache.
             # TODO: Do something more clever.
-            self._cache.clear()
+            self.clear_cache()
 
     def resolve(self, signature):
         """Resolve a signature.

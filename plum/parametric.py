@@ -6,7 +6,7 @@ import logging
 
 from .dispatcher import Dispatcher
 
-__all__ = ['parametric', 'type_parameter', 'Kind']
+__all__ = ['parametric', 'type_parameter', 'kind', 'Kind']
 log = logging.getLogger(__name__)
 
 dispatch = Dispatcher()
@@ -57,12 +57,18 @@ def type_parameter(x):
     return x._type_parameter
 
 
-@parametric
-class Kind(object):
-    """A parametric wrapper type for dispatch purposes."""
+def kind():
+    """Create a parametric wrapper type for dispatch purposes."""
 
-    def __init__(self, *xs):
-        self.xs = xs
+    @parametric
+    class Kind(object):
+        def __init__(self, *xs):
+            self.xs = xs
 
-    def get(self):
-        return self.xs[0] if len(self.xs) == 1 else self.xs
+        def get(self):
+            return self.xs[0] if len(self.xs) == 1 else self.xs
+
+    return Kind
+
+
+Kind = kind()  #: A default kind provided for convenience.

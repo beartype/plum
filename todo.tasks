@@ -7,6 +7,7 @@ Features:
 
 Bugs:
     ☐ Plum types in Union. @low
+    ☐ __repr__ to __str__.
 
 Documentation:
     ☐ General documentation.

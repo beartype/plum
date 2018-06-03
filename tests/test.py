@@ -7,8 +7,6 @@ from . import Tuple as Tu, Function, Self, Dispatcher, PromisedType, \
     ResolutionError, dispatch
 from . import eq, neq, lt, le, ge, gt, raises, call, benchmark
 
-# dispatch = Dispatcher()
-
 
 class Num(object):
     pass
@@ -256,7 +254,8 @@ def test_cache():
     def f_native(x): return None
 
     @dispatch(object)
-    def f(x): return 1
+    def f(x):
+        return 1
 
     dur_native = benchmark(f_native, (1,))
     dur_plum_first = benchmark(f, (1,), n=1)
@@ -278,3 +277,18 @@ def test_cache():
     def f(x): return 2
 
     yield eq, f(1), 2, 'cache correctness 2'
+
+
+def test_cache_clear():
+    dispatch = Dispatcher()
+
+    @dispatch(object)
+    def f(x):
+        return 1
+
+    dur1 = benchmark(f, (1,), n=1)
+    dispatch.clear_cache()
+    dur2 = benchmark(f, (1,), n=1)
+
+    yield le, dur1, dur2 * 5
+    yield le, dur2, dur1 * 5

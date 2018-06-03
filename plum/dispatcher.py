@@ -41,5 +41,10 @@ class Dispatcher(object):
 
         return decorator
 
+    def clear_cache(self):
+        """Clear all cache."""
+        for f in self._functions.values():
+            f.clear_cache()
+
 
 dispatch = Dispatcher()
