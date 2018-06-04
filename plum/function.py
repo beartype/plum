@@ -116,7 +116,7 @@ class Function(object):
     def __call__(self, *args, **kw_args):
         self._resolve_pending_registrations()
 
-        # Handle unbound calls in the case of Python 3.
+        # Handle unbound calls.
         if len(args) > 0 and args[0] is UnboundCall:
             args = args[1:]
 
