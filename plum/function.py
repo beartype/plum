@@ -175,15 +175,10 @@ class Function(object):
         return method(*args, **kw_args)
 
     def __get__(self, instance, cls=None):
-        try:
-            # Python 2:
-            return types.MethodType(self, instance, cls)
-        except TypeError:
-            # Python 3:
-            if instance is None:
-                return partial(self.__call__, UnboundCall)
-            else:
-                return partial(self.__call__, instance)
+        if instance is None:
+            return partial(self.__call__, UnboundCall)
+        else:
+            return partial(self.__call__, instance)
 
     @staticmethod
     def find_most_specific(signatures):
