@@ -1,5 +1,5 @@
-Plum: Multiple Dispatch in Python
-=================================
+`Plum: Multiple Dispatch in Python <https://github.com/wesselb/plum>`__
+=======================================================================
 
 |Build| |Coverage Status| |Latest Docs|
 
