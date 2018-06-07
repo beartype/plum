@@ -292,3 +292,19 @@ def test_cache_clear():
 
     yield le, dur1, dur2 * 5
     yield le, dur2, dur1 * 5
+
+
+def test_multi():
+    dispatch = Dispatcher()
+
+    @dispatch(object)
+    def f(x):
+        return 'fallback'
+
+    @dispatch.multi([int], [str])
+    def f(x):
+        return 'int or str'
+
+    yield eq, f(1), 'int or str'
+    yield eq, f('1'), 'int or str'
+    yield eq, f(1.), 'fallback'
