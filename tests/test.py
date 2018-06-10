@@ -4,8 +4,8 @@ from __future__ import absolute_import, division, print_function
 
 from . import Tuple as Tu, Function, Self, Dispatcher, PromisedType, \
     Referentiable, NotFoundLookupError, AmbiguousLookupError, \
-    ResolutionError, dispatch
-from . import eq, neq, lt, le, ge, gt, raises, call, benchmark
+    ResolutionError, dispatch, Union
+from . import eq, neq, lt, le, ge, gt, raises, call, benchmark, ok
 
 
 class Num(object):
@@ -308,3 +308,10 @@ def test_multi():
     yield eq, f(1), 'int or str'
     yield eq, f('1'), 'int or str'
     yield eq, f(1.), 'fallback'
+
+
+def test_instance_check():
+    t = Union(int, str)
+    yield ok, isinstance(1, t)
+    yield ok, isinstance('1', t)
+    yield ok, not isinstance(1., t)

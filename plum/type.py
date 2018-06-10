@@ -45,6 +45,9 @@ class Union(AbstractType, Comparable):
         return all([any([issubclass(x, y) for y in other.types])
                     for x in self.types])
 
+    def __instancecheck__(self, instance):
+        return isinstance(instance, tuple(self.types))
+
 
 class Type(Union):
     """A type."""
