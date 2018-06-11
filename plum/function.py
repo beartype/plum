@@ -41,10 +41,22 @@ class Function(object):
         self._class = as_type(in_class) if in_class else None
         self._pending_signatures = []
         self._pending_fs = []
+        self._resolved_signatures = []
+        self._resolved_fs = []
 
-    def clear_cache(self):
-        """Clear cache."""
+    def clear_cache(self, reregister=True):
+        """Clear cache.
+
+        Args:
+            reregister (bool, optional): Also reregister all methods.
+                Defaults to `True`.
+        """
         self._cache.clear()
+        if reregister:
+            self._pending_signatures.extend(self._resolved_signatures)
+            self._pending_fs.extend(self._resolved_fs)
+            self._resolved_signatures, self._resolved_fs = [], []
+            self.methods.clear()
 
     def register(self, signature, f):
         """Register a method.
@@ -74,12 +86,16 @@ class Function(object):
                       'signature {}.'.format(self._name, signature))
             self.methods[signature] = f
 
+            # Add to resolved registrations.
+            self._resolved_signatures.append(signature)
+            self._resolved_fs.append(f)
+
         if any_registered:
             self._pending_signatures, self._pending_fs = [], []
 
             # Clear cache.
             # TODO: Do something more clever.
-            self.clear_cache()
+            self.clear_cache(reregister=False)
 
     def resolve(self, signature):
         """Resolve a signature.
