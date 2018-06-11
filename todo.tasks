@@ -5,9 +5,13 @@ Features:
     ☐ More efficient caching strategy.
     ☐ Concrete classes and type variables to perform diagonal dispatch.
 
-Bugs:
-    ☐ Plum types in Union. @low
-    ☐ __repr__ to __str__.
+Refactor: @high
+    ☐ Plum types in Union/Varargs.
+    ☐ Rework Union–Type hierarchy.
+    ☐ __repr__ and __str__.
+    ☐ mro(): check single types.
+    ☐ Hash consistency of promised types.
+    ☐ Performance overhaul.
 
 Documentation:
     ☐ General documentation.

@@ -36,7 +36,11 @@ class Union(AbstractType, Comparable):
         return self._types
 
     def __repr__(self):
-        return '{{{}}}'.format(', '.join([t.__name__ for t in self.types]))
+        types = list(self.types)
+        if len(types) == 1:
+            return types[0].__name__
+        else:
+            return '{{{}}}'.format(', '.join([t.__name__ for t in types]))
 
     def __hash__(self):
         return multihash(Union, frozenset(self.types))
@@ -51,9 +55,6 @@ class Union(AbstractType, Comparable):
 
 class Type(Union):
     """A type."""
-
-    def __repr__(self):
-        return list(self.types)[0].__name__
 
     def mro(self):
         return list(self.types)[0].mro()
@@ -101,7 +102,7 @@ def as_type(obj):
                             ''.format(str(obj)))
         return VarArgs(*map(as_type, obj))
 
-    # A list is used as shorthand notation for a union.
+    # A set is used as shorthand notation for a union.
     if isinstance(obj, set):
         return Union(*obj)
 
