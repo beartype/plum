@@ -21,7 +21,7 @@ class FP(Re):
 
 
 def test_function():
-    f = Function('f')
+    f = Function('f', lambda x: x)
     for signature in [Tu(Num, Num), Tu(Num, Re),
                       Tu(FP, Num), Tu(FP, FP)]:
         f.register(signature, None)
