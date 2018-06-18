@@ -12,6 +12,7 @@ Refactor: @high
     ☐ mro(): check single types.
     ☐ Hash consistency of promised types.
     ☐ Performance overhaul.
+    ☐ More neatly handle UnboundCalls.
 
 Documentation:
     ☐ General documentation.
