@@ -36,7 +36,7 @@ class Dispatcher(object):
 
             # Create a new function if the function does not already exist.
             if name not in self._functions:
-                self._functions[name] = Function(name, in_class=self._class)
+                self._functions[name] = Function(name, f, in_class=self._class)
 
             # Register the new method.
             for signature in signatures:

@@ -3,8 +3,7 @@
 from __future__ import absolute_import, division, print_function
 
 import logging
-import types
-from functools import partial
+from functools import wraps
 
 from .tuple import Tuple
 from .type import as_type
@@ -31,11 +30,13 @@ class Function(object):
 
     Args:
         name (string): Name of the function.
+        f (function): Function that is wrapped.
         in_class (type, optional): Class of which the function is part.
     """
 
-    def __init__(self, name, in_class=None):
+    def __init__(self, name, f, in_class=None):
         self._name = name
+        self._f = f
         self.methods = {}
         self._cache = {}
         self._class = as_type(in_class) if in_class else None
@@ -191,10 +192,13 @@ class Function(object):
         return method(*args, **kw_args)
 
     def __get__(self, instance, cls=None):
-        if instance is None:
-            return partial(self.__call__, UnboundCall)
-        else:
-            return partial(self.__call__, instance)
+        first = UnboundCall if instance is None else instance
+
+        @wraps(self._f)
+        def f_wrapped(*args, **kw_args):
+            return self(first, *args, **kw_args)
+
+        return f_wrapped
 
     @staticmethod
     def find_most_specific(signatures):
