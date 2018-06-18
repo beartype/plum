@@ -30,17 +30,23 @@ def f(x):
 
 ```python
 >>> A
-plum.parametric.parametric.<locals>.ParametricClass
+__main__.A
+
 >>> A(1)
-plum.parametric.A{1}
+__main__.A{1}
+
 >>> issubclass(A(1), A)
 True
+
 >>> A(1)()
-<plum.parametric.A{1} at 0x<snip>>
+<__main__.A{1} at 0x10c2bab70>
+
 >>> f(A(1)())
 '1'
+
 >>> f(A(2)())
 '2'
+
 >>> f(A(3)())
 'fallback'
 ```
@@ -62,8 +68,10 @@ def f(x, *xs):
 ```
 >>> f(1)
 single argument
+
 >>> f(1, 2)
 multiple arguments
+
 >>> f(1, 2, 3)
 multiple arguments
 ```
@@ -85,8 +93,10 @@ def f(x):
 ```
 >>> f(1)
 int or str
+
 >>> f('1')
 int or str
+
 >>> f(1.0)
 fallback
 ```
@@ -118,10 +128,13 @@ stationary_kernel = StationaryKernel()
 ```
 >>> kernel + kernel
 'kernel'
+
 >>> kernel + stationary_kernel
 'kernel'
+
 >>> stationary_kernel + kernel
 'kernel'
+
 >>> stationary_kernel + stationary_kernel
 'stationary kernel'
 ```

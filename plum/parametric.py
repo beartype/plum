@@ -3,6 +3,7 @@
 from __future__ import absolute_import, division, print_function
 
 import logging
+from functools import update_wrapper
 
 from .dispatcher import Dispatcher
 
@@ -30,20 +31,42 @@ def parametric(Class):
         raise RuntimeError('To let {} be a parametric class, it must be a '
                            'new-style class.')
 
-    class ParametricClass(Class):
-        def __new__(cls, *ps):
-            # Convert type parameters.
-            ps = tuple(get_id(p) for p in ps)
+    def __new__(cls, *ps):
+        # Convert type parameters.
+        ps = tuple(get_id(p) for p in ps)
 
-            if ps not in subclasses:
-                def __new__(cls, *args, **kw_args):
-                    return Class.__new__(cls)
+        if ps not in subclasses:
+            def __new__(cls, *args, **kw_args):
+                return Class.__new__(cls)
 
-                name = Class.__name__ + '{' + ','.join(str(p) for p in ps) + '}'
-                SubClass = type(name, (ParametricClass,), {'__new__': __new__})
-                SubClass._type_parameter = ps[0] if len(ps) == 1 else ps
-                subclasses[ps] = SubClass
-            return subclasses[ps]
+            # Create subclass.
+            name = Class.__name__ + '{' + ','.join(str(p) for p in ps) + '}'
+            SubClass = type(name,
+                            (Class, ParametricClass,),
+                            {'__new__': __new__})
+            SubClass._type_parameter = ps[0] if len(ps) == 1 else ps
+            SubClass.__module__ = Class.__module__
+
+            # Attempt to set correct docstring.
+            try:
+                SubClass.__doc__ = Class.__doc__
+            except AttributeError:
+                pass
+
+            subclasses[ps] = SubClass
+        return subclasses[ps]
+
+    # Create parametric class.
+    ParametricClass = type(Class.__name__,
+                           Class.__bases__,
+                           {'__new__': __new__})
+    ParametricClass.__module__ = Class.__module__
+
+    # Attempt to correct docstring.
+    try:
+        ParametricClass.__doc__ = Class.__doc__
+    except AttributeError:
+        pass
 
     return ParametricClass
 
