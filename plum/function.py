@@ -29,17 +29,17 @@ class Function(object):
     """A function.
 
     Args:
-        name (string): Name of the function.
         f (function): Function that is wrapped.
         in_class (type, optional): Class of which the function is part.
     """
 
-    def __init__(self, name, f, in_class=None):
-        self._name = name
+    def __init__(self, f, in_class=None):
         self._f = f
         self.methods = {}
+
         self._cache = {}
         self._class = as_type(in_class) if in_class else None
+
         self._pending_signatures = []
         self._pending_fs = []
         self._resolved_signatures = []
@@ -81,10 +81,10 @@ class Function(object):
             if signature in self.methods:
                 raise RuntimeError('For function "{}", the method with '
                                    'signature {} has been defined multiple '
-                                   'times.'.format(self._name, signature))
+                                   'times.'.format(self._f.__name__, signature))
 
             log.debug('For function "{}", resolving registration with '
-                      'signature {}.'.format(self._name, signature))
+                      'signature {}.'.format(self._f.__name__, signature))
             self.methods[signature] = f
 
             # Add to resolved registrations.
@@ -121,21 +121,17 @@ class Function(object):
         if len(candidates) > 1:
             raise AmbiguousLookupError(
                 'For function "{}", signature {} is ambiguous among the '
-                'following:\n  {}'.format(self._name, signature,
+                'following:\n  {}'.format(self._f.__name__, signature,
                                           '\n  '.join(map(str, candidates))))
         elif len(candidates) == 1:
             return candidates[0]
         else:
             raise NotFoundLookupError(
                 'For function "{}", signature {} could not be resolved.'
-                ''.format(self._name, signature))
+                ''.format(self._f.__name__, signature))
 
     def __call__(self, *args, **kw_args):
         self._resolve_pending_registrations()
-
-        # Handle unbound calls.
-        if len(args) > 0 and args[0] is UnboundCall:
-            args = args[1:]
 
         # Get types of arguments for signatures.
         sig_args = args[1:] if self._class else args  # Split off `self`.
@@ -162,7 +158,7 @@ class Function(object):
 
                     # Get the function.
                     try:
-                        f = getattr(c, self._name)
+                        f = getattr(c, self._f.__name__)
                     except AttributeError:
                         continue
 
@@ -192,11 +188,13 @@ class Function(object):
         return method(*args, **kw_args)
 
     def __get__(self, instance, cls=None):
-        first = UnboundCall if instance is None else instance
+        # Prepend `instance` to the argument in case the call is bound.
+        prefix = () if instance is None else (instance,)
 
+        # Wrap the function using `wraps` to preserve docstrings and such.
         @wraps(self._f)
         def f_wrapped(*args, **kw_args):
-            return self(first, *args, **kw_args)
+            return self(*(prefix + args), **kw_args)
 
         return f_wrapped
 
