@@ -2,8 +2,8 @@
 
 from __future__ import absolute_import, division, print_function
 
+from . import eq, neq, ok
 from . import parametric, type_parameter, Kind, kind
-from . import eq, neq, lt, le, ge, gt, raises, call, ok
 
 
 def test():

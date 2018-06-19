@@ -32,7 +32,7 @@ class Comparable(object):
 
     @abc.abstractmethod
     def __le__(self, other):
-        pass
+        pass  # pragma: no cover
 
     def __lt__(self, other):
         return self <= other and self != other

@@ -21,11 +21,11 @@ class AbstractType(object):
 
     @abc.abstractmethod
     def __hash__(self):
-        pass
+        pass  # pragma: no cover
 
     @abc.abstractmethod
     def __repr__(self):
-        pass
+        pass  # pragma: no cover
 
 
 class VarArgs(AbstractType):
@@ -77,7 +77,6 @@ class ComparableType(AbstractType, Comparable):
         Returns:
             tuple[type]: Types encapsulated.
         """
-        pass
 
     def mro(self):
         types = self.get_types()
@@ -187,7 +186,7 @@ def as_type(obj):
     # Finally, perform conversions if necessary.
     if isinstance(obj, AbstractType):
         return obj
-    elif isinstance(type(obj), type):
+    elif isinstance(obj, type):
         return Type(obj)
     else:
         raise RuntimeError('Could not convert "{}" to a type.'.format(obj))

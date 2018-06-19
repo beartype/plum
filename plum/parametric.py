@@ -26,7 +26,7 @@ def parametric(Class):
     """A decorator for parametric classes."""
     subclasses = {}
 
-    if not issubclass(Class, object):
+    if not issubclass(Class, object): # pragma: no cover
         raise RuntimeError('To let {} be a parametric class, it must be a '
                            'new-style class.')
 
@@ -50,7 +50,7 @@ def parametric(Class):
             # Attempt to correct docstring.
             try:
                 SubClass.__doc__ = Class.__doc__
-            except AttributeError:
+            except AttributeError:  # pragma: no cover
                 pass
 
             subclasses[ps] = SubClass
@@ -65,7 +65,7 @@ def parametric(Class):
     # Attempt to correct docstring.
     try:
         ParametricClass.__doc__ = Class.__doc__
-    except AttributeError:
+    except AttributeError:  # pragma: no cover
         pass
 
     return ParametricClass

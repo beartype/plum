@@ -5,7 +5,27 @@ from __future__ import absolute_import, division, print_function
 from . import Tuple as Tu, Function, Self, Dispatcher, PromisedType, \
     Referentiable, NotFoundLookupError, AmbiguousLookupError, \
     ResolutionError, dispatch, Union
-from . import eq, neq, lt, le, ge, gt, raises, call, benchmark, ok
+from . import eq, neq, lt, le, ge, gt, raises, call, ok
+
+
+def test_corner_cases():
+    A = PromisedType()
+    yield raises, ResolutionError, lambda: A.resolve()
+    yield raises, ResolutionError, lambda: Self().resolve()
+    yield raises, TypeError, lambda: Tu([int], int)
+    yield raises, TypeError, lambda: Tu([int, str])
+    yield raises, RuntimeError, lambda: Tu(1)
+    yield raises, RuntimeError, lambda: Tu(int).varargs_type
+
+    dispatch = Dispatcher()
+
+    @dispatch(int)
+    def f(x): pass
+
+    @dispatch(int)
+    def f(x): pass
+
+    yield raises, RuntimeError, lambda: f(1)
 
 
 class Num(object):
@@ -171,6 +191,8 @@ def test_inheritance():
     yield eq, calc + hammer, 'destroyed calculator'
     yield eq, Calculator.__add__(calc, hammer), 'destroyed calculator'
     yield eq, calc.compute(ComputableObject()), 'result'
+    yield eq, calc.compute(object, ComputableObject()), 'a result'
+    yield eq, calc.compute(ComputableObject(), object), 'another result'
 
 
 def test_inheritance_exceptions():
@@ -238,60 +260,6 @@ def test_varargs():
     yield eq, f(Num(), FP(), FP()), 'two numbers and more reals'
     yield eq, f(Num(), Num(), FP()), 'two numbers and more reals'
     yield raises, LookupError, lambda: f(FP(), FP())
-
-
-def test_corner_cases():
-    A = PromisedType()
-    yield raises, ResolutionError, lambda: A.resolve()
-    yield raises, ResolutionError, lambda: Self().resolve()
-    yield raises, TypeError, lambda: Tu([int], int)
-
-
-def test_cache():
-    # Test performance.
-    dispatch = Dispatcher()
-
-    def f_native(x): return None
-
-    @dispatch(object)
-    def f(x):
-        return 1
-
-    dur_native = benchmark(f_native, (1,))
-    dur_plum_first = benchmark(f, (1,), n=1)
-    dur_plum = benchmark(f, (1,))
-
-    # A cached call should not be more than 30 times slower than a native call.
-    yield le, dur_plum, 30 * dur_native, 'compare native'
-
-    # A first call should not be more than 200 times slower than a first call.
-    yield le, dur_plum_first, 200 * dur_plum, 'compare first'
-
-    # The cached call should be at least 20 times faster than a first call.
-    yield le, dur_plum, dur_plum_first / 20, 'cache performance'
-
-    # Test cache correctness.
-    yield eq, f(1), 1, 'cache correctness 1'
-
-    @dispatch(int)
-    def f(x): return 2
-
-    yield eq, f(1), 2, 'cache correctness 2'
-
-
-def test_cache_clear():
-    dispatch = Dispatcher()
-
-    @dispatch(object)
-    def f(x):
-        return 1
-
-    dur1 = benchmark(f, (1,), n=1)
-    dispatch.clear_cache()
-    dur2 = benchmark(f, (1,), n=1)
-
-    yield le, dur1, dur2 * 5
-    yield le, dur2, dur1 * 5
 
 
 def test_multi():
