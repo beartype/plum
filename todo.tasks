@@ -1,14 +1,9 @@
 Features:
+    ☐ In the case of ambiguity, show the method that would break the ambiguity. @high
+    ☐ Improved formatting of error messages. @high
     ☐ Improved type resolution algorithm.
-    ☐ In the case of ambiguity, show the method that would break the ambiguity.
-    ☐ Improved formatting of error messages.
     ☐ More efficient caching strategy.
     ☐ Concrete classes and type variables to perform diagonal dispatch.
-
-Refactor:
-    ☐ Docstrings: make distinction between Plum types and Python types. @critical
-    ☐ Coverage. @critical
-    ☐ Split up tests. @critical
 
 Documentation:
     ☐ General documentation.
@@ -17,6 +12,9 @@ Documentation:
 
 ＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿
 Archive:
+ ✓ Split up tests. @critical @done (18-06-19 03:24) @project(Refactor)
+ ✓ Docstrings: make distinction between Plum types and Python types. @critical @done (18-06-19 03:24) @project(Refactor)
+ ✓ Coverage. @critical @done (18-06-19 03:24) @project(Refactor)
  ✓ mro(): check single types. @done (18-06-19 01:44) @project(Refactor)
  ✓ __repr__ and __str__. @done (18-06-19 01:44) @project(Refactor)
  ✓ Rework Union–Type hierarchy. @done (18-06-19 01:44) @project(Refactor)
