@@ -20,7 +20,7 @@ class Tuple(Comparable):
 
     def __init__(self, *types):
         # Ensure that all types are types.
-        self.types = tuple(map(as_type, types))
+        self.types = tuple(as_type(t) for t in types)
 
         # Ensure that only the last type possibly represents varargs.
         if any([isinstance(t, VarArgs) for t in self.types[:-1]]):
@@ -74,7 +74,7 @@ class Tuple(Comparable):
     @property
     def varargs_type(self):
         """Type of the varargs."""
-        return self.types[-1].arg_type
+        return self.types[-1].type
 
     def is_compatible(self, other):
         """Check whether this tuple is compatible with another one."""

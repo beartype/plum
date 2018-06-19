@@ -5,14 +5,10 @@ Features:
     ☐ More efficient caching strategy.
     ☐ Concrete classes and type variables to perform diagonal dispatch.
 
-Refactor: @high
-    ☐ Plum types in Union/Varargs.
-    ☐ Rework Union–Type hierarchy.
-    ☐ __repr__ and __str__.
-    ☐ mro(): check single types.
-    ☐ Hash consistency of promised types.
-    ☐ Performance overhaul.
-    ☐ More neatly handle UnboundCalls.
+Refactor:
+    ☐ Docstrings: make distinction between Plum types and Python types. @critical
+    ☐ Coverage. @critical
+    ☐ Split up tests. @critical
 
 Documentation:
     ☐ General documentation.
@@ -21,6 +17,12 @@ Documentation:
 
 ＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿
 Archive:
+ ✓ mro(): check single types. @done (18-06-19 01:44) @project(Refactor)
+ ✓ __repr__ and __str__. @done (18-06-19 01:44) @project(Refactor)
+ ✓ Rework Union–Type hierarchy. @done (18-06-19 01:44) @project(Refactor)
+ ✓ Plum types in Union/Varargs. @done (18-06-19 01:44) @project(Refactor)
+ ✓ Hash consistency of promised types. @done (18-06-19 01:44) @project(Refactor)
+ ✓ More neatly handle UnboundCalls. @done (18-06-19 00:14) @project(Refactor)
  ✓ Interaction between cache and adding new methods. @done (18-06-03 11:51) @project(Bugs)
  ✓ Read the Docs. @done (17-11-13 15:43) @project(Documentation)
  ✓ Union type. @done (17-11-10 17:04) @project(Features)

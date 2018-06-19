@@ -10,10 +10,6 @@ def multihash(*args):
     return hash(args)
 
 
-class Namespace(object):
-    """A general-purpose namespace."""
-
-
 class Comparable(object):
     """A mixin that makes instances of the class comparable.
 
@@ -43,4 +39,3 @@ class Comparable(object):
     def is_comparable(self, other):
         """Check whether this object is comparable with another one."""
         return self < other or self == other or self > other
-

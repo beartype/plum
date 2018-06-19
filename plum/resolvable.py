@@ -4,6 +4,8 @@ from __future__ import division, print_function, absolute_import
 
 import abc
 
+from .util import multihash
+
 __all__ = ['ResolutionError', 'Resolvable', 'Promise', 'Referentiable',
            'Reference']
 

@@ -7,12 +7,11 @@ import abc
 from .resolvable import Reference, Promise
 from .util import multihash, Comparable
 
-__all__ = ['AbstractType', 'Type', 'Union', 'VarArgs', 'as_type', 'Self',
-           'PromisedType']
+__all__ = ['VarArgs', 'Union', 'Self', 'PromisedType', 'as_type']
 
 
 class AbstractType(object):
-    """An abstract class defining the type hierarchy."""""
+    """An abstract class defining the top of the type hierarchy."""""
 
     __metaclass__ = abc.ABCMeta
 
@@ -25,69 +24,140 @@ class AbstractType(object):
         pass
 
 
-class Union(AbstractType, Comparable):
-    """A union of types."""
-
-    def __init__(self, *types):
-        self._types = set(types)
-
-    @property
-    def types(self):
-        return self._types
-
-    def __repr__(self):
-        types = list(self.types)
-        if len(types) == 1:
-            return types[0].__name__
-        else:
-            return '{{{}}}'.format(', '.join([t.__name__ for t in types]))
-
-    def __hash__(self):
-        return multihash(Union, frozenset(self.types))
-
-    def __le__(self, other):
-        return all([any([issubclass(x, y) for y in other.types])
-                    for x in self.types])
-
-    def __instancecheck__(self, instance):
-        return isinstance(instance, tuple(self.types))
-
-
-class Type(Union):
-    """A type."""
-
-    def mro(self):
-        return list(self.types)[0].mro()
-
-
 class VarArgs(AbstractType):
-    """Type that represents a variable number of types.
+    """Type that represents a variable number of the same type.
 
     Args:
-        type (type, optional): Supertype of all the arguments. Defaults to
-            `object`.
+        type (type, optional): Type of the variable number of types. Defaults
+            to `object`.
     """
 
-    def __init__(self, arg_type=object):
-        self.arg_type = as_type(arg_type)
+    def __init__(self, type=object):
+        self.type = as_type(type)
 
     def __hash__(self):
-        return multihash(VarArgs, self.arg_type)
+        return multihash(VarArgs, self.type)
 
     def __repr__(self):
-        return 'VarArgs({})'.format(repr(self.arg_type))
+        return 'VarArgs({})'.format(repr(self.type))
 
     def expand(self, num):
         """Expand the varargs to a tuple of types.
 
         Args:
             num (int): Length of the tuple.
+
+        Returns:
+            tuple: Expansion.
         """
-        return tuple([self.arg_type] * num)
+        return (self.type,) * num
+
+
+class ComparableType(AbstractType, Comparable):
+    """A type that can be compared to other types."""
+
+    def __le__(self, other):
+        return issubclass(self, other)
+
+    def __subclasscheck__(self, subclass):
+        return all([issubclass(t, self.get_types())
+                    for t in subclass.get_types()])
+
+    def __instancecheck__(self, instance):
+        return isinstance(instance, self.get_types())
+
+    @abc.abstractmethod
+    def get_types(self):
+        """Get the types encapsulated by this type.
+
+        Returns:
+            tuple[type]: Types encapsulated.
+        """
+        pass
+
+    def mro(self):
+        types = self.get_types()
+        if len(types) != 1:
+            raise RuntimeError('Exactly one type must be encapsulated to get '
+                               'the MRO.')
+        return types[0].mro()
+
+
+class Union(ComparableType):
+    """A union of types.
+
+    Args:
+        *types (type): Types to encapsulate.
+    """
+
+    def __init__(self, *types):
+        self._types = tuple(as_type(t) for t in types)
+
+    def __hash__(self):
+        return multihash(Union, frozenset(self._types))
+
+    def __repr__(self):
+        return '{{{}}}'.format(', '.join(repr(t) for t in self._types))
+
+    def get_types(self):
+        return sum([t.get_types() for t in self._types], ())
+
+
+class Type(ComparableType):
+    """A single type.
+
+    Args:
+        type (type): Type to encapsulate.
+    """
+
+    def __init__(self, type):
+        self._type = type
+
+    def __hash__(self):
+        return multihash(Type, self._type)
+
+    def __repr__(self):
+        if isinstance(self._type, AbstractType):
+            return repr(self._type)
+        else:
+            return '{}.{}'.format(self._type.__module__, self._type.__name__)
+
+    def get_types(self):
+        return self._type,
+
+
+class PromisedType(ComparableType, Promise):
+    """A promised type."""
+
+    def __hash__(self):
+        return hash(as_type(self.resolve()))
+
+    def __repr__(self):
+        return repr(self.resolve())
+
+    def get_types(self):
+        return as_type(self.resolve()).get_types()
+
+
+class Self(Reference, PromisedType):
+    """Reference type.
+
+    Note:
+        Both :class:`.resolvable.Reference` and :class:`.type.PromisedType`
+        implement `resolve()`. We need that from :class:`.resolvable.Reference`,
+        so we inherit from :class:`.resolvable.Reference` first.
+    """
 
 
 def as_type(obj):
-    """Ensure that an object is a type."""
+    """Convert object to a type.
+
+    Args:
+        obj (object): Object to convert to type.
+
+    Returns:
+        :class:`.type.AbstractType`: Type corresponding to `obj`.
+    """
     # :class:`.type.Self` has a shorthand notation that doesn't require the
     # user to instantiate it.
     if obj is Self:
@@ -100,7 +170,11 @@ def as_type(obj):
                             'be specified in one of the following ways: [], '
                             '[Type], VarArgs(), or VarArgs(Type).'
                             ''.format(str(obj)))
-        return VarArgs(*map(as_type, obj))
+        elif len(obj) == 1:
+            return VarArgs(as_type(obj[0]))
+        else:
+            # `len(obj) == 0`.
+            return VarArgs()
 
     # A set is used as shorthand notation for a union.
     if isinstance(obj, set):
@@ -113,29 +187,3 @@ def as_type(obj):
         return Type(obj)
     else:
         raise RuntimeError('Could not convert "{}" to a type.'.format(obj))
-
-
-class Self(Type, Reference):
-    def __init__(self, *types):
-        Type.__init__(self, *types)
-        Reference.__init__(self)
-
-    @property
-    def types(self):
-        return {self.resolve()}
-
-
-class PromisedType(Type, Promise):
-    def __init__(self, *types):
-        Type.__init__(self, *types)
-        Promise.__init__(self)
-
-    @property
-    def types(self):
-        obj = self.resolve()
-        if type(obj) == type:
-            return {obj}
-        elif type(obj) == set:
-            return obj
-        else:
-            raise RuntimeError('Unknown resolved object "{}".'.format(obj))
