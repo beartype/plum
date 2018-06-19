@@ -149,12 +149,26 @@ class Function(object):
                 method = None
 
                 # Walk through the classes in the class's MRO, except for this
-                # class, and attempt to get the function.
+                # class.
                 for c in self._class.mro()[1:]:
+
+                    # Get the function.
                     try:
-                        method = getattr(c, self._f.__name__)
+                        f = getattr(c, self._f.__name__)
                     except AttributeError:
                         continue
+
+                    # Get the method.
+                    try:
+                        if isinstance(f, Function):
+                            method = f.methods[f.resolve(signature)]
+                        else:
+                            method = f
+                        break
+                    except NotFoundLookupError:
+                        continue
+                    except AmbiguousLookupError as e:
+                        raise e
 
                 if not method:
                     # If no method has been found after walking through the
