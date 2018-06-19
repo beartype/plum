@@ -34,7 +34,7 @@ class Dispatcher(object):
         def decorator(f):
             name = f.__name__
 
-            # Create a new function if the function does not already exist.
+            # Create a new function only if the function does not already exist.
             if name not in self._functions:
                 self._functions[name] = Function(f, in_class=self._class)
 
@@ -59,4 +59,4 @@ class Dispatcher(object):
             instance.clear_cache()
 
 
-dispatch = Dispatcher()
+dispatch = Dispatcher()  #: A default dispatcher for convenience purposes.

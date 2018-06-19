@@ -6,7 +6,14 @@ import abc
 
 
 def multihash(*args):
-    """Multi-argument order-sensitive hash."""
+    """Multi-argument order-sensitive hash.
+
+    Args:
+        *args: Objects to hash.
+
+    Returns:
+        int: Hash.
+    """
     return hash(args)
 
 
@@ -37,5 +44,14 @@ class Comparable(object):
         return self >= other and self != other
 
     def is_comparable(self, other):
-        """Check whether this object is comparable with another one."""
+        """Check whether this object is comparable with another one.
+
+        Args:
+            other (:class:`.util.Comparable`): Object to check comparability
+                with.
+
+        Returns:
+            bool: `True` if the object is comparable with `other` and `False`
+                otherwise.
+        """
         return self < other or self == other or self > other

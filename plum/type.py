@@ -11,7 +11,11 @@ __all__ = ['VarArgs', 'Union', 'Self', 'PromisedType', 'as_type']
 
 
 class AbstractType(object):
-    """An abstract class defining the top of the type hierarchy."""""
+    """An abstract class defining the top of the Plum type hierarchy.
+
+    Any instance of a subclass of :class:`.type.AbstractType` will be henceforth
+    referred to be of type Plum type or `ptype`.
+    """
 
     __metaclass__ = abc.ABCMeta
 
@@ -25,11 +29,11 @@ class AbstractType(object):
 
 
 class VarArgs(AbstractType):
-    """Type that represents a variable number of the same type.
+    """Plum type that represents a variable number of the same Plum type.
 
     Args:
-        type (type, optional): Type of the variable number of types. Defaults
-            to `object`.
+        type (type or ptype, optional): Type or Plum type of the variable
+            number of types. Defaults to `object`.
     """
 
     def __init__(self, type=object):
@@ -54,7 +58,7 @@ class VarArgs(AbstractType):
 
 
 class ComparableType(AbstractType, Comparable):
-    """A type that can be compared to other types."""
+    """A Plum type that can be compared to other Plum types."""
 
     def __le__(self, other):
         return issubclass(self, other)
@@ -68,7 +72,7 @@ class ComparableType(AbstractType, Comparable):
 
     @abc.abstractmethod
     def get_types(self):
-        """Get the types encapsulated by this type.
+        """Get the types encapsulated by this Plum type.
 
         Returns:
             tuple[type]: Types encapsulated.
@@ -84,10 +88,10 @@ class ComparableType(AbstractType, Comparable):
 
 
 class Union(ComparableType):
-    """A union of types.
+    """A union of Plum types.
 
     Args:
-        *types (type): Types to encapsulate.
+        *types (type or ptype): Types or Plum types to encapsulate.
     """
 
     def __init__(self, *types):
@@ -104,7 +108,7 @@ class Union(ComparableType):
 
 
 class Type(ComparableType):
-    """A single type.
+    """A Plum type encapsulating a type.
 
     Args:
         type (type): Type to encapsulate.
@@ -127,7 +131,7 @@ class Type(ComparableType):
 
 
 class PromisedType(ComparableType, Promise):
-    """A promised type."""
+    """A promised Plum type."""
 
     def __hash__(self):
         return hash(as_type(self.resolve()))
@@ -140,7 +144,7 @@ class PromisedType(ComparableType, Promise):
 
 
 class Self(Reference, PromisedType):
-    """Reference type.
+    """Reference Plum type.
 
     Note:
         Both :class:`.resolvable.Reference` and :class:`.type.PromisedType`
@@ -156,7 +160,7 @@ def as_type(obj):
         obj (object): Object to convert to type.
 
     Returns:
-        :class:`.type.AbstractType`: Type corresponding to `obj`.
+        :class:`.type.AbstractType`: Plum type corresponding to `obj`.
     """
     # :class:`.type.Self` has a shorthand notation that doesn't require the
     # user to instantiate it.

@@ -15,7 +15,7 @@ class Tuple(Comparable):
     """Tuple.
 
     Args:
-        *types (type): Types of the arguments.
+        *types (type or ptype): Types of the arguments.
     """
 
     def __init__(self, *types):
@@ -35,32 +35,39 @@ class Tuple(Comparable):
     def __len__(self):
         return len(self.base)
 
-    def apply_binary_operator(self, operator, other):
-        """Apply a binary operator to this :class:`.tuple.Tuple` and another."""
-        if not self.is_compatible(other):
-            return False
-        return all([operator(x, y) for x, y
-                    in zip(self.expand_varargs_to(other),
-                           other.expand_varargs_to(self))])
+    def expand_varargs_to(self, other):
+        """Expand varargs to a given :class:`.tuple.Tuple`.
 
-    def expand_varargs_to(self, tup):
-        """Expand types to a given :class:`.tuple.Tuple`."""
+        Args:
+            other (:class:`.tuple.Tuple`): Other tuple to expand to.
+
+        Returns:
+            tuple[ptype]: Tuple of Plum types that matches `other`.
+        """
         if self.has_varargs():
-            expansion_size = max(len(tup) - len(self), 0)
+            expansion_size = max(len(other) - len(self), 0)
             types = self.base + self.types[-1].expand(expansion_size)
-            log.debug('Expanded {} as {} for {}.'.format(self, types, tup))
+            log.debug('Expanded {} as {} for {}.'.format(self, types, other))
             return types
         else:
             return self.base
 
     def __le__(self, other):
+        # Check varargs.
         if self.has_varargs() and not other.has_varargs():
             return False
-        elif self.has_varargs() and other.has_varargs():
-            return (self.varargs_type <= other.varargs_type and
-                    self.apply_binary_operator(lambda x, y: x <= y, other))
-        else:
-            return self.apply_binary_operator(lambda x, y: x <= y, other)
+        elif (self.has_varargs() and
+              other.has_varargs() and
+              self.varargs_type > other.varargs_type):
+            return False
+
+        # Check compatibility.
+        if not self.is_compatible(other):
+            return False
+
+        # Finally, compare.
+        return all([x <= y for x, y in zip(self.expand_varargs_to(other),
+                                           other.expand_varargs_to(self))])
 
     @property
     def base(self):
@@ -68,16 +75,31 @@ class Tuple(Comparable):
         return self.types[:-1] if self.has_varargs() else self.types
 
     def has_varargs(self):
-        """Check whether this tuple has varargs."""
+        """Check whether this tuple has varargs.
+
+        Returns:
+            bool: `True` if and only if this tuple has varargs.
+        """
         return len(self.types) > 0 and isinstance(self.types[-1], VarArgs)
 
     @property
     def varargs_type(self):
         """Type of the varargs."""
+        if not self.has_varargs():
+            raise RuntimeError('Type of varargs requested, but tuple does not '
+                               'have varargs.')
         return self.types[-1].type
 
     def is_compatible(self, other):
-        """Check whether this tuple is compatible with another one."""
+        """Check whether this tuple is compatible with another one.
+
+        Args:
+            other (:class:`.tuple.Tuple`): Other tuple to check compatibility
+                with.
+
+        Returns:
+            bool: Compatibility.
+        """
         return (len(self) == len(other)
                 or (len(self) > len(other) and other.has_varargs())
                 or (len(self) < len(other) and self.has_varargs()))

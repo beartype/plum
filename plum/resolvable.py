@@ -4,8 +4,6 @@ from __future__ import division, print_function, absolute_import
 
 import abc
 
-from .util import multihash
-
 __all__ = ['ResolutionError', 'Resolvable', 'Promise', 'Referentiable',
            'Reference']
 
@@ -21,7 +19,11 @@ class Resolvable(object):
 
     @abc.abstractmethod
     def resolve(self):
-        """Resolve the object."""
+        """Resolve the object.
+
+        Returns:
+            Promised object.
+        """
 
 
 class Promise(Resolvable):

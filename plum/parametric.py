@@ -3,7 +3,6 @@
 from __future__ import absolute_import, division, print_function
 
 import logging
-from functools import update_wrapper
 
 from .dispatcher import Dispatcher
 
@@ -14,12 +13,12 @@ dispatch = Dispatcher()
 
 
 @dispatch(object)
-def get_id(x):
+def _get_id(x):
     return id(x)
 
 
 @dispatch({int, float, str})
-def get_id(x):
+def _get_id(x):
     return x
 
 
@@ -33,8 +32,9 @@ def parametric(Class):
 
     def __new__(cls, *ps):
         # Convert type parameters.
-        ps = tuple(get_id(p) for p in ps)
+        ps = tuple(_get_id(p) for p in ps)
 
+        # Only create new subclass if it doesn't exist already.
         if ps not in subclasses:
             def __new__(cls, *args, **kw_args):
                 return Class.__new__(cls)
@@ -47,7 +47,7 @@ def parametric(Class):
             SubClass._type_parameter = ps[0] if len(ps) == 1 else ps
             SubClass.__module__ = Class.__module__
 
-            # Attempt to set correct docstring.
+            # Attempt to correct docstring.
             try:
                 SubClass.__doc__ = Class.__doc__
             except AttributeError:
@@ -75,13 +75,20 @@ def type_parameter(x):
     """Get the type parameter of an instance of a parametric type.
 
     Args:
-        x (instance): Instance of a parametric type.
+        x (object): Instance of a parametric type.
+
+    Returns:
+        object: Type parameter.
     """
     return x._type_parameter
 
 
 def kind():
-    """Create a parametric wrapper type for dispatch purposes."""
+    """Create a parametric wrapper type for dispatch purposes.
+
+    Returns:
+        object: New parametric type wrapper.
+    """
 
     @parametric
     class Kind(object):

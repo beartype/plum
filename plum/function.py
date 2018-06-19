@@ -12,10 +12,6 @@ __all__ = ['Function', 'AmbiguousLookupError', 'NotFoundLookupError']
 log = logging.getLogger(__name__)
 
 
-class UnboundCall(object):
-    """A special object to indicate an unbound call."""
-
-
 class AmbiguousLookupError(LookupError):
     """A signature cannot be resolved due to ambiguity."""
 
@@ -114,7 +110,7 @@ class Function(object):
         candidates = [s for s in self.methods.keys() if signature <= s]
         log.info('Applicable candidates: [{}].'
                  ''.format(', '.join(map(str, candidates))))
-        candidates = self.find_most_specific(candidates)
+        candidates = find_most_specific(candidates)
 
         # If only a single candidate is left, the resolution has been
         # successful.
@@ -188,7 +184,7 @@ class Function(object):
         return method(*args, **kw_args)
 
     def __get__(self, instance, cls=None):
-        # Prepend `instance` to the argument in case the call is bound.
+        # Prepend `instance` to the arguments in case the call is bound.
         prefix = () if instance is None else (instance,)
 
         # Wrap the function using `wraps` to preserve docstrings and such.
@@ -198,35 +194,38 @@ class Function(object):
 
         return f_wrapped
 
-    @staticmethod
-    def find_most_specific(signatures):
-        """Find the most specific signatures in a list of signatures.
 
-         Args:
-            signatures (list of :class:`.tuple.Tuple`): List of signatures.
-        """
-        candidates = []
-        for signature in signatures:
-            log.info('Iteration: candidates: [{}]; considering {}.'
-                     ''.format(', '.join(map(str, candidates)), signature))
+def find_most_specific(signatures):
+    """Find the most specific in a list of signatures.
 
-            # If none of the candidates are comparable, then add the method as
-            # a new candidate and continue.
-            if not any(c.is_comparable(signature) for c in candidates):
-                candidates += [signature]
-                continue
+     Args:
+        signatures (list[:class:`.tuple.Tuple`]): List of signatures.
 
-            # The signature under consideration is comparable with at least one
-            # of the candidates. First, filter any strictly more general
-            # candidates.
-            new_candidates = [c for c in candidates if not signature < c]
+    Returns:
+        :class:`.tuple.Tuple`: Most specific signatures.
+    """
+    candidates = []
+    for signature in signatures:
+        log.info('Iteration: candidates: [{}]; considering {}.'
+                 ''.format(', '.join(map(str, candidates)), signature))
 
-            # If the signature under consideration is as specific as at least
-            # one candidate, then and only then add it as a candidate.
-            if any(signature <= c for c in candidates):
-                candidates = new_candidates + [signature]
-            else:
-                candidates = new_candidates
+        # If none of the candidates are comparable, then add the method as
+        # a new candidate and continue.
+        if not any(c.is_comparable(signature) for c in candidates):
+            candidates += [signature]
+            continue
 
-        log.info('Reduced to [{}].'.format(', '.join(map(str, candidates))))
-        return candidates
+        # The signature under consideration is comparable with at least one
+        # of the candidates. First, filter any strictly more general
+        # candidates.
+        new_candidates = [c for c in candidates if not signature < c]
+
+        # If the signature under consideration is as specific as at least
+        # one candidate, then and only then add it as a candidate.
+        if any(signature <= c for c in candidates):
+            candidates = new_candidates + [signature]
+        else:
+            candidates = new_candidates
+
+    log.info('Reduced to [{}].'.format(', '.join(map(str, candidates))))
+    return candidates
