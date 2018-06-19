@@ -120,10 +120,7 @@ class Type(ComparableType):
         return multihash(Type, self._type)
 
     def __repr__(self):
-        if isinstance(self._type, AbstractType):
-            return repr(self._type)
-        else:
-            return '{}.{}'.format(self._type.__module__, self._type.__name__)
+        return '{}.{}'.format(self._type.__module__, self._type.__name__)
 
     def get_types(self):
         return self._type,

@@ -4,18 +4,18 @@ from __future__ import absolute_import, division, print_function
 
 from . import Tuple as Tu, Function, Self, Dispatcher, PromisedType, \
     Referentiable, NotFoundLookupError, AmbiguousLookupError, \
-    ResolutionError, dispatch, Union
+    ResolutionError, dispatch, Union, as_type
 from . import eq, neq, lt, le, ge, gt, raises, call, ok
 
 
 def test_corner_cases():
-    A = PromisedType()
-    yield raises, ResolutionError, lambda: A.resolve()
+    yield raises, ResolutionError, lambda: PromisedType().resolve()
     yield raises, ResolutionError, lambda: Self().resolve()
     yield raises, TypeError, lambda: Tu([int], int)
     yield raises, TypeError, lambda: Tu([int, str])
     yield raises, RuntimeError, lambda: Tu(1)
     yield raises, RuntimeError, lambda: Tu(int).varargs_type
+    yield raises, RuntimeError, lambda: as_type({int, str}).mro()
 
     dispatch = Dispatcher()
 
