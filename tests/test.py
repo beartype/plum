@@ -50,6 +50,14 @@ def test_function():
     yield call, f, 'resolve', (Tu(Re, FP),), Tu(Num, Re)
     yield raises, LookupError, lambda: f.resolve(Tu(FP, Re))
 
+    # Test dynamic extension of the function.
+    yield raises, LookupError, lambda: f.resolve(Tu(int))
+
+    @f.extend(int)
+    def f(x): pass
+
+    yield call, f, 'resolve', (Tu(int),), Tu(int)
+
 
 def test_tuple():
     yield le, Tu(Num, FP), Tu(Num, FP)

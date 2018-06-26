@@ -28,8 +28,11 @@ class Function(object):
         f (function): Function that is wrapped.
         in_class (type, optional): Class of which the function is part.
     """
+    _instances = []
 
     def __init__(self, f, in_class=None):
+        Function._instances.append(self)
+
         self._f = f
         self.methods = {}
 
@@ -40,6 +43,18 @@ class Function(object):
         self._pending_fs = []
         self._resolved_signatures = []
         self._resolved_fs = []
+
+    def extend(self, *types):
+        """A decorator to extend the function with another signature."""
+
+        def decorator(f):
+            # Register the new method.
+            self.register(Tuple(*types), f)
+
+            # Return the function.
+            return self
+
+        return decorator
 
     def clear_cache(self, reregister=True):
         """Clear cache.

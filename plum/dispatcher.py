@@ -17,10 +17,8 @@ class Dispatcher(object):
     Args:
         in_class (type, optional): Class to which the namespace is associated.
     """
-    _instances = []
 
     def __init__(self, in_class=None):
-        Dispatcher._instances.append(self)
         self._functions = {}
         self._class = in_class
 
@@ -55,8 +53,8 @@ class Dispatcher(object):
     @staticmethod
     def clear_all_cache():
         """Clear all cache."""
-        for instance in Dispatcher._instances:
-            instance.clear_cache()
+        for f in Function._instances:
+            f.clear_cache()
 
 
 dispatch = Dispatcher()  #: A default dispatcher for convenience purposes.
