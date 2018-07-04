@@ -107,7 +107,7 @@ class Union(ComparableType):
 
 
 class Type(ComparableType):
-    """A Plum type encapsulating a type.
+    """A Plum type encapsulating a single type.
 
     Args:
         type (type): Type to encapsulate.
