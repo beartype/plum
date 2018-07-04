@@ -35,14 +35,13 @@ class Function(object):
 
         self._f = f
         self.methods = {}
+        self.precedences = {}
 
         self._cache = {}
         self._class = as_type(in_class) if in_class else None
 
-        self._pending_signatures = []
-        self._pending_fs = []
-        self._resolved_signatures = []
-        self._resolved_fs = []
+        self._pending = []
+        self._resolved = []
 
     def extend(self, *types):
         """A decorator to extend the function with another signature."""
@@ -65,27 +64,30 @@ class Function(object):
         """
         self._cache.clear()
         if reregister:
-            self._pending_signatures.extend(self._resolved_signatures)
-            self._pending_fs.extend(self._resolved_fs)
-            self._resolved_signatures, self._resolved_fs = [], []
+            # Add all resolved to pending.
+            self._pending.extend(self._resolved)
+
+            # Clear resolved.
+            self._resolved = []
             self.methods.clear()
 
-    def register(self, signature, f):
+    def register(self, signature, f, precedence=0):
         """Register a method.
 
         Args:
             signature (:class:`.tuple.Tuple`): Signature of the method.
             f (function): Function that implements the method.
+            precedence (int, optional): Precedence of the function. Defaults
+                to `0`.
         """
-        self._pending_fs.append(f)
-        self._pending_signatures.append(signature)
+        self._pending.append((signature, f, precedence))
 
     def _resolve_pending_registrations(self):
-        any_registered = False
+        registered = False
 
         # Perform any pending registrations.
-        for signature, f in zip(self._pending_signatures, self._pending_fs):
-            any_registered = True
+        for signature, f, precedence in self._pending:
+            registered = True
 
             # Check that a method with the same signature hasn't been defined
             # already.
@@ -97,13 +99,13 @@ class Function(object):
             log.debug('For function "{}", resolving registration with '
                       'signature {}.'.format(self._f.__name__, signature))
             self.methods[signature] = f
+            self.precedences[signature] = precedence
 
             # Add to resolved registrations.
-            self._resolved_signatures.append(signature)
-            self._resolved_fs.append(f)
+            self._resolved.append((signature, f, precedence))
 
-        if any_registered:
-            self._pending_signatures, self._pending_fs = [], []
+        if registered:
+            self._pending = []
 
             # Clear cache.
             # TODO: Do something more clever.
@@ -130,10 +132,23 @@ class Function(object):
         # If only a single candidate is left, the resolution has been
         # successful.
         if len(candidates) > 1:
+            # There are multiple candidates. Check their precedences and see
+            # if that breaks the ambiguity.
+            precedences = [self.precedences[c] for c in candidates]
+            highest_precedence = max(*precedences)
+            if len([p for p in precedences if p == highest_precedence]) == 1:
+                # Ambiguity can be resolved by precedence. So do so.
+                return candidates[precedences.index(highest_precedence)]
+
+            # Could not resolve the ambiguity, so error. First, make a nice list
+            #  of the candidates and the precedences.
+            listed_candidates = '\n  '.join(['{} (precedence: {})'
+                                             ''.format(c, self.precedences[c])
+                                             for c in candidates])
             raise AmbiguousLookupError(
                 'For function "{}", signature {} is ambiguous among the '
                 'following:\n  {}'.format(self._f.__name__, signature,
-                                          '\n  '.join(map(str, candidates))))
+                                          listed_candidates))
         elif len(candidates) == 1:
             return candidates[0]
         else:

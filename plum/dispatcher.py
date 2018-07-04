@@ -22,13 +22,32 @@ class Dispatcher(object):
         self._functions = {}
         self._class = in_class
 
-    def __call__(self, *types):
-        return self._create_decorator([Tuple(*types)])
+    def __call__(self, *types, precedence=0):
+        """Create a decorator for a particular signature.
 
-    def multi(self, *signatures):
-        return self._create_decorator([Tuple(*types) for types in signatures])
+        Args:
+            *types (type): Types of the signatures.
+            precedence (int, optional): Precedence of the signature.
 
-    def _create_decorator(self, signatures):
+        Returns:
+            function: Decorator.
+        """
+        return self._create_decorator([Tuple(*types)], precedence=precedence)
+
+    def multi(self, *signatures, precedence=0):
+        """Create a decorator for multiple given signatures.
+        
+        Args:
+            *tuple[type] (type): Signatures.
+            precedence (int, optional): Precedence of the signatures.
+
+        Returns:
+            function: Decorator.
+        """
+        return self._create_decorator([Tuple(*types) for types in signatures],
+                                      precedence=precedence)
+
+    def _create_decorator(self, signatures, precedence):
         def decorator(f):
             name = f.__name__
 
@@ -38,7 +57,7 @@ class Dispatcher(object):
 
             # Register the new method.
             for signature in signatures:
-                self._functions[name].register(signature, f)
+                self._functions[name].register(signature, f, precedence)
 
             # Return the function.
             return self._functions[name]
