@@ -22,7 +22,7 @@ class Dispatcher(object):
         self._functions = {}
         self._class = in_class
 
-    def __call__(self, *types, precedence=0):
+    def __call__(self, *types, **kw_args):
         """Create a decorator for a particular signature.
 
         Args:
@@ -32,9 +32,10 @@ class Dispatcher(object):
         Returns:
             function: Decorator.
         """
+        precedence = 0 if 'precedence' not in kw_args else kw_args['precedence']
         return self._create_decorator([Tuple(*types)], precedence=precedence)
 
-    def multi(self, *signatures, precedence=0):
+    def multi(self, *signatures, **kw_args):
         """Create a decorator for multiple given signatures.
 
         Args:
@@ -44,6 +45,7 @@ class Dispatcher(object):
         Returns:
             function: Decorator.
         """
+        precedence = 0 if 'precedence' not in kw_args else kw_args['precedence']
         return self._create_decorator([Tuple(*types) for types in signatures],
                                       precedence=precedence)
 
