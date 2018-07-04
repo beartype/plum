@@ -36,7 +36,7 @@ class Dispatcher(object):
 
     def multi(self, *signatures, precedence=0):
         """Create a decorator for multiple given signatures.
-        
+
         Args:
             *tuple[type] (type): Signatures.
             precedence (int, optional): Precedence of the signatures.

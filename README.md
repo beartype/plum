@@ -7,6 +7,64 @@
 Everybody likes multiple dispatch, just like everybody likes plums.
 
 ## Examples
+### Method Precedence
+```python
+from plum import dispatch
+
+class Element(object):
+    pass
+
+
+class ZeroElement(Element):
+    pass
+
+
+class SpecialisedElement(Element):
+    pass
+
+
+@dispatch(ZeroElement, Element)
+def mul_no_precedence(a, b):
+    return 'zero'
+
+
+@dispatch(Element, SpecialisedElement)
+def mul_no_precedence(a, b):
+    return 'specialised operation'
+    
+
+@dispatch(ZeroElement, Element, precedence=1)
+def mul(a, b):
+    return 'zero'
+
+
+@dispatch(Element, SpecialisedElement)
+def mul(a, b):
+    return 'specialised operation'
+```
+
+```python
+>>> zero = ZeroElement()
+
+>>> specialised_element = SpecialisedElement()
+
+>>> element = Element()
+
+>>> mul(zero, element)
+'zero'
+
+>>> mul(element, specialised_element)
+'specialised operation'
+
+>>> mul_no_precedence(zero, specialised_element)
+AmbiguousLookupError: For function "mul_no_precedence", signature (__main__.ZeroElement, __main__.SpecialisedElement) is ambiguous among the following:
+  (__main__.ZeroElement, __main__.Element) (precedence: 0)
+  (__main__.Element, __main__.SpecialisedElement) (precedence: 0)
+
+>>> mul(zero, specialised_element)
+'zero'
+```
+
 ### Parametric Classes
 ```python
 from plum import dispatch, parametric
