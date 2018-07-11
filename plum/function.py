@@ -43,12 +43,21 @@ class Function(object):
         self._pending = []
         self._resolved = []
 
-    def extend(self, *types):
+        # Copy some basic info.
+        self.__name__ = f.__name__
+        self.__doc__ = f.__doc__
+
+    def extend(self, *types, precedence=0):
         """A decorator to extend the function with another signature."""
+        return self.extend_multi(types, precedence=precedence)
+
+    def extend_multi(self, *signatures, precedence=0):
+        """A decorator to extend the function with multiple signatures."""
 
         def decorator(f):
             # Register the new method.
-            self.register(Tuple(*types), f)
+            for signature in signatures:
+                self.register(Tuple(*signature), f, precedence=precedence)
 
             # Return the function.
             return self
@@ -210,6 +219,9 @@ class Function(object):
             return self(*(prefix + args), **kw_args)
 
         return f_wrapped
+
+    def invoke(self, *types):
+        return self.methods[self.resolve(Tuple(*types))]
 
 
 def find_most_specific(signatures):
