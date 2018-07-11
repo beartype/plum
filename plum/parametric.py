@@ -17,7 +17,7 @@ def _get_id(x):
     return id(x)
 
 
-@dispatch({int, float, str})
+@dispatch({int, float, str, type})
 def _get_id(x):
     return x
 
