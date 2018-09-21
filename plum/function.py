@@ -47,12 +47,16 @@ class Function(object):
         self.__name__ = f.__name__
         self.__doc__ = f.__doc__
 
-    def extend(self, *types, precedence=0):
+    def extend(self, *types, **kw_args):
         """A decorator to extend the function with another signature."""
-        return self.extend_multi(types, precedence=precedence)
+        return self.extend_multi(types, **kw_args)
 
-    def extend_multi(self, *signatures, precedence=0):
+    def extend_multi(self, *signatures, **kw_args):
         """A decorator to extend the function with multiple signatures."""
+        if 'precedence' in kw_args:
+            precedence = kw_args['precedence']
+        else:
+            precedence = 0
 
         def decorator(f):
             # Register the new method.
@@ -150,7 +154,7 @@ class Function(object):
                 return candidates[precedences.index(highest_precedence)]
 
             # Could not resolve the ambiguity, so error. First, make a nice list
-            #  of the candidates and the precedences.
+            # of the candidates and their precedences.
             listed_candidates = '\n  '.join(['{} (precedence: {})'
                                              ''.format(c, self.precedences[c])
                                              for c in candidates])
@@ -214,6 +218,9 @@ class Function(object):
         prefix = () if instance is None else (instance,)
 
         # Wrap the function using `wraps` to preserve docstrings and such.
+        # Also keep a newline here to prevent this comment being associated
+        # to the wrapped function.
+
         @wraps(self._f)
         def f_wrapped(*args, **kw_args):
             return self(*(prefix + args), **kw_args)
