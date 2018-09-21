@@ -7,7 +7,7 @@ import abc
 from .resolvable import Reference, Promise
 from .util import multihash, Comparable
 
-__all__ = ['VarArgs', 'Union', 'Self', 'PromisedType', 'as_type']
+__all__ = ['VarArgs', 'Union', 'Self', 'PromisedType', 'as_type', 'TypeType']
 
 
 class AbstractType(object):
@@ -187,3 +187,7 @@ def as_type(obj):
         return Type(obj)
     else:
         raise RuntimeError('Could not convert "{}" to a type.'.format(obj))
+
+
+TypeType = {type, AbstractType, set, list}
+"""The type of a Plum type, including shorthands."""

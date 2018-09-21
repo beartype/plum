@@ -4,6 +4,7 @@ Features:
     ☐ Improved type resolution algorithm.
     ☐ More efficient caching strategy.
     ☐ Concrete classes and type variables to perform diagonal dispatch.
+    ☐ Method ambiguity resolution. @critical
 
 Documentation:
     ☐ General documentation.

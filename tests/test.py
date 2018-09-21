@@ -4,8 +4,8 @@ from __future__ import absolute_import, division, print_function
 
 from . import Tuple as Tu, Function, Self, Dispatcher, PromisedType, \
     Referentiable, NotFoundLookupError, AmbiguousLookupError, \
-    ResolutionError, dispatch, Union, as_type
-from . import eq, neq, lt, le, ge, gt, raises, call, ok
+    ResolutionError, dispatch, Union, as_type, TypeType
+from . import eq, neq, lt, le, ge, gt, raises, call, ok, nle
 
 
 def test_corner_cases():
@@ -382,3 +382,17 @@ def test_invoke():
     yield eq, f.invoke(float)(1), 'int, str, or float'
     yield eq, f.invoke({int, str})(1), 'int, str, or float'
     yield eq, f.invoke({int, str, float})(1), 'int, str, or float'
+
+
+def test_typetype():
+    Promised = PromisedType()
+    Promised.deliver(int)
+
+    yield le, as_type(type(int)), as_type(TypeType)
+    yield le, as_type(type(Promised)), as_type(TypeType)
+    yield le, as_type(type({int})), as_type(TypeType)
+    yield le, as_type(type([int])), as_type(TypeType)
+
+    yield nle, as_type(int), as_type(TypeType)
+    yield nle, as_type(Promised), as_type(TypeType)
+    yield nle, as_type({int}), as_type(TypeType)

@@ -35,3 +35,7 @@ def benchmark(f, args, n=1000):
 
 def call(f, method, args, res):
     assert_equal(getattr(f, method)(*args), res)
+
+
+def nle(x, y, desc=None):
+    assert (not (x <= y)), desc
