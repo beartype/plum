@@ -335,6 +335,23 @@ def test_extension():
     yield eq, f('1'), 'str or float'
     yield eq, f(1.0), 'str or float'
 
+    # Test that precedences are working correctly.
+    @dispatch()
+    def g():
+        return 'fallback'
+
+    @g.extend({int, str}, precedence=1)
+    def g(x):
+        return 'int or str'
+
+    @g.extend({int, float}, precedence=2)
+    def g(x):
+        return 'int or float'
+
+    yield eq, g('1'), 'int or str'
+    yield eq, g(1.0), 'int or float'
+    yield eq, g(1), 'int or float'
+
 
 def test_invoke():
     dispatch = Dispatcher()
