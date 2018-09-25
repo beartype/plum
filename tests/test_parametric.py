@@ -66,3 +66,12 @@ def test_kind():
     yield neq, Kind2(1), Kind(1)
     yield eq, Kind(1), Kind(1)
     yield eq, Kind2(1), Kind2(1)
+
+    # Test providing a superclass, where the default should be `object`.
+    class SuperClass(object):
+        pass
+
+    Kind3 = kind(SuperClass)
+    yield ok, issubclass(Kind3(1), SuperClass)
+    yield ok, not issubclass(Kind2(1), SuperClass)
+    yield ok, issubclass(Kind2(1), object)

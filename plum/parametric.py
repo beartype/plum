@@ -26,7 +26,7 @@ def parametric(Class):
     """A decorator for parametric classes."""
     subclasses = {}
 
-    if not issubclass(Class, object): # pragma: no cover
+    if not issubclass(Class, object):  # pragma: no cover
         raise RuntimeError('To let {} be a parametric class, it must be a '
                            'new-style class.')
 
@@ -83,15 +83,18 @@ def type_parameter(x):
     return x._type_parameter
 
 
-def kind():
+def kind(SuperClass=object):
     """Create a parametric wrapper type for dispatch purposes.
+
+    Args:
+        SuperClass (type): Super class.
 
     Returns:
         object: New parametric type wrapper.
     """
 
     @parametric
-    class Kind(object):
+    class Kind(SuperClass):
         def __init__(self, *xs):
             self.xs = xs
 
