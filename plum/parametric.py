@@ -71,6 +71,7 @@ def parametric(Class):
     return ParametricClass
 
 
+@dispatch(object)
 def type_parameter(x):
     """Get the type parameter of an instance of a parametric type.
 
