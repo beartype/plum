@@ -1,0 +1,423 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Plum: Multiple Dispatch in Python &mdash; plum 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Application Programming Interface" href="api.html" />
+    <link rel="prev" title="Welcome to Plum" href="index.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> plum
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Plum: Multiple Dispatch in Python</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#method-precedence">Method Precedence</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parametric-classes">Parametric Classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#variable-types">Variable Types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#union-types">Union Types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#inheritance">Inheritance</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Application Programming Interface</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">plum</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Plum: Multiple Dispatch in Python</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/readme.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="plum-multiple-dispatch-in-python">
+<h1><a class="reference external" href="https://github.com/wesselb/plum">Plum: Multiple Dispatch in Python</a><a class="headerlink" href="#plum-multiple-dispatch-in-python" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference external" href="https://travis-ci.org/wesselb/plum"><img alt="Build" src="https://travis-ci.org/wesselb/plum.svg?branch=master" /></a> <a class="reference external" href="https://coveralls.io/github/wesselb/plum?branch=master"><img alt="Coverage Status" src="https://coveralls.io/repos/github/wesselb/plum/badge.svg?branch=master" /></a> <a class="reference external" href="https://wesselb.github.io/plum"><img alt="Latest Docs" src="https://img.shields.io/badge/docs-latest-blue.svg" /></a></p>
+<p>Everybody likes multiple dispatch, just like everybody likes plums.</p>
+<div class="section" id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="method-precedence">
+<h3>Method Precedence<a class="headerlink" href="#method-precedence" title="Permalink to this headline">¶</a></h3>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="k">import</span> <span class="n">dispatch</span>
+
+<span class="k">class</span> <span class="nc">Element</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">ZeroElement</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">SpecialisedElement</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="nd">@dispatch</span><span class="p">(</span><span class="n">ZeroElement</span><span class="p">,</span> <span class="n">Element</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">mul_no_precedence</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s1">&#39;zero&#39;</span>
+
+
+<span class="nd">@dispatch</span><span class="p">(</span><span class="n">Element</span><span class="p">,</span> <span class="n">SpecialisedElement</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">mul_no_precedence</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s1">&#39;specialised operation&#39;</span>
+
+
+<span class="nd">@dispatch</span><span class="p">(</span><span class="n">ZeroElement</span><span class="p">,</span> <span class="n">Element</span><span class="p">,</span> <span class="n">precedence</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">mul</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s1">&#39;zero&#39;</span>
+
+
+<span class="nd">@dispatch</span><span class="p">(</span><span class="n">Element</span><span class="p">,</span> <span class="n">SpecialisedElement</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">mul</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s1">&#39;specialised operation&#39;</span>
+</pre></div>
+</div>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">zero</span> <span class="o">=</span> <span class="n">ZeroElement</span><span class="p">()</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">specialised_element</span> <span class="o">=</span> <span class="n">SpecialisedElement</span><span class="p">()</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">element</span> <span class="o">=</span> <span class="n">Element</span><span class="p">()</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mul</span><span class="p">(</span><span class="n">zero</span><span class="p">,</span> <span class="n">element</span><span class="p">)</span>
+<span class="go">&#39;zero&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mul</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">specialised_element</span><span class="p">)</span>
+<span class="go">&#39;specialised operation&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mul_no_precedence</span><span class="p">(</span><span class="n">zero</span><span class="p">,</span> <span class="n">specialised_element</span><span class="p">)</span>
+<span class="go">AmbiguousLookupError: For function &quot;mul_no_precedence&quot;, signature (__main__.ZeroElement, __main__.SpecialisedElement) is ambiguous among the following:</span>
+<span class="go">  (__main__.ZeroElement, __main__.Element) (precedence: 0)</span>
+<span class="go">  (__main__.Element, __main__.SpecialisedElement) (precedence: 0)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mul</span><span class="p">(</span><span class="n">zero</span><span class="p">,</span> <span class="n">specialised_element</span><span class="p">)</span>
+<span class="go">&#39;zero&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="parametric-classes">
+<h3>Parametric Classes<a class="headerlink" href="#parametric-classes" title="Permalink to this headline">¶</a></h3>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="k">import</span> <span class="n">dispatch</span><span class="p">,</span> <span class="n">parametric</span>
+
+<span class="nd">@parametric</span>
+<span class="k">class</span> <span class="nc">A</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>  <span class="c1"># Must be a new-style class!</span>
+    <span class="k">pass</span>
+
+<span class="nd">@dispatch</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s1">&#39;fallback&#39;</span>
+
+<span class="nd">@dispatch</span><span class="p">(</span><span class="n">A</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s1">&#39;1&#39;</span>
+
+<span class="nd">@dispatch</span><span class="p">(</span><span class="n">A</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s1">&#39;2&#39;</span>
+</pre></div>
+</div>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span>
+<span class="go">__main__.A</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">A</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">__main__.A{1}</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">issubclass</span><span class="p">(</span><span class="n">A</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">A</span><span class="p">)</span>
+<span class="go">True</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">A</span><span class="p">(</span><span class="mi">1</span><span class="p">)()</span>
+<span class="go">&lt;__main__.A{1} at 0x10c2bab70&gt;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="n">A</span><span class="p">(</span><span class="mi">1</span><span class="p">)())</span>
+<span class="go">&#39;1&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="n">A</span><span class="p">(</span><span class="mi">2</span><span class="p">)())</span>
+<span class="go">&#39;2&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="n">A</span><span class="p">(</span><span class="mi">3</span><span class="p">)())</span>
+<span class="go">&#39;fallback&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="variable-types">
+<h3>Variable Types<a class="headerlink" href="#variable-types" title="Permalink to this headline">¶</a></h3>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="k">import</span> <span class="n">dispatch</span>
+
+<span class="nd">@dispatch</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;single argument&#39;</span><span class="p">)</span>
+
+<span class="nd">@dispatch</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="p">[</span><span class="nb">int</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">xs</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;multiple arguments&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">single argument</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="go">multiple arguments</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="go">multiple arguments</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="union-types">
+<h3>Union Types<a class="headerlink" href="#union-types" title="Permalink to this headline">¶</a></h3>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="k">import</span> <span class="n">dispatch</span>
+
+<span class="nd">@dispatch</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;fallback&#39;</span><span class="p">)</span>
+
+<span class="nd">@dispatch</span><span class="p">({</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">})</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;int or str&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">int or str</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>
+<span class="go">int or str</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="go">fallback</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="inheritance">
+<h3>Inheritance<a class="headerlink" href="#inheritance" title="Permalink to this headline">¶</a></h3>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="k">import</span> <span class="n">Dispatcher</span><span class="p">,</span> <span class="n">Referentiable</span><span class="p">,</span> <span class="n">Self</span>
+
+<span class="k">class</span> <span class="nc">Kernel</span><span class="p">(</span><span class="n">Referentiable</span><span class="p">):</span>
+    <span class="n">dispatch</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">(</span><span class="n">in_class</span><span class="o">=</span><span class="n">Self</span><span class="p">)</span>
+
+    <span class="nd">@dispatch</span><span class="p">(</span><span class="n">Self</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;kernel&#39;</span>
+
+<span class="k">class</span> <span class="nc">StationaryKernel</span><span class="p">(</span><span class="n">Kernel</span><span class="p">,</span> <span class="n">Referentiable</span><span class="p">):</span>
+    <span class="n">dispatch</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">(</span><span class="n">in_class</span><span class="o">=</span><span class="n">Self</span><span class="p">)</span>
+
+    <span class="nd">@dispatch</span><span class="p">(</span><span class="n">Self</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;stationary kernel&#39;</span>
+
+<span class="n">kernel</span> <span class="o">=</span> <span class="n">Kernel</span><span class="p">()</span>
+<span class="n">stationary_kernel</span> <span class="o">=</span> <span class="n">StationaryKernel</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">kernel</span> <span class="o">+</span> <span class="n">kernel</span>
+<span class="go">&#39;kernel&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">kernel</span> <span class="o">+</span> <span class="n">stationary_kernel</span>
+<span class="go">&#39;kernel&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">stationary_kernel</span> <span class="o">+</span> <span class="n">kernel</span>
+<span class="go">&#39;kernel&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">stationary_kernel</span> <span class="o">+</span> <span class="n">stationary_kernel</span>
+<span class="go">&#39;stationary kernel&#39;</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="api.html" class="btn btn-neutral float-right" title="Application Programming Interface" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="Welcome to Plum" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Wessel Bruinsma.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1.0',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  <script type="text/javascript" src="_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

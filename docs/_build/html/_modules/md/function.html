@@ -1,0 +1,404 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>md.function &mdash; md 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../genindex.html"/>
+        <link rel="search" title="Search" href="../../search.html"/>
+    <link rel="top" title="md 0.1.0 documentation" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> md
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../source/md.html">md package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">md</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>md.function</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for md.function</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">types</span>
+
+<span class="kn">from</span> <span class="nn">.signature</span> <span class="k">import</span> <span class="n">Signature</span>
+<span class="kn">from</span> <span class="nn">.type</span> <span class="k">import</span> <span class="n">as_type</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Function&#39;</span><span class="p">,</span> <span class="s1">&#39;AmbiguousLookupError&#39;</span><span class="p">,</span> <span class="s1">&#39;NotFoundLookupError&#39;</span><span class="p">]</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="AmbiguousLookupError"><a class="viewcode-back" href="../../source/md.function.html#md.function.AmbiguousLookupError">[docs]</a><span class="k">class</span> <span class="nc">AmbiguousLookupError</span><span class="p">(</span><span class="ne">LookupError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A signature cannot be resolved due to ambiguity.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="NotFoundLookupError"><a class="viewcode-back" href="../../source/md.function.html#md.function.NotFoundLookupError">[docs]</a><span class="k">class</span> <span class="nc">NotFoundLookupError</span><span class="p">(</span><span class="ne">LookupError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A signature cannot be resolved because no applicable method can be</span>
+<span class="sd">    found.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="Function"><a class="viewcode-back" href="../../source/md.function.html#md.function.Function">[docs]</a><span class="k">class</span> <span class="nc">Function</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A function.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        name (string): Name of the function.</span>
+<span class="sd">        in_class (instance of :class:`.type.ResolvableType`, optional): Class</span>
+<span class="sd">            of which the function is part.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">in_class</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_methods</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_class</span> <span class="o">=</span> <span class="n">as_type</span><span class="p">(</span><span class="n">in_class</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pending_signatures</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pending_fs</span> <span class="o">=</span> <span class="p">[]</span>
+
+<div class="viewcode-block" id="Function.register"><a class="viewcode-back" href="../../source/md.function.html#md.function.Function.register">[docs]</a>    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signature</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Register a method.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            signature (instance of :class:`.function.Signature`): Signature of</span>
+<span class="sd">                the method.</span>
+<span class="sd">            f (function): Function that implements the method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pending_fs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pending_signatures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">signature</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_resolve_pending_registrations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">signature</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pending_signatures</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pending_fs</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">signature</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_methods</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;For function &quot;</span><span class="si">{}</span><span class="s1">&quot;, the method with &#39;</span>
+                                   <span class="s1">&#39;signature </span><span class="si">{}</span><span class="s1"> has been defined multiple &#39;</span>
+                                   <span class="s1">&#39;times.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">,</span> <span class="n">signature</span><span class="p">))</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;For function &quot;</span><span class="si">{}</span><span class="s1">&quot;, resolving registration with &#39;</span>
+                      <span class="s1">&#39;signature </span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">,</span> <span class="n">signature</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_methods</span><span class="p">[</span><span class="n">signature</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pending_signatures</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pending_fs</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+
+<div class="viewcode-block" id="Function.resolve"><a class="viewcode-back" href="../../source/md.function.html#md.function.Function.resolve">[docs]</a>    <span class="k">def</span> <span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signature</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Resolve a signature.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            signature (instance of :class:`.function.Signature`): Signature to</span>
+<span class="sd">                resolve.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The most-specific signature among the signatures of all applicable</span>
+<span class="sd">            methods.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># First, resolve any pending registrations.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_pending_registrations</span><span class="p">()</span>
+
+        <span class="c1"># Check whether the signature matches a method exactly or has been</span>
+        <span class="c1"># cached previously.</span>
+        <span class="k">if</span> <span class="n">signature</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Signature found in cache.&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">signature</span><span class="p">]</span>
+
+        <span class="c1"># Find the most specific applicable signature.</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_methods</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">signature</span> <span class="o">&lt;=</span> <span class="n">s</span><span class="p">]</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Applicable candidates: [</span><span class="si">{}</span><span class="s1">].&#39;</span>
+                 <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">candidates</span><span class="p">))))</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_most_specific</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">AmbiguousLookupError</span><span class="p">(</span>
+                <span class="s1">&#39;For function &quot;</span><span class="si">{}</span><span class="s1">&quot;, signature </span><span class="si">{}</span><span class="s1"> is ambiguous among the &#39;</span>
+                <span class="s1">&#39;following:</span><span class="se">\n</span><span class="s1">  </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">,</span> <span class="n">signature</span><span class="p">,</span>
+                                          <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">  &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">candidates</span><span class="p">))))</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># Cache the result before returning.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">signature</span><span class="p">]</span> <span class="o">=</span> <span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">signature</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">NotFoundLookupError</span><span class="p">(</span>
+                <span class="s1">&#39;For function &quot;</span><span class="si">{}</span><span class="s1">&quot;, signature </span><span class="si">{}</span><span class="s1"> could not be resolved.&#39;</span>
+                <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">,</span> <span class="n">signature</span><span class="p">))</span></div>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
+        <span class="c1"># Split off `self` in the case that the function is a method of a</span>
+        <span class="c1"># class.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_class</span><span class="p">:</span>
+            <span class="n">args_self</span><span class="p">,</span> <span class="n">args</span> <span class="o">=</span> <span class="n">args</span><span class="p">[:</span><span class="mi">1</span><span class="p">],</span> <span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">args_self</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">()</span>
+
+        <span class="c1"># Look up the signature.</span>
+        <span class="n">signature</span> <span class="o">=</span> <span class="n">Signature</span><span class="p">(</span><span class="o">*</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">args</span><span class="p">))</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Call with signature </span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">signature</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_methods</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">signature</span><span class="p">)]</span>
+        <span class="k">except</span> <span class="n">NotFoundLookupError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+
+            <span class="c1"># A method could not be not found. Now decide what to do based on</span>
+            <span class="c1"># whether the function is part of a class.</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_class</span><span class="p">:</span>
+
+                <span class="c1"># The method is part of class. Temporarily remove the method,</span>
+                <span class="c1"># call Python&#39;s method resolution algorithm again, and</span>
+                <span class="c1"># afterwards place back the method.</span>
+                <span class="nb">delattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_class</span><span class="o">.</span><span class="n">resolve</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_class</span><span class="o">.</span><span class="n">resolve</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                    <span class="c1"># Unsuccessful. Place back the method and do raise the</span>
+                    <span class="c1"># exception.</span>
+                    <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_class</span><span class="o">.</span><span class="n">resolve</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">e</span>
+                <span class="k">except</span> <span class="n">AmbiguousLookupError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="c1"># The lookup was successful, but ambiguous. Raise the new</span>
+                    <span class="c1"># exception.</span>
+                    <span class="k">raise</span> <span class="n">e</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_class</span><span class="o">.</span><span class="n">resolve</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+
+                <span class="c1"># The function is not part of a class. Do raise the exception.</span>
+                <span class="k">raise</span> <span class="n">e</span>
+
+        <span class="c1"># Perform call to method.</span>
+        <span class="k">return</span> <span class="n">method</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">args_self</span> <span class="o">+</span> <span class="n">args</span><span class="p">),</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">types</span><span class="o">.</span><span class="n">MethodType</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Function.find_most_specific"><a class="viewcode-back" href="../../source/md.function.html#md.function.Function.find_most_specific">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">find_most_specific</span><span class="p">(</span><span class="n">signatures</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Find the most specific signatures in a list of signatures.</span>
+
+<span class="sd">         Args:</span>
+<span class="sd">            signatures (instances of :class:`.function.Signature`): List of</span>
+<span class="sd">                signatures.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cands</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">signatures</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Iteration: candidates: [</span><span class="si">{}</span><span class="s1">]; considering </span><span class="si">{}</span><span class="s1">.&#39;</span>
+                     <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">cands</span><span class="p">)),</span> <span class="n">s</span><span class="p">))</span>
+
+            <span class="c1"># If none of the candidates are comparable, then add the method as</span>
+            <span class="c1"># a new candidate and continue.</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">is_comparable</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cands</span><span class="p">):</span>
+                <span class="n">cands</span> <span class="o">+=</span> <span class="p">[</span><span class="n">s</span><span class="p">]</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># The signature under consideration is comparable with at least one</span>
+            <span class="c1"># of the candidates. First, filter any strictly more general</span>
+            <span class="c1"># candidates.</span>
+            <span class="n">new_cands</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cands</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span> <span class="o">&lt;</span> <span class="n">c</span><span class="p">]</span>
+
+            <span class="c1"># If the signature under consideration is as specific as at least</span>
+            <span class="c1"># one candidate, then and only then add it as a candidate.</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">s</span> <span class="o">&lt;=</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cands</span><span class="p">):</span>
+                <span class="n">cands</span> <span class="o">=</span> <span class="n">new_cands</span> <span class="o">+</span> <span class="p">[</span><span class="n">s</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cands</span> <span class="o">=</span> <span class="n">new_cands</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Reduced to [</span><span class="si">{}</span><span class="s1">].&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">cands</span><span class="p">))))</span>
+        <span class="k">return</span> <span class="n">cands</span></div></div>
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Wessel Bruinsma.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'0.1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

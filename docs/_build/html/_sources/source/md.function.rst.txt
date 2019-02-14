@@ -1,0 +1,7 @@
+md\.function module
+===================
+
+.. automodule:: md.function
+    :members:
+    :undoc-members:
+    :show-inheritance:

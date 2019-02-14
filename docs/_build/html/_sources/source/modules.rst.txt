@@ -1,0 +1,7 @@
+=TEST
+=====
+
+.. toctree::
+   :maxdepth: 4
+
+   md

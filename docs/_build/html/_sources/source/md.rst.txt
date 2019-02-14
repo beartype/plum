@@ -1,0 +1,19 @@
+md package
+==========
+
+.. automodule:: md
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Submodules
+----------
+
+.. toctree::
+
+   md.dispatcher
+   md.function
+   md.signature
+   md.type
+   md.util
+

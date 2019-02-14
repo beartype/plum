@@ -1,0 +1,20 @@
+plum package
+============
+
+.. automodule:: plum
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Submodules
+----------
+
+.. toctree::
+
+   plum.dispatcher
+   plum.function
+   plum.resolvable
+   plum.tuple
+   plum.type
+   plum.util
+

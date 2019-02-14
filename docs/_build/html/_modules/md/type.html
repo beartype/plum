@@ -1,0 +1,441 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>md.type &mdash; md 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../genindex.html"/>
+        <link rel="search" title="Search" href="../../search.html"/>
+    <link rel="top" title="md 0.1.0 documentation" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> md
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../source/md.html">md package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">md</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>md.type</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for md.type</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span>
+
+<span class="kn">import</span> <span class="nn">abc</span>
+<span class="kn">from</span> <span class="nn">.util</span> <span class="k">import</span> <span class="n">Comparable</span><span class="p">,</span> <span class="n">multihash</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;TypeResolutionError&#39;</span><span class="p">,</span> <span class="s1">&#39;VariableAssignmentError&#39;</span><span class="p">,</span> <span class="s1">&#39;Type&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;ResolvableType&#39;</span><span class="p">,</span> <span class="s1">&#39;AvailableType&#39;</span><span class="p">,</span> <span class="s1">&#39;Referentiable&#39;</span><span class="p">,</span> <span class="s1">&#39;Self&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;VarArgs&#39;</span><span class="p">,</span> <span class="s1">&#39;Variable&#39;</span><span class="p">,</span> <span class="s1">&#39;as_type&#39;</span><span class="p">,</span> <span class="s1">&#39;render_list&#39;</span><span class="p">,</span> <span class="s1">&#39;PromisedType&#39;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="TypeResolutionError"><a class="viewcode-back" href="../../source/md.type.html#md.type.TypeResolutionError">[docs]</a><span class="k">class</span> <span class="nc">TypeResolutionError</span><span class="p">(</span><span class="ne">TypeError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Type could not be resolved.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="VariableAssignmentError"><a class="viewcode-back" href="../../source/md.type.html#md.type.VariableAssignmentError">[docs]</a><span class="k">class</span> <span class="nc">VariableAssignmentError</span><span class="p">(</span><span class="n">TypeResolutionError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A variable could not be assigned a value.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="Type"><a class="viewcode-back" href="../../source/md.type.html#md.type.Type">[docs]</a><span class="k">class</span> <span class="nc">Type</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A type.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="ResolvableType"><a class="viewcode-back" href="../../source/md.type.html#md.type.ResolvableType">[docs]</a><span class="k">class</span> <span class="nc">ResolvableType</span><span class="p">(</span><span class="n">Type</span><span class="p">,</span> <span class="n">Comparable</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A type can be resolved.&quot;&quot;&quot;</span>
+    <span class="n">__metaclass__</span> <span class="o">=</span> <span class="n">abc</span><span class="o">.</span><span class="n">ABCMeta</span>
+
+<div class="viewcode-block" id="ResolvableType.resolve"><a class="viewcode-back" href="../../source/md.type.html#md.type.ResolvableType.resolve">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Resolve the type.&quot;&quot;&quot;</span></div>
+
+    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">multihash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">__le__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">issubclass</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resolve</span><span class="p">(),</span> <span class="n">other</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">__name__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="k">except</span> <span class="n">TypeResolutionError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;&lt;UnresolvableType&gt;&#39;</span></div>
+
+
+<div class="viewcode-block" id="AvailableType"><a class="viewcode-back" href="../../source/md.type.html#md.type.AvailableType">[docs]</a><span class="k">class</span> <span class="nc">AvailableType</span><span class="p">(</span><span class="n">ResolvableType</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A type that can be readily resolved.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="o">=</span> <span class="nb">type</span>
+
+<div class="viewcode-block" id="AvailableType.resolve"><a class="viewcode-back" href="../../source/md.type.html#md.type.AvailableType.resolve">[docs]</a>    <span class="k">def</span> <span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Resolve the type.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span></div></div>
+
+
+<div class="viewcode-block" id="PromisedType"><a class="viewcode-back" href="../../source/md.type.html#md.type.PromisedType">[docs]</a><span class="k">class</span> <span class="nc">PromisedType</span><span class="p">(</span><span class="n">ResolvableType</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A type that is promised to be resolvable on time.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="PromisedType.deliver"><a class="viewcode-back" href="../../source/md.type.html#md.type.PromisedType.deliver">[docs]</a>    <span class="k">def</span> <span class="nf">deliver</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Deliver the promise.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            type (type): The type to deliver.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="o">=</span> <span class="nb">type</span></div>
+
+<div class="viewcode-block" id="PromisedType.resolve"><a class="viewcode-back" href="../../source/md.type.html#md.type.PromisedType.resolve">[docs]</a>    <span class="k">def</span> <span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TypeResolutionError</span><span class="p">(</span><span class="s1">&#39;Promise was not kept.&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span></div></div>
+
+
+<div class="viewcode-block" id="Referentiable"><a class="viewcode-back" href="../../source/md.type.html#md.type.Referentiable">[docs]</a><span class="k">class</span> <span class="nc">Referentiable</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A class that can be referenced through :class:`.dispatch.Self`.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="Self"><a class="viewcode-back" href="../../source/md.type.html#md.type.Self">[docs]</a><span class="k">class</span> <span class="nc">Self</span><span class="p">(</span><span class="n">ResolvableType</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A type that allows a class to reference itself in its definition.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pos</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">Referentiable</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">())</span>
+
+<div class="viewcode-block" id="Self.resolve"><a class="viewcode-back" href="../../source/md.type.html#md.type.Self.resolve">[docs]</a>    <span class="k">def</span> <span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">subclasses</span> <span class="o">=</span> <span class="n">Referentiable</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">subclasses</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TypeResolutionError</span><span class="p">(</span>
+                <span class="s1">&#39;Requesting subclass </span><span class="si">{}</span><span class="s1"> of Referentiable, whereas only </span><span class="si">{}</span><span class="s1"> &#39;</span>
+                <span class="s1">&#39;exist(s).&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">subclasses</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">subclasses</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pos</span><span class="p">]</span></div></div>
+
+
+<div class="viewcode-block" id="VarArgs"><a class="viewcode-back" href="../../source/md.type.html#md.type.VarArgs">[docs]</a><span class="k">class</span> <span class="nc">VarArgs</span><span class="p">(</span><span class="n">Type</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Type that represents a variable number of arguments.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        type (type, optional): Supertype of all the arguments. Defaults to</span>
+<span class="sd">            `object`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arg_type</span><span class="o">=</span><span class="nb">object</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">arg_type</span> <span class="o">=</span> <span class="n">as_type</span><span class="p">(</span><span class="n">arg_type</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">multihash</span><span class="p">(</span><span class="s1">&#39;VarArgs&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">arg_type</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">__name__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;VarArgs(</span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_type</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+
+<div class="viewcode-block" id="VarArgs.expand"><a class="viewcode-back" href="../../source/md.type.html#md.type.VarArgs.expand">[docs]</a>    <span class="k">def</span> <span class="nf">expand</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Expand the varargs to a tuple of the type of the variable number of</span>
+<span class="sd">        arguments.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            num (int): Length of the tuple.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">arg_type</span><span class="p">]</span> <span class="o">*</span> <span class="n">num</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Variable"><a class="viewcode-back" href="../../source/md.type.html#md.type.Variable">[docs]</a><span class="k">class</span> <span class="nc">Variable</span><span class="p">(</span><span class="n">ResolvableType</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Type variable.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        type (type, optional): Supertype of the variable. Defaults to `object`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">all</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">object</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="o">=</span> <span class="nb">type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">all</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Variable.is_free"><a class="viewcode-back" href="../../source/md.type.html#md.type.Variable.is_free">[docs]</a>    <span class="k">def</span> <span class="nf">is_free</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="ow">is</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="Variable.assign"><a class="viewcode-back" href="../../source/md.type.html#md.type.Variable.assign">[docs]</a>    <span class="k">def</span> <span class="nf">assign</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_free</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">value</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">VariableAssignmentError</span><span class="p">(</span>
+                <span class="s1">&#39;Cannot assign </span><span class="si">{}</span><span class="s1"> value </span><span class="si">{}</span><span class="s1">: </span><span class="si">{}</span><span class="s1"> must be a subtype of </span><span class="si">{}</span><span class="s1">. &#39;</span>
+                <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                          <span class="n">value</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span><span class="o">.</span><span class="vm">__name__</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">value</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">VariableAssignmentError</span><span class="p">(</span>
+                <span class="s1">&#39;Cannot assign </span><span class="si">{}</span><span class="s1"> value </span><span class="si">{}</span><span class="s1">: </span><span class="si">{}</span><span class="s1"> has already been assigned &#39;</span>
+                <span class="s1">&#39;value </span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                                   <span class="bp">self</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="o">.</span><span class="vm">__name__</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">value</span></div>
+
+<div class="viewcode-block" id="Variable.unassign"><a class="viewcode-back" href="../../source/md.type.html#md.type.Variable.unassign">[docs]</a>    <span class="k">def</span> <span class="nf">unassign</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="Variable.resolve"><a class="viewcode-back" href="../../source/md.type.html#md.type.Variable.resolve">[docs]</a>    <span class="k">def</span> <span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_free</span><span class="p">():</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">__name__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;TypeVariable(</span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_type</span><span class="p">))</span>
+
+<div class="viewcode-block" id="Variable.unassign_all"><a class="viewcode-back" href="../../source/md.type.html#md.type.Variable.unassign_all">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">unassign_all</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">Variable</span><span class="o">.</span><span class="n">all</span><span class="p">:</span>
+            <span class="n">var</span><span class="o">.</span><span class="n">unassign</span><span class="p">()</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">is_variable</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">Variable</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="as_type"><a class="viewcode-back" href="../../source/md.type.html#md.type.as_type">[docs]</a><span class="k">def</span> <span class="nf">as_type</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convert an object to an instance of :class:`.type.Type`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        type (type or instance of :class:`.dispatch.ResolvableType`): Object</span>
+<span class="sd">            to convert.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># If `t` is `None`, then return `None`.</span>
+    <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="c1"># :class:`.type.Self` has a shorthand notation that doesn&#39;t require the</span>
+    <span class="c1"># user to instantiate it.</span>
+    <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="n">Self</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">t</span><span class="p">()</span>
+
+    <span class="c1"># A list is used as shorthand notation for varargs.</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Invalid type specification: &quot;</span><span class="si">{}</span><span class="s1">&quot;. Varargs has to &#39;</span>
+                            <span class="s1">&#39;be specified in one of the following ways: [], &#39;</span>
+                            <span class="s1">&#39;[Type], VarArgs(), or VarArgs(Type).&#39;</span>
+                            <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">VarArgs</span><span class="p">(</span><span class="o">*</span><span class="nb">map</span><span class="p">(</span><span class="n">as_type</span><span class="p">,</span> <span class="n">t</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">Type</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">t</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">AvailableType</span><span class="p">(</span><span class="n">t</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="render_list"><a class="viewcode-back" href="../../source/md.type.html#md.type.render_list">[docs]</a><span class="k">def</span> <span class="nf">render_list</span><span class="p">(</span><span class="n">types</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Render a list of types to a string.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        types (list of types of instance of :class:`.dispatch.Type`): List</span>
+<span class="sd">            of types to render.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="s1">&#39;(</span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">types</span><span class="p">))</span></div>
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Wessel Bruinsma.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'0.1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

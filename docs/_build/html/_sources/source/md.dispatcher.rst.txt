@@ -1,0 +1,7 @@
+md\.dispatcher module
+=====================
+
+.. automodule:: md.dispatcher
+    :members:
+    :undoc-members:
+    :show-inheritance:
