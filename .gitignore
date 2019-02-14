@@ -8,7 +8,10 @@ venv
 *.egg-info
 
 # Documentation and coverage
-doc/_build
+docs/_build
+docs/_static
+docs/source
+docs/readme.rst
 cover
 
 # Other

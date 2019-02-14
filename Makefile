@@ -1,19 +1,58 @@
-.PHONY: autodoc doc init test docopen
+.PHONY: docmake docopen docinit docremove docupdate init install test clean
 
-autodoc:
-	rm -rf doc/source
-	sphinx-apidoc -eMT -o doc/source/ plum
-	rm doc/source/plum.rst
-	pandoc --from=markdown --to=rst --output=doc/readme.rst README.md
+PACKAGE := plum
 
-doc:
-	cd doc && make html
+docmake:
+	rm -rf docs/source
+	sphinx-apidoc -eMT -o docs/source/ $(PACKAGE)
+	rm docs/source/$(PACKAGE).rst
+	pandoc --from=markdown --to=rst --output=docs/readme.rst README.md
+	cd docs && make html
 
 docopen:
-	open doc/_build/html/index.html
+	open docs/_build/html/index.html
+
+docinit:
+	$(eval BRANCH := $(shell git rev-parse --abbrev-ref HEAD))
+	git checkout -b gh-pages
+	git ls-tree HEAD \
+		| awk '$$4 !~ /\.nojekyll|docs|index\.html/ { print $$4 }' \
+		| xargs -I {} git rm -r {}
+	touch .nojekyll
+	echo '<meta http-equiv="refresh" content="0; url=./docs/_build/html/index.html" />' > index.html
+	git commit -m "Branch cleaned for docs"
+	git add .nojekyll index.html
+	git push origin gh-pages
+	git checkout $(BRANCH)
+
+docremove:
+	git branch -D gh-pages
+	git push origin --delete gh-pages
+
+docupdate: docmake
+	$(eval BRANCH := $(shell git rev-parse --abbrev-ref HEAD))
+	rm -rf docs/_build/html_new
+	mv docs/_build/html docs/_build/html_new
+	git checkout gh-pages
+	rm -rf docs/_build/html
+	mv docs/_build/html_new docs/_build/html
+	git add -f docs/_build/html
+	git commit -m "Update docs at $$(date +'%d %b %Y, %H:%M')"
+	git push origin gh-pages
+	git checkout $(BRANCH)
 
 init:
 	pip install -r requirements.txt
 
+install:
+	pip install -r requirements.txt -e .
+
 test:
-	python /usr/local/bin/nosetests tests --with-coverage --cover-html --cover-package=plum
+	python -m nose tests --with-coverage --cover-html --cover-package=$(PACKAGE) -v --logging-filter=$(PACKAGE)
+
+clean:
+	rm -rf docs/_build docs/source docs/readme.rst
+	git rm --cached -r docs
+	git add docs/Makefile docs/conf.py docs/index.rst docs/api.rst
+	rm -rf .coverage cover
+	find . | grep '\(\.DS_Store\|\.pyc\)$$' | xargs rm
