@@ -20,8 +20,8 @@ docinit:
 		| xargs -I {} git rm -r {}
 	touch .nojekyll
 	echo '<meta http-equiv="refresh" content="0; url=./docs/_build/html/index.html" />' > index.html
-	git commit -m "Branch cleaned for docs"
 	git add .nojekyll index.html
+	git commit -m "Branch cleaned for docs"
 	git push origin gh-pages
 	git checkout $(BRANCH)
 
