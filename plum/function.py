@@ -165,9 +165,10 @@ class Function(object):
         elif len(candidates) == 1:
             return candidates[0]
         else:
+            class_message = ' of {}'.format(self._class) if self._class else ''
             raise NotFoundLookupError(
-                'For function "{}", signature {} could not be resolved.'
-                ''.format(self._f.__name__, signature))
+                'For function "{}"{}, signature {} could not be resolved.'
+                ''.format(self._f.__name__, class_message, signature))
 
     def __call__(self, *args, **kw_args):
         self._resolve_pending_registrations()
@@ -199,6 +200,13 @@ class Function(object):
                         break
                     except AttributeError:
                         pass
+
+                if method == object.__init__:
+                    # The constructor of `object` has been found. This
+                    # happens when there a constructor is called and no
+                    # appropriate method can be found. Raise the original
+                    # exception.
+                    raise e
 
                 if not method:
                     # If no method has been found after walking through the
