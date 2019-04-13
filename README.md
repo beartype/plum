@@ -7,6 +7,23 @@
 Everybody likes multiple dispatch, just like everybody likes plums.
 
 ## Examples
+### Return Types
+```python
+from plum import dispatch
+
+@dispatch({int, str}, return_type=int)
+def f(x):
+    return x
+```
+
+```python
+>>> f(1)
+1
+
+>>> f('1')
+TypeError: Expected return type "builtins.int", but got type "builtins.str".
+```
+
 ### Method Precedence
 ```python
 from plum import dispatch
