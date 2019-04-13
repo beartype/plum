@@ -263,8 +263,8 @@ def _assert_type(result, expected_type):
     if isinstance(result, expected_type):
         return result
     else:
-        raise TypeError('Expected return type {}, but got type {}.'
-                        ''.format(expected_type, type(result)))
+        raise TypeError('Expected return type "{}", but got type "{}".'
+                        ''.format(expected_type, as_type(type(result))))
 
 
 def find_most_specific(signatures):
