@@ -55,3 +55,21 @@ class Comparable(object):
                 otherwise.
         """
         return self < other or self == other or self > other
+
+
+def get_default(dictionary, key, default):
+    """Get a value from a dictionary, assuming a default value.
+
+    Args:
+        dictionary (dict): Dictionary.
+        key (hashable): Key of value to get.
+        default (object): Default value, in case the key is not in the
+            dictionary.
+
+    Returns:
+        object: Value associated to key or the default value.
+    """
+    try:
+        return dictionary[key]
+    except KeyError:
+        return default

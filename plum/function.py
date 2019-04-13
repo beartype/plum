@@ -7,6 +7,7 @@ from functools import wraps
 
 from .tuple import Tuple
 from .type import as_type
+from .util import get_default
 
 __all__ = ['Function', 'AmbiguousLookupError', 'NotFoundLookupError']
 log = logging.getLogger(__name__)
@@ -36,6 +37,7 @@ class Function(object):
         self._f = f
         self.methods = {}
         self.precedences = {}
+        self.return_types = {}
 
         self._cache = {}
         self._class = as_type(in_class) if in_class else None
@@ -53,15 +55,16 @@ class Function(object):
 
     def extend_multi(self, *signatures, **kw_args):
         """A decorator to extend the function with multiple signatures."""
-        if 'precedence' in kw_args:
-            precedence = kw_args['precedence']
-        else:
-            precedence = 0
+        precedence = get_default(kw_args, 'precedence', 0)
+        return_type = get_default(kw_args, 'return_type', object)
 
         def decorator(f):
             # Register the new method.
             for signature in signatures:
-                self.register(Tuple(*signature), f, precedence=precedence)
+                self.register(Tuple(*signature),
+                              f,
+                              precedence=precedence,
+                              return_type=return_type)
 
             # Return the function.
             return self
@@ -84,7 +87,7 @@ class Function(object):
             self._resolved = []
             self.methods.clear()
 
-    def register(self, signature, f, precedence=0):
+    def register(self, signature, f, precedence=0, return_type=object):
         """Register a method.
 
         Args:
@@ -92,14 +95,16 @@ class Function(object):
             f (function): Function that implements the method.
             precedence (int, optional): Precedence of the function. Defaults
                 to `0`.
+            return_type (type, optional): Return type of the function. Defaults
+                to `object`.
         """
-        self._pending.append((signature, f, precedence))
+        self._pending.append((signature, f, precedence, return_type))
 
     def _resolve_pending_registrations(self):
         registered = False
 
         # Perform any pending registrations.
-        for signature, f, precedence in self._pending:
+        for signature, f, precedence, return_type in self._pending:
             registered = True
 
             # Check that a method with the same signature hasn't been defined
@@ -113,9 +118,10 @@ class Function(object):
                       'signature {}.'.format(self._f.__name__, signature))
             self.methods[signature] = f
             self.precedences[signature] = precedence
+            self.return_types[signature] = return_type
 
             # Add to resolved registrations.
-            self._resolved.append((signature, f, precedence))
+            self._resolved.append((signature, f, precedence, return_type))
 
         if registered:
             self._pending = []
@@ -131,8 +137,8 @@ class Function(object):
             signature (:class:`.tuple.Tuple`): Signature to resolve.
 
         Returns:
-            The most-specific signature among the signatures of all applicable
-            methods.
+            :class:`.tuple.Tuple`: The most-specific signature among the
+            signatures of all applicable methods.
         """
         self._resolve_pending_registrations()
 
@@ -179,7 +185,8 @@ class Function(object):
 
         # Attempt to use cache.
         try:
-            return self._cache[sig_types](*args, **kw_args)
+            method, return_type = self._cache[sig_types]
+            return _assert_type(method(*args, **kw_args), return_type)
         except KeyError:
             pass
 
@@ -188,9 +195,12 @@ class Function(object):
 
         if self._class:
             try:
-                method = self.methods[self.resolve(signature)]
+                resolved_signature = self.resolve(signature)
+                method = self.methods[resolved_signature]
+                return_type = self.return_types[resolved_signature]
             except NotFoundLookupError as e:
                 method = None
+                return_type = object
 
                 # Walk through the classes in the class's MRO, except for this
                 # class, and try to get the method.
@@ -214,12 +224,14 @@ class Function(object):
                     raise e
         else:
             # Not in a class. Simply resolve.
-            method = self.methods[self.resolve(signature)]
+            resolved_signature = self.resolve(signature)
+            method = self.methods[resolved_signature]
+            return_type = self.return_types[resolved_signature]
 
         # Cache lookup.
-        self._cache[sig_types] = method
+        self._cache[sig_types] = (method, return_type)
 
-        return method(*args, **kw_args)
+        return _assert_type(method(*args, **kw_args), return_type)
 
     def __get__(self, instance, cls=None):
         # Prepend `instance` to the arguments in case the call is bound.
@@ -236,7 +248,23 @@ class Function(object):
         return f_wrapped
 
     def invoke(self, *types):
+        """Invoke a particular method, bypassing return type assertions.
+
+        Args:
+            *types: Types to resolve.
+
+        Returns:
+            function: Method.
+        """
         return self.methods[self.resolve(Tuple(*types))]
+
+
+def _assert_type(result, expected_type):
+    if isinstance(result, expected_type):
+        return result
+    else:
+        raise TypeError('Expected return type {}, but got type {}.'
+                        ''.format(expected_type, type(result)))
 
 
 def find_most_specific(signatures):

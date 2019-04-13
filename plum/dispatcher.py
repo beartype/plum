@@ -6,6 +6,8 @@ import logging
 
 from .function import Function
 from .tuple import Tuple
+from .type import as_type
+from .util import get_default
 
 __all__ = ['Dispatcher', 'dispatch']
 log = logging.getLogger(__name__)
@@ -27,29 +29,40 @@ class Dispatcher(object):
 
         Args:
             *types (type): Types of the signatures.
-            precedence (int, optional): Precedence of the signature.
+            precedence (int, optional): Precedence of the signature. Defaults to
+                `0`.
+            return_type (type, optional): Expected return type. Defaults to
+                `object.`
 
         Returns:
             function: Decorator.
         """
-        precedence = 0 if 'precedence' not in kw_args else kw_args['precedence']
-        return self._create_decorator([Tuple(*types)], precedence=precedence)
+        precedence = get_default(kw_args, 'precedence', 0)
+        return_type = get_default(kw_args, 'return_type', object)
+        return self._create_decorator([Tuple(*types)],
+                                      precedence=precedence,
+                                      return_type=as_type(return_type))
 
     def multi(self, *signatures, **kw_args):
         """Create a decorator for multiple given signatures.
 
         Args:
             *tuple[type] (type): Signatures.
-            precedence (int, optional): Precedence of the signatures.
+            precedence (int, optional): Precedence of the signatures. Defaults
+                to `0`.
+            return_type (type, optional): Expected return type. Defaults to
+                `object.`
 
         Returns:
             function: Decorator.
         """
-        precedence = 0 if 'precedence' not in kw_args else kw_args['precedence']
+        precedence = get_default(kw_args, 'precedence', 0)
+        return_type = get_default(kw_args, 'return_type', object)
         return self._create_decorator([Tuple(*types) for types in signatures],
-                                      precedence=precedence)
+                                      precedence=precedence,
+                                      return_type=as_type(return_type))
 
-    def _create_decorator(self, signatures, precedence):
+    def _create_decorator(self, signatures, precedence, return_type):
         def decorator(f):
             name = f.__name__
 
@@ -59,7 +72,10 @@ class Dispatcher(object):
 
             # Register the new method.
             for signature in signatures:
-                self._functions[name].register(signature, f, precedence)
+                self._functions[name].register(signature,
+                                               f,
+                                               precedence,
+                                               return_type)
 
             # Return the function.
             return self._functions[name]
