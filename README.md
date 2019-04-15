@@ -1,7 +1,7 @@
 # [Plum: Multiple Dispatch in Python](https://github.com/wesselb/plum)
 
 [![Build](https://travis-ci.org/wesselb/plum.svg?branch=master)](https://travis-ci.org/wesselb/plum)
-[![Coverage Status](https://coveralls.io/repos/github/wesselb/plum/badge.svg?branch=master)](https://coveralls.io/github/wesselb/plum?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/wesselb/plum/badge.svg?branch=master&service=github)](https://coveralls.io/github/wesselb/plum?branch=master)
 [![Latest Docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://wesselb.github.io/plum)
 
 Everybody likes multiple dispatch, just like everybody likes plums.
