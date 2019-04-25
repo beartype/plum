@@ -6,7 +6,6 @@ import logging
 
 from .function import Function
 from .tuple import Tuple
-from .type import as_type
 from .util import get_default
 
 __all__ = ['Dispatcher', 'dispatch']
@@ -41,7 +40,7 @@ class Dispatcher(object):
         return_type = get_default(kw_args, 'return_type', object)
         return self._create_decorator([Tuple(*types)],
                                       precedence=precedence,
-                                      return_type=as_type(return_type))
+                                      return_type=return_type)
 
     def multi(self, *signatures, **kw_args):
         """Create a decorator for multiple given signatures.
@@ -60,7 +59,7 @@ class Dispatcher(object):
         return_type = get_default(kw_args, 'return_type', object)
         return self._create_decorator([Tuple(*types) for types in signatures],
                                       precedence=precedence,
-                                      return_type=as_type(return_type))
+                                      return_type=return_type)
 
     def _create_decorator(self, signatures, precedence, return_type):
         def decorator(f):
