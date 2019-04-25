@@ -3,11 +3,19 @@
 from __future__ import absolute_import, print_function, division
 
 import abc
+import logging
 
 from .resolvable import Reference, Promise
 from .util import multihash, Comparable
 
-__all__ = ['VarArgs', 'Union', 'Self', 'PromisedType', 'as_type', 'TypeType']
+__all__ = ['VarArgs',
+           'Union',
+           'PromisedType',
+           'Self',
+           'TypeType',
+           'as_type',
+           'is_object']
+log = logging.getLogger(__name__)
 
 
 class AbstractType(object):
@@ -149,6 +157,10 @@ class Self(Reference, PromisedType):
     """
 
 
+TypeType = {type, AbstractType, set, list}
+"""The type of a Plum type, including shorthands."""
+
+
 def as_type(obj):
     """Convert object to a type.
 
@@ -189,5 +201,13 @@ def as_type(obj):
         raise RuntimeError('Could not convert "{}" to a type.'.format(obj))
 
 
-TypeType = {type, AbstractType, set, list}
-"""The type of a Plum type, including shorthands."""
+def is_object(t):
+    """A fast comparison to check if a Plum type is `object`.
+
+    Args:
+        t (ptype): Type to check.
+
+    Returns:
+        bool: `t` is `object`.
+    """
+    return t.get_types() == (object,)
