@@ -14,7 +14,8 @@ __all__ = ['VarArgs',
            'Self',
            'TypeType',
            'as_type',
-           'is_object']
+           'is_object',
+           'is_type']
 log = logging.getLogger(__name__)
 
 
@@ -211,3 +212,15 @@ def is_object(t):
         bool: `t` is `object`.
     """
     return t.get_types() == (object,)
+
+
+def is_type(t):
+    """Fast check for whether an object is a type.
+
+    Args:
+        t (object): Object to check.
+
+    Returns:
+        bool: `t` is `object`.
+    """
+    return isinstance(t, tuple(TypeType))
