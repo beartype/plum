@@ -8,3 +8,4 @@ from .tuple import *
 from .type import *
 from .resolvable import *
 from .parametric import *
+from .promotion import *
