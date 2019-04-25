@@ -3,8 +3,8 @@
 from __future__ import absolute_import, division, print_function
 
 from . import Union, PromisedType, as_type, TypeType, ResolutionError, Self, \
-    VarArgs, Type, Referentiable
-from . import eq, neq, le, raises, nle, isnotinstance, isnotsubclass
+    VarArgs, Type, Referentiable, is_object, is_type
+from . import ok, eq, neq, le, raises, nle, isnotinstance, isnotsubclass
 
 
 def test_varargs():
@@ -81,3 +81,16 @@ def test_astype():
     yield eq, as_type(Type(int)), Type(int)
     yield eq, as_type(int), Type(int)
     yield raises, RuntimeError, lambda: as_type(1)
+
+
+def test_is_object():
+    yield ok, is_object(Type(object))
+    yield ok, not is_object(Type(int))
+
+
+def test_is_type():
+    yield ok, is_type(int)
+    yield ok, is_type({int})
+    yield ok, is_type([int])
+    yield ok, is_type(Type(int))
+    yield ok, not is_type(1)
