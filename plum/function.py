@@ -3,7 +3,9 @@
 from __future__ import absolute_import, division, print_function
 
 import logging
-from functools import wraps
+
+from plum.type import is_object
+from plum.util import Wrapped
 
 from .tuple import Tuple
 from .type import as_type
@@ -22,6 +24,30 @@ class NotFoundLookupError(LookupError):
     found."""
 
 
+class _DNS(object):
+    """A dynamic name space to which the function `convert` will be assigned.
+    This is necessary to avoid circular imports."""
+
+    convert = None
+
+
+def _convert(obj, target_type):
+    """Convert an object to a particular type. Calls `.function._DNS.convert`
+    if `target_type` is not `object`.
+
+    Args:
+        obj (object): Object to convert.
+        target_type (type): Type to convert to.
+
+    Returns:
+        object: `object_to_covert` converted to type of `obj_from_target`.
+    """
+    if is_object(target_type):
+        return obj
+    else:
+        return _DNS.convert(obj, target_type)
+
+
 class Function(object):
     """A function.
 
@@ -37,7 +63,6 @@ class Function(object):
         self._f = f
         self.methods = {}
         self.precedences = {}
-        self.return_types = {}
 
         self._cache = {}
         self._class = as_type(in_class) if in_class else None
@@ -45,9 +70,10 @@ class Function(object):
         self._pending = []
         self._resolved = []
 
-        # Copy some basic info.
+        # Copy metadata.
         self.__name__ = f.__name__
         self.__doc__ = f.__doc__
+        self.__module__ = f.__module__
 
     def extend(self, *types, **kw_args):
         """A decorator to extend the function with another signature."""
@@ -86,6 +112,7 @@ class Function(object):
             # Clear resolved.
             self._resolved = []
             self.methods.clear()
+            self.precedences.clear()
 
     def register(self, signature, f, precedence=0, return_type=object):
         """Register a method.
@@ -116,9 +143,9 @@ class Function(object):
 
             log.debug('For function "{}", resolving registration with '
                       'signature {}.'.format(self._f.__name__, signature))
-            self.methods[signature] = f
+            # Make sure to convert return type to Plum type.
+            self.methods[signature] = (f, as_type(return_type))
             self.precedences[signature] = precedence
-            self.return_types[signature] = return_type
 
             # Add to resolved registrations.
             self._resolved.append((signature, f, precedence, return_type))
@@ -186,7 +213,7 @@ class Function(object):
         # Attempt to use cache.
         try:
             method, return_type = self._cache[sig_types]
-            return _assert_type(method(*args, **kw_args), return_type)
+            return _convert(method(*args, **kw_args), return_type)
         except KeyError:
             pass
 
@@ -195,12 +222,10 @@ class Function(object):
 
         if self._class:
             try:
-                resolved_signature = self.resolve(signature)
-                method = self.methods[resolved_signature]
-                return_type = self.return_types[resolved_signature]
+                method, return_type = self.methods[self.resolve(signature)]
             except NotFoundLookupError as e:
                 method = None
-                return_type = object
+                return_type = as_type(object)
 
                 # Walk through the classes in the class's MRO, except for this
                 # class, and try to get the method.
@@ -224,31 +249,21 @@ class Function(object):
                     raise e
         else:
             # Not in a class. Simply resolve.
-            resolved_signature = self.resolve(signature)
-            method = self.methods[resolved_signature]
-            return_type = self.return_types[resolved_signature]
+            method, return_type = self.methods[self.resolve(signature)]
 
         # Cache lookup.
         self._cache[sig_types] = (method, return_type)
-
-        return _assert_type(method(*args, **kw_args), return_type)
+        return _convert(method(*args, **kw_args), return_type)
 
     def __get__(self, instance, cls=None):
         # Prepend `instance` to the arguments in case the call is bound.
-        prefix = () if instance is None else (instance,)
-
-        # Wrap the function using `wraps` to preserve docstrings and such.
-        # Also keep a newline here to prevent this comment being associated
-        # to the wrapped function.
-
-        @wraps(self._f)
-        def f_wrapped(*args, **kw_args):
-            return self(*(prefix + args), **kw_args)
-
-        return f_wrapped
+        return Wrapped(
+            self,
+            prepend_args=() if instance is None else (instance,)
+        )
 
     def invoke(self, *types):
-        """Invoke a particular method, bypassing return type assertions.
+        """Invoke a particular method.
 
         Args:
             *types: Types to resolve.
@@ -256,15 +271,18 @@ class Function(object):
         Returns:
             function: Method.
         """
-        return self.methods[self.resolve(Tuple(*types))]
+        method, return_type = self.methods[self.resolve(Tuple(*types))]
+        return Wrapped(
+            method,
+            processing_fun=lambda x: _convert(x, return_type)
+        )
 
-
-def _assert_type(result, expected_type):
-    if isinstance(result, expected_type):
-        return result
-    else:
-        raise TypeError('Expected return type "{}", but got type "{}".'
-                        ''.format(expected_type, as_type(type(result))))
+    def __repr__(self):
+        count = len(self._pending) + len(self._resolved)
+        count_str = '1 method' if count == 1 else '{} methods'.format(count)
+        return '<function {}.{} ({})>'.format(self.__module__,
+                                              self.__name__,
+                                              count_str)
 
 
 def find_most_specific(signatures):
