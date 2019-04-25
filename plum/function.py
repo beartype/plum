@@ -278,11 +278,8 @@ class Function(object):
         )
 
     def __repr__(self):
-        count = len(self._pending) + len(self._resolved)
-        count_str = '1 method' if count == 1 else '{} methods'.format(count)
-        return '<function {}.{} ({})>'.format(self.__module__,
-                                              self.__name__,
-                                              count_str)
+        return '<function {} with {} method(s)>' \
+               ''.format(self._f, len(self._pending) + len(self._resolved))
 
 
 def find_most_specific(signatures):

@@ -106,3 +106,6 @@ class Wrapped(object):
 
     def __getattr__(self, item):
         return getattr(self._obj, item)
+
+    def __repr__(self):
+        return repr(self._obj)

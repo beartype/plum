@@ -39,12 +39,21 @@ def test_function():
     yield call, f, 'resolve', (Tu(int),), Tu(int)
 
 
-def test_metadata():
+def test_metadata_and_printing():
     dispatch = Dispatcher()
 
     @dispatch()
     def f():
         """docstring of f"""
+
+    yield eq, f.__name__, 'f'
+    yield eq, f.__doc__, 'docstring of f'
+    yield eq, f.__module__, 'tests.test_function'
+    yield eq, repr(f), '<function {} with 1 method(s)>'.format(f._f)
+    yield eq, f.invoke().__name__, 'f'
+    yield eq, f.invoke().__doc__, 'docstring of f'
+    yield eq, f.invoke().__module__, 'tests.test_function'
+    yield eq, repr(f.invoke()), repr(f._f)
 
     class A(Referentiable):
         _dispatch = Dispatcher(in_class=Self)
@@ -53,20 +62,18 @@ def test_metadata():
         def g(self):
             """docstring of g"""
 
-    g = A().g
+    a = A()
+    g = a.g
 
-    yield eq, f.__name__, 'f'
-    yield eq, f.__doc__, 'docstring of f'
-    yield eq, f.__module__, 'tests.test_function'
-    yield eq, f.invoke().__name__, 'f'
-    yield eq, f.invoke().__doc__, 'docstring of f'
-    yield eq, f.invoke().__module__, 'tests.test_function'
     yield eq, g.__name__, 'g'
     yield eq, g.__doc__, 'docstring of g'
     yield eq, g.__module__, 'tests.test_function'
+    yield eq, repr(g), '<function {} with 1 method(s)>' \
+                       ''.format(A._dispatch._functions['g']._f)
     yield eq, g.invoke().__name__, 'g'
     yield eq, g.invoke().__doc__, 'docstring of g'
     yield eq, g.invoke().__module__, 'tests.test_function'
+    yield eq, repr(g.invoke()), repr(A._dispatch._functions['g']._f)
 
 
 def test_extension():
