@@ -49,20 +49,18 @@ def test_multi():
     yield raises, TypeError, lambda: g.invoke(str)('1')
 
 
-class A(object):
-    def do(self, x):
-        return 'hello from A'
-
-
-class B(A, Referentiable):
-    _dispatch = Dispatcher(in_class=Self)
-
-    @_dispatch(Union(int, Self, str), return_type=Union(int, Self))
-    def do(self, x):
-        return x
-
-
 def test_inheritance():
+    class A(object):
+        def do(self, x):
+            return 'hello from A'
+
+    class B(A, Referentiable):
+        _dispatch = Dispatcher(in_class=Self)
+
+        @_dispatch(Union(int, Self, str), return_type=Union(int, Self))
+        def do(self, x):
+            return x
+
     b = B()
 
     yield eq, b.do(1), 1

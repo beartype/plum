@@ -4,12 +4,10 @@ from __future__ import absolute_import, division, print_function
 
 from plum import Dispatcher, Referentiable, Self
 
-from . import Function, Tuple as Tu
-from . import eq, raises, call
-from .test_tuple import Num, FP, Re
+from . import eq, raises
 
 
-def test_corner_cases():
+def test_double_definition():
     dispatch = Dispatcher()
 
     @dispatch(int)
@@ -21,35 +19,15 @@ def test_corner_cases():
     yield raises, RuntimeError, lambda: f(1)
 
 
-def test_function():
-    f = Function(lambda x: x)
-    for signature in [Tu(Num, Num), Tu(Num, Re),
-                      Tu(FP, Num), Tu(FP, FP)]:
-        f.register(signature, None)
-
-    yield call, f, 'resolve_signature', (Tu(Re, Re),), Tu(Num, Re)
-    yield call, f, 'resolve_signature', (Tu(Re, FP),), Tu(Num, Re)
-    yield raises, LookupError, lambda: f.resolve_signature(Tu(FP, Re))
-
-    # Test dynamic extension of the function.
-    yield raises, LookupError, lambda: f.resolve_signature(Tu(int))
-
-    @f.extend(int)
-    def f(x): pass
-
-    yield call, f, 'resolve_signature', (Tu(int),), Tu(int)
-
-
-class A(Referentiable):
-    _dispatch = Dispatcher(in_class=Self)
-
-    @_dispatch()
-    def g(self):
-        """docstring of g"""
-
-
 def test_metadata_and_printing():
     dispatch = Dispatcher()
+
+    class A(Referentiable):
+        _dispatch = Dispatcher(in_class=Self)
+
+        @_dispatch()
+        def g(self):
+            """docstring of g"""
 
     @dispatch()
     def f():
@@ -57,11 +35,11 @@ def test_metadata_and_printing():
 
     yield eq, f.__name__, 'f'
     yield eq, f.__doc__, 'docstring of f'
-    yield eq, f.__module__, 'tests.test_function'
+    yield eq, f.__module__, 'tests.test_dispatcher'
     yield eq, repr(f), '<function {} with 1 method(s)>'.format(f._f)
     yield eq, f.invoke().__name__, 'f'
     yield eq, f.invoke().__doc__, 'docstring of f'
-    yield eq, f.invoke().__module__, 'tests.test_function'
+    yield eq, f.invoke().__module__, 'tests.test_dispatcher'
     yield eq, repr(f.invoke()), repr(f._f)
 
     a = A()
@@ -69,12 +47,12 @@ def test_metadata_and_printing():
 
     yield eq, g.__name__, 'g'
     yield eq, g.__doc__, 'docstring of g'
-    yield eq, g.__module__, 'tests.test_function'
+    yield eq, g.__module__, 'tests.test_dispatcher'
     yield eq, repr(g), '<function {} with 1 method(s)>' \
                        ''.format(A._dispatch._functions['g']._f)
     yield eq, g.invoke().__name__, 'g'
     yield eq, g.invoke().__doc__, 'docstring of g'
-    yield eq, g.invoke().__module__, 'tests.test_function'
+    yield eq, g.invoke().__module__, 'tests.test_dispatcher'
     yield eq, repr(g.invoke()), repr(A._dispatch._functions['g']._f)
 
 
@@ -146,20 +124,25 @@ def test_invoke():
     yield eq, f.invoke({int, str, float})(1), 'int, str, or float'
 
 
-class A2(object):
+# TODO:
+#   If the following classes are defined inside `test_invoke_inheritance`,
+#   `Referentiable.__subclasses__()` in `test_type.test_self` does not add `A`
+#   to the end in Python 2.7. Why?
+
+class A(object):
     def do(self, x):
         return 'fallback'
 
 
-class B2(A2, Referentiable):
-    _dispatch = Dispatcher(in_class=Self())
+class B(A, Referentiable):
+    _dispatch = Dispatcher(in_class=Self)
 
     @_dispatch(int)
     def do(self, x):
         return 'int'
 
 
-class C2(B2, Referentiable):
+class C(B, Referentiable):
     _dispatch = Dispatcher(in_class=Self)
 
     @_dispatch(str)
@@ -168,7 +151,7 @@ class C2(B2, Referentiable):
 
 
 def test_invoke_inheritance():
-    c = C2()
+    c = C()
 
     # Test bound calls.
     yield eq, c.do.invoke(str)('1'), 'str'
@@ -176,6 +159,6 @@ def test_invoke_inheritance():
     yield eq, c.do.invoke(float)(1.0), 'fallback'
 
     # Test unbound calls.
-    yield eq, C2.do.invoke(str)(c, '1'), 'str'
-    yield eq, C2.do.invoke(int)(c, 1), 'int'
-    yield eq, C2.do.invoke(float)(c, 1.0), 'fallback'
+    yield eq, C.do.invoke(str)(c, '1'), 'str'
+    yield eq, C.do.invoke(int)(c, 1), 'int'
+    yield eq, C.do.invoke(float)(c, 1.0), 'fallback'

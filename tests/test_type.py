@@ -73,7 +73,8 @@ def test_typetype():
 
 
 def test_astype():
-    yield isinstance, as_type(Self), Self
+    # Need `ok` here: printing will resolve `Self`.
+    yield ok, isinstance(as_type(Self), Self)
     yield isinstance, as_type([]), VarArgs
     yield isinstance, as_type([int]), VarArgs
     yield raises, TypeError, lambda: as_type([int, str])

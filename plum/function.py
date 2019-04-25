@@ -7,7 +7,7 @@ import logging
 from plum.type import is_object
 
 from .tuple import Tuple
-from .type import as_type, TypeType, is_type
+from .type import as_type, is_type
 from .util import get_default
 
 __all__ = ['Function', 'AmbiguousLookupError', 'NotFoundLookupError']
