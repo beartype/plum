@@ -3,8 +3,9 @@
 from __future__ import absolute_import, division, print_function
 
 from plum.util import multihash, Comparable, get_default
+import numpy as np
 
-from . import eq, neq, le, lt, ge, gt
+from . import ok, eq, neq, le, lt, ge, gt
 
 
 def test_multihash():
@@ -30,6 +31,8 @@ def test_comparable():
     yield ge, Number(2), Number(1)
     yield ge, Number(2), Number(2)
     yield gt, Number(2), Number(1)
+    yield ok, Number(1).is_comparable(Number(2))
+    yield ok, not Number(1).is_comparable(Number(np.nan))
 
 
 def test_get_default():
