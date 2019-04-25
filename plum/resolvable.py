@@ -5,7 +5,10 @@ from __future__ import division, print_function, absolute_import
 import abc
 import logging
 
-__all__ = ['ResolutionError', 'Resolvable', 'Promise', 'Referentiable',
+__all__ = ['ResolutionError',
+           'Resolvable',
+           'Promise',
+           'Referentiable',
            'Reference']
 log = logging.getLogger(__name__)
 
