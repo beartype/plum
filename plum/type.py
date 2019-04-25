@@ -10,6 +10,7 @@ from .util import multihash, Comparable
 
 __all__ = ['VarArgs',
            'Union',
+           'Type',
            'PromisedType',
            'Self',
            'TypeType',
