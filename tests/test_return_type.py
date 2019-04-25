@@ -55,9 +55,9 @@ class A(object):
 
 
 class B(A, Referentiable):
-    dispatch = Dispatcher(in_class=Self)
+    _dispatch = Dispatcher(in_class=Self)
 
-    @dispatch(Union(int, Self, str), return_type=Union(int, Self))
+    @_dispatch(Union(int, Self, str), return_type=Union(int, Self))
     def do(self, x):
         return x
 
