@@ -3,8 +3,7 @@
 from __future__ import absolute_import, division, print_function
 
 from . import Self, Dispatcher, PromisedType, \
-    Referentiable, NotFoundLookupError, AmbiguousLookupError, \
-    dispatch
+    Referentiable, NotFoundLookupError, AmbiguousLookupError
 from . import eq, raises
 from .test_tuple import Num, Re, FP
 
@@ -144,42 +143,45 @@ def test_inheritance_exceptions():
     yield eq, calc.compute(o, object), 'another result'
 
 
-@dispatch(Num)
+_dispatch = Dispatcher()
+
+
+@_dispatch(Num)
 def f(a):
     return 'number'
 
 
-@dispatch(Num, Num)
+@_dispatch(Num, Num)
 def f(a, b):
     return 'two numbers'
 
 
-@dispatch(Num, FP)
+@_dispatch(Num, FP)
 def f(a, b):
     return 'a number and a float'
 
 
-@dispatch(Num, Num, [Num])
+@_dispatch(Num, Num, [Num])
 def f(a, b, *cs):
     return 'two or more numbers'
 
 
-@dispatch(Num, Num, [Re])
+@_dispatch(Num, Num, [Re])
 def f(a, b, *cs):
     return 'two numbers and more reals'
 
 
-@dispatch(FP, Num, [Re])
+@_dispatch(FP, Num, [Re])
 def f(a, b, c, *ds):
     return 'a float, a number, and more reals'
 
 
-@dispatch(Re, Num, [FP])
+@_dispatch(Re, Num, [FP])
 def f(a, b, c, *ds):
     return 'a real, a number, and more floats'
 
 
-@dispatch([])
+@_dispatch([])
 def f(*args):
     return 'fallback'
 
