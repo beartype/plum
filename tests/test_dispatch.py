@@ -13,25 +13,25 @@ class ComputableObject(object):
 
 
 class Device(Referentiable):
-    dispatch = Dispatcher(in_class=Self)
+    _dispatch = Dispatcher(in_class=Self)
 
-    @dispatch()
+    @_dispatch()
     def __init__(self):
         pass
 
-    @dispatch(Num, Num)
+    @_dispatch(Num, Num)
     def do(self, x, y):
         return 'doing two numbers'
 
-    @dispatch()
+    @_dispatch()
     def do(self):
         return 'doing nothing'
 
-    @dispatch(Self)
+    @_dispatch(Self)
     def do(self, other):
         return 'doing a device'
 
-    @dispatch(Re, Num)
+    @_dispatch(Re, Num)
     def do(self, x, y):
         return 'doing a real and a number'
 
@@ -41,11 +41,11 @@ class Device(Referentiable):
     def __radd__(self, other):
         return other + self
 
-    @dispatch(object, ComputableObject)
+    @_dispatch(object, ComputableObject)
     def compute(self, a, b):
         return 'a result'
 
-    @dispatch(ComputableObject, object)
+    @_dispatch(ComputableObject, object)
     def compute(self, a, b):
         return 'another result'
 
@@ -55,34 +55,34 @@ PromisedHammer = PromisedType()
 
 
 class Hammer(Device, Referentiable):
-    dispatch = Dispatcher(in_class=Self)
+    _dispatch = Dispatcher(in_class=Self)
 
-    @dispatch(PromisedHammer)
+    @_dispatch(PromisedHammer)
     def __add__(self, other):
         return 'super hammer'
 
-    @dispatch(PromisedCalculator)
+    @_dispatch(PromisedCalculator)
     def __add__(self, other):
         return 'destroyed calculator'
 
 
 class Calculator(Device, Referentiable):
-    dispatch = Dispatcher(in_class=Self)
+    _dispatch = Dispatcher(in_class=Self)
 
-    @dispatch(int)
+    @_dispatch(int)
     def __init__(self, size):
         self.size = size
         Device.__init__(self)
 
-    @dispatch(PromisedCalculator)
+    @_dispatch(PromisedCalculator)
     def __add__(self, other):
         return 'super calculator'
 
-    @dispatch(PromisedHammer)
+    @_dispatch(PromisedHammer)
     def __add__(self, other):
         return 'destroyed calculator'
 
-    @dispatch(ComputableObject)
+    @_dispatch(ComputableObject)
     def compute(self, obj):
         return 'result'
 

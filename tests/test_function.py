@@ -152,7 +152,7 @@ class A2(object):
 
 
 class B2(A2, Referentiable):
-    _dispatch = Dispatcher(in_class=Self)
+    _dispatch = Dispatcher(in_class=Self())
 
     @_dispatch(int)
     def do(self, x):
