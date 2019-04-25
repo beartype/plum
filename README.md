@@ -9,7 +9,7 @@ Everybody likes multiple dispatch, just like everybody likes plums.
 ## Examples
 ### Return Types
 ```python
-from plum import dispatch
+from plum import dispatch, add_conversion_method
 
 @dispatch({int, str}, return_type=int)
 def f(x):
@@ -22,6 +22,12 @@ def f(x):
 
 >>> f('1')
 TypeError: Expected return type "builtins.int", but got type "builtins.str".
+
+>>> add_conversion_method(type_from=str, type_to=int, f=int)
+
+>>> f('1')
+1
+
 ```
 
 ### Method Precedence
