@@ -3,6 +3,7 @@
 from __future__ import absolute_import, division, print_function
 
 from plum.util import multihash, Comparable, get_default
+
 from . import eq, neq, le, lt, ge, gt
 
 
