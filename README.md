@@ -7,6 +7,46 @@
 Everybody likes multiple dispatch, just like everybody likes plums.
 
 ## Examples
+### Promotion
+```python
+from plum import dispatch, promote, add_promotion_rule, add_conversion_method
+
+@dispatch(object, object)
+def add(x, y):
+    return add(*promote(x, y))
+    
+    
+@dispatch(int, int)
+def add(x, y):
+    return x + y
+    
+    
+@dispatch(float, float)
+def add(x, y):
+    return x + y
+```
+
+```python
+>>> add(1, 2)
+3
+
+>>> add(1.0, 2.0)
+3.0
+
+>>> add(1, 2.0)
+TypeError: No promotion rule for "builtins.int" and "builtins.float".
+
+>>> add_promotion_rule(int, float, float)
+
+>>> add(1, 2.0)
+TypeError: Cannot convert a "builtins.int" to a "builtins.float".
+
+>>> add_conversion_method(type_from=int, type_to=float, f=float)
+
+>>> add(1, 2.0)
+3.0
+```
+
 ### Return Types
 ```python
 from plum import dispatch, add_conversion_method
