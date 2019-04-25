@@ -20,8 +20,8 @@ def test_cache():
     dur_plum_first = benchmark(f, (1,), n=1)
     dur_plum = benchmark(f, (1,))
 
-    # A cached call should not be more than 40 times slower than a native call.
-    yield le, dur_plum, 40 * dur_native, 'compare native'
+    # A cached call should not be more than 30 times slower than a native call.
+    yield le, dur_plum, 30 * dur_native, 'compare native'
 
     # A first call should not be more than 200 times slower than a first call.
     yield le, dur_plum_first, 200 * dur_plum, 'compare first'
