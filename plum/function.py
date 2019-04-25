@@ -5,10 +5,9 @@ from __future__ import absolute_import, division, print_function
 import logging
 
 from plum.type import is_object
-from plum.util import Wrapped
 
 from .tuple import Tuple
-from .type import as_type
+from .type import as_type, TypeType, is_type
 from .util import get_default
 
 __all__ = ['Function', 'AmbiguousLookupError', 'NotFoundLookupError']
@@ -46,6 +45,43 @@ def _convert(obj, target_type):
         return obj
     else:
         return _DNS.convert(obj, target_type)
+
+
+class WrappedMethod(object):
+    """Wrap a method, copying metadata and handling bound and unbound calls and
+    conversion to the right return type.
+
+    Args:
+        method (function): Method to wrap.
+        instance (tuple, optional): Instance in the case of a bound call.
+            Defaults to `None`.
+        return_type (ptype, optional): Return type. Defaults to `object`.
+    """
+
+    def __init__(self, method, instance=None, return_type=as_type(object)):
+        self._method = method
+        self._instance = instance
+        self._return_type = return_type
+
+        # Copy metadata.
+        self.__name__ = method.__name__
+        self.__doc__ = method.__doc__
+        self.__module__ = method.__module__
+
+    def __call__(self, *args, **kw_args):
+        if self._instance is not None:
+            args = (self._instance,) + args
+
+        # Perform call and convert to correct return type.
+        return _convert(self._method(*args, **kw_args), self._return_type)
+
+    def __repr__(self):
+        return repr(self._method)
+
+    def invoke(self, *types):
+        if self._instance is not None:
+            types = (self._instance,) + types
+        return self._method.invoke(*types)
 
 
 class Function(object):
@@ -157,15 +193,16 @@ class Function(object):
             # TODO: Do something more clever.
             self.clear_cache(reregister=False)
 
-    def resolve(self, signature):
-        """Resolve a signature.
+    def resolve_signature(self, signature):
+        """Resolve a signature to get the most specific signature amongst the
+        signatures of all applicable methods.
 
         Args:
             signature (:class:`.tuple.Tuple`): Signature to resolve.
 
         Returns:
-            :class:`.tuple.Tuple`: The most-specific signature among the
-            signatures of all applicable methods.
+            :class:`.tuple.Tuple`: The most specific signature among the
+                signatures of all applicable methods.
         """
         self._resolve_pending_registrations()
 
@@ -203,26 +240,33 @@ class Function(object):
                 'For function "{}"{}, signature {} could not be resolved.'
                 ''.format(self._f.__name__, class_message, signature))
 
-    def __call__(self, *args, **kw_args):
-        self._resolve_pending_registrations()
+    def resolve_method(self, *types):
+        """Get the method and return type corresponding to types of arguments.
 
-        # Get types of arguments for signatures.
-        sig_args = args[1:] if self._class else args  # Split off `self`.
-        sig_types = tuple(type(x) for x in sig_args)
+        Args:
+            *types (type): Types of arguments.
+
+        Returns:
+            tuple: Tuple containing method and return type.
+        """
+        # New registrations may invalidate cache, so resolve pending
+        # registrations first.
+        self._resolve_pending_registrations()
 
         # Attempt to use cache.
         try:
-            method, return_type = self._cache[sig_types]
-            return _convert(method(*args, **kw_args), return_type)
+            method, return_type = self._cache[types]
+            return method, return_type
         except KeyError:
             pass
 
         # Look up the signature.
-        signature = Tuple(*sig_types)
+        signature = Tuple(*types)
 
         if self._class:
             try:
-                method, return_type = self.methods[self.resolve(signature)]
+                method, return_type = \
+                    self.methods[self.resolve_signature(signature)]
             except NotFoundLookupError as e:
                 method = None
                 return_type = as_type(object)
@@ -249,18 +293,21 @@ class Function(object):
                     raise e
         else:
             # Not in a class. Simply resolve.
-            method, return_type = self.methods[self.resolve(signature)]
+            method, return_type \
+                = self.methods[self.resolve_signature(signature)]
 
         # Cache lookup.
-        self._cache[sig_types] = (method, return_type)
-        return _convert(method(*args, **kw_args), return_type)
+        self._cache[types] = (method, return_type)
+        return method, return_type
 
-    def __get__(self, instance, cls=None):
-        # Prepend `instance` to the arguments in case the call is bound.
-        return Wrapped(
-            self,
-            prepend_args=() if instance is None else (instance,)
-        )
+    def __call__(self, *args, **kw_args):
+        # Get types of arguments for signature.
+        sig_args = args[1:] if self._class else args  # Split off `self`.
+        sig_types = tuple(type(x) for x in sig_args)
+
+        # Get method and return type, and perform call.
+        method, return_type = self.resolve_method(*sig_types)
+        return WrappedMethod(method, return_type=return_type)(*args, **kw_args)
 
     def invoke(self, *types):
         """Invoke a particular method.
@@ -271,11 +318,18 @@ class Function(object):
         Returns:
             function: Method.
         """
-        method, return_type = self.methods[self.resolve(Tuple(*types))]
-        return Wrapped(
-            method,
-            processing_fun=lambda x: _convert(x, return_type)
-        )
+        # Check whether the call is bound or unbound.
+        bound = len(types) >= 1 and not is_type(types[0])
+
+        # Split instance in the case of a bound call.
+        instance, types = (types[0], types[1:]) if bound else (None, types)
+
+        # Get method and return type, and perform call.
+        method, return_type = self.resolve_method(*(as_type(t) for t in types))
+        return WrappedMethod(method, instance=instance, return_type=return_type)
+
+    def __get__(self, instance, cls=None):
+        return WrappedMethod(self, instance=instance)
 
     def __repr__(self):
         return '<function {} with {} method(s)>' \

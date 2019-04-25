@@ -5,7 +5,7 @@ from __future__ import absolute_import, division, print_function
 import abc
 import logging
 
-__all__ = ['multihash', 'Comparable', 'get_default', 'Wrapped']
+__all__ = ['multihash', 'Comparable', 'get_default']
 log = logging.getLogger(__name__)
 
 
@@ -77,35 +77,3 @@ def get_default(dictionary, key, default):
         return dictionary[key]
     except KeyError:
         return default
-
-
-class Wrapped(object):
-    """Wrap a callable, copying metadata.
-
-    Args:
-        obj (object): Callable to wrap.
-        prepend_args (tuple, optional): Arguments to prepend to any call.
-            Defaults to not prepending any arguments.
-        processing_fun (function, optional): Function to apply to the result of
-            any call. Defaults to the identity function.
-    """
-
-    def __init__(self, obj, prepend_args=(), processing_fun=lambda x: x):
-        self._obj = obj
-        self._prepend_args = prepend_args
-        self._processing_fun = processing_fun
-
-        # Copy metadata.
-        self.__name__ = obj.__name__
-        self.__doc__ = obj.__doc__
-        self.__module__ = obj.__module__
-
-    def __call__(self, *args, **kw_args):
-        result = self._obj(*(self._prepend_args + args), **kw_args)
-        return self._processing_fun(result)
-
-    def __getattr__(self, item):
-        return getattr(self._obj, item)
-
-    def __repr__(self):
-        return repr(self._obj)
