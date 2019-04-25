@@ -3,6 +3,7 @@
 from __future__ import absolute_import, division, print_function
 
 from plum import Dispatcher, Referentiable, Self
+
 from . import Function, Tuple as Tu
 from . import eq, raises, call
 from .test_tuple import Num, FP, Re
@@ -26,17 +27,25 @@ def test_function():
                       Tu(FP, Num), Tu(FP, FP)]:
         f.register(signature, None)
 
-    yield call, f, 'resolve', (Tu(Re, Re),), Tu(Num, Re)
-    yield call, f, 'resolve', (Tu(Re, FP),), Tu(Num, Re)
-    yield raises, LookupError, lambda: f.resolve(Tu(FP, Re))
+    yield call, f, 'resolve_signature', (Tu(Re, Re),), Tu(Num, Re)
+    yield call, f, 'resolve_signature', (Tu(Re, FP),), Tu(Num, Re)
+    yield raises, LookupError, lambda: f.resolve_signature(Tu(FP, Re))
 
     # Test dynamic extension of the function.
-    yield raises, LookupError, lambda: f.resolve(Tu(int))
+    yield raises, LookupError, lambda: f.resolve_signature(Tu(int))
 
     @f.extend(int)
     def f(x): pass
 
-    yield call, f, 'resolve', (Tu(int),), Tu(int)
+    yield call, f, 'resolve_signature', (Tu(int),), Tu(int)
+
+
+class A(Referentiable):
+    _dispatch = Dispatcher(in_class=Self)
+
+    @_dispatch()
+    def g(self):
+        """docstring of g"""
 
 
 def test_metadata_and_printing():
@@ -54,13 +63,6 @@ def test_metadata_and_printing():
     yield eq, f.invoke().__doc__, 'docstring of f'
     yield eq, f.invoke().__module__, 'tests.test_function'
     yield eq, repr(f.invoke()), repr(f._f)
-
-    class A(Referentiable):
-        _dispatch = Dispatcher(in_class=Self)
-
-        @_dispatch()
-        def g(self):
-            """docstring of g"""
 
     a = A()
     g = a.g
@@ -142,3 +144,38 @@ def test_invoke():
     yield eq, f.invoke(float)(1), 'int, str, or float'
     yield eq, f.invoke({int, str})(1), 'int, str, or float'
     yield eq, f.invoke({int, str, float})(1), 'int, str, or float'
+
+
+class A2(object):
+    def do(self, x):
+        return 'fallback'
+
+
+class B2(A2, Referentiable):
+    _dispatch = Dispatcher(in_class=Self)
+
+    @_dispatch(int)
+    def do(self, x):
+        return 'int'
+
+
+class C2(B2, Referentiable):
+    _dispatch = Dispatcher(in_class=Self)
+
+    @_dispatch(str)
+    def do(self, x):
+        return 'str'
+
+
+def test_invoke_inheritance():
+    c = C2()
+
+    # Test bound calls.
+    yield eq, c.do.invoke(str)('1'), 'str'
+    yield eq, c.do.invoke(int)(1), 'int'
+    yield eq, c.do.invoke(float)(1.0), 'fallback'
+
+    # Test unbound calls.
+    yield eq, C2.do.invoke(str)(c, '1'), 'str'
+    yield eq, C2.do.invoke(int)(c, 1), 'int'
+    yield eq, C2.do.invoke(float)(c, 1.0), 'fallback'
