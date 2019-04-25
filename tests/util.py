@@ -37,5 +37,13 @@ def call(f, method, args, res):
     assert_equal(getattr(f, method)(*args), res)
 
 
-def nle(x, y, desc=None):
-    assert (not (x <= y)), desc
+def nle(x, y):
+    assert (not (x <= y))
+
+
+def isnotinstance(x, y):
+    assert not isinstance(x, y)
+
+
+def isnotsubclass(x, y):
+    assert not issubclass(x, y)
