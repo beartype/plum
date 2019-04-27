@@ -24,8 +24,9 @@ Everybody likes multiple dispatch, just like everybody likes plums.
 
 ## Installation
 
-Plum requires at least Python 2.7 or Python 3.6.
-To install the package, run the following sequence of commands:
+The package is tested for Python 2.7 and Python 3.6, which are the versions 
+recommended to use.
+To install the package, use the following sequence of commands:
 
 ```
 git clone https://github.com/wesselb/plum
