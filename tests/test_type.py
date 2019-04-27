@@ -51,10 +51,11 @@ def test_promisedtype():
     yield eq, t.get_types(), Type(int).get_types()
 
 
-def test_self():
-    class A(Referentiable):
-        self = Self()
+class A(Referentiable):
+    self = Self()
 
+
+def test_self():
     yield eq, A.self, as_type(A)
 
 
