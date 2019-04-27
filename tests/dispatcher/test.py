@@ -35,11 +35,11 @@ def test_metadata_and_printing():
 
     yield eq, f.__name__, 'f'
     yield eq, f.__doc__, 'docstring of f'
-    yield eq, f.__module__, 'tests.test_dispatcher'
+    yield eq, f.__module__, 'tests.dispatcher.test'
     yield eq, repr(f), '<function {} with 1 method(s)>'.format(f._f)
     yield eq, f.invoke().__name__, 'f'
     yield eq, f.invoke().__doc__, 'docstring of f'
-    yield eq, f.invoke().__module__, 'tests.test_dispatcher'
+    yield eq, f.invoke().__module__, 'tests.dispatcher.test'
     yield eq, repr(f.invoke()), repr(f._f)
 
     a = A()
@@ -47,12 +47,12 @@ def test_metadata_and_printing():
 
     yield eq, g.__name__, 'g'
     yield eq, g.__doc__, 'docstring of g'
-    yield eq, g.__module__, 'tests.test_dispatcher'
+    yield eq, g.__module__, 'tests.dispatcher.test'
     yield eq, repr(g), '<function {} with 1 method(s)>' \
                        ''.format(A._dispatch._functions['g']._f)
     yield eq, g.invoke().__name__, 'g'
     yield eq, g.invoke().__doc__, 'docstring of g'
-    yield eq, g.invoke().__module__, 'tests.test_dispatcher'
+    yield eq, g.invoke().__module__, 'tests.dispatcher.test'
     yield eq, repr(g.invoke()), repr(A._dispatch._functions['g']._f)
 
 

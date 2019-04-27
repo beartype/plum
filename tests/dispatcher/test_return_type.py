@@ -2,10 +2,9 @@
 
 from __future__ import absolute_import, division, print_function
 
-from . import Dispatcher, Referentiable, Self, Union, convert, \
-    add_conversion_method
+from . import Dispatcher, Referentiable, Self, Union, add_conversion_method
 from . import eq, raises
-from .test_promotion import save_convert_methods, restore_convert_methods
+from ..test_promotion import save_convert_methods, restore_convert_methods
 
 
 def test_return_type():
