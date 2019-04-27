@@ -3,6 +3,7 @@
 from __future__ import absolute_import, division, print_function
 
 import logging
+import inspect
 
 from .function import Function
 from .tuple import Tuple
@@ -78,6 +79,52 @@ class Dispatcher(object):
 
             # Return the function.
             return self._functions[name]
+
+        return decorator
+
+    def annotations(self, precedence=0):  # pragma: no cover
+        """Dispatch from annotations.
+
+        Args:
+            precedence (int, optional): Precedence of the signature. Defaults to
+                `0`.
+
+        Returns:
+            function: Decorator.
+        """
+
+        def decorator(f):
+            # Extract specification.
+            spec = inspect.getfullargspec(f)
+
+            # Get types of arguments.
+            types = []
+            for arg in spec.args:
+                try:
+                    types.append(spec.annotations[arg])
+                except KeyError:
+                    types.append(object)
+
+            # Get possible varargs.
+            if spec.varargs:
+                try:
+                    types.append([spec.annotations[spec.varargs]])
+                except KeyError:
+                    types.append([object])
+
+            # Get possible return type.
+            try:
+                return_type = spec.annotations['return']
+            except KeyError:
+                return_type = object
+
+            # Assemble signature.
+            signature = Tuple(*types)
+
+            # Create and call decorator.
+            return self._create_decorator([signature],
+                                          precedence,
+                                          return_type)(f)
 
         return decorator
 
