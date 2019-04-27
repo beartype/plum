@@ -87,6 +87,7 @@
 <li class="toctree-l2"><a class="reference internal" href="plum.dispatcher.html">plum.dispatcher module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plum.function.html">plum.function module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plum.parametric.html">plum.parametric module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plum.promotion.html">plum.promotion module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plum.resolvable.html">plum.resolvable module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plum.tuple.html">plum.tuple module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plum.type.html">plum.type module</a></li>
@@ -161,6 +162,24 @@
             
   <div class="section" id="module-plum.util">
 <span id="plum-util-module"></span><h1>plum.util module<a class="headerlink" href="#module-plum.util" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="plum.util.multihash">
+<code class="descclassname">plum.util.</code><code class="descname">multihash</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/util.html#multihash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.util.multihash" title="Permalink to this definition">¶</a></dt>
+<dd><p>Multi-argument order-sensitive hash.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>*args</strong> – Objects to hash.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Hash.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">int</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 <dl class="class">
 <dt id="plum.util.Comparable">
 <em class="property">class </em><code class="descclassname">plum.util.</code><code class="descname">Comparable</code><a class="reference internal" href="../_modules/plum/util.html#Comparable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.util.Comparable" title="Permalink to this definition">¶</a></dt>
@@ -193,18 +212,26 @@ with.</td>
 </dd></dl>
 
 <dl class="function">
-<dt id="plum.util.multihash">
-<code class="descclassname">plum.util.</code><code class="descname">multihash</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/util.html#multihash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.util.multihash" title="Permalink to this definition">¶</a></dt>
-<dd><p>Multi-argument order-sensitive hash.</p>
+<dt id="plum.util.get_default">
+<code class="descclassname">plum.util.</code><code class="descname">get_default</code><span class="sig-paren">(</span><em>dictionary</em>, <em>key</em>, <em>default</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/util.html#get_default"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.util.get_default" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a value from a dictionary, assuming a default value.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>*args</strong> – Objects to hash.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>dictionary</strong> (<em>dict</em>) – Dictionary.</li>
+<li><strong>key</strong> (<em>hashable</em>) – Key of value to get.</li>
+<li><strong>default</strong> (<em>object</em>) – Default value, in case the key is not in the
+dictionary.</li>
+</ul>
+</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Hash.</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Value associated to key or the default value.</p>
+</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">int</td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">object</p>
+</td>
 </tr>
 </tbody>
 </table>

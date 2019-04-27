@@ -151,9 +151,11 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
 
 <span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
 
 <span class="kn">from</span> <span class="nn">.function</span> <span class="k">import</span> <span class="n">Function</span>
 <span class="kn">from</span> <span class="nn">.tuple</span> <span class="k">import</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">.util</span> <span class="k">import</span> <span class="n">get_default</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Dispatcher&#39;</span><span class="p">,</span> <span class="s1">&#39;dispatch&#39;</span><span class="p">]</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -175,29 +177,40 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            *types (type): Types of the signatures.</span>
-<span class="sd">            precedence (int, optional): Precedence of the signature.</span>
+<span class="sd">            precedence (int, optional): Precedence of the signature. Defaults to</span>
+<span class="sd">                `0`.</span>
+<span class="sd">            return_type (type, optional): Expected return type. Defaults to</span>
+<span class="sd">                `object.`</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            function: Decorator.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">precedence</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="s1">&#39;precedence&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kw_args</span> <span class="k">else</span> <span class="n">kw_args</span><span class="p">[</span><span class="s1">&#39;precedence&#39;</span><span class="p">]</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_decorator</span><span class="p">([</span><span class="n">Tuple</span><span class="p">(</span><span class="o">*</span><span class="n">types</span><span class="p">)],</span> <span class="n">precedence</span><span class="o">=</span><span class="n">precedence</span><span class="p">)</span>
+        <span class="n">precedence</span> <span class="o">=</span> <span class="n">get_default</span><span class="p">(</span><span class="n">kw_args</span><span class="p">,</span> <span class="s1">&#39;precedence&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">return_type</span> <span class="o">=</span> <span class="n">get_default</span><span class="p">(</span><span class="n">kw_args</span><span class="p">,</span> <span class="s1">&#39;return_type&#39;</span><span class="p">,</span> <span class="nb">object</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_decorator</span><span class="p">([</span><span class="n">Tuple</span><span class="p">(</span><span class="o">*</span><span class="n">types</span><span class="p">)],</span>
+                                      <span class="n">precedence</span><span class="o">=</span><span class="n">precedence</span><span class="p">,</span>
+                                      <span class="n">return_type</span><span class="o">=</span><span class="n">return_type</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Dispatcher.multi"><a class="viewcode-back" href="../../source/plum.dispatcher.html#plum.dispatcher.Dispatcher.multi">[docs]</a>    <span class="k">def</span> <span class="nf">multi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">signatures</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Create a decorator for multiple given signatures.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            *tuple[type] (type): Signatures.</span>
-<span class="sd">            precedence (int, optional): Precedence of the signatures.</span>
+<span class="sd">            precedence (int, optional): Precedence of the signatures. Defaults</span>
+<span class="sd">                to `0`.</span>
+<span class="sd">            return_type (type, optional): Expected return type. Defaults to</span>
+<span class="sd">                `object.`</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            function: Decorator.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">precedence</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="s1">&#39;precedence&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kw_args</span> <span class="k">else</span> <span class="n">kw_args</span><span class="p">[</span><span class="s1">&#39;precedence&#39;</span><span class="p">]</span>
+        <span class="n">precedence</span> <span class="o">=</span> <span class="n">get_default</span><span class="p">(</span><span class="n">kw_args</span><span class="p">,</span> <span class="s1">&#39;precedence&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">return_type</span> <span class="o">=</span> <span class="n">get_default</span><span class="p">(</span><span class="n">kw_args</span><span class="p">,</span> <span class="s1">&#39;return_type&#39;</span><span class="p">,</span> <span class="nb">object</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_decorator</span><span class="p">([</span><span class="n">Tuple</span><span class="p">(</span><span class="o">*</span><span class="n">types</span><span class="p">)</span> <span class="k">for</span> <span class="n">types</span> <span class="ow">in</span> <span class="n">signatures</span><span class="p">],</span>
-                                      <span class="n">precedence</span><span class="o">=</span><span class="n">precedence</span><span class="p">)</span></div>
+                                      <span class="n">precedence</span><span class="o">=</span><span class="n">precedence</span><span class="p">,</span>
+                                      <span class="n">return_type</span><span class="o">=</span><span class="n">return_type</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">_create_decorator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signatures</span><span class="p">,</span> <span class="n">precedence</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_create_decorator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signatures</span><span class="p">,</span> <span class="n">precedence</span><span class="p">,</span> <span class="n">return_type</span><span class="p">):</span>
         <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
             <span class="n">name</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="vm">__name__</span>
 
@@ -207,12 +220,61 @@
 
             <span class="c1"># Register the new method.</span>
             <span class="k">for</span> <span class="n">signature</span> <span class="ow">in</span> <span class="n">signatures</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_functions</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">signature</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">precedence</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_functions</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">signature</span><span class="p">,</span>
+                                               <span class="n">f</span><span class="p">,</span>
+                                               <span class="n">precedence</span><span class="p">,</span>
+                                               <span class="n">return_type</span><span class="p">)</span>
 
             <span class="c1"># Return the function.</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_functions</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
 
         <span class="k">return</span> <span class="n">decorator</span>
+
+<div class="viewcode-block" id="Dispatcher.annotations"><a class="viewcode-back" href="../../source/plum.dispatcher.html#plum.dispatcher.Dispatcher.annotations">[docs]</a>    <span class="k">def</span> <span class="nf">annotations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">precedence</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
+        <span class="sd">&quot;&quot;&quot;Dispatch from annotations.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            precedence (int, optional): Precedence of the signature. Defaults to</span>
+<span class="sd">                `0`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            function: Decorator.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+            <span class="c1"># Extract specification.</span>
+            <span class="n">spec</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getfullargspec</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+            <span class="c1"># Get types of arguments.</span>
+            <span class="n">types</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">types</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">annotations</span><span class="p">[</span><span class="n">arg</span><span class="p">])</span>
+                <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                    <span class="n">types</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span>
+
+            <span class="c1"># Get possible varargs.</span>
+            <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">varargs</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">types</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">spec</span><span class="o">.</span><span class="n">annotations</span><span class="p">[</span><span class="n">spec</span><span class="o">.</span><span class="n">varargs</span><span class="p">]])</span>
+                <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                    <span class="n">types</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="nb">object</span><span class="p">])</span>
+
+            <span class="c1"># Get possible return type.</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">return_type</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">annotations</span><span class="p">[</span><span class="s1">&#39;return&#39;</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="n">return_type</span> <span class="o">=</span> <span class="nb">object</span>
+
+            <span class="c1"># Assemble signature.</span>
+            <span class="n">signature</span> <span class="o">=</span> <span class="n">Tuple</span><span class="p">(</span><span class="o">*</span><span class="n">types</span><span class="p">)</span>
+
+            <span class="c1"># Create and call decorator.</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_decorator</span><span class="p">([</span><span class="n">signature</span><span class="p">],</span>
+                                          <span class="n">precedence</span><span class="p">,</span>
+                                          <span class="n">return_type</span><span class="p">)(</span><span class="n">f</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">decorator</span></div>
 
 <div class="viewcode-block" id="Dispatcher.clear_cache"><a class="viewcode-back" href="../../source/plum.dispatcher.html#plum.dispatcher.Dispatcher.clear_cache">[docs]</a>    <span class="k">def</span> <span class="nf">clear_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Clear cache.&quot;&quot;&quot;</span>

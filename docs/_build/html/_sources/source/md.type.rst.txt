@@ -1,7 +1,0 @@
-md\.type module
-===============
-
-.. automodule:: md.type
-    :members:
-    :undoc-members:
-    :show-inheritance:

@@ -1,7 +1,7 @@
-md\.dispatcher module
+plum.promotion module
 =====================
 
-.. automodule:: md.dispatcher
+.. automodule:: plum.promotion
     :members:
     :undoc-members:
     :show-inheritance:

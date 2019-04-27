@@ -1,7 +1,0 @@
-md\.signature module
-====================
-
-.. automodule:: md.signature
-    :members:
-    :undoc-members:
-    :show-inheritance:

@@ -88,6 +88,7 @@
 <li class="toctree-l2 current"><a class="current reference internal" href="#">plum.dispatcher module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plum.function.html">plum.function module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plum.parametric.html">plum.parametric module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plum.promotion.html">plum.promotion module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plum.resolvable.html">plum.resolvable module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plum.tuple.html">plum.tuple module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plum.type.html">plum.type module</a></li>
@@ -175,6 +176,25 @@
 </tr>
 </tbody>
 </table>
+<dl class="method">
+<dt id="plum.dispatcher.Dispatcher.annotations">
+<code class="descname">annotations</code><span class="sig-paren">(</span><em>precedence=0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/dispatcher.html#Dispatcher.annotations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.dispatcher.Dispatcher.annotations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dispatch from annotations.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>precedence</strong> (<em>int</em><em>, </em><em>optional</em>) – Precedence of the signature. Defaults to
+<cite>0</cite>.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Decorator.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">function</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 <dl class="staticmethod">
 <dt id="plum.dispatcher.Dispatcher.clear_all_cache">
 <em class="property">static </em><code class="descname">clear_all_cache</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/dispatcher.html#Dispatcher.clear_all_cache"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.dispatcher.Dispatcher.clear_all_cache" title="Permalink to this definition">¶</a></dt>
@@ -197,7 +217,10 @@
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>*tuple</strong><strong>[</strong><strong>type</strong><strong>]</strong> (<em>type</em>) – Signatures.</li>
-<li><strong>precedence</strong> (<em>int</em><em>, </em><em>optional</em>) – Precedence of the signatures.</li>
+<li><strong>precedence</strong> (<em>int</em><em>, </em><em>optional</em>) – Precedence of the signatures. Defaults
+to <cite>0</cite>.</li>
+<li><strong>return_type</strong> (<em>type</em><em>, </em><em>optional</em>) – Expected return type. Defaults to
+<cite>object.</cite></li>
 </ul>
 </td>
 </tr>

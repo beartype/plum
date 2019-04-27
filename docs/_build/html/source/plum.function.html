@@ -88,6 +88,7 @@
 <li class="toctree-l2"><a class="reference internal" href="plum.dispatcher.html">plum.dispatcher module</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">plum.function module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plum.parametric.html">plum.parametric module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plum.promotion.html">plum.promotion module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plum.resolvable.html">plum.resolvable module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plum.tuple.html">plum.tuple module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plum.type.html">plum.type module</a></li>
@@ -209,11 +210,24 @@ Defaults to <cite>True</cite>.</td>
 <dl class="method">
 <dt id="plum.function.Function.invoke">
 <code class="descname">invoke</code><span class="sig-paren">(</span><em>*types</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/function.html#Function.invoke"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.function.Function.invoke" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Invoke a particular method.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>*types</strong> – Types to resolve.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Method.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">function</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="plum.function.Function.register">
-<code class="descname">register</code><span class="sig-paren">(</span><em>signature</em>, <em>f</em>, <em>precedence=0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/function.html#Function.register"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.function.Function.register" title="Permalink to this definition">¶</a></dt>
+<code class="descname">register</code><span class="sig-paren">(</span><em>signature</em>, <em>f</em>, <em>precedence=0</em>, <em>return_type=&lt;class 'object'&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/function.html#Function.register"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.function.Function.register" title="Permalink to this definition">¶</a></dt>
 <dd><p>Register a method.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -224,6 +238,8 @@ Defaults to <cite>True</cite>.</td>
 <li><strong>f</strong> (<em>function</em>) – Function that implements the method.</li>
 <li><strong>precedence</strong> (<em>int</em><em>, </em><em>optional</em>) – Precedence of the function. Defaults
 to <cite>0</cite>.</li>
+<li><strong>return_type</strong> (<em>type</em><em>, </em><em>optional</em>) – Return type of the function. Defaults
+to <cite>object</cite>.</li>
 </ul>
 </td>
 </tr>
@@ -232,17 +248,41 @@ to <cite>0</cite>.</li>
 </dd></dl>
 
 <dl class="method">
-<dt id="plum.function.Function.resolve">
-<code class="descname">resolve</code><span class="sig-paren">(</span><em>signature</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/function.html#Function.resolve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.function.Function.resolve" title="Permalink to this definition">¶</a></dt>
-<dd><p>Resolve a signature.</p>
+<dt id="plum.function.Function.resolve_method">
+<code class="descname">resolve_method</code><span class="sig-paren">(</span><em>*types</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/function.html#Function.resolve_method"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.function.Function.resolve_method" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the method and return type corresponding to types of arguments.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>*types</strong> (<em>type</em>) – Types of arguments.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Tuple containing method and return type.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">tuple</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="plum.function.Function.resolve_signature">
+<code class="descname">resolve_signature</code><span class="sig-paren">(</span><em>signature</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/function.html#Function.resolve_signature"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.function.Function.resolve_signature" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolve a signature to get the most specific signature amongst the
+signatures of all applicable methods.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>signature</strong> (<a class="reference internal" href="plum.tuple.html#plum.tuple.Tuple" title="plum.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple.Tuple</span></code></a>) – Signature to resolve.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The most-specific signature among the signatures of all applicable
-methods.</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="docutils">
+<dt>The most specific signature among the</dt>
+<dd>signatures of all applicable methods.</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="plum.tuple.html#plum.tuple.Tuple" title="plum.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple.Tuple</span></code></a></td>
 </tr>
 </tbody>
 </table>

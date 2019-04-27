@@ -84,12 +84,21 @@
             
               <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Plum: Multiple Dispatch in Python</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#advanced-features-by-example">Advanced Features by Example</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#add-multiple-methods">Add Multiple Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#extend-a-function-from-another-package">Extend a Function From Another Package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#directly-invoke-a-method">Directly Invoke a Method</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#union-types">Union Types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#variable-arguments">Variable Arguments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#inheritance">Inheritance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#conversion">Conversion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#promotion">Promotion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#return-types">Return Types</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#method-precedence">Method Precedence</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#parametric-classes">Parametric Classes</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#variable-types">Variable Types</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#union-types">Union Types</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#inheritance">Inheritance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dispatch-from-type-annotations">Dispatch From Type Annotations</a></li>
 </ul>
 </li>
 </ul>
@@ -161,12 +170,369 @@
             
   <div class="section" id="plum-multiple-dispatch-in-python">
 <h1><a class="reference external" href="https://github.com/wesselb/plum">Plum: Multiple Dispatch in Python</a><a class="headerlink" href="#plum-multiple-dispatch-in-python" title="Permalink to this headline">¶</a></h1>
-<p><a class="reference external" href="https://travis-ci.org/wesselb/plum"><img alt="Build" src="https://travis-ci.org/wesselb/plum.svg?branch=master" /></a> <a class="reference external" href="https://coveralls.io/github/wesselb/plum?branch=master"><img alt="Coverage Status" src="https://coveralls.io/repos/github/wesselb/plum/badge.svg?branch=master" /></a> <a class="reference external" href="https://wesselb.github.io/plum"><img alt="Latest Docs" src="https://img.shields.io/badge/docs-latest-blue.svg" /></a></p>
+<p><a class="reference external" href="https://travis-ci.org/wesselb/plum"><img alt="Build" src="https://travis-ci.org/wesselb/plum.svg?branch=master" /></a> <a class="reference external" href="https://coveralls.io/github/wesselb/plum?branch=master"><img alt="Coverage Status" src="https://coveralls.io/repos/github/wesselb/plum/badge.svg?branch=master&amp;service=github" /></a> <a class="reference external" href="https://wesselb.github.io/plum"><img alt="Latest Docs" src="https://img.shields.io/badge/docs-latest-blue.svg" /></a></p>
 <p>Everybody likes multiple dispatch, just like everybody likes plums.</p>
-<div class="section" id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><a class="reference external" href="#installation">Installation</a></li>
+<li><a class="reference external" href="#basic-usage">Basic Usage</a></li>
+<li><a class="reference external" href="#advanced-features-by-example">Advanced Features by Example</a><ul>
+<li><a class="reference external" href="#add-multiple-methods">Add Multiple Methods</a></li>
+<li><a class="reference external" href="#extend-a-function-from-another-package">Extend a Function From Another
+Package</a></li>
+<li><a class="reference external" href="#directly-invoke-a-method">Directly Invoke a Method</a></li>
+<li><a class="reference external" href="#union-types">Union Types</a></li>
+<li><a class="reference external" href="#variable-arguments">Variable Arguments</a></li>
+<li><a class="reference external" href="#inheritance">Inheritance</a></li>
+<li><a class="reference external" href="#conversion">Conversion</a></li>
+<li><a class="reference external" href="#promotion">Promotion</a></li>
+<li><a class="reference external" href="#return-types">Return Types</a></li>
+<li><a class="reference external" href="#method-precedence">Method Precedence</a></li>
+<li><a class="reference external" href="#parametric-classes">Parametric Classes</a></li>
+<li><a class="reference external" href="#dispatch-from-type-annotations">Dispatch From Type
+Annotations</a></li>
+</ul>
+</li>
+</ul>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>Plum requires at least Python 2.7 or Python 3.6. To install the package,
+run the following sequence of commands:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">wesselb</span><span class="o">/</span><span class="n">plum</span>
+<span class="n">cd</span> <span class="n">plum</span>
+<span class="n">make</span> <span class="n">install</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="basic-usage">
+<h2>Basic Usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">¶</a></h2>
+<p>Multiple dispatch allows you to implement multiple <em>methods</em> for the
+same <em>function</em>, where the methods specify the types of their arguments:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="k">import</span> <span class="n">dispatch</span>
+
+<span class="nd">@dispatch</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s1">&#39;This is a string!&#39;</span>
+
+
+<span class="nd">@dispatch</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s1">&#39;This is an integer!&#39;</span>
+</pre></div>
+</div>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>
+<span class="go">&#39;This is a string!&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">&#39;This is an integer!&#39;</span>
+</pre></div>
+</div>
+<p>We haven’t implemented a method for <code class="docutils literal notranslate"><span class="pre">float</span></code>s, so in that case an
+exception will be raised:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="go">NotFoundLookupError: For function &quot;f&quot;, signature (builtins.float) could not be resolved.</span>
+</pre></div>
+</div>
+<p>Instead of implementing a method for <code class="docutils literal notranslate"><span class="pre">float</span></code>s, let’s implement a
+method for all numbers:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">numbers</span> <span class="k">import</span> <span class="n">Number</span>
+
+
+<span class="nd">@dispatch</span><span class="p">(</span><span class="n">Number</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s1">&#39;This is a number!&#39;</span>
+</pre></div>
+</div>
+<p>Since a <code class="docutils literal notranslate"><span class="pre">float</span></code> is a <code class="docutils literal notranslate"><span class="pre">Number</span></code>, <code class="docutils literal notranslate"><span class="pre">f(1.0)</span></code> will return
+<code class="docutils literal notranslate"><span class="pre">'This</span> <span class="pre">is</span> <span class="pre">a</span> <span class="pre">number!'</span></code>. But an <code class="docutils literal notranslate"><span class="pre">int</span></code> is also a <code class="docutils literal notranslate"><span class="pre">Number</span></code>, so
+<code class="docutils literal notranslate"><span class="pre">f(1)</span></code> can either return <code class="docutils literal notranslate"><span class="pre">'This</span> <span class="pre">is</span> <span class="pre">an</span> <span class="pre">integer!'</span></code> or
+<code class="docutils literal notranslate"><span class="pre">'This</span> <span class="pre">is</span> <span class="pre">a</span> <span class="pre">number!'</span></code>. The rule of multiple dispatch is that the <em>most
+specific</em> method is chosen:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">&#39;This is an integer!&#39;</span>
+</pre></div>
+</div>
+<p>since an <code class="docutils literal notranslate"><span class="pre">int</span></code> is a <code class="docutils literal notranslate"><span class="pre">Number</span></code>, but a <code class="docutils literal notranslate"><span class="pre">Number</span></code> is not necessarily an
+<code class="docutils literal notranslate"><span class="pre">int</span></code>.</p>
+<p>For an excellent and way more detailed overview of multiple dispatch,
+see the <a class="reference external" href="https://docs.julialang.org/en/">manual of the Julia
+Language</a>.</p>
+</div>
+<div class="section" id="advanced-features-by-example">
+<h2>Advanced Features by Example<a class="headerlink" href="#advanced-features-by-example" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="add-multiple-methods">
+<h3>Add Multiple Methods<a class="headerlink" href="#add-multiple-methods" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">Dispatcher.multi</span></code> can be used to implement multiple methods at once:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="k">import</span> <span class="n">dispatch</span>
+
+<span class="nd">@dispatch</span><span class="o">.</span><span class="n">multi</span><span class="p">((</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+<span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span>
+</pre></div>
+</div>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">add</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="go">2</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">add</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+<span class="go">2.0</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">add</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+<span class="go">NotFoundLookupError: For function &quot;add&quot;, signature (builtins.int, builtins.float) could not be resolved.</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="extend-a-function-from-another-package">
+<h3>Extend a Function From Another Package<a class="headerlink" href="#extend-a-function-from-another-package" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">Function.extend</span></code> can be used to extend a particular function:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">package</span> <span class="k">import</span> <span class="n">f</span>
+
+<span class="nd">@f</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s1">&#39;new behaviour&#39;</span>
+</pre></div>
+</div>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="go">&#39;old behaviour&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">&#39;new behaviour&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="directly-invoke-a-method">
+<h3>Directly Invoke a Method<a class="headerlink" href="#directly-invoke-a-method" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">Function.invoke</span></code> can be used to invoke a method given types of the
+arguments:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="k">import</span> <span class="n">dispatch</span>
+
+<span class="nd">@dispatch</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s1">&#39;int&#39;</span>
+
+
+<span class="nd">@dispatch</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s1">&#39;str&#39;</span>
+</pre></div>
+</div>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">&#39;int&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>
+<span class="go">&#39;str&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="nb">int</span><span class="p">)(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>
+<span class="go">&#39;int&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="nb">str</span><span class="p">)(</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">&#39;str&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="union-types">
+<h3>Union Types<a class="headerlink" href="#union-types" title="Permalink to this headline">¶</a></h3>
+<p>Sets can be used to instantiate union types:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="k">import</span> <span class="n">dispatch</span>
+
+<span class="nd">@dispatch</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;fallback&#39;</span><span class="p">)</span>
+
+<span class="nd">@dispatch</span><span class="p">({</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">})</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;int or str&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">int or str</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>
+<span class="go">int or str</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="go">fallback</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="variable-arguments">
+<h3>Variable Arguments<a class="headerlink" href="#variable-arguments" title="Permalink to this headline">¶</a></h3>
+<p>A list can be used to specify variable arguments:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="k">import</span> <span class="n">dispatch</span>
+
+<span class="nd">@dispatch</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;single argument&#39;</span><span class="p">)</span>
+
+<span class="nd">@dispatch</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="p">[</span><span class="nb">int</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">xs</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;multiple arguments&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">single argument</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="go">multiple arguments</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="go">multiple arguments</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="inheritance">
+<h3>Inheritance<a class="headerlink" href="#inheritance" title="Permalink to this headline">¶</a></h3>
+<p>Since every class in Python can be subclassed, diagonal dispatch cannot
+be implemented. However, inheritance can be used to achieve a form of
+diagonal dispatch:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="k">import</span> <span class="n">Dispatcher</span><span class="p">,</span> <span class="n">Referentiable</span><span class="p">,</span> <span class="n">Self</span>
+
+<span class="k">class</span> <span class="nc">Real</span><span class="p">(</span><span class="n">Referentiable</span><span class="p">):</span>
+    <span class="n">dispatch</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">(</span><span class="n">in_class</span><span class="o">=</span><span class="n">Self</span><span class="p">)</span>
+
+    <span class="nd">@dispatch</span><span class="p">(</span><span class="n">Self</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;real&#39;</span>
+
+<span class="k">class</span> <span class="nc">Rational</span><span class="p">(</span><span class="n">Real</span><span class="p">,</span> <span class="n">Referentiable</span><span class="p">):</span>
+    <span class="n">dispatch</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">(</span><span class="n">in_class</span><span class="o">=</span><span class="n">Self</span><span class="p">)</span>
+
+    <span class="nd">@dispatch</span><span class="p">(</span><span class="n">Self</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;rational&#39;</span>
+
+<span class="n">real</span> <span class="o">=</span> <span class="n">Real</span><span class="p">()</span>
+<span class="n">rational</span> <span class="o">=</span> <span class="n">Rational</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">real</span> <span class="o">+</span> <span class="n">real</span>
+<span class="go">&#39;real&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">real</span> <span class="o">+</span> <span class="n">rational</span>
+<span class="go">&#39;real&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rational</span> <span class="o">+</span> <span class="n">real</span>
+<span class="go">&#39;real&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rational</span> <span class="o">+</span> <span class="n">rational</span>
+<span class="go">&#39;rational&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="conversion">
+<h3>Conversion<a class="headerlink" href="#conversion" title="Permalink to this headline">¶</a></h3>
+<p>The function <code class="docutils literal notranslate"><span class="pre">convert</span></code> can be used to convert objects of one type to
+another:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">numbers</span> <span class="k">import</span> <span class="n">Number</span>
+
+<span class="kn">from</span> <span class="nn">plum</span> <span class="k">import</span> <span class="n">convert</span>
+
+
+<span class="k">class</span> <span class="nc">Rational</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="n">denom</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num</span> <span class="o">=</span> <span class="n">num</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">denom</span> <span class="o">=</span> <span class="n">denom</span>
+</pre></div>
+</div>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">convert</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">Number</span><span class="p">)</span>
+<span class="go">0.5</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">convert</span><span class="p">(</span><span class="n">Rational</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">Number</span><span class="p">)</span>
+<span class="go">TypeError: Cannot convert a &quot;__main__.Rational&quot; to a &quot;numbers.Number&quot;.</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">TypeError</span></code> indicates that <code class="docutils literal notranslate"><span class="pre">convert</span></code> does not know how to
+convert a <code class="docutils literal notranslate"><span class="pre">Rational</span></code> to a <code class="docutils literal notranslate"><span class="pre">Number</span></code>. Let us implement that
+conversion:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">operator</span> <span class="k">import</span> <span class="n">truediv</span>
+
+<span class="kn">from</span> <span class="nn">plum</span> <span class="k">import</span> <span class="n">conversion_method</span>
+
+
+<span class="nd">@conversion_method</span><span class="p">(</span><span class="n">type_from</span><span class="o">=</span><span class="n">Rational</span><span class="p">,</span> <span class="n">type_to</span><span class="o">=</span><span class="n">Number</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">rational_to_number</span><span class="p">(</span><span class="n">q</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">truediv</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">num</span><span class="p">,</span> <span class="n">q</span><span class="o">.</span><span class="n">denom</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">convert</span><span class="p">(</span><span class="n">Rational</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">Number</span><span class="p">)</span>
+<span class="go">0.5</span>
+</pre></div>
+</div>
+<p>Instead of the decorator <code class="docutils literal notranslate"><span class="pre">conversion_method</span></code>, one can also use
+<code class="docutils literal notranslate"><span class="pre">add_conversion_method</span></code>:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="k">import</span> <span class="n">add_conversion_method</span>
+
+<span class="n">add_conversion_method</span><span class="p">(</span><span class="n">type_from</span><span class="p">,</span> <span class="n">type_to</span><span class="p">,</span> <span class="n">conversion_function</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="promotion">
+<h3>Promotion<a class="headerlink" href="#promotion" title="Permalink to this headline">¶</a></h3>
+<p>The function <code class="docutils literal notranslate"><span class="pre">promote</span></code> can be used to promote objects to a common
+type:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="k">import</span> <span class="n">dispatch</span><span class="p">,</span> <span class="n">promote</span><span class="p">,</span> <span class="n">add_promotion_rule</span><span class="p">,</span> <span class="n">add_conversion_method</span>
+
+<span class="nd">@dispatch</span><span class="p">(</span><span class="nb">object</span><span class="p">,</span> <span class="nb">object</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">add</span><span class="p">(</span><span class="o">*</span><span class="n">promote</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+
+
+<span class="nd">@dispatch</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span>
+
+
+<span class="nd">@dispatch</span><span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span>
+</pre></div>
+</div>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">add</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="go">3</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">add</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>
+<span class="go">3.0</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">add</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>
+<span class="go">TypeError: No promotion rule for &quot;builtins.int&quot; and &quot;builtins.float&quot;.</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">add_promotion_rule</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">add</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>
+<span class="go">TypeError: Cannot convert a &quot;builtins.int&quot; to a &quot;builtins.float&quot;.</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">add_conversion_method</span><span class="p">(</span><span class="n">type_from</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">type_to</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">add</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>
+<span class="go">3.0</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="return-types">
+<h3>Return Types<a class="headerlink" href="#return-types" title="Permalink to this headline">¶</a></h3>
+<p>The keyword argument <code class="docutils literal notranslate"><span class="pre">return_type</span></code> can be set to specify return types:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="k">import</span> <span class="n">dispatch</span><span class="p">,</span> <span class="n">add_conversion_method</span>
+
+<span class="nd">@dispatch</span><span class="p">({</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">},</span> <span class="n">return_type</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">x</span>
+</pre></div>
+</div>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">1</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>
+<span class="go">TypeError: Expected return type &quot;builtins.int&quot;, but got type &quot;builtins.str&quot;.</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">add_conversion_method</span><span class="p">(</span><span class="n">type_from</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">type_to</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>
+<span class="go">1</span>
+</pre></div>
+</div>
+</div>
 <div class="section" id="method-precedence">
 <h3>Method Precedence<a class="headerlink" href="#method-precedence" title="Permalink to this headline">¶</a></h3>
+<p>The keyword argument <code class="docutils literal notranslate"><span class="pre">precedence</span></code> can be set to an integer value to
+specify precedence levels of methods, which are used to break ambiguity:</p>
 <div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="k">import</span> <span class="n">dispatch</span>
 
 <span class="k">class</span> <span class="nc">Element</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -225,6 +591,7 @@
 </div>
 <div class="section" id="parametric-classes">
 <h3>Parametric Classes<a class="headerlink" href="#parametric-classes" title="Permalink to this headline">¶</a></h3>
+<p>The decorator <code class="docutils literal notranslate"><span class="pre">parametric</span></code> can be used to create parametric classes:</p>
 <div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="k">import</span> <span class="n">dispatch</span><span class="p">,</span> <span class="n">parametric</span>
 
 <span class="nd">@parametric</span>
@@ -267,87 +634,30 @@
 </pre></div>
 </div>
 </div>
-<div class="section" id="variable-types">
-<h3>Variable Types<a class="headerlink" href="#variable-types" title="Permalink to this headline">¶</a></h3>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="k">import</span> <span class="n">dispatch</span>
+<div class="section" id="dispatch-from-type-annotations">
+<h3>Dispatch From Type Annotations<a class="headerlink" href="#dispatch-from-type-annotations" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">Dispatcher.annotations</span></code> is an experimental feature that can be used
+to dispatch on a function’s type annotations:</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="k">import</span> <span class="n">dispatch</span><span class="p">,</span> <span class="n">add_conversion_method</span>
 
-<span class="nd">@dispatch</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;single argument&#39;</span><span class="p">)</span>
+<span class="n">add_conversion_method</span><span class="p">(</span><span class="n">type_from</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">type_to</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
 
-<span class="nd">@dispatch</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="p">[</span><span class="nb">int</span><span class="p">])</span>
-<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">xs</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;multiple arguments&#39;</span><span class="p">)</span>
+
+<span class="nd">@dispatch</span><span class="o">.</span><span class="n">annotations</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">int_to_str</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">x</span>
+
+
+<span class="nd">@dispatch</span><span class="o">.</span><span class="n">annotations</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">int_to_str</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;I only take integers!&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<span class="go">single argument</span>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">int_to_str</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="go">ValueError: I only take integers!</span>
 
-<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="go">multiple arguments</span>
-
-<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-<span class="go">multiple arguments</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="union-types">
-<h3>Union Types<a class="headerlink" href="#union-types" title="Permalink to this headline">¶</a></h3>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="k">import</span> <span class="n">dispatch</span>
-
-<span class="nd">@dispatch</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;fallback&#39;</span><span class="p">)</span>
-
-<span class="nd">@dispatch</span><span class="p">({</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">})</span>
-<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;int or str&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<span class="go">int or str</span>
-
-<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">)</span>
-<span class="go">int or str</span>
-
-<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
-<span class="go">fallback</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="inheritance">
-<h3>Inheritance<a class="headerlink" href="#inheritance" title="Permalink to this headline">¶</a></h3>
-<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="k">import</span> <span class="n">Dispatcher</span><span class="p">,</span> <span class="n">Referentiable</span><span class="p">,</span> <span class="n">Self</span>
-
-<span class="k">class</span> <span class="nc">Kernel</span><span class="p">(</span><span class="n">Referentiable</span><span class="p">):</span>
-    <span class="n">dispatch</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">(</span><span class="n">in_class</span><span class="o">=</span><span class="n">Self</span><span class="p">)</span>
-
-    <span class="nd">@dispatch</span><span class="p">(</span><span class="n">Self</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s1">&#39;kernel&#39;</span>
-
-<span class="k">class</span> <span class="nc">StationaryKernel</span><span class="p">(</span><span class="n">Kernel</span><span class="p">,</span> <span class="n">Referentiable</span><span class="p">):</span>
-    <span class="n">dispatch</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">(</span><span class="n">in_class</span><span class="o">=</span><span class="n">Self</span><span class="p">)</span>
-
-    <span class="nd">@dispatch</span><span class="p">(</span><span class="n">Self</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s1">&#39;stationary kernel&#39;</span>
-
-<span class="n">kernel</span> <span class="o">=</span> <span class="n">Kernel</span><span class="p">()</span>
-<span class="n">stationary_kernel</span> <span class="o">=</span> <span class="n">StationaryKernel</span><span class="p">()</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">kernel</span> <span class="o">+</span> <span class="n">kernel</span>
-<span class="go">&#39;kernel&#39;</span>
-
-<span class="gp">&gt;&gt;&gt; </span><span class="n">kernel</span> <span class="o">+</span> <span class="n">stationary_kernel</span>
-<span class="go">&#39;kernel&#39;</span>
-
-<span class="gp">&gt;&gt;&gt; </span><span class="n">stationary_kernel</span> <span class="o">+</span> <span class="n">kernel</span>
-<span class="go">&#39;kernel&#39;</span>
-
-<span class="gp">&gt;&gt;&gt; </span><span class="n">stationary_kernel</span> <span class="o">+</span> <span class="n">stationary_kernel</span>
-<span class="go">&#39;stationary kernel&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">int_to_str</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">&#39;1&#39;</span>
 </pre></div>
 </div>
 </div>
