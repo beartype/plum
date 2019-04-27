@@ -152,6 +152,7 @@
 
 <span class="kn">import</span> <span class="nn">abc</span>
 <span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">six</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;ResolutionError&#39;</span><span class="p">,</span>
            <span class="s1">&#39;Resolvable&#39;</span><span class="p">,</span>
@@ -200,7 +201,16 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_obj</span></div></div>
 
 
-<div class="viewcode-block" id="Referentiable"><a class="viewcode-back" href="../../source/plum.resolvable.html#plum.resolvable.Referentiable">[docs]</a><span class="k">class</span> <span class="nc">Referentiable</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">ReferentiableTracker</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Metaclass that tracks referentiables.&quot;&quot;&quot;</span>
+    <span class="n">referentiables</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">dct</span><span class="p">):</span>
+        <span class="n">ReferentiableTracker</span><span class="o">.</span><span class="n">referentiables</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+        <span class="nb">type</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">dct</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Referentiable"><a class="viewcode-back" href="../../source/plum.resolvable.html#plum.resolvable.Referentiable">[docs]</a><span class="k">class</span> <span class="nc">Referentiable</span><span class="p">(</span><span class="n">six</span><span class="o">.</span><span class="n">with_metaclass</span><span class="p">(</span><span class="n">ReferentiableTracker</span><span class="p">,</span> <span class="nb">object</span><span class="p">)):</span>
     <span class="sd">&quot;&quot;&quot;A class that can be referenced through :class:`.resolvable.Reference`.&quot;&quot;&quot;</span></div>
 
 
@@ -208,16 +218,16 @@
     <span class="sd">&quot;&quot;&quot;Resolves to the last subclass of :class:`.resolvable.Referentiable`.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">pos</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">Referentiable</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pos</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ReferentiableTracker</span><span class="o">.</span><span class="n">referentiables</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Reference.resolve"><a class="viewcode-back" href="../../source/plum.resolvable.html#plum.resolvable.Reference.resolve">[docs]</a>    <span class="k">def</span> <span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">subclasses</span> <span class="o">=</span> <span class="n">Referentiable</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">()</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">subclasses</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos</span><span class="p">:</span>
+        <span class="n">referentiables</span> <span class="o">=</span> <span class="n">Referentiable</span><span class="o">.</span><span class="n">referentiables</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">referentiables</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ResolutionError</span><span class="p">(</span>
-                <span class="s1">&#39;Requesting subclass </span><span class="si">{}</span><span class="s1"> of Referentiable, whereas only </span><span class="si">{}</span><span class="s1"> &#39;</span>
-                <span class="s1">&#39;exist(s).&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">subclasses</span><span class="p">)))</span>
+                <span class="s1">&#39;Requesting referentiable </span><span class="si">{}</span><span class="s1">, whereas only </span><span class="si">{}</span><span class="s1"> exist(s).&#39;</span>
+                <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">referentiables</span><span class="p">)))</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">subclasses</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pos</span><span class="p">]</span></div></div>
+            <span class="k">return</span> <span class="n">referentiables</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pos</span><span class="p">]</span></div></div>
 </pre></div>
 
            </div>
