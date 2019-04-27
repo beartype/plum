@@ -11,15 +11,13 @@ Features:
     Other:
         ☐ Improved formatting of error messages.
 
-Bugs:
-    ☐ Inconsistent behaviour of `A.__subclassses__()` in `test_type.test_self` and `test_dispatcher_function.test_invoke_inheritance` in Python 2.7.
-        See note before `test_dispatcher_function.test_invoke_inheritance`.
-
  Other:
     ☐ Is there a better alternative to numeric method precedences?
 
 ＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿
 Archive:
+ ✓ Inconsistent behaviour of `A.__subclassses__()` in `test_type.test_self` and `test_dispatcher_function.test_invoke_inheritance` in Python 2.7. @done (19-04-27 22:22) @project(Bugs)
+  See note before `test_dispatcher_function.test_invoke_inheritance`.
  ✓ Split up tests. @critical @done (18-06-19 03:24) @project(Refactor)
  ✓ Docstrings: make distinction between Plum types and Python types. @critical @done (18-06-19 03:24) @project(Refactor)
  ✓ Coverage. @critical @done (18-06-19 03:24) @project(Refactor)

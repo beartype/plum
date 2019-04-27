@@ -4,6 +4,7 @@ from __future__ import division, print_function, absolute_import
 
 import abc
 import logging
+import six
 
 __all__ = ['ResolutionError',
            'Resolvable',
@@ -52,7 +53,16 @@ class Promise(Resolvable):
             return self._obj
 
 
-class Referentiable(object):
+class ReferentiableTracker(type):
+    """Metaclass that tracks referentiables."""
+    referentiables = []
+
+    def __init__(cls, name, bases, dct):
+        ReferentiableTracker.referentiables.append(cls)
+        type.__init__(cls, name, bases, dct)
+
+
+class Referentiable(six.with_metaclass(ReferentiableTracker, object)):
     """A class that can be referenced through :class:`.resolvable.Reference`."""
 
 
@@ -60,13 +70,13 @@ class Reference(Resolvable):
     """Resolves to the last subclass of :class:`.resolvable.Referentiable`."""
 
     def __init__(self):
-        self.pos = len(Referentiable.__subclasses__())
+        self.pos = len(ReferentiableTracker.referentiables)
 
     def resolve(self):
-        subclasses = Referentiable.__subclasses__()
-        if len(subclasses) - 1 < self.pos:
+        referentiables = Referentiable.referentiables
+        if len(referentiables) - 1 < self.pos:
             raise ResolutionError(
-                'Requesting subclass {} of Referentiable, whereas only {} '
-                'exist(s).'.format(self.pos + 1, len(subclasses)))
+                'Requesting referentiable {}, whereas only {} exist(s).'
+                ''.format(self.pos + 1, len(referentiables)))
         else:
-            return subclasses[self.pos]
+            return referentiables[self.pos]

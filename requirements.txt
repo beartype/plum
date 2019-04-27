@@ -1,2 +1,4 @@
 nose
 coveralls
+numpy
+six

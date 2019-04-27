@@ -124,33 +124,25 @@ def test_invoke():
     yield eq, f.invoke({int, str, float})(1), 'int, str, or float'
 
 
-# TODO:
-#   If the following classes are defined inside `test_invoke_inheritance`,
-#   `Referentiable.__subclasses__()` in `test_type.test_self` does not add `A`
-#   to the end in Python 2.7. Why?
-
-class A(object):
-    def do(self, x):
-        return 'fallback'
-
-
-class B(A, Referentiable):
-    _dispatch = Dispatcher(in_class=Self)
-
-    @_dispatch(int)
-    def do(self, x):
-        return 'int'
-
-
-class C(B, Referentiable):
-    _dispatch = Dispatcher(in_class=Self)
-
-    @_dispatch(str)
-    def do(self, x):
-        return 'str'
-
-
 def test_invoke_inheritance():
+    class A(object):
+        def do(self, x):
+            return 'fallback'
+
+    class B(A, Referentiable):
+        _dispatch = Dispatcher(in_class=Self)
+
+        @_dispatch(int)
+        def do(self, x):
+            return 'int'
+
+    class C(B, Referentiable):
+        _dispatch = Dispatcher(in_class=Self)
+
+        @_dispatch(str)
+        def do(self, x):
+            return 'str'
+
     c = C()
 
     # Test bound calls.
