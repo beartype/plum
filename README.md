@@ -6,8 +6,319 @@
 
 Everybody likes multiple dispatch, just like everybody likes plums.
 
-## Examples
+* [Installation](#installation)
+* [Basic Usage](#basic-usage)
+* [Advanced Features by Example](#advanced-features-by-example)
+    - [Add Multiple Methods](#add-multiple-methods)
+    - [Extend a Function From Another Package](#extend-a-function-from-another-package)
+    - [Directly Invoke a Method](#directly-invoke-a-method)
+    - [Union Types](#union-types)
+    - [Variable Arguments](#variable-arguments)
+    - [Inheritance](#inheritance)
+    - [Conversion](#conversion)
+    - [Promotion](#promotion)
+    - [Return Types](#return-types)
+    - [Method Precedence](#method-precedence)
+    - [Parametric Classes](#parametric-classes)
+    - [Dispatch From Type Annotations](#dispatch-from-type-annotations)
+
+## Installation
+
+Plum requires at least Python 2.7 or Python 3.6.
+To install the package, run the following sequence of commands:
+
+```
+git clone https://github.com/wesselb/plum
+cd plum
+make install
+```
+
+## Basic Usage
+
+Multiple dispatch allows you to implement multiple *methods* for the same 
+*function*, where the methods specify the types of their arguments:
+
+```python
+from plum import dispatch
+
+@dispatch(str)
+def f(x):
+    return 'This is a string!'
+    
+
+@dispatch(int)
+def f(x):
+    return 'This is an integer!'
+```
+
+```python
+>>> f('1')
+'This is a string!'
+
+>>> f(1)
+'This is an integer!'
+```
+
+We haven't implemented a method for `float`s, so in that case an exception 
+will be raised:
+
+```python
+>>> f(1.0)
+NotFoundLookupError: For function "f", signature (builtins.float) could not be resolved.
+```
+
+Instead of implementing a method for `float`s, let's implement a method for 
+all numbers:
+
+```python
+from numbers import Number
+
+
+@dispatch(Number)
+def f(x):
+    return 'This is a number!'
+```
+
+Since a `float` is a `Number`, `f(1.0)` will return `'This is a number!'`.
+But an `int` is also a `Number`, so `f(1)` can either return 
+`'This is an integer!'` or `'This is a number!'`.
+The rule of multiple dispatch is that the *most specific* method is chosen:
+
+
+```python
+>>> f(1)
+'This is an integer!'
+```
+
+since an `int` is a `Number`, but a `Number` is not necessarily an `int`.
+
+For an excellent and way more detailed overview of multiple dispatch, see the
+[manual of the Julia Language](https://docs.julialang.org/en/).
+
+## Advanced Features by Example
+
+### Add Multiple Methods
+`Dispatcher.multi` can be used to implement multiple methods at once:
+
+```python
+from plum import dispatch
+
+@dispatch.multi((int, int), (float, float))
+def add(x, y):
+    return x + y
+```
+
+```python
+>>> add(1, 1)
+2
+
+>>> add(1.0, 1.0)
+2.0
+
+>>> add(1, 1.0)
+NotFoundLookupError: For function "add", signature (builtins.int, builtins.float) could not be resolved.
+```
+
+### Extend a Function From Another Package
+`Function.extend` can be used to extend a particular function:
+
+```python
+from package import f
+
+@f.extend(int)
+def f(x):
+    return 'new behaviour'
+```
+
+```python
+>>> f(1.0)
+'old behaviour'
+
+>>> f(1)
+'new behaviour'
+```
+
+### Directly Invoke a Method
+`Function.invoke` can be used to invoke a method given types of the arguments:
+
+```python
+from plum import dispatch
+
+@dispatch(int)
+def f(x):
+    return 'int'
+    
+    
+@dispatch(str)
+def f(x):
+    return 'str'
+```
+
+```python
+>>> f(1)
+'int'
+
+>>> f('1')
+'str'
+
+>>> f.invoke(int)('1')
+'int'
+
+>>> f.invoke(str)(1)
+'str'
+```
+
+### Union Types
+Sets can be used to instantiate union types:
+
+```python
+from plum import dispatch
+
+@dispatch(object)
+def f(x):
+    print('fallback')
+
+@dispatch({int, str})
+def f(x):
+    print('int or str')
+```
+
+```
+>>> f(1)
+int or str
+
+>>> f('1')
+int or str
+
+>>> f(1.0)
+fallback
+```
+
+### Variable Arguments
+A list can be used to specify variable arguments:
+
+```python
+from plum import dispatch
+
+@dispatch(int)
+def f(x):
+    print('single argument')
+
+@dispatch(int, [int])
+def f(x, *xs):
+    print('multiple arguments')
+```
+
+```
+>>> f(1)
+single argument
+
+>>> f(1, 2)
+multiple arguments
+
+>>> f(1, 2, 3)
+multiple arguments
+```
+
+### Inheritance
+
+Since every class in Python can be subclassed, diagonal dispatch cannot be 
+implemented.
+However, inheritance can be used to achieve a form of diagonal dispatch:
+
+```python
+from plum import Dispatcher, Referentiable, Self
+
+class Real(Referentiable):
+    dispatch = Dispatcher(in_class=Self)
+
+    @dispatch(Self)
+    def __add__(self, other):
+        return 'real'
+
+class Rational(Real, Referentiable):
+    dispatch = Dispatcher(in_class=Self)
+
+    @dispatch(Self)
+    def __add__(self, other):
+        return 'rational'
+
+real = Real()
+rational = Rational()
+```
+
+
+```
+>>> real + real
+'real'
+
+>>> real + rational
+'real'
+
+>>> rational + real
+'real'
+
+>>> rational + rational
+'rational'
+```
+
+
+### Conversion
+The function `convert` can be used to convert objects of one type to another:
+
+```python
+from numbers import Number
+
+from plum import convert
+
+
+class Rational(object):
+    def __init__(self, num, denom):
+        self.num = num
+        self.denom = denom
+```
+
+```python
+>>> convert(0.5, Number)
+0.5
+
+>>> convert(Rational(1, 2), Number)
+TypeError: Cannot convert a "__main__.Rational" to a "numbers.Number".
+```
+
+The `TypeError` indicates that `convert` does not know how to convert a 
+`Rational` to a `Number`.
+Let us implement that conversion:
+
+```python
+from operator import truediv
+
+from plum import conversion_method
+        
+
+@conversion_method(type_from=Rational, type_to=Number)
+def rational_to_number(q):
+    return truediv(q.num, q.denom)
+```
+
+```python
+>>> convert(Rational(1, 2), Number)
+0.5
+```
+
+Instead of the decorator `conversion_method`, one can also use 
+`add_conversion_method`:
+
+
+```python
+from plum import add_conversion_method
+
+add_conversion_method(type_from, type_to, conversion_function)
+```
+
 ### Promotion
+The function `promote` can be used to promote objects to a common type:
+
 ```python
 from plum import dispatch, promote, add_promotion_rule, add_conversion_method
 
@@ -48,6 +359,8 @@ TypeError: Cannot convert a "builtins.int" to a "builtins.float".
 ```
 
 ### Return Types
+The keyword argument `return_type` can be set to specify return types:
+
 ```python
 from plum import dispatch, add_conversion_method
 
@@ -71,6 +384,9 @@ TypeError: Expected return type "builtins.int", but got type "builtins.str".
 ```
 
 ### Method Precedence
+The keyword argument `precedence` can be set to an integer value to specify 
+precedence levels of methods, which are used to break ambiguity:
+
 ```python
 from plum import dispatch
 
@@ -129,6 +445,8 @@ AmbiguousLookupError: For function "mul_no_precedence", signature (__main__.Zero
 ```
 
 ### Parametric Classes
+The decorator `parametric` can be used to create parametric classes:
+
 ```python
 from plum import dispatch, parametric
 
@@ -173,92 +491,36 @@ True
 ```
 
 
-### Variable Types
+### Dispatch From Type Annotations
+`Dispatcher.annotations` is an experimental feature that can be used to 
+dispatch on a function's type annotations:
+
 ```python
-from plum import dispatch
+from plum import dispatch, add_conversion_method
 
-@dispatch(int)
-def f(x):
-    print('single argument')
+add_conversion_method(type_from=int, type_to=str, f=str)
 
-@dispatch(int, [int])
-def f(x, *xs):
-    print('multiple arguments')
+
+@dispatch.annotations()
+def int_to_str(x: int) -> str:
+    return x
+    
+    
+@dispatch.annotations()
+def int_to_str(x):
+    raise ValueError('I only take integers!')
 ```
 
-```
->>> f(1)
-single argument
-
->>> f(1, 2)
-multiple arguments
-
->>> f(1, 2, 3)
-multiple arguments
-```
-
-### Union Types
 ```python
-from plum import dispatch
+>>> int_to_str(1.0)
+ValueError: I only take integers!
 
-@dispatch(object)
-def f(x):
-    print('fallback')
-
-@dispatch({int, str})
-def f(x):
-    print('int or str')
+>>> int_to_str(1)
+'1'
 ```
 
 
-```
->>> f(1)
-int or str
 
->>> f('1')
-int or str
-
->>> f(1.0)
-fallback
-```
-
-
-### Inheritance
-```python
-from plum import Dispatcher, Referentiable, Self
-
-class Kernel(Referentiable):
-    dispatch = Dispatcher(in_class=Self)
-
-    @dispatch(Self)
-    def __add__(self, other):
-        return 'kernel'
-
-class StationaryKernel(Kernel, Referentiable):
-    dispatch = Dispatcher(in_class=Self)
-
-    @dispatch(Self)
-    def __add__(self, other):
-        return 'stationary kernel'
-
-kernel = Kernel()
-stationary_kernel = StationaryKernel()
-```
-
-
-```
->>> kernel + kernel
-'kernel'
-
->>> kernel + stationary_kernel
-'kernel'
-
->>> stationary_kernel + kernel
-'kernel'
-
->>> stationary_kernel + stationary_kernel
-'stationary kernel'
-```
 
 
 
