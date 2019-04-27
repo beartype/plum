@@ -1,13 +1,15 @@
 Features:
-    ☐ Type intersection.
-        ☐ In the case of ambiguity, show the method that would break the ambiguity. @high
-    ☐ Improved formatting of error messages. @high
-    ☐ Concrete classes and type variables to perform diagonal dispatch.
-    ☐ Add support for type annotations.
-    ☐ Add support for typing module.
+    Type system:
+        ☐ Type intersection.
+            ☐ Show method to break ambiguity.
+        ☐ Concrete classes and type variables to perform diagonal dispatch.
+        ☐ Support parametrised generics.
+        ☐ Test signatures from annotations.
     Efficiency:
         ☐ Improved type resolution algorithm.
         ☐ More efficient caching strategy.
+    Other:
+        ☐ Improved formatting of error messages.
 
 Bugs:
     ☐ Inconsistent behaviour of `A.__subclassses__()` in `test_type.test_self` and `test_dispatcher_function.test_invoke_inheritance` in Python 2.7.
