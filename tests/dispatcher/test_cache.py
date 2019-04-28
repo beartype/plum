@@ -16,18 +16,26 @@ def test_cache():
     def f(x):
         return 1
 
+    @dispatch({int, float})
+    def f(x):
+        return 1
+
+    @dispatch({int, float, str})
+    def f(x):
+        return 1
+
     dur_native = benchmark(f_native, (1,))
     dur_plum_first = benchmark(f, (1,), n=1)
     dur_plum = benchmark(f, (1,))
 
-    # A cached call should not be more than 30 times slower than a native call.
-    yield le, dur_plum, 30 * dur_native, 'compare native'
+    # A cached call should not be more than 500 times slower than a native call.
+    yield le, dur_plum, 500 * dur_native, 'compare native'
 
-    # A first call should not be more than 200 times slower than a first call.
-    yield le, dur_plum_first, 200 * dur_plum, 'compare first'
+    # A first call should not be more than 100 times slower than a cached call.
+    yield le, dur_plum_first, 100 * dur_plum, 'compare first'
 
-    # The cached call should be at least 20 times faster than a first call.
-    yield le, dur_plum, dur_plum_first / 20, 'cache performance'
+    # The cached call should be at least 10 times faster than a first call.
+    yield le, dur_plum, dur_plum_first / 10, 'cache performance'
 
     # Test cache correctness.
     yield eq, f(1), 1, 'cache correctness 1'
