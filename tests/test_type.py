@@ -31,6 +31,12 @@ def test_union():
           '{{{!r}, {!r}}}'.format(Type(int), Type(str))
     yield eq, set(Union(int, str).get_types()), {str, int}
 
+    # Test equivalence between `Union` and `Type`.
+    yield eq, hash(Union(int)), hash(Type(int))
+    yield neq, hash(Union(int, str)), hash(Type(int))
+    yield eq, repr(Union(int)), repr(Type(int))
+    yield neq, repr(Union(int, str)), repr(Type(int))
+
 
 def test_type():
     yield eq, hash(Type(int)), hash(Type(int))
@@ -63,14 +69,14 @@ def test_typetype():
     Promised = PromisedType()
     Promised.deliver(int)
 
-    yield le, as_type(type(int)), as_type(TypeType)
-    yield le, as_type(type(Promised)), as_type(TypeType)
-    yield le, as_type(type({int})), as_type(TypeType)
-    yield le, as_type(type([int])), as_type(TypeType)
+    yield le, as_type(type(int)), TypeType
+    yield le, as_type(type(Promised)), TypeType
+    yield le, as_type(type({int})), TypeType
+    yield le, as_type(type([int])), TypeType
 
-    yield nle, as_type(int), as_type(TypeType)
-    yield nle, as_type(Promised), as_type(TypeType)
-    yield nle, as_type({int}), as_type(TypeType)
+    yield nle, as_type(int), TypeType
+    yield nle, as_type(Promised), TypeType
+    yield nle, as_type({int}), TypeType
 
 
 def test_astype():

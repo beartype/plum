@@ -107,10 +107,16 @@ class Union(ComparableType):
         self._types = tuple(as_type(t) for t in types)
 
     def __hash__(self):
-        return multihash(Union, frozenset(self._types))
+        if len(self._types) == 1:
+            return hash(self._types[0])
+        else:
+            return multihash(Union, frozenset(self._types))
 
     def __repr__(self):
-        return '{{{}}}'.format(', '.join(repr(t) for t in self._types))
+        if len(self._types) == 1:
+            return repr(self._types[0])
+        else:
+            return '{{{}}}'.format(', '.join(repr(t) for t in self._types))
 
     def get_types(self):
         return sum([t.get_types() for t in self._types], ())
@@ -157,10 +163,6 @@ class Self(Reference, PromisedType):
         implement `resolve()`. We need that from :class:`.resolvable.Reference`,
         so we inherit from :class:`.resolvable.Reference` first.
     """
-
-
-TypeType = {type, AbstractType, set, list}
-"""The type of a Plum type, including shorthands."""
 
 
 def as_type(obj):
@@ -224,4 +226,8 @@ def is_type(t):
     Returns:
         bool: `t` is `object`.
     """
-    return isinstance(t, tuple(TypeType))
+    return isinstance(t, TypeType.get_types())
+
+
+TypeType = Union(type, AbstractType, list, set)
+"""The type of a Plum type, including shorthands."""
