@@ -137,3 +137,8 @@ def promote(*objs):
 def promote(obj):
     # Promote should always return a tuple to avoid edge cases.
     return (obj,)
+
+
+@_dispatch()
+def promote():
+    return ()

@@ -52,6 +52,7 @@ def test_conversion():
 def test_promotion():
     convert_methods = save_convert_methods()
 
+    yield eq, promote(), ()
     yield eq, promote(1), (1,)
     yield eq, promote(1.), (1.,)
     yield eq, promote(1, 1), (1, 1)
