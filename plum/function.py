@@ -9,6 +9,7 @@ from plum.type import is_object
 from .tuple import Tuple
 from .type import as_type, is_type
 from .util import get_default
+from .resolvable import Promise
 
 __all__ = ['Function', 'AmbiguousLookupError', 'NotFoundLookupError']
 log = logging.getLogger(__name__)
@@ -23,16 +24,14 @@ class NotFoundLookupError(LookupError):
     found."""
 
 
-class _DNS(object):
-    """A dynamic name space to which the function `convert` will be assigned.
-    This is necessary to avoid circular imports."""
-
-    convert = None
+# These promises are necessary to avoid circular imports.
+promised_convert = Promise()  #: This will resolve to `.promotion.convert`.
+promised_type_of = Promise()  #: This will resolve to `.parametric.type_of`.
 
 
 def _convert(obj, target_type):
-    """Convert an object to a particular type. Calls `.function._DNS.convert`
-    if `target_type` is not `object`.
+    """Convert an object to a particular type. Converts if `target_type` is not
+    `object`.
 
     Args:
         obj (object): Object to convert.
@@ -44,7 +43,7 @@ def _convert(obj, target_type):
     if is_object(target_type):
         return obj
     else:
-        return _DNS.convert(obj, target_type)
+        return promised_convert.resolve()(obj, target_type)
 
 
 class WrappedMethod(object):
@@ -100,6 +99,10 @@ class Function(object):
         self.methods = {}
         self.precedences = {}
 
+        # Keep track of whether any of the signatures contains a parametric
+        # type. This is a necessary performance optimisation.
+        self._parametric = False
+
         self._cache = {}
         self._class = as_type(in_class) if in_class else None
 
@@ -149,6 +152,7 @@ class Function(object):
             self._resolved = []
             self.methods.clear()
             self.precedences.clear()
+            self._parametric = False
 
     def register(self, signature, f, precedence=0, return_type=object):
         """Register a method.
@@ -186,11 +190,16 @@ class Function(object):
             # Add to resolved registrations.
             self._resolved.append((signature, f, precedence, return_type))
 
+            # Check whether the signature contains a parametric type.
+            if any(t.parametric for t in signature.types):
+                self._parametric = True
+
         if registered:
             self._pending = []
 
             # Clear cache.
-            # TODO: Do something more clever.
+            # TODO: Do something more clever, but be careful with the tracking
+            # parametric types.
             self.clear_cache(reregister=False)
 
     def resolve_signature(self, signature):
@@ -249,6 +258,8 @@ class Function(object):
         Returns:
             tuple: Tuple containing method and return type.
         """
+        log.debug('Resolving method for types {}.'.format(types))
+
         # New registrations may invalidate cache, so resolve pending
         # registrations first.
         self._resolve_pending_registrations()
@@ -301,9 +312,19 @@ class Function(object):
         return method, return_type
 
     def __call__(self, *args, **kw_args):
-        # Get types of arguments for signature.
-        sig_args = args[1:] if self._class else args  # Split off `self`.
-        sig_types = tuple(type(x) for x in sig_args)
+        # First resolve pending registrations, because the value of
+        # `self._parametric` depends on it.
+        self._resolve_pending_registrations()
+
+        # Get types of arg.
+        sig_args = args[1:] if self._class else args
+
+        # Get types of arguments for signature. Only use `type_of` if
+        # necessary, because it incurs a significant performance hit.
+        if self._parametric:
+            sig_types = [promised_type_of.resolve()(x) for x in sig_args]
+        else:
+            sig_types = [type(x) for x in sig_args]
 
         # Get method and return type, and perform call.
         method, return_type = self.resolve_method(*sig_types)

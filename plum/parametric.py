@@ -5,19 +5,29 @@ from __future__ import absolute_import, division, print_function
 import logging
 
 from .dispatcher import Dispatcher
+from .type import ComparableType, as_type, TypeType
+from .util import multihash
+from .function import promised_type_of
 
-__all__ = ['parametric', 'type_parameter', 'kind', 'Kind']
+__all__ = ['parametric',
+           'type_parameter',
+           'kind',
+           'Kind',
+           'ListType',
+           'TupleType',
+           'type_of']
 log = logging.getLogger(__name__)
 
-dispatch = Dispatcher()
+_dispatch = Dispatcher()
 
 
-@dispatch(object)
+@_dispatch(object)
 def _get_id(x):
+    print('getting id of ', x, 'with type', type(x))
     return id(x)
 
 
-@dispatch({int, float, str, type})
+@_dispatch({int, float, str, TypeType})
 def _get_id(x):
     return x
 
@@ -42,7 +52,7 @@ def parametric(Class):
             # Create subclass.
             name = Class.__name__ + '{' + ','.join(str(p) for p in ps) + '}'
             SubClass = type(name,
-                            (Class, ParametricClass,),
+                            (ParametricClass,),
                             {'__new__': __new__})
             SubClass._type_parameter = ps[0] if len(ps) == 1 else ps
             SubClass.__module__ = Class.__module__
@@ -58,7 +68,7 @@ def parametric(Class):
 
     # Create parametric class.
     ParametricClass = type(Class.__name__,
-                           Class.__bases__,
+                           (Class,),
                            {'__new__': __new__})
     ParametricClass.__module__ = Class.__module__
 
@@ -71,7 +81,7 @@ def parametric(Class):
     return ParametricClass
 
 
-@dispatch(object)
+@_dispatch(object)
 def type_parameter(x):
     """Get the type parameter of an instance of a parametric type.
 
@@ -106,3 +116,91 @@ def kind(SuperClass=object):
 
 
 Kind = kind()  #: A default kind provided for convenience.
+
+
+@parametric
+class _ParametricList(list):
+    """Parametric list type."""
+
+
+class ListType(ComparableType):
+    """Parametric list Plum type.
+
+    Args:
+        el_type (type or ptype): Element type.
+    """
+
+    def __init__(self, el_type):
+        self._el_type = as_type(el_type)
+
+    def __hash__(self):
+        return multihash(ListType, self._el_type)
+
+    def __repr__(self):
+        return 'ListType({})'.format(self._el_type)
+
+    def get_types(self):
+        return _ParametricList(self._el_type),
+
+    @property
+    def parametric(self):
+        return True
+
+
+@parametric
+class _ParametricTuple(tuple):
+    """Parametric tuple type."""
+
+
+class TupleType(ComparableType):
+    """Parametric tuple Plum type.
+
+    Args:
+        el_type (type or ptype): Element type.
+    """
+
+    def __init__(self, el_type):
+        self._el_type = as_type(el_type)
+
+    def __hash__(self):
+        return multihash(TupleType, self._el_type)
+
+    def __repr__(self):
+        return 'TupleType({})'.format(self._el_type)
+
+    def get_types(self):
+        return _ParametricTuple(self._el_type),
+
+    @property
+    def parametric(self):
+        return True
+
+
+def _types_of_iterable(xs):
+    types = {type_of(x) for x in xs}
+    if len(types) == 1:
+        return list(types)[0]
+    else:
+        return as_type(types)
+
+
+def type_of(obj):
+    """Get the Plum type of an object.
+
+    Args:
+        obj (object): Object to get type of.
+
+    Returns
+        ptype: Plum type of `obj`.
+    """
+    if isinstance(obj, list):
+        return ListType(_types_of_iterable(obj))
+
+    if isinstance(obj, tuple):
+        return TupleType(_types_of_iterable(obj))
+
+    return as_type(type(obj))
+
+
+# Deliver `type_of`.
+promised_type_of.deliver(type_of)

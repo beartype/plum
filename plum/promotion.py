@@ -5,8 +5,9 @@ from __future__ import absolute_import, division, print_function
 import logging
 
 from .dispatcher import Dispatcher
-from .function import _DNS
+from .function import promised_convert
 from .type import as_type, TypeType
+from .parametric import type_of
 
 __all__ = ['convert',
            'add_conversion_method',
@@ -18,7 +19,7 @@ log = logging.getLogger(__name__)
 _dispatch = Dispatcher()
 
 
-@_dispatch(object, object)
+@_dispatch(object, TypeType)
 def convert(obj, type_to):
     """Convert an object to a particular type.
 
@@ -29,18 +30,22 @@ def convert(obj, type_to):
     Returns:
         object: `object_to_covert` converted to type of `obj_from_target`.
     """
-    type_from = as_type(type(obj))
+    return _convert.invoke(type_of(obj), type_to)(obj, type_to)
+
+
+# Deliver `convert`.
+promised_convert.deliver(convert)
+
+
+@_dispatch(object, object)
+def _convert(obj, type_to):
+    type_from = type_of(obj)
     type_to = as_type(type_to)
     if type_from <= type_to:
         return obj
     else:
         raise TypeError('Cannot convert a "{}" to a "{}".'
                         ''.format(type_from, type_to))
-
-
-@_dispatch(object, TypeType)
-def convert(obj, type_to):
-    return convert.invoke(type(obj), type_to)(obj, type_to)
 
 
 def add_conversion_method(type_from, type_to, f):
@@ -52,7 +57,7 @@ def add_conversion_method(type_from, type_to, f):
         f (function): Function that converts an object of type `type_from` to
             type `type_to`.
     """
-    convert.extend(type_from, type_to)(lambda obj, _: f(obj))
+    _convert.extend(type_from, type_to)(lambda obj, _: f(obj))
 
 
 def conversion_method(type_from, type_to):
@@ -68,9 +73,6 @@ def conversion_method(type_from, type_to):
         add_conversion_method(type_from, type_to, f)
 
     return add_method
-
-
-_DNS.convert = convert  # Assign the convert function, as promised.
 
 
 @_dispatch(object, object)
@@ -120,7 +122,7 @@ def promote(*objs):
         tuple: `objs`, but all converted to a common type.
     """
     # Get the types of the objects.
-    types = [type(obj) for obj in objs]
+    types = [type_of(obj) for obj in objs]
 
     # Find the common type.
     common_type = _promotion_rule.invoke(types[0], types[1])(types[0], types[1])

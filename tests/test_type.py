@@ -4,21 +4,23 @@ from __future__ import absolute_import, division, print_function
 
 from . import Union, PromisedType, as_type, TypeType, ResolutionError, Self, \
     VarArgs, Type, Referentiable, is_object, is_type
-from . import ok, eq, neq, le, raises, nle, isnotinstance, isnotsubclass
+from . import ok, eq, neq, le, raises, nle, isnotinstance, isnotsubclass, \
+    assert_issubclass, assert_isinstance
 
 
 def test_varargs():
     yield eq, hash(VarArgs(int)), hash(VarArgs(int))
     yield eq, repr(VarArgs(int)), 'VarArgs({!r})'.format(Type(int))
     yield eq, VarArgs(int).expand(2), (Type(int), Type(int))
+    yield ok, not VarArgs(int).parametric
 
 
 def test_comparabletype():
-    yield isinstance, 1, Union(int)
+    yield assert_isinstance, 1, Union(int)
     yield isnotinstance, '1', Union(int)
-    yield isinstance, '1', Union(int, str)
-    yield issubclass, Union(int), Union(int)
-    yield issubclass, Union(int), Union(int, str)
+    yield assert_isinstance, '1', Union(int, str)
+    yield assert_issubclass, Union(int), Union(int)
+    yield assert_issubclass, Union(int), Union(int, str)
     yield isnotsubclass, Union(int, str), Union(int)
     yield eq, Union(int).mro(), int.mro()
     yield raises, RuntimeError, lambda: Union(int, str).mro()
@@ -30,6 +32,7 @@ def test_union():
           repr(Union(int, str)), \
           '{{{!r}, {!r}}}'.format(Type(int), Type(str))
     yield eq, set(Union(int, str).get_types()), {str, int}
+    yield ok, not Union(int).parametric
 
     # Test equivalence between `Union` and `Type`.
     yield eq, hash(Union(int)), hash(Type(int))
@@ -43,6 +46,7 @@ def test_type():
     yield neq, hash(Type(int)), hash(Type(str))
     yield eq, repr(Type(int)), '{}.{}'.format(int.__module__, int.__name__)
     yield eq, Type(int).get_types(), (int,)
+    yield ok, not Type(int).parametric
 
 
 def test_promisedtype():
@@ -55,6 +59,7 @@ def test_promisedtype():
     yield eq, hash(t), hash(Type(int))
     yield eq, repr(t), repr(Type(int))
     yield eq, t.get_types(), Type(int).get_types()
+    yield ok, not t.parametric
 
 
 class A(Referentiable):
@@ -82,8 +87,8 @@ def test_typetype():
 def test_astype():
     # Need `ok` here: printing will resolve `Self`.
     yield ok, isinstance(as_type(Self), Self)
-    yield isinstance, as_type([]), VarArgs
-    yield isinstance, as_type([int]), VarArgs
+    yield assert_isinstance, as_type([]), VarArgs
+    yield assert_isinstance, as_type([int]), VarArgs
     yield raises, TypeError, lambda: as_type([int, str])
     yield eq, as_type({int, str}), Union(int, str)
     yield eq, as_type(Type(int)), Type(int)

@@ -13,6 +13,7 @@ Everybody likes multiple dispatch, just like everybody likes plums.
     - [Extend a Function From Another Package](#extend-a-function-from-another-package)
     - [Directly Invoke a Method](#directly-invoke-a-method)
     - [Union Types](#union-types)
+    - [Parametric Types](#parametric-types)
     - [Variable Arguments](#variable-arguments)
     - [Inheritance](#inheritance)
     - [Conversion](#conversion)
@@ -179,6 +180,7 @@ from plum import dispatch
 def f(x):
     print('fallback')
 
+
 @dispatch({int, str})
 def f(x):
     print('int or str')
@@ -193,6 +195,44 @@ int or str
 
 >>> f(1.0)
 fallback
+```
+
+
+### Parametric Types
+The parametric types `TupleType` and `ListType` can be used to dispatch on 
+lists with particular types of elements.
+Importantly, the type system is *invariant*.
+
+```python
+from plum import dispatch, TupleType, ListType
+
+@dispatch({tuple, list})
+def f(x):
+    print('tuple or list')
+    
+    
+@dispatch(TupleType(int))
+def f(x):
+    print('tuple of int')
+    
+    
+@dispatch(ListType(int))
+def f(x):
+    print('list of int')
+```
+
+```python
+>>> f([1, 2])
+'list of int'
+
+>>> f([1, '2'])
+'tuple or list'
+
+>>> f((1, 2))
+'tuple of int'
+
+>>> f((1, '2'))
+'tuple or list'
 ```
 
 ### Variable Arguments
@@ -222,7 +262,6 @@ multiple arguments
 ```
 
 ### Inheritance
-
 Since every class in Python can be subclassed, diagonal dispatch cannot be 
 implemented.
 However, inheritance can be used to achieve a form of diagonal dispatch:

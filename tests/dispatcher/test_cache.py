@@ -2,7 +2,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from . import Dispatcher
+from . import Dispatcher, ListType
 from . import eq, le, benchmark
 
 
@@ -53,24 +53,28 @@ def test_cache_clearing():
     def f(x):
         return 1
 
-    dur1 = benchmark(f, (1,), n=1)
+    @dispatch(ListType(int))
+    def f(x):
+        return 1
+
+    f(1)
+
+    # Check that cache is used.
+    yield eq, len(f.methods), 2
+    yield eq, len(f.precedences), 2
+    yield eq, f._parametric, True
+
     dispatch.clear_cache()
 
     # Check that cache is cleared.
     yield eq, len(f.methods), 0
     yield eq, len(f.precedences), 0
+    yield eq, f._parametric, False
 
-    dur2 = benchmark(f, (1,), n=1)
+    f(1)
     Dispatcher.clear_all_cache()
 
     # Again check that cache is cleared.
     yield eq, len(f.methods), 0
     yield eq, len(f.precedences), 0
-
-    dur3 = benchmark(f, (1,), n=1)
-
-    # Check that caching yields improved timings.
-    yield le, dur1, dur2 * 5
-    yield le, dur2, dur1 * 5
-    yield le, dur1, dur3 * 5
-    yield le, dur3, dur1 * 5
+    yield eq, f._parametric, False

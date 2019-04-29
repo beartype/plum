@@ -2,9 +2,8 @@
 
 from __future__ import absolute_import, division, print_function
 
-from plum import Dispatcher, Referentiable, Self
-
-from . import eq, raises
+from . import Dispatcher, Referentiable, Self, ListType
+from . import eq, raises, ok
 
 
 def test_double_definition():
@@ -154,3 +153,23 @@ def test_invoke_inheritance():
     yield eq, C.do.invoke(str)(c, '1'), 'str'
     yield eq, C.do.invoke(int)(c, 1), 'int'
     yield eq, C.do.invoke(float)(c, 1.0), 'fallback'
+
+
+def test_parametric_tracking():
+    dispatch = Dispatcher()
+
+    @dispatch(int)
+    def f(x):
+        pass
+
+    yield ok, not f._parametric
+    f(1)
+    yield ok, not f._parametric
+
+    @dispatch(ListType(int))
+    def f(x):
+        pass
+
+    yield ok, not f._parametric
+    f(1)
+    yield ok, f._parametric

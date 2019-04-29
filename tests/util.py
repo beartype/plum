@@ -41,6 +41,14 @@ def nle(x, y):
     assert (not (x <= y))
 
 
+def assert_isinstance(x, y):
+    assert isinstance(x, y)
+
+
+def assert_issubclass(x, y):
+    assert issubclass(x, y)
+
+
 def isnotinstance(x, y):
     assert not isinstance(x, y)
 

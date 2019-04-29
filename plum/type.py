@@ -37,6 +37,12 @@ class AbstractType(object):
     def __repr__(self):
         pass  # pragma: no cover
 
+    @property
+    def parametric(self):
+        """Boolean that indicates whether this is or contains a parametric
+        type."""
+        return False
+
 
 class VarArgs(AbstractType):
     """Plum type that represents a variable number of the same Plum type.
@@ -65,6 +71,10 @@ class VarArgs(AbstractType):
             tuple: Expansion.
         """
         return (self.type,) * num
+
+    @property
+    def parametric(self):
+        return self.type.parametric
 
 
 class ComparableType(AbstractType, Comparable):
@@ -121,6 +131,10 @@ class Union(ComparableType):
     def get_types(self):
         return sum([t.get_types() for t in self._types], ())
 
+    @property
+    def parametric(self):
+        return any(t.parametric for t in self._types)
+
 
 class Type(ComparableType):
     """A Plum type encapsulating a single type.
@@ -154,6 +168,10 @@ class PromisedType(ComparableType, Promise):
     def get_types(self):
         return as_type(self.resolve()).get_types()
 
+    @property
+    def parametric(self):
+        return as_type(self.resolve()).parametric
+
 
 class Self(Reference, PromisedType):
     """Reference Plum type.
@@ -174,10 +192,9 @@ def as_type(obj):
     Returns:
         :class:`.type.AbstractType`: Plum type corresponding to `obj`.
     """
-    # :class:`.type.Self` has a shorthand notation that doesn't require the
-    # user to instantiate it.
-    if obj is Self:
-        return obj()
+    # If `obj` is already a Plum type, we're done.
+    if isinstance(obj, AbstractType):
+        return obj
 
     # A list is used as shorthand notation for varargs.
     if isinstance(obj, list):
@@ -188,21 +205,23 @@ def as_type(obj):
                             ''.format(str(obj)))
         elif len(obj) == 1:
             return VarArgs(as_type(obj[0]))
-        else:
-            # `len(obj) == 0`.
+        else:  # `len(obj) == 0`.
             return VarArgs()
 
     # A set is used as shorthand notation for a union.
     if isinstance(obj, set):
         return Union(*obj)
 
-    # Finally, perform conversions if necessary.
-    if isinstance(obj, AbstractType):
-        return obj
-    elif isinstance(obj, type):
+    # If `obj` is a `type`, handle shorthands; otherwise, wrap it in `Type`.
+    if isinstance(obj, type):
+        # :class:`.type.Self` has a shorthand notation that doesn't require the
+        # user to instantiate it.
+        if obj is Self:
+            return obj()
+
         return Type(obj)
-    else:
-        raise RuntimeError('Could not convert "{}" to a type.'.format(obj))
+
+    raise RuntimeError('Could not convert "{}" to a type.'.format(obj))
 
 
 def is_object(t):
