@@ -14,6 +14,7 @@ Everybody likes multiple dispatch, just like everybody likes plums.
       Package <#extend-a-function-from-another-package>`__
    -  `Directly Invoke a Method <#directly-invoke-a-method>`__
    -  `Union Types <#union-types>`__
+   -  `Parametric Types <#parametric-types>`__
    -  `Variable Arguments <#variable-arguments>`__
    -  `Inheritance <#inheritance>`__
    -  `Conversion <#conversion>`__
@@ -196,6 +197,7 @@ Sets can be used to instantiate union types:
     def f(x):
         print('fallback')
 
+
     @dispatch({int, str})
     def f(x):
         print('int or str')
@@ -210,6 +212,45 @@ Sets can be used to instantiate union types:
 
     >>> f(1.0)
     fallback
+
+Parametric Types
+~~~~~~~~~~~~~~~~
+
+The parametric types ``TupleType`` and ``ListType`` can be used to
+dispatch on lists with particular types of elements. Importantly, the
+type system is *invariant*.
+
+.. code:: python
+
+    from plum import dispatch, TupleType, ListType
+
+    @dispatch({tuple, list})
+    def f(x):
+        print('tuple or list')
+        
+        
+    @dispatch(TupleType(int))
+    def f(x):
+        print('tuple of int')
+        
+        
+    @dispatch(ListType(int))
+    def f(x):
+        print('list of int')
+
+.. code:: python
+
+    >>> f([1, 2])
+    'list of int'
+
+    >>> f([1, '2'])
+    'tuple or list'
+
+    >>> f((1, 2))
+    'tuple of int'
+
+    >>> f((1, '2'))
+    'tuple or list'
 
 Variable Arguments
 ~~~~~~~~~~~~~~~~~~

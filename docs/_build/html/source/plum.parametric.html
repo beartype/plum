@@ -207,9 +207,103 @@
 
 <dl class="class">
 <dt id="plum.parametric.Kind">
-<em class="property">class </em><code class="descclassname">plum.parametric.</code><code class="descname">Kind</code><a class="headerlink" href="#plum.parametric.Kind" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<em class="property">class </em><code class="descclassname">plum.parametric.</code><code class="descname">Kind</code><span class="sig-paren">(</span><em>*xs</em><span class="sig-paren">)</span><a class="headerlink" href="#plum.parametric.Kind" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#plum.parametric.Kind" title="plum.parametric.Kind"><code class="xref py py-class docutils literal notranslate"><span class="pre">plum.parametric.Kind</span></code></a></p>
 <p>A default kind provided for convenience.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="plum.parametric.ListType">
+<em class="property">class </em><code class="descclassname">plum.parametric.</code><code class="descname">ListType</code><span class="sig-paren">(</span><em>el_type</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/parametric.html#ListType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.parametric.ListType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">plum.type.ComparableType</span></code></p>
+<p>Parametric list Plum type.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>el_type</strong> (<em>type</em><em> or </em><em>ptype</em>) – Element type.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="plum.parametric.ListType.get_types">
+<code class="descname">get_types</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/parametric.html#ListType.get_types"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.parametric.ListType.get_types" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the types encapsulated by this Plum type.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Types encapsulated.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">tuple[type]</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="plum.parametric.ListType.parametric">
+<code class="descname">parametric</code><a class="headerlink" href="#plum.parametric.ListType.parametric" title="Permalink to this definition">¶</a></dt>
+<dd><p>Boolean that indicates whether this is or contains a parametric
+type.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="plum.parametric.TupleType">
+<em class="property">class </em><code class="descclassname">plum.parametric.</code><code class="descname">TupleType</code><span class="sig-paren">(</span><em>el_type</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/parametric.html#TupleType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.parametric.TupleType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">plum.type.ComparableType</span></code></p>
+<p>Parametric tuple Plum type.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>el_type</strong> (<em>type</em><em> or </em><em>ptype</em>) – Element type.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="plum.parametric.TupleType.get_types">
+<code class="descname">get_types</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/parametric.html#TupleType.get_types"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.parametric.TupleType.get_types" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the types encapsulated by this Plum type.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Types encapsulated.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">tuple[type]</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="plum.parametric.TupleType.parametric">
+<code class="descname">parametric</code><a class="headerlink" href="#plum.parametric.TupleType.parametric" title="Permalink to this definition">¶</a></dt>
+<dd><p>Boolean that indicates whether this is or contains a parametric
+type.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="plum.parametric.type_of">
+<code class="descclassname">plum.parametric.</code><code class="descname">type_of</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/parametric.html#type_of"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.parametric.type_of" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the Plum type of an object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>obj</strong> (<em>object</em>) – Object to get type of.</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Returns</dt>
+<dd>ptype: Plum type of <cite>obj</cite>.</dd>
+</dl>
 </dd></dl>
 
 </div>

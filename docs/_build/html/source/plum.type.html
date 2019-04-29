@@ -195,6 +195,13 @@ number of types. Defaults to <cite>object</cite>.</td>
 </table>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="plum.type.VarArgs.parametric">
+<code class="descname">parametric</code><a class="headerlink" href="#plum.type.VarArgs.parametric" title="Permalink to this definition">¶</a></dt>
+<dd><p>Boolean that indicates whether this is or contains a parametric
+type.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="class">
@@ -224,6 +231,13 @@ number of types. Defaults to <cite>object</cite>.</td>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="plum.type.Union.parametric">
+<code class="descname">parametric</code><a class="headerlink" href="#plum.type.Union.parametric" title="Permalink to this definition">¶</a></dt>
+<dd><p>Boolean that indicates whether this is or contains a parametric
+type.</p>
 </dd></dl>
 
 </dd></dl>
@@ -280,6 +294,13 @@ number of types. Defaults to <cite>object</cite>.</td>
 </table>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="plum.type.PromisedType.parametric">
+<code class="descname">parametric</code><a class="headerlink" href="#plum.type.PromisedType.parametric" title="Permalink to this definition">¶</a></dt>
+<dd><p>Boolean that indicates whether this is or contains a parametric
+type.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="class">
@@ -297,7 +318,7 @@ so we inherit from <a class="reference internal" href="plum.resolvable.html#plum
 
 <dl class="data">
 <dt id="plum.type.TypeType">
-<code class="descclassname">plum.type.</code><code class="descname">TypeType</code><em class="property"> = {&lt;class 'set'&gt;, &lt;class 'plum.type.AbstractType'&gt;, &lt;class 'type'&gt;, &lt;class 'list'&gt;}</em><a class="headerlink" href="#plum.type.TypeType" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">plum.type.</code><code class="descname">TypeType</code><em class="property"> = {builtins.type, plum.type.AbstractType, builtins.list, builtins.set}</em><a class="headerlink" href="#plum.type.TypeType" title="Permalink to this definition">¶</a></dt>
 <dd><p>The type of a Plum type, including shorthands.</p>
 </dd></dl>
 

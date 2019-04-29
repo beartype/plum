@@ -91,6 +91,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#extend-a-function-from-another-package">Extend a Function From Another Package</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#directly-invoke-a-method">Directly Invoke a Method</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#union-types">Union Types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parametric-types">Parametric Types</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#variable-arguments">Variable Arguments</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#inheritance">Inheritance</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#conversion">Conversion</a></li>
@@ -181,6 +182,7 @@
 Package</a></li>
 <li><a class="reference external" href="#directly-invoke-a-method">Directly Invoke a Method</a></li>
 <li><a class="reference external" href="#union-types">Union Types</a></li>
+<li><a class="reference external" href="#parametric-types">Parametric Types</a></li>
 <li><a class="reference external" href="#variable-arguments">Variable Arguments</a></li>
 <li><a class="reference external" href="#inheritance">Inheritance</a></li>
 <li><a class="reference external" href="#conversion">Conversion</a></li>
@@ -338,6 +340,7 @@ arguments:</p>
 <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;fallback&#39;</span><span class="p">)</span>
 
+
 <span class="nd">@dispatch</span><span class="p">({</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">})</span>
 <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;int or str&#39;</span><span class="p">)</span>
@@ -351,6 +354,42 @@ arguments:</p>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
 <span class="go">fallback</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="parametric-types">
+<h3>Parametric Types<a class="headerlink" href="#parametric-types" title="Permalink to this headline">¶</a></h3>
+<p>The parametric types <code class="docutils literal notranslate"><span class="pre">TupleType</span></code> and <code class="docutils literal notranslate"><span class="pre">ListType</span></code> can be used to
+dispatch on lists with particular types of elements. Importantly, the
+type system is <em>invariant</em>.</p>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="k">import</span> <span class="n">dispatch</span><span class="p">,</span> <span class="n">TupleType</span><span class="p">,</span> <span class="n">ListType</span>
+
+<span class="nd">@dispatch</span><span class="p">({</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">})</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;tuple or list&#39;</span><span class="p">)</span>
+
+
+<span class="nd">@dispatch</span><span class="p">(</span><span class="n">TupleType</span><span class="p">(</span><span class="nb">int</span><span class="p">))</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;tuple of int&#39;</span><span class="p">)</span>
+
+
+<span class="nd">@dispatch</span><span class="p">(</span><span class="n">ListType</span><span class="p">(</span><span class="nb">int</span><span class="p">))</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;list of int&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="code python highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+<span class="go">&#39;list of int&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;2&#39;</span><span class="p">])</span>
+<span class="go">&#39;tuple or list&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="go">&#39;tuple of int&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;2&#39;</span><span class="p">))</span>
+<span class="go">&#39;tuple or list&#39;</span>
 </pre></div>
 </div>
 </div>

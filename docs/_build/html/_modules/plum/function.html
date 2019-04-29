@@ -157,6 +157,7 @@
 <span class="kn">from</span> <span class="nn">.tuple</span> <span class="k">import</span> <span class="n">Tuple</span>
 <span class="kn">from</span> <span class="nn">.type</span> <span class="k">import</span> <span class="n">as_type</span><span class="p">,</span> <span class="n">is_type</span>
 <span class="kn">from</span> <span class="nn">.util</span> <span class="k">import</span> <span class="n">get_default</span>
+<span class="kn">from</span> <span class="nn">.resolvable</span> <span class="k">import</span> <span class="n">Promise</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Function&#39;</span><span class="p">,</span> <span class="s1">&#39;AmbiguousLookupError&#39;</span><span class="p">,</span> <span class="s1">&#39;NotFoundLookupError&#39;</span><span class="p">]</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -171,16 +172,14 @@
 <span class="sd">    found.&quot;&quot;&quot;</span></div>
 
 
-<span class="k">class</span> <span class="nc">_DNS</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A dynamic name space to which the function `convert` will be assigned.</span>
-<span class="sd">    This is necessary to avoid circular imports.&quot;&quot;&quot;</span>
-
-    <span class="n">convert</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="c1"># These promises are necessary to avoid circular imports.</span>
+<span class="n">promised_convert</span> <span class="o">=</span> <span class="n">Promise</span><span class="p">()</span>  <span class="c1">#: This will resolve to `.promotion.convert`.</span>
+<span class="n">promised_type_of</span> <span class="o">=</span> <span class="n">Promise</span><span class="p">()</span>  <span class="c1">#: This will resolve to `.parametric.type_of`.</span>
 
 
 <span class="k">def</span> <span class="nf">_convert</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">target_type</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Convert an object to a particular type. Calls `.function._DNS.convert`</span>
-<span class="sd">    if `target_type` is not `object`.</span>
+    <span class="sd">&quot;&quot;&quot;Convert an object to a particular type. Converts if `target_type` is not</span>
+<span class="sd">    `object`.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        obj (object): Object to convert.</span>
@@ -192,7 +191,7 @@
     <span class="k">if</span> <span class="n">is_object</span><span class="p">(</span><span class="n">target_type</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">obj</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">_DNS</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">target_type</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">promised_convert</span><span class="o">.</span><span class="n">resolve</span><span class="p">()(</span><span class="n">obj</span><span class="p">,</span> <span class="n">target_type</span><span class="p">)</span>
 
 
 <span class="k">class</span> <span class="nc">WrappedMethod</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -248,6 +247,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">methods</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">precedences</span> <span class="o">=</span> <span class="p">{}</span>
 
+        <span class="c1"># Keep track of whether any of the signatures contains a parametric</span>
+        <span class="c1"># type. This is a necessary performance optimisation.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_parametric</span> <span class="o">=</span> <span class="kc">False</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_class</span> <span class="o">=</span> <span class="n">as_type</span><span class="p">(</span><span class="n">in_class</span><span class="p">)</span> <span class="k">if</span> <span class="n">in_class</span> <span class="k">else</span> <span class="kc">None</span>
 
@@ -296,7 +299,8 @@
             <span class="c1"># Clear resolved.</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_resolved</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">precedences</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">precedences</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_parametric</span> <span class="o">=</span> <span class="kc">False</span></div>
 
 <div class="viewcode-block" id="Function.register"><a class="viewcode-back" href="../../source/plum.function.html#plum.function.Function.register">[docs]</a>    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signature</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">precedence</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">return_type</span><span class="o">=</span><span class="nb">object</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Register a method.</span>
@@ -334,11 +338,16 @@
             <span class="c1"># Add to resolved registrations.</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_resolved</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">signature</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">precedence</span><span class="p">,</span> <span class="n">return_type</span><span class="p">))</span>
 
+            <span class="c1"># Check whether the signature contains a parametric type.</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">parametric</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">signature</span><span class="o">.</span><span class="n">types</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_parametric</span> <span class="o">=</span> <span class="kc">True</span>
+
         <span class="k">if</span> <span class="n">registered</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_pending</span> <span class="o">=</span> <span class="p">[]</span>
 
             <span class="c1"># Clear cache.</span>
-            <span class="c1"># TODO: Do something more clever.</span>
+            <span class="c1"># TODO: Do something more clever, but be careful with the tracking</span>
+            <span class="c1"># parametric types.</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">clear_cache</span><span class="p">(</span><span class="n">reregister</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Function.resolve_signature"><a class="viewcode-back" href="../../source/plum.function.html#plum.function.Function.resolve_signature">[docs]</a>    <span class="k">def</span> <span class="nf">resolve_signature</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signature</span><span class="p">):</span>
@@ -397,6 +406,8 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            tuple: Tuple containing method and return type.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Resolving method for types </span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">types</span><span class="p">))</span>
+
         <span class="c1"># New registrations may invalidate cache, so resolve pending</span>
         <span class="c1"># registrations first.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_pending_registrations</span><span class="p">()</span>
@@ -449,9 +460,19 @@
         <span class="k">return</span> <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span></div>
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
-        <span class="c1"># Get types of arguments for signature.</span>
-        <span class="n">sig_args</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_class</span> <span class="k">else</span> <span class="n">args</span>  <span class="c1"># Split off `self`.</span>
-        <span class="n">sig_types</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">sig_args</span><span class="p">)</span>
+        <span class="c1"># First resolve pending registrations, because the value of</span>
+        <span class="c1"># `self._parametric` depends on it.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_pending_registrations</span><span class="p">()</span>
+
+        <span class="c1"># Get types of arg.</span>
+        <span class="n">sig_args</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_class</span> <span class="k">else</span> <span class="n">args</span>
+
+        <span class="c1"># Get types of arguments for signature. Only use `type_of` if</span>
+        <span class="c1"># necessary, because it incurs a significant performance hit.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parametric</span><span class="p">:</span>
+            <span class="n">sig_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">promised_type_of</span><span class="o">.</span><span class="n">resolve</span><span class="p">()(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">sig_args</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sig_types</span> <span class="o">=</span> <span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">sig_args</span><span class="p">]</span>
 
         <span class="c1"># Get method and return type, and perform call.</span>
         <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve_method</span><span class="p">(</span><span class="o">*</span><span class="n">sig_types</span><span class="p">)</span>

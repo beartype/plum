@@ -185,6 +185,12 @@
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">parametric</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Boolean that indicates whether this is or contains a parametric</span>
+<span class="sd">        type.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
 
 <div class="viewcode-block" id="VarArgs"><a class="viewcode-back" href="../../source/plum.type.html#plum.type.VarArgs">[docs]</a><span class="k">class</span> <span class="nc">VarArgs</span><span class="p">(</span><span class="n">AbstractType</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Plum type that represents a variable number of the same Plum type.</span>
@@ -212,7 +218,11 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            tuple: Expansion.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">,)</span> <span class="o">*</span> <span class="n">num</span></div></div>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">,)</span> <span class="o">*</span> <span class="n">num</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">parametric</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">parametric</span></div>
 
 
 <span class="k">class</span> <span class="nc">ComparableType</span><span class="p">(</span><span class="n">AbstractType</span><span class="p">,</span> <span class="n">Comparable</span><span class="p">):</span>
@@ -255,13 +265,23 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_types</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">as_type</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">types</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">multihash</span><span class="p">(</span><span class="n">Union</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">multihash</span><span class="p">(</span><span class="n">Union</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s1">&#39;{{</span><span class="si">{}</span><span class="s1">}}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;{{</span><span class="si">{}</span><span class="s1">}}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">))</span>
 
 <div class="viewcode-block" id="Union.get_types"><a class="viewcode-back" href="../../source/plum.type.html#plum.type.Union.get_types">[docs]</a>    <span class="k">def</span> <span class="nf">get_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">sum</span><span class="p">([</span><span class="n">t</span><span class="o">.</span><span class="n">get_types</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">],</span> <span class="p">())</span></div></div>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">([</span><span class="n">t</span><span class="o">.</span><span class="n">get_types</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">],</span> <span class="p">())</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">parametric</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">parametric</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Type"><a class="viewcode-back" href="../../source/plum.type.html#plum.type.Type">[docs]</a><span class="k">class</span> <span class="nc">Type</span><span class="p">(</span><span class="n">ComparableType</span><span class="p">):</span>
@@ -294,7 +314,11 @@
         <span class="k">return</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span>
 
 <div class="viewcode-block" id="PromisedType.get_types"><a class="viewcode-back" href="../../source/plum.type.html#plum.type.PromisedType.get_types">[docs]</a>    <span class="k">def</span> <span class="nf">get_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">as_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span><span class="o">.</span><span class="n">get_types</span><span class="p">()</span></div></div>
+        <span class="k">return</span> <span class="n">as_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span><span class="o">.</span><span class="n">get_types</span><span class="p">()</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">parametric</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">as_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span><span class="o">.</span><span class="n">parametric</span></div>
 
 
 <div class="viewcode-block" id="Self"><a class="viewcode-back" href="../../source/plum.type.html#plum.type.Self">[docs]</a><span class="k">class</span> <span class="nc">Self</span><span class="p">(</span><span class="n">Reference</span><span class="p">,</span> <span class="n">PromisedType</span><span class="p">):</span>
@@ -307,10 +331,6 @@
 <span class="sd">    &quot;&quot;&quot;</span></div>
 
 
-<span class="n">TypeType</span> <span class="o">=</span> <span class="p">{</span><span class="nb">type</span><span class="p">,</span> <span class="n">AbstractType</span><span class="p">,</span> <span class="nb">set</span><span class="p">,</span> <span class="nb">list</span><span class="p">}</span>
-<span class="sd">&quot;&quot;&quot;The type of a Plum type, including shorthands.&quot;&quot;&quot;</span>
-
-
 <div class="viewcode-block" id="as_type"><a class="viewcode-back" href="../../source/plum.type.html#plum.type.as_type">[docs]</a><span class="k">def</span> <span class="nf">as_type</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Convert object to a type.</span>
 
@@ -320,10 +340,9 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`.type.AbstractType`: Plum type corresponding to `obj`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># :class:`.type.Self` has a shorthand notation that doesn&#39;t require the</span>
-    <span class="c1"># user to instantiate it.</span>
-    <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="n">Self</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">obj</span><span class="p">()</span>
+    <span class="c1"># If `obj` is already a Plum type, we&#39;re done.</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">AbstractType</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">obj</span>
 
     <span class="c1"># A list is used as shorthand notation for varargs.</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
@@ -334,21 +353,23 @@
                             <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">obj</span><span class="p">)))</span>
         <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">VarArgs</span><span class="p">(</span><span class="n">as_type</span><span class="p">(</span><span class="n">obj</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># `len(obj) == 0`.</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># `len(obj) == 0`.</span>
             <span class="k">return</span> <span class="n">VarArgs</span><span class="p">()</span>
 
     <span class="c1"># A set is used as shorthand notation for a union.</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">set</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">Union</span><span class="p">(</span><span class="o">*</span><span class="n">obj</span><span class="p">)</span>
 
-    <span class="c1"># Finally, perform conversions if necessary.</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">AbstractType</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">obj</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+    <span class="c1"># If `obj` is a `type`, handle shorthands; otherwise, wrap it in `Type`.</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+        <span class="c1"># :class:`.type.Self` has a shorthand notation that doesn&#39;t require the</span>
+        <span class="c1"># user to instantiate it.</span>
+        <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="n">Self</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">obj</span><span class="p">()</span>
+
         <span class="k">return</span> <span class="n">Type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Could not convert &quot;</span><span class="si">{}</span><span class="s1">&quot; to a type.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span></div>
+
+    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Could not convert &quot;</span><span class="si">{}</span><span class="s1">&quot; to a type.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="is_object"><a class="viewcode-back" href="../../source/plum.type.html#plum.type.is_object">[docs]</a><span class="k">def</span> <span class="nf">is_object</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
@@ -372,7 +393,11 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        bool: `t` is `object`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">TypeType</span><span class="p">))</span></div>
+    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">TypeType</span><span class="o">.</span><span class="n">get_types</span><span class="p">())</span></div>
+
+
+<span class="n">TypeType</span> <span class="o">=</span> <span class="n">Union</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">AbstractType</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">set</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;The type of a Plum type, including shorthands.&quot;&quot;&quot;</span>
 </pre></div>
 
            </div>

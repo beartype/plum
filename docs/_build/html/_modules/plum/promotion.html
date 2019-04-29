@@ -153,8 +153,9 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 
 <span class="kn">from</span> <span class="nn">.dispatcher</span> <span class="k">import</span> <span class="n">Dispatcher</span>
-<span class="kn">from</span> <span class="nn">.function</span> <span class="k">import</span> <span class="n">_DNS</span>
+<span class="kn">from</span> <span class="nn">.function</span> <span class="k">import</span> <span class="n">promised_convert</span>
 <span class="kn">from</span> <span class="nn">.type</span> <span class="k">import</span> <span class="n">as_type</span><span class="p">,</span> <span class="n">TypeType</span>
+<span class="kn">from</span> <span class="nn">.parametric</span> <span class="k">import</span> <span class="n">type_of</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;convert&#39;</span><span class="p">,</span>
            <span class="s1">&#39;add_conversion_method&#39;</span><span class="p">,</span>
@@ -166,7 +167,7 @@
 <span class="n">_dispatch</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">()</span>
 
 
-<span class="nd">@_dispatch</span><span class="p">(</span><span class="nb">object</span><span class="p">,</span> <span class="nb">object</span><span class="p">)</span>
+<div class="viewcode-block" id="convert"><a class="viewcode-back" href="../../source/plum.promotion.html#plum.promotion.convert">[docs]</a><span class="nd">@_dispatch</span><span class="p">(</span><span class="nb">object</span><span class="p">,</span> <span class="n">TypeType</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">convert</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">type_to</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Convert an object to a particular type.</span>
 
@@ -177,18 +178,22 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        object: `object_to_covert` converted to type of `obj_from_target`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">type_from</span> <span class="o">=</span> <span class="n">as_type</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">_convert</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">type_of</span><span class="p">(</span><span class="n">obj</span><span class="p">),</span> <span class="n">type_to</span><span class="p">)(</span><span class="n">obj</span><span class="p">,</span> <span class="n">type_to</span><span class="p">)</span></div>
+
+
+<span class="c1"># Deliver `convert`.</span>
+<span class="n">promised_convert</span><span class="o">.</span><span class="n">deliver</span><span class="p">(</span><span class="n">convert</span><span class="p">)</span>
+
+
+<span class="nd">@_dispatch</span><span class="p">(</span><span class="nb">object</span><span class="p">,</span> <span class="nb">object</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">_convert</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">type_to</span><span class="p">):</span>
+    <span class="n">type_from</span> <span class="o">=</span> <span class="n">type_of</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
     <span class="n">type_to</span> <span class="o">=</span> <span class="n">as_type</span><span class="p">(</span><span class="n">type_to</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">type_from</span> <span class="o">&lt;=</span> <span class="n">type_to</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">obj</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Cannot convert a &quot;</span><span class="si">{}</span><span class="s1">&quot; to a &quot;</span><span class="si">{}</span><span class="s1">&quot;.&#39;</span>
                         <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">type_from</span><span class="p">,</span> <span class="n">type_to</span><span class="p">))</span>
-
-
-<div class="viewcode-block" id="convert"><a class="viewcode-back" href="../../source/plum.promotion.html#plum.promotion.convert">[docs]</a><span class="nd">@_dispatch</span><span class="p">(</span><span class="nb">object</span><span class="p">,</span> <span class="n">TypeType</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">convert</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">type_to</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">convert</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">),</span> <span class="n">type_to</span><span class="p">)(</span><span class="n">obj</span><span class="p">,</span> <span class="n">type_to</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="add_conversion_method"><a class="viewcode-back" href="../../source/plum.promotion.html#plum.promotion.add_conversion_method">[docs]</a><span class="k">def</span> <span class="nf">add_conversion_method</span><span class="p">(</span><span class="n">type_from</span><span class="p">,</span> <span class="n">type_to</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
@@ -200,7 +205,7 @@
 <span class="sd">        f (function): Function that converts an object of type `type_from` to</span>
 <span class="sd">            type `type_to`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">convert</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">type_from</span><span class="p">,</span> <span class="n">type_to</span><span class="p">)(</span><span class="k">lambda</span> <span class="n">obj</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">f</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span></div>
+    <span class="n">_convert</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">type_from</span><span class="p">,</span> <span class="n">type_to</span><span class="p">)(</span><span class="k">lambda</span> <span class="n">obj</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">f</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="conversion_method"><a class="viewcode-back" href="../../source/plum.promotion.html#plum.promotion.conversion_method">[docs]</a><span class="k">def</span> <span class="nf">conversion_method</span><span class="p">(</span><span class="n">type_from</span><span class="p">,</span> <span class="n">type_to</span><span class="p">):</span>
@@ -216,9 +221,6 @@
         <span class="n">add_conversion_method</span><span class="p">(</span><span class="n">type_from</span><span class="p">,</span> <span class="n">type_to</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">add_method</span></div>
-
-
-<span class="n">_DNS</span><span class="o">.</span><span class="n">convert</span> <span class="o">=</span> <span class="n">convert</span>  <span class="c1"># Assign the convert function, as promised.</span>
 
 
 <span class="nd">@_dispatch</span><span class="p">(</span><span class="nb">object</span><span class="p">,</span> <span class="nb">object</span><span class="p">)</span>
@@ -268,7 +270,7 @@
 <span class="sd">        tuple: `objs`, but all converted to a common type.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Get the types of the objects.</span>
-    <span class="n">types</span> <span class="o">=</span> <span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">objs</span><span class="p">]</span>
+    <span class="n">types</span> <span class="o">=</span> <span class="p">[</span><span class="n">type_of</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">objs</span><span class="p">]</span>
 
     <span class="c1"># Find the common type.</span>
     <span class="n">common_type</span> <span class="o">=</span> <span class="n">_promotion_rule</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">types</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">types</span><span class="p">[</span><span class="mi">1</span><span class="p">])(</span><span class="n">types</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">types</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
