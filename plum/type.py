@@ -4,6 +4,7 @@ from __future__ import absolute_import, print_function, division
 
 import abc
 import logging
+from itertools import combinations
 
 from .resolvable import Reference, Promise
 from .util import multihash, Comparable
@@ -114,26 +115,41 @@ class Union(ComparableType):
     """
 
     def __init__(self, *types):
+        # Lazily convert to a set to avoid resolution errors.
         self._types = tuple(as_type(t) for t in types)
 
+    def _to_set(self):
+        self._types = set(self._types)
+
     def __hash__(self):
+        self._to_set()
         if len(self._types) == 1:
-            return hash(self._types[0])
+            return hash(list(self._types)[0])
         else:
             return multihash(Union, frozenset(self._types))
 
     def __repr__(self):
+        self._to_set()
         if len(self._types) == 1:
-            return repr(self._types[0])
+            return repr(list(self._types)[0])
         else:
             return '{{{}}}'.format(', '.join(repr(t) for t in self._types))
 
     def get_types(self):
+        self._to_set()
         return sum([t.get_types() for t in self._types], ())
 
     @property
     def parametric(self):
+        self._to_set()
         return any(t.parametric for t in self._types)
+
+    def expand(self, parametric_type=lambda x: x):
+        self._to_set()
+        result = set()
+        for num in range(1, len(self._types) + 1):
+            result |= set(Union(*xs) for xs in combinations(self._types, num))
+        return Union(*[parametric_type(x) for x in result])
 
 
 class Type(ComparableType):

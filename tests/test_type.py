@@ -3,7 +3,7 @@
 from __future__ import absolute_import, division, print_function
 
 from . import Union, PromisedType, as_type, TypeType, ResolutionError, Self, \
-    VarArgs, Type, Referentiable, is_object, is_type
+    VarArgs, Type, Referentiable, is_object, is_type, ListType
 from . import ok, eq, neq, le, raises, nle, isnotinstance, isnotsubclass, \
     assert_issubclass, assert_isinstance
 
@@ -28,9 +28,7 @@ def test_comparabletype():
 
 def test_union():
     yield eq, hash(Union(int, str)), hash(Union(str, int))
-    yield eq, \
-          repr(Union(int, str)), \
-          '{{{!r}, {!r}}}'.format(Type(int), Type(str))
+    yield eq, repr(Union(int, str)), repr(Union(str, int))
     yield eq, set(Union(int, str).get_types()), {str, int}
     yield ok, not Union(int).parametric
 
@@ -39,6 +37,20 @@ def test_union():
     yield neq, hash(Union(int, str)), hash(Type(int))
     yield eq, repr(Union(int)), repr(Type(int))
     yield neq, repr(Union(int, str)), repr(Type(int))
+
+    # Test lazy conversion to set.
+    t = Union(int, int, str)
+    yield assert_isinstance, t._types, tuple
+    t.get_types()
+    yield assert_isinstance, t._types, set
+
+    # Test expansion.
+    yield eq, Union(int).expand(Union), Type(int)
+    yield eq, Union(int, str).expand(Union), Union(int, str)
+    yield eq, Union(int).expand(ListType), ListType(int)
+    yield eq, \
+          Union(int, str).expand(ListType), \
+          Union(ListType(int), ListType(str), ListType(Union(int, str)))
 
 
 def test_type():
