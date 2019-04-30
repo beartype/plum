@@ -5,9 +5,10 @@ from __future__ import absolute_import, division, print_function
 import logging
 
 from .dispatcher import Dispatcher
-from .type import ComparableType, as_type, TypeType
+from .type import ComparableType, as_type, TypeType, \
+    promised_type_of as promised_type_of2
 from .util import multihash
-from .function import promised_type_of
+from .function import promised_type_of as promised_type_of1
 
 __all__ = ['parametric',
            'type_parameter',
@@ -203,4 +204,5 @@ def type_of(obj):
 
 
 # Deliver `type_of`.
-promised_type_of.deliver(type_of)
+promised_type_of1.deliver(type_of)
+promised_type_of2.deliver(type_of)

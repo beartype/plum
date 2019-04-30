@@ -113,6 +113,10 @@ def test_listtype():
     yield isnotsubclass, ListType(int).get_types()[0], int
     yield isnotsubclass, ListType(int).get_types()[0], tuple
 
+    # Test instance check.
+    yield assert_isinstance, [], ListType(Union())
+    yield assert_isinstance, [1, 2], ListType(Union(int))
+
     # Check tracking of parametric.
     yield ok, ListType(int).parametric
     yield ok, as_type([ListType(int)]).parametric
@@ -160,6 +164,10 @@ def test_tupletype():
     yield assert_issubclass, TupleType(int).get_types()[0], tuple
     yield isnotsubclass, TupleType(int).get_types()[0], int
     yield isnotsubclass, TupleType(int).get_types()[0], list
+
+    # Test instance check.
+    yield assert_isinstance, (), TupleType(Union())
+    yield assert_isinstance, (1, 2), TupleType(Union(int))
 
     # Check tracking of parametric.
     yield ok, TupleType(int).parametric

@@ -78,6 +78,9 @@ class VarArgs(AbstractType):
         return self.type.parametric
 
 
+promised_type_of = Promise()  #: Resolves to `.parametric.type_of`.
+
+
 class ComparableType(AbstractType, Comparable):
     """A Plum type that can be compared to other Plum types."""
 
@@ -89,7 +92,7 @@ class ComparableType(AbstractType, Comparable):
                     for t in subclass.get_types()])
 
     def __instancecheck__(self, instance):
-        return isinstance(instance, self.get_types())
+        return issubclass(promised_type_of.resolve()(instance), self)
 
     @abc.abstractmethod
     def get_types(self):
