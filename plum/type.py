@@ -119,7 +119,8 @@ class Union(ComparableType):
         self._types = tuple(as_type(t) for t in types)
 
     def _to_set(self):
-        self._types = set(self._types)
+        if not isinstance(self._types, set):
+            self._types = set(self._types)
 
     def __hash__(self):
         self._to_set()
