@@ -28,7 +28,7 @@ def test_comparabletype():
 
 def test_union():
     yield eq, hash(Union(int, str)), hash(Union(str, int))
-    yield eq, repr(Union(int, str)), repr(Union(str, int))
+    yield eq, repr(Union(int, str)), repr(Union(int, str))
     yield eq, set(Union(int, str).get_types()), {str, int}
     yield ok, not Union(int).parametric
 
