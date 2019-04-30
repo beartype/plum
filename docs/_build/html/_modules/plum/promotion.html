@@ -281,10 +281,15 @@
     <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">convert</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">common_type</span><span class="p">)</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">objs</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="promote"><a class="viewcode-back" href="../../source/plum.promotion.html#plum.promotion.promote">[docs]</a><span class="nd">@_dispatch</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span>
+<span class="nd">@_dispatch</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">promote</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
     <span class="c1"># Promote should always return a tuple to avoid edge cases.</span>
-    <span class="k">return</span> <span class="p">(</span><span class="n">obj</span><span class="p">,)</span></div>
+    <span class="k">return</span> <span class="p">(</span><span class="n">obj</span><span class="p">,)</span>
+
+
+<div class="viewcode-block" id="promote"><a class="viewcode-back" href="../../source/plum.promotion.html#plum.promotion.promote">[docs]</a><span class="nd">@_dispatch</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">promote</span><span class="p">():</span>
+    <span class="k">return</span> <span class="p">()</span></div>
 </pre></div>
 
            </div>
