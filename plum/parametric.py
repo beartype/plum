@@ -6,7 +6,7 @@ import logging
 
 from .dispatcher import Dispatcher
 from .type import ComparableType, as_type, TypeType, \
-    promised_type_of as promised_type_of2
+    promised_type_of as promised_type_of2, is_type
 from .util import multihash
 from .function import promised_type_of as promised_type_of1
 
@@ -24,13 +24,28 @@ _dispatch = Dispatcher()
 
 @_dispatch(object)
 def _get_id(x):
-    print('getting id of ', x, 'with type', type(x))
     return id(x)
 
 
 @_dispatch({int, float, str, TypeType})
 def _get_id(x):
     return x
+
+
+class CovariantType(type):
+    """A metaclass that implements *covariance* of parametric types."""
+    def __subclasscheck__(self, subclass):
+        if hasattr(subclass, '_is_parametric'):
+            # Check that they are instances of the same parametric type.
+            if subclass.__bases__ == self.__bases__:
+                par_subclass = type_parameter(subclass)
+                par_self = type_parameter(self)
+                # Check that the type parameters are types.
+                if is_type(par_subclass) and is_type(par_self):
+                    return as_type(par_subclass) <= as_type(par_self)
+
+        # Default behaviour to `type`s subclass check.
+        return type.__subclasscheck__(self, subclass)
 
 
 def parametric(Class):
@@ -52,9 +67,11 @@ def parametric(Class):
 
             # Create subclass.
             name = Class.__name__ + '{' + ','.join(str(p) for p in ps) + '}'
-            SubClass = type(name,
-                            (ParametricClass,),
-                            {'__new__': __new__})
+            SubClass = type.__new__(CovariantType,
+                                    name,
+                                    (ParametricClass,),
+                                    {'__new__': __new__,
+                                     '_is_parametric': True})
             SubClass._type_parameter = ps[0] if len(ps) == 1 else ps
             SubClass.__module__ = Class.__module__
 

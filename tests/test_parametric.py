@@ -7,7 +7,7 @@ from plum.parametric import _types_of_iterable
 from . import eq, neq, ok, isnotsubclass, assert_isinstance, isnotinstance, \
     assert_issubclass
 from . import parametric, type_parameter, Kind, kind, Type, Union, type_of, \
-    ListType, TupleType, as_type, PromisedType, Dispatcher
+    ListType, TupleType, as_type, PromisedType, Dispatcher, TypeType
 
 
 def test():
@@ -204,3 +204,11 @@ def test_tupletype():
     yield eq, f(((1,), (1,))), 'tup of tup of int'
     yield eq, f(((1,), (1, 2))), 'tup of tup of int'
     yield eq, f(((1,), (1, 2, '3'))), 'tup'
+
+
+def test_covariance():
+    yield assert_issubclass, ListType(int), ListType(object)
+    yield assert_issubclass, ListType(ListType(int)), ListType(ListType(object))
+    yield isnotsubclass, ListType(int), ListType(str)
+    yield isnotsubclass, ListType(ListType), ListType(int)
+    yield assert_issubclass, ListType(ListType), ListType(TypeType)

@@ -5,9 +5,10 @@ from __future__ import absolute_import, print_function, division
 import abc
 import logging
 from itertools import combinations
+import inspect
 
 from .resolvable import Reference, Promise
-from .util import multihash, Comparable
+from .util import multihash, Comparable, get_default
 
 __all__ = ['VarArgs',
            'Union',
@@ -115,11 +116,24 @@ class Union(ComparableType):
 
     Args:
         *types (type or ptype): Types or Plum types to encapsulate.
+        alias (str, optional): Give the union a name.
     """
 
-    def __init__(self, *types):
+    def __init__(self, *types, **kw_args):
         # Lazily convert to a set to avoid resolution errors.
         self._types = tuple(as_type(t) for t in types)
+
+        # Constuct alias if one is given.
+        alias = get_default(kw_args, 'alias', None)
+        if alias:
+            frame = inspect.stack()[1]
+            module = inspect.getmodule(frame[0])
+            if module:
+                self.alias = '{}.{}'.format(module.__name__, alias)
+            else:  # pragma: no cover
+                self.alias = alias
+        else:
+            self.alias = None
 
     def _to_set(self):
         if not isinstance(self._types, set):
@@ -134,6 +148,12 @@ class Union(ComparableType):
 
     def __repr__(self):
         self._to_set()
+
+        # Show the alias if one is given.
+        if self.alias is not None:
+            return self.alias
+
+        # Otherwise, show all the types it contains.
         if len(self._types) == 1:
             return repr(list(self._types)[0])
         else:
@@ -147,13 +167,6 @@ class Union(ComparableType):
     def parametric(self):
         self._to_set()
         return any(t.parametric for t in self._types)
-
-    def expand(self, parametric_type=lambda x: x):
-        self._to_set()
-        result = set()
-        for num in range(1, len(self._types) + 1):
-            result |= set(Union(*xs) for xs in combinations(self._types, num))
-        return Union(*[parametric_type(x) for x in result])
 
 
 class Type(ComparableType):

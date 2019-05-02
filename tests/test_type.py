@@ -3,7 +3,7 @@
 from __future__ import absolute_import, division, print_function
 
 from . import Union, PromisedType, as_type, TypeType, ResolutionError, Self, \
-    VarArgs, Type, Referentiable, is_object, is_type, ListType
+    VarArgs, Type, Referentiable, is_object, is_type
 from . import ok, eq, neq, le, raises, nle, isnotinstance, isnotsubclass, \
     assert_issubclass, assert_isinstance
 
@@ -44,13 +44,9 @@ def test_union():
     t.get_types()
     yield assert_isinstance, t._types, set
 
-    # Test expansion.
-    yield eq, Union(int).expand(Union), Type(int)
-    yield eq, Union(int, str).expand(Union), Union(int, str)
-    yield eq, Union(int).expand(ListType), ListType(int)
-    yield eq, \
-          Union(int, str).expand(ListType), \
-          Union(ListType(int), ListType(str), ListType(Union(int, str)))
+    # Test aliases.
+    yield eq, repr(Union(int, alias='MyUnion')), 'tests.test_type.MyUnion'
+    yield eq, repr(Union(int, str, alias='MyUnion')), 'tests.test_type.MyUnion'
 
 
 def test_type():
