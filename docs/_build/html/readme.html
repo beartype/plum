@@ -361,6 +361,7 @@ type system is <em>covariant</em>, as opposed to Julia’s type system, which is
 <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;single argument&#39;</span><span class="p">)</span>
 
+
 <span class="nd">@dispatch</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="p">[</span><span class="nb">int</span><span class="p">])</span>
 <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">xs</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;multiple arguments&#39;</span><span class="p">)</span>
@@ -413,6 +414,7 @@ diagonal dispatch:</p>
     <span class="nd">@dispatch</span><span class="p">(</span><span class="n">Self</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">return</span> <span class="s1">&#39;real&#39;</span>
+
 
 <span class="k">class</span> <span class="nc">Rational</span><span class="p">(</span><span class="n">Real</span><span class="p">,</span> <span class="n">Referentiable</span><span class="p">):</span>
     <span class="n">dispatch</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">(</span><span class="n">in_class</span><span class="o">=</span><span class="n">Self</span><span class="p">)</span>
@@ -597,13 +599,16 @@ specify precedence levels of methods, which are used to break ambiguity:</p>
 <span class="k">class</span> <span class="nc">A</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>  <span class="c1"># Must be a new-style class!</span>
     <span class="k">pass</span>
 
+
 <span class="nd">@dispatch</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="k">return</span> <span class="s1">&#39;fallback&#39;</span>
 
+
 <span class="nd">@dispatch</span><span class="p">(</span><span class="n">A</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
 <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="k">return</span> <span class="s1">&#39;1&#39;</span>
+
 
 <span class="nd">@dispatch</span><span class="p">(</span><span class="n">A</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
 <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>

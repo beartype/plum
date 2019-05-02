@@ -217,6 +217,7 @@ A list can be used to specify variable arguments:
     @dispatch(int)
     def f(x):
         print('single argument')
+        
 
     @dispatch(int, [int])
     def f(x, *xs):
@@ -276,6 +277,7 @@ diagonal dispatch:
         @dispatch(Self)
         def __add__(self, other):
             return 'real'
+            
 
     class Rational(Real, Referentiable):
         dispatch = Dispatcher(in_class=Self)
@@ -477,13 +479,16 @@ The decorator ``parametric`` can be used to create parametric classes:
     class A(object):  # Must be a new-style class!
         pass
         
+        
     @dispatch(A)
     def f(x):
         return 'fallback'
         
+        
     @dispatch(A(1))
     def f(x):
         return '1'
+        
         
     @dispatch(A(2))
     def f(x):
