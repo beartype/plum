@@ -153,9 +153,10 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 
 <span class="kn">from</span> <span class="nn">.dispatcher</span> <span class="k">import</span> <span class="n">Dispatcher</span>
-<span class="kn">from</span> <span class="nn">.type</span> <span class="k">import</span> <span class="n">ComparableType</span><span class="p">,</span> <span class="n">as_type</span><span class="p">,</span> <span class="n">TypeType</span>
+<span class="kn">from</span> <span class="nn">.type</span> <span class="k">import</span> <span class="n">ComparableType</span><span class="p">,</span> <span class="n">as_type</span><span class="p">,</span> <span class="n">TypeType</span><span class="p">,</span> \
+    <span class="n">promised_type_of</span> <span class="k">as</span> <span class="n">promised_type_of2</span><span class="p">,</span> <span class="n">is_type</span>
 <span class="kn">from</span> <span class="nn">.util</span> <span class="k">import</span> <span class="n">multihash</span>
-<span class="kn">from</span> <span class="nn">.function</span> <span class="k">import</span> <span class="n">promised_type_of</span>
+<span class="kn">from</span> <span class="nn">.function</span> <span class="k">import</span> <span class="n">promised_type_of</span> <span class="k">as</span> <span class="n">promised_type_of1</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;parametric&#39;</span><span class="p">,</span>
            <span class="s1">&#39;type_parameter&#39;</span><span class="p">,</span>
@@ -171,13 +172,28 @@
 
 <span class="nd">@_dispatch</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">_get_id</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;getting id of &#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="s1">&#39;with type&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
     <span class="k">return</span> <span class="nb">id</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 
 
 <span class="nd">@_dispatch</span><span class="p">({</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">TypeType</span><span class="p">})</span>
 <span class="k">def</span> <span class="nf">_get_id</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">x</span>
+
+
+<span class="k">class</span> <span class="nc">CovariantType</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A metaclass that implements *covariance* of parametric types.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__subclasscheck__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subclass</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">subclass</span><span class="p">,</span> <span class="s1">&#39;_is_parametric&#39;</span><span class="p">):</span>
+            <span class="c1"># Check that they are instances of the same parametric type.</span>
+            <span class="k">if</span> <span class="n">subclass</span><span class="o">.</span><span class="vm">__bases__</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__bases__</span><span class="p">:</span>
+                <span class="n">par_subclass</span> <span class="o">=</span> <span class="n">type_parameter</span><span class="p">(</span><span class="n">subclass</span><span class="p">)</span>
+                <span class="n">par_self</span> <span class="o">=</span> <span class="n">type_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+                <span class="c1"># Check that the type parameters are types.</span>
+                <span class="k">if</span> <span class="n">is_type</span><span class="p">(</span><span class="n">par_subclass</span><span class="p">)</span> <span class="ow">and</span> <span class="n">is_type</span><span class="p">(</span><span class="n">par_self</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">as_type</span><span class="p">(</span><span class="n">par_subclass</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">as_type</span><span class="p">(</span><span class="n">par_self</span><span class="p">)</span>
+
+        <span class="c1"># Default behaviour to `type`s subclass check.</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="o">.</span><span class="fm">__subclasscheck__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subclass</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="parametric"><a class="viewcode-back" href="../../source/plum.parametric.html#plum.parametric.parametric">[docs]</a><span class="k">def</span> <span class="nf">parametric</span><span class="p">(</span><span class="n">Class</span><span class="p">):</span>
@@ -199,9 +215,11 @@
 
             <span class="c1"># Create subclass.</span>
             <span class="n">name</span> <span class="o">=</span> <span class="n">Class</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">+</span> <span class="s1">&#39;{&#39;</span> <span class="o">+</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">ps</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;}&#39;</span>
-            <span class="n">SubClass</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">name</span><span class="p">,</span>
-                            <span class="p">(</span><span class="n">ParametricClass</span><span class="p">,),</span>
-                            <span class="p">{</span><span class="s1">&#39;__new__&#39;</span><span class="p">:</span> <span class="fm">__new__</span><span class="p">})</span>
+            <span class="n">SubClass</span> <span class="o">=</span> <span class="nb">type</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="n">CovariantType</span><span class="p">,</span>
+                                    <span class="n">name</span><span class="p">,</span>
+                                    <span class="p">(</span><span class="n">ParametricClass</span><span class="p">,),</span>
+                                    <span class="p">{</span><span class="s1">&#39;__new__&#39;</span><span class="p">:</span> <span class="fm">__new__</span><span class="p">,</span>
+                                     <span class="s1">&#39;_is_parametric&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
             <span class="n">SubClass</span><span class="o">.</span><span class="n">_type_parameter</span> <span class="o">=</span> <span class="n">ps</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ps</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">ps</span>
             <span class="n">SubClass</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">=</span> <span class="n">Class</span><span class="o">.</span><span class="vm">__module__</span>
 
@@ -351,7 +369,8 @@
 
 
 <span class="c1"># Deliver `type_of`.</span>
-<span class="n">promised_type_of</span><span class="o">.</span><span class="n">deliver</span><span class="p">(</span><span class="n">type_of</span><span class="p">)</span>
+<span class="n">promised_type_of1</span><span class="o">.</span><span class="n">deliver</span><span class="p">(</span><span class="n">type_of</span><span class="p">)</span>
+<span class="n">promised_type_of2</span><span class="o">.</span><span class="n">deliver</span><span class="p">(</span><span class="n">type_of</span><span class="p">)</span>
 </pre></div>
 
            </div>

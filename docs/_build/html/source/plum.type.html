@@ -206,22 +206,21 @@ type.</p>
 
 <dl class="class">
 <dt id="plum.type.Union">
-<em class="property">class </em><code class="descclassname">plum.type.</code><code class="descname">Union</code><span class="sig-paren">(</span><em>*types</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/type.html#Union"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.type.Union" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">plum.type.</code><code class="descname">Union</code><span class="sig-paren">(</span><em>*types</em>, <em>**kw_args</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/type.html#Union"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.type.Union" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">plum.type.ComparableType</span></code></p>
 <p>A union of Plum types.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>*types</strong> (<em>type</em><em> or </em><em>ptype</em>) – Types or Plum types to encapsulate.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>*types</strong> (<em>type</em><em> or </em><em>ptype</em>) – Types or Plum types to encapsulate.</li>
+<li><strong>alias</strong> (<em>str</em><em>, </em><em>optional</em>) – Give the union a name.</li>
+</ul>
+</td>
 </tr>
 </tbody>
 </table>
-<dl class="method">
-<dt id="plum.type.Union.expand">
-<code class="descname">expand</code><span class="sig-paren">(</span><em>parametric_type=&lt;function Union.&lt;lambda&gt;&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/type.html#Union.expand"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.type.Union.expand" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
 <dl class="method">
 <dt id="plum.type.Union.get_types">
 <code class="descname">get_types</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/type.html#Union.get_types"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.type.Union.get_types" title="Permalink to this definition">¶</a></dt>
@@ -323,7 +322,7 @@ so we inherit from <a class="reference internal" href="plum.resolvable.html#plum
 
 <dl class="data">
 <dt id="plum.type.TypeType">
-<code class="descclassname">plum.type.</code><code class="descname">TypeType</code><em class="property"> = {builtins.set, builtins.list, builtins.type, plum.type.AbstractType}</em><a class="headerlink" href="#plum.type.TypeType" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">plum.type.</code><code class="descname">TypeType</code><em class="property"> = {builtins.set, builtins.list, plum.type.AbstractType, builtins.type}</em><a class="headerlink" href="#plum.type.TypeType" title="Permalink to this definition">¶</a></dt>
 <dd><p>The type of a Plum type, including shorthands.</p>
 </dd></dl>
 

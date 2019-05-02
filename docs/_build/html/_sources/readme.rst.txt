@@ -9,21 +9,21 @@ Everybody likes multiple dispatch, just like everybody likes plums.
 -  `Basic Usage <#basic-usage>`__
 -  `Advanced Features by Example <#advanced-features-by-example>`__
 
+   -  `Dispatch From Type
+      Annotations <#dispatch-from-type-annotations>`__
+   -  `Union Types <#union-types>`__
+   -  `Parametric Types <#parametric-types>`__
+   -  `Variable Arguments <#variable-arguments>`__
+   -  `Return Types <#return-types>`__
+   -  `Inheritance <#inheritance>`__
+   -  `Conversion <#conversion>`__
+   -  `Promotion <#promotion>`__
+   -  `Method Precedence <#method-precedence>`__
+   -  `Parametric Classes <#parametric-classes>`__
    -  `Add Multiple Methods <#add-multiple-methods>`__
    -  `Extend a Function From Another
       Package <#extend-a-function-from-another-package>`__
    -  `Directly Invoke a Method <#directly-invoke-a-method>`__
-   -  `Union Types <#union-types>`__
-   -  `Parametric Types <#parametric-types>`__
-   -  `Variable Arguments <#variable-arguments>`__
-   -  `Inheritance <#inheritance>`__
-   -  `Conversion <#conversion>`__
-   -  `Promotion <#promotion>`__
-   -  `Return Types <#return-types>`__
-   -  `Method Precedence <#method-precedence>`__
-   -  `Parametric Classes <#parametric-classes>`__
-   -  `Dispatch From Type
-      Annotations <#dispatch-from-type-annotations>`__
 
 Installation
 ------------
@@ -103,86 +103,38 @@ For an excellent and way more detailed overview of multiple dispatch,
 see the `manual of the Julia
 Language <https://docs.julialang.org/en/>`__.
 
-Advanced Features by Example
-----------------------------
+Features by Example
+-------------------
 
-Add Multiple Methods
-~~~~~~~~~~~~~~~~~~~~
+Dispatch From Type Annotations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``Dispatcher.multi`` can be used to implement multiple methods at once:
-
-.. code:: python
-
-    from plum import dispatch
-
-    @dispatch.multi((int, int), (float, float))
-    def add(x, y):
-        return x + y
+``Dispatcher.annotations`` is an experimental feature that can be used
+to dispatch on a function's type annotations:
 
 .. code:: python
 
-    >>> add(1, 1)
-    2
+    from plum import dispatch, add_conversion_method
 
-    >>> add(1.0, 1.0)
-    2.0
+    add_conversion_method(type_from=int, type_to=str, f=str)
 
-    >>> add(1, 1.0)
-    NotFoundLookupError: For function "add", signature (builtins.int, builtins.float) could not be resolved.
 
-Extend a Function From Another Package
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-``Function.extend`` can be used to extend a particular function:
-
-.. code:: python
-
-    from package import f
-
-    @f.extend(int)
-    def f(x):
-        return 'new behaviour'
-
-.. code:: python
-
-    >>> f(1.0)
-    'old behaviour'
-
-    >>> f(1)
-    'new behaviour'
-
-Directly Invoke a Method
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-``Function.invoke`` can be used to invoke a method given types of the
-arguments:
-
-.. code:: python
-
-    from plum import dispatch
-
-    @dispatch(int)
-    def f(x):
-        return 'int'
+    @dispatch.annotations()
+    def int_to_str(x: int) -> str:
+        return x
         
         
-    @dispatch(str)
-    def f(x):
-        return 'str'
+    @dispatch.annotations()
+    def int_to_str(x):
+        raise ValueError('I only take integers!')
 
 .. code:: python
 
-    >>> f(1)
-    'int'
+    >>> int_to_str(1.0)
+    ValueError: I only take integers!
 
-    >>> f('1')
-    'str'
-
-    >>> f.invoke(int)('1')
-    'int'
-
-    >>> f.invoke(str)(1)
-    'str'
+    >>> int_to_str(1)
+    '1'
 
 Union Types
 ~~~~~~~~~~~
@@ -218,7 +170,8 @@ Parametric Types
 
 The parametric types ``TupleType`` and ``ListType`` can be used to
 dispatch on lists with particular types of elements. Importantly, the
-type system is *invariant*.
+type system is *covariant*, as opposed to Julia's type system, which is
+*invariant*.
 
 .. code:: python
 
@@ -279,6 +232,32 @@ A list can be used to specify variable arguments:
 
     >>> f(1, 2, 3)
     multiple arguments
+
+Return Types
+~~~~~~~~~~~~
+
+The keyword argument ``return_type`` can be set to specify return types:
+
+.. code:: python
+
+    from plum import dispatch, add_conversion_method
+
+    @dispatch({int, str}, return_type=int)
+    def f(x):
+        return x
+
+.. code:: python
+
+    >>> f(1)
+    1
+
+    >>> f('1')
+    TypeError: Expected return type "builtins.int", but got type "builtins.str".
+
+    >>> add_conversion_method(type_from=str, type_to=int, f=int)
+
+    >>> f('1')
+    1
 
 Inheritance
 ~~~~~~~~~~~
@@ -422,32 +401,6 @@ type:
     >>> add(1, 2.0)
     3.0
 
-Return Types
-~~~~~~~~~~~~
-
-The keyword argument ``return_type`` can be set to specify return types:
-
-.. code:: python
-
-    from plum import dispatch, add_conversion_method
-
-    @dispatch({int, str}, return_type=int)
-    def f(x):
-        return x
-
-.. code:: python
-
-    >>> f(1)
-    1
-
-    >>> f('1')
-    TypeError: Expected return type "builtins.int", but got type "builtins.str".
-
-    >>> add_conversion_method(type_from=str, type_to=int, f=int)
-
-    >>> f('1')
-    1
-
 Method Precedence
 ~~~~~~~~~~~~~~~~~
 
@@ -559,35 +512,83 @@ The decorator ``parametric`` can be used to create parametric classes:
     >>> f(A(3)())
     'fallback'
 
-Dispatch From Type Annotations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Add Multiple Methods
+~~~~~~~~~~~~~~~~~~~~
 
-``Dispatcher.annotations`` is an experimental feature that can be used
-to dispatch on a function's type annotations:
-
-.. code:: python
-
-    from plum import dispatch, add_conversion_method
-
-    add_conversion_method(type_from=int, type_to=str, f=str)
-
-
-    @dispatch.annotations()
-    def int_to_str(x: int) -> str:
-        return x
-        
-        
-    @dispatch.annotations()
-    def int_to_str(x):
-        raise ValueError('I only take integers!')
+``Dispatcher.multi`` can be used to implement multiple methods at once:
 
 .. code:: python
 
-    >>> int_to_str(1.0)
-    ValueError: I only take integers!
+    from plum import dispatch
 
-    >>> int_to_str(1)
-    '1'
+    @dispatch.multi((int, int), (float, float))
+    def add(x, y):
+        return x + y
+
+.. code:: python
+
+    >>> add(1, 1)
+    2
+
+    >>> add(1.0, 1.0)
+    2.0
+
+    >>> add(1, 1.0)
+    NotFoundLookupError: For function "add", signature (builtins.int, builtins.float) could not be resolved.
+
+Extend a Function From Another Package
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``Function.extend`` can be used to extend a particular function:
+
+.. code:: python
+
+    from package import f
+
+    @f.extend(int)
+    def f(x):
+        return 'new behaviour'
+
+.. code:: python
+
+    >>> f(1.0)
+    'old behaviour'
+
+    >>> f(1)
+    'new behaviour'
+
+Directly Invoke a Method
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+``Function.invoke`` can be used to invoke a method given types of the
+arguments:
+
+.. code:: python
+
+    from plum import dispatch
+
+    @dispatch(int)
+    def f(x):
+        return 'int'
+        
+        
+    @dispatch(str)
+    def f(x):
+        return 'str'
+
+.. code:: python
+
+    >>> f(1)
+    'int'
+
+    >>> f('1')
+    'str'
+
+    >>> f.invoke(int)('1')
+    'int'
+
+    >>> f.invoke(str)(1)
+    'str'
 
 .. |Build| image:: https://travis-ci.org/wesselb/plum.svg?branch=master
    :target: https://travis-ci.org/wesselb/plum
