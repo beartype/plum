@@ -3,7 +3,7 @@ Features:
         ☐ Type intersection.
             ☐ Show method to break ambiguity.
         ☐ Concrete classes and type variables to perform diagonal dispatch.
-        ☐ Support parametrised generics.
+        ☐ Support typing module: parametrised generics and type variables.
         ☐ Test signatures from annotations.
     Efficiency:
         ☐ Improved type resolution algorithm.
