@@ -5,7 +5,7 @@ from __future__ import absolute_import, division, print_function
 from . import convert, add_conversion_method, add_promotion_rule, promote, \
     conversion_method
 from . import eq, raises
-from .test_tuple import Num, Re, FP
+from .test_signature import Num, Re, FP
 
 
 def save_convert_methods():

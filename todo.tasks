@@ -4,7 +4,10 @@ Features:
             ☐ Show method to break ambiguity.
         ☐ Concrete classes and type variables to perform diagonal dispatch.
         ☐ Support typing module: parametrised generics and type variables.
-        ☐ Test signatures from annotations.
+        ☐ Move to __getitem__ for instantiating types.
+        Signatures from annotations:
+            ☐ Test.
+            ☐ Keyword argument to Dispatcher.
     Efficiency:
         ☐ Improved type resolution algorithm.
         ☐ More efficient caching strategy.

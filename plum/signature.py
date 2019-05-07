@@ -7,12 +7,12 @@ import logging
 from .type import as_type, VarArgs
 from .util import Comparable, multihash
 
-__all__ = ['Tuple']
+__all__ = ['Signature']
 log = logging.getLogger(__name__)
 
 
-class Tuple(Comparable):
-    """Tuple.
+class Signature(Comparable):
+    """Signature.
 
     Args:
         *types (type or ptype): Types of the arguments.
@@ -30,16 +30,16 @@ class Tuple(Comparable):
         return '({})'.format(', '.join(map(repr, self.types)))
 
     def __hash__(self):
-        return multihash(Tuple, *self.types)
+        return multihash(Signature, *self.types)
 
     def __len__(self):
         return len(self.base)
 
     def expand_varargs_to(self, other):
-        """Expand varargs to a given :class:`.tuple.Tuple`.
+        """Expand varargs to a given :class:`.signature.Signature`.
 
         Args:
-            other (:class:`.tuple.Tuple`): Other tuple to expand to.
+            other (:class:`.signature.Signature`): Other tuple to expand to.
 
         Returns:
             tuple[ptype]: Tuple of Plum types that matches `other`.
@@ -75,10 +75,10 @@ class Tuple(Comparable):
         return self.types[:-1] if self.has_varargs() else self.types
 
     def has_varargs(self):
-        """Check whether this tuple has varargs.
+        """Check whether this signature has varargs.
 
         Returns:
-            bool: `True` if and only if this tuple has varargs.
+            bool: `True` if and only if this signature has varargs.
         """
         return len(self.types) > 0 and isinstance(self.types[-1], VarArgs)
 
@@ -91,11 +91,11 @@ class Tuple(Comparable):
         return self.types[-1].type
 
     def is_compatible(self, other):
-        """Check whether this tuple is compatible with another one.
+        """Check whether this signature is compatible with another one.
 
         Args:
-            other (:class:`.tuple.Tuple`): Other tuple to check compatibility
-                with.
+            other (:class:`.signature.Signature`): Other signature to check
+                compatibility with.
 
         Returns:
             bool: Compatibility.

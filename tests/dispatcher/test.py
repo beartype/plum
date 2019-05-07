@@ -2,7 +2,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from . import Dispatcher, Referentiable, Self, ListType
+from . import Dispatcher, Referentiable, Self, List
 from . import eq, raises, ok
 
 
@@ -166,7 +166,7 @@ def test_parametric_tracking():
     f(1)
     yield ok, not f._parametric
 
-    @dispatch(ListType(int))
+    @dispatch(List(int))
     def f(x):
         pass
 

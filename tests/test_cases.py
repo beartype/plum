@@ -5,7 +5,7 @@ from __future__ import absolute_import, division, print_function
 from . import Self, Dispatcher, PromisedType, \
     Referentiable, NotFoundLookupError, AmbiguousLookupError
 from . import eq, raises
-from .test_tuple import Num, Re, FP
+from .test_signature import Num, Re, FP
 
 
 class ComputableObject(object):

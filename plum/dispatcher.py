@@ -6,7 +6,7 @@ import logging
 import inspect
 
 from .function import Function
-from .tuple import Tuple
+from .signature import Signature
 from .util import get_default
 
 __all__ = ['Dispatcher', 'dispatch']
@@ -39,7 +39,7 @@ class Dispatcher(object):
         """
         precedence = get_default(kw_args, 'precedence', 0)
         return_type = get_default(kw_args, 'return_type', object)
-        return self._create_decorator([Tuple(*types)],
+        return self._create_decorator([Signature(*types)],
                                       precedence=precedence,
                                       return_type=return_type)
 
@@ -58,7 +58,7 @@ class Dispatcher(object):
         """
         precedence = get_default(kw_args, 'precedence', 0)
         return_type = get_default(kw_args, 'return_type', object)
-        return self._create_decorator([Tuple(*types) for types in signatures],
+        return self._create_decorator([Signature(*types) for types in signatures],
                                       precedence=precedence,
                                       return_type=return_type)
 
@@ -119,7 +119,7 @@ class Dispatcher(object):
                 return_type = object
 
             # Assemble signature.
-            signature = Tuple(*types)
+            signature = Signature(*types)
 
             # Create and call decorator.
             return self._create_decorator([signature],

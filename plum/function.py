@@ -6,7 +6,7 @@ import logging
 
 from plum.type import is_object
 
-from .tuple import Tuple
+from .signature import Signature
 from .type import as_type, is_type
 from .util import get_default
 from .resolvable import Promise
@@ -126,7 +126,7 @@ class Function(object):
         def decorator(f):
             # Register the new method.
             for signature in signatures:
-                self.register(Tuple(*signature),
+                self.register(Signature(*signature),
                               f,
                               precedence=precedence,
                               return_type=return_type)
@@ -158,7 +158,7 @@ class Function(object):
         """Register a method.
 
         Args:
-            signature (:class:`.tuple.Tuple`): Signature of the method.
+            signature (:class:`.signature.Signature`): Signature of the method.
             f (function): Function that implements the method.
             precedence (int, optional): Precedence of the function. Defaults
                 to `0`.
@@ -207,10 +207,10 @@ class Function(object):
         signatures of all applicable methods.
 
         Args:
-            signature (:class:`.tuple.Tuple`): Signature to resolve.
+            signature (:class:`.signature.Signature`): Signature to resolve.
 
         Returns:
-            :class:`.tuple.Tuple`: The most specific signature among the
+            :class:`.signature.Signature`: The most specific signature among the
                 signatures of all applicable methods.
         """
         self._resolve_pending_registrations()
@@ -272,7 +272,7 @@ class Function(object):
             pass
 
         # Look up the signature.
-        signature = Tuple(*types)
+        signature = Signature(*types)
 
         if self._class:
             try:
@@ -361,10 +361,10 @@ def find_most_specific(signatures):
     """Find the most specific in a list of signatures.
 
      Args:
-        signatures (list[:class:`.tuple.Tuple`]): List of signatures.
+        signatures (list[:class:`.signature.Signature`]): List of signatures.
 
     Returns:
-        :class:`.tuple.Tuple`: Most specific signatures.
+        :class:`.signature.Signature`: Most specific signatures.
     """
     candidates = []
     for signature in signatures:

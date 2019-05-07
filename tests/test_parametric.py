@@ -7,7 +7,7 @@ from plum.parametric import _types_of_iterable
 from . import eq, neq, ok, isnotsubclass, assert_isinstance, isnotinstance, \
     assert_issubclass
 from . import parametric, type_parameter, Kind, kind, Type, Union, type_of, \
-    ListType, TupleType, as_type, PromisedType, Dispatcher, TypeType
+    List, Tuple, as_type, PromisedType, Dispatcher, TypeType
 
 
 def test():
@@ -93,36 +93,36 @@ def test_types_of_iterables():
 def test_type_of():
     yield eq, type_of(1), Type(int)
     yield eq, type_of('1'), Type(str)
-    yield eq, type_of([1]), ListType(int)
-    yield eq, type_of([1, '1']), ListType({int, str})
-    yield eq, type_of([1, '1', (1,)]), ListType({int, str, TupleType(int)})
-    yield eq, type_of((1,)), TupleType(int)
-    yield eq, type_of(('1',)), TupleType(str)
-    yield eq, type_of((1, '1')), TupleType({int, str})
-    yield eq, type_of((1, '1', [1])), TupleType({int, str, ListType(int)})
+    yield eq, type_of([1]), List(int)
+    yield eq, type_of([1, '1']), List({int, str})
+    yield eq, type_of([1, '1', (1,)]), List({int, str, Tuple(int)})
+    yield eq, type_of((1,)), Tuple(int)
+    yield eq, type_of(('1',)), Tuple(str)
+    yield eq, type_of((1, '1')), Tuple({int, str})
+    yield eq, type_of((1, '1', [1])), Tuple({int, str, List(int)})
 
 
 def test_listtype():
     # Standard type tests.
-    yield eq, hash(ListType(int)), hash(ListType(int))
-    yield neq, hash(ListType(int)), hash(ListType(str))
-    yield eq, hash(ListType(ListType(int))), hash(ListType(ListType(int)))
-    yield neq, hash(ListType(ListType(int))), hash(ListType(ListType(str)))
-    yield eq, repr(ListType(int)), 'ListType({})'.format(repr(Type(int)))
-    yield assert_issubclass, ListType(int).get_types()[0], list
-    yield isnotsubclass, ListType(int).get_types()[0], int
-    yield isnotsubclass, ListType(int).get_types()[0], tuple
+    yield eq, hash(List(int)), hash(List(int))
+    yield neq, hash(List(int)), hash(List(str))
+    yield eq, hash(List(List(int))), hash(List(List(int)))
+    yield neq, hash(List(List(int))), hash(List(List(str)))
+    yield eq, repr(List(int)), 'ListType({})'.format(repr(Type(int)))
+    yield assert_issubclass, List(int).get_types()[0], list
+    yield isnotsubclass, List(int).get_types()[0], int
+    yield isnotsubclass, List(int).get_types()[0], tuple
 
     # Test instance check.
-    yield assert_isinstance, [], ListType(Union())
-    yield assert_isinstance, [1, 2], ListType(Union(int))
+    yield assert_isinstance, [], List(Union())
+    yield assert_isinstance, [1, 2], List(Union(int))
 
     # Check tracking of parametric.
-    yield ok, ListType(int).parametric
-    yield ok, as_type([ListType(int)]).parametric
-    yield ok, as_type({ListType(int)}).parametric
+    yield ok, List(int).parametric
+    yield ok, as_type([List(int)]).parametric
+    yield ok, as_type({List(int)}).parametric
     promise = PromisedType()
-    promise.deliver(ListType(int))
+    promise.deliver(List(int))
     yield ok, promise.resolve().parametric
 
     # Test correctness.
@@ -136,11 +136,11 @@ def test_listtype():
     def f(x):
         return 'list'
 
-    @dispatch(ListType(int))
+    @dispatch(List(int))
     def f(x):
         return 'list of int'
 
-    @dispatch(ListType(ListType(int)))
+    @dispatch(List(List(int)))
     def f(x):
         return 'list of list of int'
 
@@ -156,25 +156,25 @@ def test_listtype():
 
 def test_tupletype():
     # Standard type tests.
-    yield eq, hash(TupleType(int)), hash(TupleType(int))
-    yield neq, hash(TupleType(int)), hash(TupleType(str))
-    yield eq, hash(TupleType(TupleType(int))), hash(TupleType(TupleType(int)))
-    yield neq, hash(TupleType(TupleType(int))), hash(TupleType(TupleType(str)))
-    yield eq, repr(TupleType(int)), 'TupleType({})'.format(repr(Type(int)))
-    yield assert_issubclass, TupleType(int).get_types()[0], tuple
-    yield isnotsubclass, TupleType(int).get_types()[0], int
-    yield isnotsubclass, TupleType(int).get_types()[0], list
+    yield eq, hash(Tuple(int)), hash(Tuple(int))
+    yield neq, hash(Tuple(int)), hash(Tuple(str))
+    yield eq, hash(Tuple(Tuple(int))), hash(Tuple(Tuple(int)))
+    yield neq, hash(Tuple(Tuple(int))), hash(Tuple(Tuple(str)))
+    yield eq, repr(Tuple(int)), 'TupleType({})'.format(repr(Type(int)))
+    yield assert_issubclass, Tuple(int).get_types()[0], tuple
+    yield isnotsubclass, Tuple(int).get_types()[0], int
+    yield isnotsubclass, Tuple(int).get_types()[0], list
 
     # Test instance check.
-    yield assert_isinstance, (), TupleType(Union())
-    yield assert_isinstance, (1, 2), TupleType(Union(int))
+    yield assert_isinstance, (), Tuple(Union())
+    yield assert_isinstance, (1, 2), Tuple(Union(int))
 
     # Check tracking of parametric.
-    yield ok, TupleType(int).parametric
-    yield ok, as_type([TupleType(int)]).parametric
-    yield ok, as_type({TupleType(int)}).parametric
+    yield ok, Tuple(int).parametric
+    yield ok, as_type([Tuple(int)]).parametric
+    yield ok, as_type({Tuple(int)}).parametric
     promise = PromisedType()
-    promise.deliver(TupleType(int))
+    promise.deliver(Tuple(int))
     yield ok, promise.resolve().parametric
 
     # Test correctness.
@@ -188,11 +188,11 @@ def test_tupletype():
     def f(x):
         return 'tup'
 
-    @dispatch(TupleType(int))
+    @dispatch(Tuple(int))
     def f(x):
         return 'tup of int'
 
-    @dispatch(TupleType(TupleType(int)))
+    @dispatch(Tuple(Tuple(int)))
     def f(x):
         return 'tup of tup of int'
 
@@ -207,8 +207,8 @@ def test_tupletype():
 
 
 def test_covariance():
-    yield assert_issubclass, ListType(int), ListType(object)
-    yield assert_issubclass, ListType(ListType(int)), ListType(ListType(object))
-    yield isnotsubclass, ListType(int), ListType(str)
-    yield isnotsubclass, ListType(ListType), ListType(int)
-    yield assert_issubclass, ListType(ListType), ListType(TypeType)
+    yield assert_issubclass, List(int), List(object)
+    yield assert_issubclass, List(List(int)), List(List(object))
+    yield isnotsubclass, List(int), List(str)
+    yield isnotsubclass, List(List), List(int)
+    yield assert_issubclass, List(List), List(TypeType)

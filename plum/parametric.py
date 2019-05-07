@@ -14,8 +14,8 @@ __all__ = ['parametric',
            'type_parameter',
            'kind',
            'Kind',
-           'ListType',
-           'TupleType',
+           'List',
+           'Tuple',
            'type_of']
 log = logging.getLogger(__name__)
 
@@ -141,7 +141,7 @@ class _ParametricList(list):
     """Parametric list type."""
 
 
-class ListType(ComparableType):
+class List(ComparableType):
     """Parametric list Plum type.
 
     Args:
@@ -152,7 +152,7 @@ class ListType(ComparableType):
         self._el_type = as_type(el_type)
 
     def __hash__(self):
-        return multihash(ListType, self._el_type)
+        return multihash(List, self._el_type)
 
     def __repr__(self):
         return 'ListType({})'.format(self._el_type)
@@ -170,7 +170,7 @@ class _ParametricTuple(tuple):
     """Parametric tuple type."""
 
 
-class TupleType(ComparableType):
+class Tuple(ComparableType):
     """Parametric tuple Plum type.
 
     Args:
@@ -181,7 +181,7 @@ class TupleType(ComparableType):
         self._el_type = as_type(el_type)
 
     def __hash__(self):
-        return multihash(TupleType, self._el_type)
+        return multihash(Tuple, self._el_type)
 
     def __repr__(self):
         return 'TupleType({})'.format(self._el_type)
@@ -212,10 +212,10 @@ def type_of(obj):
         ptype: Plum type of `obj`.
     """
     if isinstance(obj, list):
-        return ListType(_types_of_iterable(obj))
+        return List(_types_of_iterable(obj))
 
     if isinstance(obj, tuple):
-        return TupleType(_types_of_iterable(obj))
+        return Tuple(_types_of_iterable(obj))
 
     return as_type(type(obj))
 

@@ -2,7 +2,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from . import Dispatcher, ListType
+from . import Dispatcher, List
 from . import eq, le, benchmark
 
 
@@ -53,7 +53,7 @@ def test_cache_clearing():
     def f(x):
         return 1
 
-    @dispatch(ListType(int))
+    @dispatch(List(int))
     def f(x):
         return 1
 
