@@ -79,7 +79,8 @@ class VarArgs(AbstractType):
         return self.type.parametric
 
 
-promised_type_of = Promise()  #: Resolves to `.parametric.type_of`.
+promised_type_of = Promise()  # Resolves to `.parametric.type_of`.
+subclasscheck_cache = {}  # Cache results of `__subclasscheck__`.
 
 
 class ComparableType(AbstractType, Comparable):
@@ -89,8 +90,15 @@ class ComparableType(AbstractType, Comparable):
         return issubclass(self, other)
 
     def __subclasscheck__(self, subclass):
-        return all([issubclass(t, self.get_types())
-                    for t in subclass.get_types()])
+        # Cache results for performance.
+        key = hash(self), hash(subclass)
+        try:
+            return subclasscheck_cache[key]
+        except KeyError:
+            check = all([issubclass(t, self.get_types())
+                         for t in subclass.get_types()])
+            subclasscheck_cache[key] = check  # Cache result of check.
+            return check
 
     def __instancecheck__(self, instance):
         return issubclass(promised_type_of.resolve()(instance), self)

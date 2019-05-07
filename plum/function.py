@@ -25,8 +25,8 @@ class NotFoundLookupError(LookupError):
 
 
 # These promises are necessary to avoid circular imports.
-promised_convert = Promise()  #: This will resolve to `.promotion.convert`.
-promised_type_of = Promise()  #: This will resolve to `.parametric.type_of`.
+promised_convert = Promise()  # This will resolve to `.promotion.convert`.
+promised_type_of = Promise()  # This will resolve to `.parametric.type_of`.
 
 
 def _convert(obj, target_type):
