@@ -199,7 +199,7 @@ class Function(object):
 
             # Clear cache.
             # TODO: Do something more clever, but be careful with the tracking
-            # parametric types.
+            # of parametric types.
             self.clear_cache(reregister=False)
 
     def resolve_signature(self, signature):
