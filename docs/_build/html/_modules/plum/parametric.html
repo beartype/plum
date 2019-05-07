@@ -162,8 +162,8 @@
            <span class="s1">&#39;type_parameter&#39;</span><span class="p">,</span>
            <span class="s1">&#39;kind&#39;</span><span class="p">,</span>
            <span class="s1">&#39;Kind&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;ListType&#39;</span><span class="p">,</span>
-           <span class="s1">&#39;TupleType&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;List&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;Tuple&#39;</span><span class="p">,</span>
            <span class="s1">&#39;type_of&#39;</span><span class="p">]</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -289,7 +289,7 @@
     <span class="sd">&quot;&quot;&quot;Parametric list type.&quot;&quot;&quot;</span>
 
 
-<div class="viewcode-block" id="ListType"><a class="viewcode-back" href="../../source/plum.parametric.html#plum.parametric.ListType">[docs]</a><span class="k">class</span> <span class="nc">ListType</span><span class="p">(</span><span class="n">ComparableType</span><span class="p">):</span>
+<div class="viewcode-block" id="List"><a class="viewcode-back" href="../../source/plum.parametric.html#plum.parametric.List">[docs]</a><span class="k">class</span> <span class="nc">List</span><span class="p">(</span><span class="n">ComparableType</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Parametric list Plum type.</span>
 
 <span class="sd">    Args:</span>
@@ -300,12 +300,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span> <span class="o">=</span> <span class="n">as_type</span><span class="p">(</span><span class="n">el_type</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">multihash</span><span class="p">(</span><span class="n">ListType</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">multihash</span><span class="p">(</span><span class="n">List</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s1">&#39;ListType(</span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span><span class="p">)</span>
 
-<div class="viewcode-block" id="ListType.get_types"><a class="viewcode-back" href="../../source/plum.parametric.html#plum.parametric.ListType.get_types">[docs]</a>    <span class="k">def</span> <span class="nf">get_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="List.get_types"><a class="viewcode-back" href="../../source/plum.parametric.html#plum.parametric.List.get_types">[docs]</a>    <span class="k">def</span> <span class="nf">get_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">_ParametricList</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span><span class="p">),</span></div>
 
     <span class="nd">@property</span>
@@ -318,7 +318,7 @@
     <span class="sd">&quot;&quot;&quot;Parametric tuple type.&quot;&quot;&quot;</span>
 
 
-<div class="viewcode-block" id="TupleType"><a class="viewcode-back" href="../../source/plum.parametric.html#plum.parametric.TupleType">[docs]</a><span class="k">class</span> <span class="nc">TupleType</span><span class="p">(</span><span class="n">ComparableType</span><span class="p">):</span>
+<div class="viewcode-block" id="Tuple"><a class="viewcode-back" href="../../source/plum.parametric.html#plum.parametric.Tuple">[docs]</a><span class="k">class</span> <span class="nc">Tuple</span><span class="p">(</span><span class="n">ComparableType</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Parametric tuple Plum type.</span>
 
 <span class="sd">    Args:</span>
@@ -329,12 +329,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span> <span class="o">=</span> <span class="n">as_type</span><span class="p">(</span><span class="n">el_type</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">multihash</span><span class="p">(</span><span class="n">TupleType</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">multihash</span><span class="p">(</span><span class="n">Tuple</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s1">&#39;TupleType(</span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span><span class="p">)</span>
 
-<div class="viewcode-block" id="TupleType.get_types"><a class="viewcode-back" href="../../source/plum.parametric.html#plum.parametric.TupleType.get_types">[docs]</a>    <span class="k">def</span> <span class="nf">get_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Tuple.get_types"><a class="viewcode-back" href="../../source/plum.parametric.html#plum.parametric.Tuple.get_types">[docs]</a>    <span class="k">def</span> <span class="nf">get_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">_ParametricTuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span><span class="p">),</span></div>
 
     <span class="nd">@property</span>
@@ -360,10 +360,10 @@
 <span class="sd">        ptype: Plum type of `obj`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">ListType</span><span class="p">(</span><span class="n">_types_of_iterable</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">List</span><span class="p">(</span><span class="n">_types_of_iterable</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">TupleType</span><span class="p">(</span><span class="n">_types_of_iterable</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">Tuple</span><span class="p">(</span><span class="n">_types_of_iterable</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
 
     <span class="k">return</span> <span class="n">as_type</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span></div>
 

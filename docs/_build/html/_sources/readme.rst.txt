@@ -175,19 +175,19 @@ type system is *covariant*, as opposed to Julia's type system, which is
 
 .. code:: python
 
-    from plum import dispatch, TupleType, ListType
+    from plum import dispatch, Tuple, List
 
     @dispatch({tuple, list})
     def f(x):
         print('tuple or list')
         
         
-    @dispatch(TupleType(int))
+    @dispatch(Tuple(int))
     def f(x):
         print('tuple of int')
         
         
-    @dispatch(ListType(int))
+    @dispatch(List(int))
     def f(x):
         print('list of int')
 

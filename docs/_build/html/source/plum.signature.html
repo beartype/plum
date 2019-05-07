@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>plum.tuple module &mdash; plum 0.1.0 documentation</title>
+  <title>plum.signature module &mdash; plum 0.1.0 documentation</title>
   
 
   
@@ -90,7 +90,7 @@
 <li class="toctree-l2"><a class="reference internal" href="plum.parametric.html">plum.parametric module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plum.promotion.html">plum.promotion module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plum.resolvable.html">plum.resolvable module</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">plum.tuple module</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">plum.signature module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plum.type.html">plum.type module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plum.util.html">plum.util module</a></li>
 </ul>
@@ -142,13 +142,13 @@
         
           <li><a href="../api.html">Application Programming Interface</a> &raquo;</li>
         
-      <li>plum.tuple module</li>
+      <li>plum.signature module</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="../_sources/source/plum.tuple.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/source/plum.signature.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -161,13 +161,13 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="module-plum.tuple">
-<span id="plum-tuple-module"></span><h1>plum.tuple module<a class="headerlink" href="#module-plum.tuple" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-plum.signature">
+<span id="plum-signature-module"></span><h1>plum.signature module<a class="headerlink" href="#module-plum.signature" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
-<dt id="plum.tuple.Tuple">
-<em class="property">class </em><code class="descclassname">plum.tuple.</code><code class="descname">Tuple</code><span class="sig-paren">(</span><em>*types</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/tuple.html#Tuple"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.tuple.Tuple" title="Permalink to this definition">¶</a></dt>
+<dt id="plum.signature.Signature">
+<em class="property">class </em><code class="descclassname">plum.signature.</code><code class="descname">Signature</code><span class="sig-paren">(</span><em>*types</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/signature.html#Signature"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.signature.Signature" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="plum.util.html#plum.util.Comparable" title="plum.util.Comparable"><code class="xref py py-class docutils literal notranslate"><span class="pre">plum.util.Comparable</span></code></a></p>
-<p>Tuple.</p>
+<p>Signature.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -177,20 +177,20 @@
 </tbody>
 </table>
 <dl class="attribute">
-<dt id="plum.tuple.Tuple.base">
-<code class="descname">base</code><a class="headerlink" href="#plum.tuple.Tuple.base" title="Permalink to this definition">¶</a></dt>
+<dt id="plum.signature.Signature.base">
+<code class="descname">base</code><a class="headerlink" href="#plum.signature.Signature.base" title="Permalink to this definition">¶</a></dt>
 <dd><p>Base of the tuple.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="plum.tuple.Tuple.expand_varargs_to">
-<code class="descname">expand_varargs_to</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/tuple.html#Tuple.expand_varargs_to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.tuple.Tuple.expand_varargs_to" title="Permalink to this definition">¶</a></dt>
-<dd><p>Expand varargs to a given <a class="reference internal" href="#plum.tuple.Tuple" title="plum.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple.Tuple</span></code></a>.</p>
+<dt id="plum.signature.Signature.expand_varargs_to">
+<code class="descname">expand_varargs_to</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/signature.html#Signature.expand_varargs_to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.signature.Signature.expand_varargs_to" title="Permalink to this definition">¶</a></dt>
+<dd><p>Expand varargs to a given <a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><code class="xref py py-class docutils literal notranslate"><span class="pre">signature.Signature</span></code></a>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>other</strong> (<a class="reference internal" href="#plum.tuple.Tuple" title="plum.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple.Tuple</span></code></a>) – Other tuple to expand to.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>other</strong> (<a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><code class="xref py py-class docutils literal notranslate"><span class="pre">signature.Signature</span></code></a>) – Other tuple to expand to.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Tuple of Plum types that matches <cite>other</cite>.</td>
 </tr>
@@ -201,14 +201,14 @@
 </dd></dl>
 
 <dl class="method">
-<dt id="plum.tuple.Tuple.has_varargs">
-<code class="descname">has_varargs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/tuple.html#Tuple.has_varargs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.tuple.Tuple.has_varargs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check whether this tuple has varargs.</p>
+<dt id="plum.signature.Signature.has_varargs">
+<code class="descname">has_varargs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/signature.html#Signature.has_varargs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.signature.Signature.has_varargs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check whether this signature has varargs.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><cite>True</cite> if and only if this tuple has varargs.</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><cite>True</cite> if and only if this signature has varargs.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">bool</td>
 </tr>
@@ -217,15 +217,15 @@
 </dd></dl>
 
 <dl class="method">
-<dt id="plum.tuple.Tuple.is_compatible">
-<code class="descname">is_compatible</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/tuple.html#Tuple.is_compatible"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.tuple.Tuple.is_compatible" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check whether this tuple is compatible with another one.</p>
+<dt id="plum.signature.Signature.is_compatible">
+<code class="descname">is_compatible</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/signature.html#Signature.is_compatible"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.signature.Signature.is_compatible" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check whether this signature is compatible with another one.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>other</strong> (<a class="reference internal" href="#plum.tuple.Tuple" title="plum.tuple.Tuple"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple.Tuple</span></code></a>) – Other tuple to check compatibility
-with.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>other</strong> (<a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><code class="xref py py-class docutils literal notranslate"><span class="pre">signature.Signature</span></code></a>) – Other signature to check
+compatibility with.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Compatibility.</td>
 </tr>
@@ -236,8 +236,8 @@ with.</td>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="plum.tuple.Tuple.varargs_type">
-<code class="descname">varargs_type</code><a class="headerlink" href="#plum.tuple.Tuple.varargs_type" title="Permalink to this definition">¶</a></dt>
+<dt id="plum.signature.Signature.varargs_type">
+<code class="descname">varargs_type</code><a class="headerlink" href="#plum.signature.Signature.varargs_type" title="Permalink to this definition">¶</a></dt>
 <dd><p>Type of the varargs.</p>
 </dd></dl>
 

@@ -1,0 +1,7 @@
+plum.signature module
+=====================
+
+.. automodule:: plum.signature
+    :members:
+    :undoc-members:
+    :show-inheritance:

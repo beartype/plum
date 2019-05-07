@@ -154,7 +154,7 @@
 <span class="kn">import</span> <span class="nn">inspect</span>
 
 <span class="kn">from</span> <span class="nn">.function</span> <span class="k">import</span> <span class="n">Function</span>
-<span class="kn">from</span> <span class="nn">.tuple</span> <span class="k">import</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">.signature</span> <span class="k">import</span> <span class="n">Signature</span>
 <span class="kn">from</span> <span class="nn">.util</span> <span class="k">import</span> <span class="n">get_default</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Dispatcher&#39;</span><span class="p">,</span> <span class="s1">&#39;dispatch&#39;</span><span class="p">]</span>
@@ -187,7 +187,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">precedence</span> <span class="o">=</span> <span class="n">get_default</span><span class="p">(</span><span class="n">kw_args</span><span class="p">,</span> <span class="s1">&#39;precedence&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">return_type</span> <span class="o">=</span> <span class="n">get_default</span><span class="p">(</span><span class="n">kw_args</span><span class="p">,</span> <span class="s1">&#39;return_type&#39;</span><span class="p">,</span> <span class="nb">object</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_decorator</span><span class="p">([</span><span class="n">Tuple</span><span class="p">(</span><span class="o">*</span><span class="n">types</span><span class="p">)],</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_decorator</span><span class="p">([</span><span class="n">Signature</span><span class="p">(</span><span class="o">*</span><span class="n">types</span><span class="p">)],</span>
                                       <span class="n">precedence</span><span class="o">=</span><span class="n">precedence</span><span class="p">,</span>
                                       <span class="n">return_type</span><span class="o">=</span><span class="n">return_type</span><span class="p">)</span>
 
@@ -206,7 +206,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">precedence</span> <span class="o">=</span> <span class="n">get_default</span><span class="p">(</span><span class="n">kw_args</span><span class="p">,</span> <span class="s1">&#39;precedence&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">return_type</span> <span class="o">=</span> <span class="n">get_default</span><span class="p">(</span><span class="n">kw_args</span><span class="p">,</span> <span class="s1">&#39;return_type&#39;</span><span class="p">,</span> <span class="nb">object</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_decorator</span><span class="p">([</span><span class="n">Tuple</span><span class="p">(</span><span class="o">*</span><span class="n">types</span><span class="p">)</span> <span class="k">for</span> <span class="n">types</span> <span class="ow">in</span> <span class="n">signatures</span><span class="p">],</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_decorator</span><span class="p">([</span><span class="n">Signature</span><span class="p">(</span><span class="o">*</span><span class="n">types</span><span class="p">)</span> <span class="k">for</span> <span class="n">types</span> <span class="ow">in</span> <span class="n">signatures</span><span class="p">],</span>
                                       <span class="n">precedence</span><span class="o">=</span><span class="n">precedence</span><span class="p">,</span>
                                       <span class="n">return_type</span><span class="o">=</span><span class="n">return_type</span><span class="p">)</span></div>
 
@@ -267,7 +267,7 @@
                 <span class="n">return_type</span> <span class="o">=</span> <span class="nb">object</span>
 
             <span class="c1"># Assemble signature.</span>
-            <span class="n">signature</span> <span class="o">=</span> <span class="n">Tuple</span><span class="p">(</span><span class="o">*</span><span class="n">types</span><span class="p">)</span>
+            <span class="n">signature</span> <span class="o">=</span> <span class="n">Signature</span><span class="p">(</span><span class="o">*</span><span class="n">types</span><span class="p">)</span>
 
             <span class="c1"># Create and call decorator.</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_decorator</span><span class="p">([</span><span class="n">signature</span><span class="p">],</span>

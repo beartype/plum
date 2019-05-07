@@ -154,7 +154,7 @@
 
 <span class="kn">from</span> <span class="nn">plum.type</span> <span class="k">import</span> <span class="n">is_object</span>
 
-<span class="kn">from</span> <span class="nn">.tuple</span> <span class="k">import</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">.signature</span> <span class="k">import</span> <span class="n">Signature</span>
 <span class="kn">from</span> <span class="nn">.type</span> <span class="k">import</span> <span class="n">as_type</span><span class="p">,</span> <span class="n">is_type</span>
 <span class="kn">from</span> <span class="nn">.util</span> <span class="k">import</span> <span class="n">get_default</span>
 <span class="kn">from</span> <span class="nn">.resolvable</span> <span class="k">import</span> <span class="n">Promise</span>
@@ -173,8 +173,8 @@
 
 
 <span class="c1"># These promises are necessary to avoid circular imports.</span>
-<span class="n">promised_convert</span> <span class="o">=</span> <span class="n">Promise</span><span class="p">()</span>  <span class="c1">#: This will resolve to `.promotion.convert`.</span>
-<span class="n">promised_type_of</span> <span class="o">=</span> <span class="n">Promise</span><span class="p">()</span>  <span class="c1">#: This will resolve to `.parametric.type_of`.</span>
+<span class="n">promised_convert</span> <span class="o">=</span> <span class="n">Promise</span><span class="p">()</span>  <span class="c1"># This will resolve to `.promotion.convert`.</span>
+<span class="n">promised_type_of</span> <span class="o">=</span> <span class="n">Promise</span><span class="p">()</span>  <span class="c1"># This will resolve to `.parametric.type_of`.</span>
 
 
 <span class="k">def</span> <span class="nf">_convert</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">target_type</span><span class="p">):</span>
@@ -274,7 +274,7 @@
         <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
             <span class="c1"># Register the new method.</span>
             <span class="k">for</span> <span class="n">signature</span> <span class="ow">in</span> <span class="n">signatures</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Tuple</span><span class="p">(</span><span class="o">*</span><span class="n">signature</span><span class="p">),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Signature</span><span class="p">(</span><span class="o">*</span><span class="n">signature</span><span class="p">),</span>
                               <span class="n">f</span><span class="p">,</span>
                               <span class="n">precedence</span><span class="o">=</span><span class="n">precedence</span><span class="p">,</span>
                               <span class="n">return_type</span><span class="o">=</span><span class="n">return_type</span><span class="p">)</span>
@@ -306,7 +306,7 @@
         <span class="sd">&quot;&quot;&quot;Register a method.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            signature (:class:`.tuple.Tuple`): Signature of the method.</span>
+<span class="sd">            signature (:class:`.signature.Signature`): Signature of the method.</span>
 <span class="sd">            f (function): Function that implements the method.</span>
 <span class="sd">            precedence (int, optional): Precedence of the function. Defaults</span>
 <span class="sd">                to `0`.</span>
@@ -347,7 +347,7 @@
 
             <span class="c1"># Clear cache.</span>
             <span class="c1"># TODO: Do something more clever, but be careful with the tracking</span>
-            <span class="c1"># parametric types.</span>
+            <span class="c1"># of parametric types.</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">clear_cache</span><span class="p">(</span><span class="n">reregister</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Function.resolve_signature"><a class="viewcode-back" href="../../source/plum.function.html#plum.function.Function.resolve_signature">[docs]</a>    <span class="k">def</span> <span class="nf">resolve_signature</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signature</span><span class="p">):</span>
@@ -355,10 +355,10 @@
 <span class="sd">        signatures of all applicable methods.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            signature (:class:`.tuple.Tuple`): Signature to resolve.</span>
+<span class="sd">            signature (:class:`.signature.Signature`): Signature to resolve.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            :class:`.tuple.Tuple`: The most specific signature among the</span>
+<span class="sd">            :class:`.signature.Signature`: The most specific signature among the</span>
 <span class="sd">                signatures of all applicable methods.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_pending_registrations</span><span class="p">()</span>
@@ -420,7 +420,7 @@
             <span class="k">pass</span>
 
         <span class="c1"># Look up the signature.</span>
-        <span class="n">signature</span> <span class="o">=</span> <span class="n">Tuple</span><span class="p">(</span><span class="o">*</span><span class="n">types</span><span class="p">)</span>
+        <span class="n">signature</span> <span class="o">=</span> <span class="n">Signature</span><span class="p">(</span><span class="o">*</span><span class="n">types</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_class</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
@@ -509,10 +509,10 @@
     <span class="sd">&quot;&quot;&quot;Find the most specific in a list of signatures.</span>
 
 <span class="sd">     Args:</span>
-<span class="sd">        signatures (list[:class:`.tuple.Tuple`]): List of signatures.</span>
+<span class="sd">        signatures (list[:class:`.signature.Signature`]): List of signatures.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        :class:`.tuple.Tuple`: Most specific signatures.</span>
+<span class="sd">        :class:`.signature.Signature`: Most specific signatures.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">candidates</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">signature</span> <span class="ow">in</span> <span class="n">signatures</span><span class="p">:</span>

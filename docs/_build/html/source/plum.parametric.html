@@ -90,7 +90,7 @@
 <li class="toctree-l2 current"><a class="current reference internal" href="#">plum.parametric module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plum.promotion.html">plum.promotion module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plum.resolvable.html">plum.resolvable module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="plum.tuple.html">plum.tuple module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plum.signature.html">plum.signature module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plum.type.html">plum.type module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plum.util.html">plum.util module</a></li>
 </ul>
@@ -213,8 +213,8 @@
 </dd></dl>
 
 <dl class="class">
-<dt id="plum.parametric.ListType">
-<em class="property">class </em><code class="descclassname">plum.parametric.</code><code class="descname">ListType</code><span class="sig-paren">(</span><em>el_type</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/parametric.html#ListType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.parametric.ListType" title="Permalink to this definition">¶</a></dt>
+<dt id="plum.parametric.List">
+<em class="property">class </em><code class="descclassname">plum.parametric.</code><code class="descname">List</code><span class="sig-paren">(</span><em>el_type</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/parametric.html#List"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.parametric.List" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">plum.type.ComparableType</span></code></p>
 <p>Parametric list Plum type.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -226,8 +226,8 @@
 </tbody>
 </table>
 <dl class="method">
-<dt id="plum.parametric.ListType.get_types">
-<code class="descname">get_types</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/parametric.html#ListType.get_types"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.parametric.ListType.get_types" title="Permalink to this definition">¶</a></dt>
+<dt id="plum.parametric.List.get_types">
+<code class="descname">get_types</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/parametric.html#List.get_types"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.parametric.List.get_types" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the types encapsulated by this Plum type.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -242,8 +242,8 @@
 </dd></dl>
 
 <dl class="attribute">
-<dt id="plum.parametric.ListType.parametric">
-<code class="descname">parametric</code><a class="headerlink" href="#plum.parametric.ListType.parametric" title="Permalink to this definition">¶</a></dt>
+<dt id="plum.parametric.List.parametric">
+<code class="descname">parametric</code><a class="headerlink" href="#plum.parametric.List.parametric" title="Permalink to this definition">¶</a></dt>
 <dd><p>Boolean that indicates whether this is or contains a parametric
 type.</p>
 </dd></dl>
@@ -251,8 +251,8 @@ type.</p>
 </dd></dl>
 
 <dl class="class">
-<dt id="plum.parametric.TupleType">
-<em class="property">class </em><code class="descclassname">plum.parametric.</code><code class="descname">TupleType</code><span class="sig-paren">(</span><em>el_type</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/parametric.html#TupleType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.parametric.TupleType" title="Permalink to this definition">¶</a></dt>
+<dt id="plum.parametric.Tuple">
+<em class="property">class </em><code class="descclassname">plum.parametric.</code><code class="descname">Tuple</code><span class="sig-paren">(</span><em>el_type</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/parametric.html#Tuple"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.parametric.Tuple" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">plum.type.ComparableType</span></code></p>
 <p>Parametric tuple Plum type.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -264,8 +264,8 @@ type.</p>
 </tbody>
 </table>
 <dl class="method">
-<dt id="plum.parametric.TupleType.get_types">
-<code class="descname">get_types</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/parametric.html#TupleType.get_types"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.parametric.TupleType.get_types" title="Permalink to this definition">¶</a></dt>
+<dt id="plum.parametric.Tuple.get_types">
+<code class="descname">get_types</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/parametric.html#Tuple.get_types"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.parametric.Tuple.get_types" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the types encapsulated by this Plum type.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -280,8 +280,8 @@ type.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="plum.parametric.TupleType.parametric">
-<code class="descname">parametric</code><a class="headerlink" href="#plum.parametric.TupleType.parametric" title="Permalink to this definition">¶</a></dt>
+<dt id="plum.parametric.Tuple.parametric">
+<code class="descname">parametric</code><a class="headerlink" href="#plum.parametric.Tuple.parametric" title="Permalink to this definition">¶</a></dt>
 <dd><p>Boolean that indicates whether this is or contains a parametric
 type.</p>
 </dd></dl>
