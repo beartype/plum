@@ -2,7 +2,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from . import Dispatcher, List
+from . import Dispatcher, List, clear_all_cache
 from . import eq, le, benchmark
 
 
@@ -28,14 +28,15 @@ def test_cache():
     dur_plum_first = benchmark(f, (1,), n=1)
     dur_plum = benchmark(f, (1,))
 
-    # A cached call should not be more than 500 times slower than a native call.
-    yield le, dur_plum, 500 * dur_native, 'compare native'
+    # A cached call should not be more than 15 times slower than a native
+    # call.
+    yield le, dur_plum, 15 * dur_native, 'compare native'
 
-    # A first call should not be more than 100 times slower than a cached call.
-    yield le, dur_plum_first, 100 * dur_plum, 'compare first'
+    # A first call should not be more than 200 times slower than a cached call.
+    yield le, dur_plum_first, 200 * dur_plum, 'compare first'
 
-    # The cached call should be at least 10 times faster than a first call.
-    yield le, dur_plum, dur_plum_first / 10, 'cache performance'
+    # The cached call should be at least 20 times faster than a first call.
+    yield le, dur_plum, dur_plum_first / 20, 'cache performance'
 
     # Test cache correctness.
     yield eq, f(1), 1, 'cache correctness 1'
@@ -72,7 +73,7 @@ def test_cache_clearing():
     yield eq, f._parametric, False
 
     f(1)
-    Dispatcher.clear_all_cache()
+    clear_all_cache()
 
     # Again check that cache is cleared.
     yield eq, len(f.methods), 0
