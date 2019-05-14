@@ -3,16 +3,16 @@
 from __future__ import absolute_import, print_function, division
 
 import abc
-import logging
-from itertools import combinations
 import inspect
+import logging
 
-from .resolvable import Reference, Promise
+from .resolvable import Resolvable, Reference, Promise
 from .util import multihash, Comparable, get_default
 
 __all__ = ['VarArgs',
            'Union',
            'Type',
+           'ResolvableType',
            'PromisedType',
            'Self',
            'TypeType',
@@ -197,8 +197,8 @@ class Type(ComparableType):
         return self._type,
 
 
-class PromisedType(ComparableType, Promise):
-    """A promised Plum type."""
+class ResolvableType(ComparableType, Resolvable):
+    """A resolvable Plum type."""
 
     def __hash__(self):
         return hash(as_type(self.resolve()))
@@ -212,6 +212,10 @@ class PromisedType(ComparableType, Promise):
     @property
     def parametric(self):
         return as_type(self.resolve()).parametric
+
+
+class PromisedType(ResolvableType, Promise):
+    """A promised Plum type."""
 
 
 class Self(Reference, PromisedType):
