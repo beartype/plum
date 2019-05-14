@@ -6,10 +6,10 @@ import logging
 
 from plum.type import is_object
 
+from .resolvable import Promise
 from .signature import Signature
 from .type import as_type, is_type
 from .util import get_default
-from .resolvable import Promise
 
 __all__ = ['Function', 'AmbiguousLookupError', 'NotFoundLookupError']
 log = logging.getLogger(__name__)
@@ -40,10 +40,15 @@ def _convert(obj, target_type):
     Returns:
         object: `object_to_covert` converted to type of `obj_from_target`.
     """
-    if is_object(target_type):
+    if target_type is default_obj_type or is_object(target_type):
         return obj
     else:
         return promised_convert.resolve()(obj, target_type)
+
+
+# This is a default instance of the Plum `object` type, which is used to
+# speed up cached calls.
+default_obj_type = as_type(object)
 
 
 class WrappedMethod(object):
@@ -57,7 +62,7 @@ class WrappedMethod(object):
         return_type (ptype, optional): Return type. Defaults to `object`.
     """
 
-    def __init__(self, method, instance=None, return_type=as_type(object)):
+    def __init__(self, method, instance=None, return_type=default_obj_type):
         self._method = method
         self._instance = instance
         self._return_type = return_type
@@ -71,8 +76,11 @@ class WrappedMethod(object):
         if self._instance is not None:
             args = (self._instance,) + args
 
-        # Perform call and convert to correct return type.
-        return _convert(self._method(*args, **kw_args), self._return_type)
+        # Optimise the common case that the return type is `object`.
+        if self._return_type is default_obj_type:
+            return self._method(*args, **kw_args)
+        else:
+            return _convert(self._method(*args, **kw_args), self._return_type)
 
     def __repr__(self):
         return repr(self._method)
@@ -80,6 +88,7 @@ class WrappedMethod(object):
     def invoke(self, *types):
         if self._instance is not None:
             types = (self._instance,) + types
+
         return self._method.invoke(*types)
 
 
@@ -181,10 +190,14 @@ class Function(object):
                                    'signature {} has been defined multiple '
                                    'times.'.format(self._f.__name__, signature))
 
-            log.debug('For function "{}", resolving registration with '
-                      'signature {}.'.format(self._f.__name__, signature))
+            # If the return type is `object`, then set it to `default_obj_type`.
+            # This allows for a fast check to speed up cached calls.
+            return_type = as_type(return_type)
+            if is_object(return_type):
+                return_type = default_obj_type
+
             # Make sure to convert return type to Plum type.
-            self.methods[signature] = (f, as_type(return_type))
+            self.methods[signature] = (f, return_type)
             self.precedences[signature] = precedence
 
             # Add to resolved registrations.
@@ -217,8 +230,6 @@ class Function(object):
 
         # Find the most specific applicable signature.
         candidates = [s for s in self.methods.keys() if signature <= s]
-        log.info('Applicable candidates: [{}].'
-                 ''.format(', '.join(map(str, candidates))))
         candidates = find_most_specific(candidates)
 
         # If only a single candidate is left, the resolution has been
@@ -258,16 +269,13 @@ class Function(object):
         Returns:
             tuple: Tuple containing method and return type.
         """
-        log.debug('Resolving method for types {}.'.format(types))
-
         # New registrations may invalidate cache, so resolve pending
         # registrations first.
         self._resolve_pending_registrations()
 
         # Attempt to use cache.
         try:
-            method, return_type = self._cache[types]
-            return method, return_type
+            return self._cache[types]
         except KeyError:
             pass
 
@@ -314,21 +322,40 @@ class Function(object):
     def __call__(self, *args, **kw_args):
         # First resolve pending registrations, because the value of
         # `self._parametric` depends on it.
-        self._resolve_pending_registrations()
+        if len(self._pending) != 0:
+            self._resolve_pending_registrations()
 
         # Get types of arg.
-        sig_args = args[1:] if self._class else args
+        if self._class:
+            sig_args = args[1:]
+        else:
+            sig_args = args
 
         # Get types of arguments for signature. Only use `type_of` if
         # necessary, because it incurs a significant performance hit.
-        if self._parametric:
-            sig_types = [promised_type_of.resolve()(x) for x in sig_args]
+        if not self._parametric:
+            sig_types = tuple([type(x) for x in sig_args])
         else:
-            sig_types = [type(x) for x in sig_args]
+            sig_types = tuple([promised_type_of.resolve()(x) for x in sig_args])
 
-        # Get method and return type, and perform call.
+        try:
+            # Attempt to use cache. This will also be done in
+            # `self.resolve_method`, but checking here as well speed up
+            # cached calls significantly.
+            method, return_type = self._cache[sig_types]
+
+            # Check for the common case that the return type is object. This is
+            # to speed up the common case.
+            if return_type is default_obj_type:
+                return method(*args, **kw_args)
+            else:
+                return _convert(method(*args, **kw_args), return_type)
+        except KeyError:
+            pass
+
+        # Cache failed. Get method and return type, and perform call.
         method, return_type = self.resolve_method(*sig_types)
-        return WrappedMethod(method, return_type=return_type)(*args, **kw_args)
+        return _convert(method(*args, **kw_args), return_type)
 
     def invoke(self, *types):
         """Invoke a particular method.
@@ -346,7 +373,7 @@ class Function(object):
         instance, types = (types[0], types[1:]) if bound else (None, types)
 
         # Get method and return type, and perform call.
-        method, return_type = self.resolve_method(*(as_type(t) for t in types))
+        method, return_type = self.resolve_method(*[as_type(t) for t in types])
         return WrappedMethod(method, instance=instance, return_type=return_type)
 
     def __get__(self, instance, cls=None):
@@ -368,9 +395,6 @@ def find_most_specific(signatures):
     """
     candidates = []
     for signature in signatures:
-        log.info('Iteration: candidates: [{}]; considering {}.'
-                 ''.format(', '.join(map(str, candidates)), signature))
-
         # If none of the candidates are comparable, then add the method as
         # a new candidate and continue.
         if not any(c.is_comparable(signature) for c in candidates):
@@ -389,5 +413,4 @@ def find_most_specific(signatures):
         else:
             candidates = new_candidates
 
-    log.info('Reduced to [{}].'.format(', '.join(map(str, candidates))))
     return candidates
