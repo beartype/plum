@@ -168,8 +168,8 @@ Sets can be used to instantiate union types:
 Parametric Types
 ~~~~~~~~~~~~~~~~
 
-The parametric types ``TupleType`` and ``ListType`` can be used to
-dispatch on lists with particular types of elements. Importantly, the
+The parametric types ``Tuple`` and ``List`` can be used to dispatch on
+tuples and lists with particular types of elements. Importantly, the
 type system is *covariant*, as opposed to Julia's type system, which is
 *invariant*.
 

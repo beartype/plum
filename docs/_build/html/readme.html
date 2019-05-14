@@ -320,8 +320,8 @@ to dispatch on a function’s type annotations:</p>
 </div>
 <div class="section" id="parametric-types">
 <h3>Parametric Types<a class="headerlink" href="#parametric-types" title="Permalink to this headline">¶</a></h3>
-<p>The parametric types <code class="docutils literal notranslate"><span class="pre">TupleType</span></code> and <code class="docutils literal notranslate"><span class="pre">ListType</span></code> can be used to
-dispatch on lists with particular types of elements. Importantly, the
+<p>The parametric types <code class="docutils literal notranslate"><span class="pre">Tuple</span></code> and <code class="docutils literal notranslate"><span class="pre">List</span></code> can be used to dispatch on
+tuples and lists with particular types of elements. Importantly, the
 type system is <em>covariant</em>, as opposed to Julia’s type system, which is
 <em>invariant</em>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span>
