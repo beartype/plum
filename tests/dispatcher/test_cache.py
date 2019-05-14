@@ -3,27 +3,28 @@
 from __future__ import absolute_import, division, print_function
 
 from plum.type import subclasscheck_cache
-from . import Dispatcher, List, clear_all_cache
+from . import Dispatcher, List, clear_all_cache, Referentiable, Self
 from . import eq, le, benchmark
 
 
-def test_cache():
+def test_cache_function_call_performance_and_correctness():
     # Test performance.
     dispatch = Dispatcher()
 
-    def f_native(x): return None
+    def f_native(x):
+        pass
 
     @dispatch(object)
     def f(x):
-        return 1
+        pass
 
     @dispatch({int, float})
     def f(x):
-        return 1
+        pass
 
     @dispatch({int, float, str})
     def f(x):
-        return 1
+        pass
 
     dur_native = benchmark(f_native, (1,))
     dur_plum_first = benchmark(f, (1,), n=1)
@@ -40,12 +41,78 @@ def test_cache():
     yield le, dur_plum, dur_plum_first / 20, 'cache performance'
 
     # Test cache correctness.
-    yield eq, f(1), 1, 'cache correctness 1'
+    yield eq, f(1), None, 'cache correctness 1'
 
     @dispatch(int)
-    def f(x): return 2
+    def f(x): return 1
 
-    yield eq, f(1), 2, 'cache correctness 2'
+    yield eq, f(1), 1, 'cache correctness 2'
+
+
+def test_cache_class_call_performance():
+    class ANative(object):
+        def __call__(self, x):
+            pass
+
+        def go(self, x):
+            pass
+
+        def go_again(self, x):
+            pass
+
+    class A(Referentiable):
+        _dispatch = Dispatcher(in_class=Self)
+
+        @_dispatch(int)
+        def __call__(self, x):
+            pass
+
+        @_dispatch(str)
+        def __call__(self, x):
+            pass
+
+        @_dispatch(int)
+        def go(self, x):
+            pass
+
+        @_dispatch(str)
+        def go(self, x):
+            pass
+
+        @_dispatch(int)
+        def go_again(self, x):
+            pass
+
+        @_dispatch(str)
+        def go_again(self, x):
+            pass
+
+    a_native = ANative()
+    a = A()
+
+    # Test performance of calls. See above previous test.
+    dur_native = benchmark(a_native, (1,))
+    dur_plum_first = benchmark(a, (1,), n=1)
+    dur_plum = benchmark(a, (1,))
+    yield le, dur_plum, 25 * dur_native, 'compare native call'
+    yield le, dur_plum_first, 200 * dur_plum, 'compare first call'
+    yield le, dur_plum, dur_plum_first / 10, 'cache performance call'
+
+    # Test performance of method calls.
+    dur_native = benchmark(lambda x: a_native.go(x), (1,))
+    dur_plum_first = benchmark(lambda x: a.go(x), (1,), n=1)
+    dur_plum = benchmark(lambda x: a.go(x), (1,))
+    yield le, dur_plum, 25 * dur_native, 'compare native method'
+    yield le, dur_plum_first, 200 * dur_plum, 'compare first method'
+    yield le, dur_plum, dur_plum_first / 10, 'cache performance method'
+
+    # Test performance of static calls.
+    dur_native = benchmark(lambda x: ANative.go_again(a_native, x), (1,))
+    dur_plum_first = benchmark(lambda x: A.go_again(a, x), (1,), n=1)
+    dur_plum = benchmark(lambda x: A.go_again(a, x), (1,))
+    yield le, dur_plum, 25 * dur_native, 'compare native static'
+    yield le, dur_plum_first, 200 * dur_plum, 'compare first static'
+    yield le, dur_plum, dur_plum_first / 10, 'cache performance static'
 
 
 def test_cache_clearing():
