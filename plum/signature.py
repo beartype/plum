@@ -47,7 +47,6 @@ class Signature(Comparable):
         if self.has_varargs():
             expansion_size = max(len(other) - len(self), 0)
             types = self.base + self.types[-1].expand(expansion_size)
-            log.debug('Expanded {} as {} for {}.'.format(self, types, other))
             return types
         else:
             return self.base
