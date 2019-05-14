@@ -18,10 +18,8 @@ class ResolutionError(RuntimeError):
     """Object could not be resolved."""
 
 
-class Resolvable(object):
+class Resolvable(six.with_metaclass(abc.ABCMeta, object)):
     """An object that can be resolved and compared."""
-
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def resolve(self):
