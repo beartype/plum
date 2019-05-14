@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import, division, print_function
 
+from plum.type import subclasscheck_cache
 from . import Dispatcher, List, clear_all_cache
 from . import eq, le, benchmark
 
@@ -78,4 +79,5 @@ def test_cache_clearing():
     # Again check that cache is cleared.
     yield eq, len(f.methods), 0
     yield eq, len(f.precedences), 0
+    yield eq, len(subclasscheck_cache), 0
     yield eq, f._parametric, False
