@@ -6,10 +6,11 @@ import logging
 import inspect
 
 from .function import Function
-from .signature import Signature
+from .signature import Signature as Sig
 from .util import get_default
+from .type import subclasscheck_cache
 
-__all__ = ['Dispatcher', 'dispatch']
+__all__ = ['Dispatcher', 'dispatch', 'clear_all_cache']
 log = logging.getLogger(__name__)
 
 
@@ -39,7 +40,7 @@ class Dispatcher(object):
         """
         precedence = get_default(kw_args, 'precedence', 0)
         return_type = get_default(kw_args, 'return_type', object)
-        return self._create_decorator([Signature(*types)],
+        return self._create_decorator([Sig(*types)],
                                       precedence=precedence,
                                       return_type=return_type)
 
@@ -58,7 +59,7 @@ class Dispatcher(object):
         """
         precedence = get_default(kw_args, 'precedence', 0)
         return_type = get_default(kw_args, 'return_type', object)
-        return self._create_decorator([Signature(*types) for types in signatures],
+        return self._create_decorator([Sig(*types) for types in signatures],
                                       precedence=precedence,
                                       return_type=return_type)
 
@@ -119,7 +120,7 @@ class Dispatcher(object):
                 return_type = object
 
             # Assemble signature.
-            signature = Signature(*types)
+            signature = Sig(*types)
 
             # Create and call decorator.
             return self._create_decorator([signature],
@@ -133,11 +134,16 @@ class Dispatcher(object):
         for f in self._functions.values():
             f.clear_cache()
 
-    @staticmethod
-    def clear_all_cache():
-        """Clear all cache."""
-        for f in Function._instances:
-            f.clear_cache()
+
+def clear_all_cache():
+    """Clear all cache, including the cache of subclass checks. This
+    should be called if types are modified."""
+    # Clear function caches.
+    for f in Function._instances:
+        f.clear_cache()
+
+    # Clear subclass check cache.
+    subclasscheck_cache.clear()
 
 
 dispatch = Dispatcher()  #: A default dispatcher for convenience purposes.
