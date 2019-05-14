@@ -17,34 +17,36 @@
   
 
   
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="plum.promotion module" href="plum.promotion.html" />
     <link rel="prev" title="plum.function module" href="plum.function.html" /> 
-
-  
-  <script src="../_static/js/modernizr.min.js"></script>
-
 </head>
 
 <body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -173,36 +175,34 @@
 <dt id="plum.parametric.type_parameter">
 <code class="descclassname">plum.parametric.</code><code class="descname">type_parameter</code><a class="reference internal" href="../_modules/plum/parametric.html#type_parameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.parametric.type_parameter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the type parameter of an instance of a parametric type.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>x</strong> (<em>object</em>) – Instance of a parametric type.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Type parameter.</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">object</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>object</em>) – Instance of a parametric type.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Type parameter.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>object</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="plum.parametric.kind">
 <code class="descclassname">plum.parametric.</code><code class="descname">kind</code><span class="sig-paren">(</span><em>SuperClass=&lt;class 'object'&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/parametric.html#kind"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.parametric.kind" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a parametric wrapper type for dispatch purposes.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>SuperClass</strong> (<em>type</em>) – Super class.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">New parametric type wrapper.</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">object</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>SuperClass</strong> (<em>type</em>) – Super class.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>New parametric type wrapper.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>object</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="class">
@@ -217,28 +217,23 @@
 <em class="property">class </em><code class="descclassname">plum.parametric.</code><code class="descname">List</code><span class="sig-paren">(</span><em>el_type</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/parametric.html#List"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.parametric.List" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">plum.type.ComparableType</span></code></p>
 <p>Parametric list Plum type.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>el_type</strong> (<em>type</em><em> or </em><em>ptype</em>) – Element type.</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>el_type</strong> (<em>type</em><em> or </em><em>ptype</em>) – Element type.</p>
+</dd>
+</dl>
 <dl class="method">
 <dt id="plum.parametric.List.get_types">
 <code class="descname">get_types</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/parametric.html#List.get_types"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.parametric.List.get_types" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the types encapsulated by this Plum type.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Types encapsulated.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">tuple[type]</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Types encapsulated.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>tuple[type]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
@@ -255,28 +250,23 @@ type.</p>
 <em class="property">class </em><code class="descclassname">plum.parametric.</code><code class="descname">Tuple</code><span class="sig-paren">(</span><em>el_type</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/parametric.html#Tuple"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.parametric.Tuple" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">plum.type.ComparableType</span></code></p>
 <p>Parametric tuple Plum type.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>el_type</strong> (<em>type</em><em> or </em><em>ptype</em>) – Element type.</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>el_type</strong> (<em>type</em><em> or </em><em>ptype</em>) – Element type.</p>
+</dd>
+</dl>
 <dl class="method">
 <dt id="plum.parametric.Tuple.get_types">
 <code class="descname">get_types</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/parametric.html#Tuple.get_types"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.parametric.Tuple.get_types" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the types encapsulated by this Plum type.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Types encapsulated.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">tuple[type]</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Types encapsulated.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>tuple[type]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
@@ -292,17 +282,14 @@ type.</p>
 <dt id="plum.parametric.type_of">
 <code class="descclassname">plum.parametric.</code><code class="descname">type_of</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/parametric.html#type_of"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.parametric.type_of" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the Plum type of an object.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>obj</strong> (<em>object</em>) – Object to get type of.</td>
-</tr>
-</tbody>
-</table>
-<dl class="docutils">
-<dt>Returns</dt>
-<dd>ptype: Plum type of <cite>obj</cite>.</dd>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>obj</strong> (<em>object</em>) – Object to get type of.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Returns</dt><dd><p>ptype: Plum type of <cite>obj</cite>.</p>
+</dd>
 </dl>
 </dd></dl>
 
@@ -319,7 +306,7 @@ type.</p>
         <a href="plum.promotion.html" class="btn btn-neutral float-right" title="plum.promotion module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="plum.function.html" class="btn btn-neutral" title="plum.function module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="plum.function.html" class="btn btn-neutral float-left" title="plum.function module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -328,7 +315,7 @@ type.</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, Wessel Bruinsma.
+        &copy; Copyright 2017, Wessel Bruinsma
 
     </p>
   </div>
@@ -345,33 +332,16 @@ type.</p>
   
 
 
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../',
-            VERSION:'0.1.0',
-            LANGUAGE:'None',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../_static/jquery.js"></script>
-      <script type="text/javascript" src="../_static/underscore.js"></script>
-      <script type="text/javascript" src="../_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  <script type="text/javascript" src="../_static/js/theme.js"></script>
-
   <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>

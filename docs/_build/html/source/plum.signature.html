@@ -17,34 +17,36 @@
   
 
   
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="plum.type module" href="plum.type.html" />
     <link rel="prev" title="plum.resolvable module" href="plum.resolvable.html" /> 
-
-  
-  <script src="../_static/js/modernizr.min.js"></script>
-
 </head>
 
 <body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -168,14 +170,11 @@
 <em class="property">class </em><code class="descclassname">plum.signature.</code><code class="descname">Signature</code><span class="sig-paren">(</span><em>*types</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/signature.html#Signature"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.signature.Signature" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="plum.util.html#plum.util.Comparable" title="plum.util.Comparable"><code class="xref py py-class docutils literal notranslate"><span class="pre">plum.util.Comparable</span></code></a></p>
 <p>Signature.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>*types</strong> (<em>type</em><em> or </em><em>ptype</em>) – Types of the arguments.</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>*types</strong> (<em>type</em><em> or </em><em>ptype</em>) – Types of the arguments.</p>
+</dd>
+</dl>
 <dl class="attribute">
 <dt id="plum.signature.Signature.base">
 <code class="descname">base</code><a class="headerlink" href="#plum.signature.Signature.base" title="Permalink to this definition">¶</a></dt>
@@ -186,53 +185,49 @@
 <dt id="plum.signature.Signature.expand_varargs_to">
 <code class="descname">expand_varargs_to</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/signature.html#Signature.expand_varargs_to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.signature.Signature.expand_varargs_to" title="Permalink to this definition">¶</a></dt>
 <dd><p>Expand varargs to a given <a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><code class="xref py py-class docutils literal notranslate"><span class="pre">signature.Signature</span></code></a>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>other</strong> (<a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><code class="xref py py-class docutils literal notranslate"><span class="pre">signature.Signature</span></code></a>) – Other tuple to expand to.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Tuple of Plum types that matches <cite>other</cite>.</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">tuple[ptype]</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>other</strong> (<a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><code class="xref py py-class docutils literal notranslate"><span class="pre">signature.Signature</span></code></a>) – Other tuple to expand to.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Tuple of Plum types that matches <cite>other</cite>.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple[ptype]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="plum.signature.Signature.has_varargs">
 <code class="descname">has_varargs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/signature.html#Signature.has_varargs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.signature.Signature.has_varargs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Check whether this signature has varargs.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><cite>True</cite> if and only if this signature has varargs.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">bool</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><cite>True</cite> if and only if this signature has varargs.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="plum.signature.Signature.is_compatible">
 <code class="descname">is_compatible</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/signature.html#Signature.is_compatible"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.signature.Signature.is_compatible" title="Permalink to this definition">¶</a></dt>
 <dd><p>Check whether this signature is compatible with another one.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>other</strong> (<a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><code class="xref py py-class docutils literal notranslate"><span class="pre">signature.Signature</span></code></a>) – Other signature to check
-compatibility with.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Compatibility.</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">bool</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>other</strong> (<a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><code class="xref py py-class docutils literal notranslate"><span class="pre">signature.Signature</span></code></a>) – Other signature to check
+compatibility with.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Compatibility.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
@@ -256,7 +251,7 @@ compatibility with.</td>
         <a href="plum.type.html" class="btn btn-neutral float-right" title="plum.type module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="plum.resolvable.html" class="btn btn-neutral" title="plum.resolvable module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="plum.resolvable.html" class="btn btn-neutral float-left" title="plum.resolvable module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -265,7 +260,7 @@ compatibility with.</td>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, Wessel Bruinsma.
+        &copy; Copyright 2017, Wessel Bruinsma
 
     </p>
   </div>
@@ -282,33 +277,16 @@ compatibility with.</td>
   
 
 
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../',
-            VERSION:'0.1.0',
-            LANGUAGE:'None',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../_static/jquery.js"></script>
-      <script type="text/javascript" src="../_static/underscore.js"></script>
-      <script type="text/javascript" src="../_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  <script type="text/javascript" src="../_static/js/theme.js"></script>
-
   <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>

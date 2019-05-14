@@ -17,34 +17,36 @@
   
 
   
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="plum.resolvable module" href="plum.resolvable.html" />
     <link rel="prev" title="plum.parametric module" href="plum.parametric.html" /> 
-
-  
-  <script src="../_static/js/modernizr.min.js"></script>
-
 </head>
 
 <body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -167,44 +169,36 @@
 <dt id="plum.promotion.convert">
 <code class="descclassname">plum.promotion.</code><code class="descname">convert</code><a class="reference internal" href="../_modules/plum/promotion.html#convert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.promotion.convert" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert an object to a particular type.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>obj</strong> (<em>object</em>) – Object to convert.</li>
-<li><strong>type_to</strong> (<em>type</em>) – Type to convert to.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>object</em>) – Object to convert.</p></li>
+<li><p><strong>type_to</strong> (<em>type</em>) – Type to convert to.</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><cite>object_to_covert</cite> converted to type of <cite>obj_from_target</cite>.</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">object</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><cite>object_to_covert</cite> converted to type of <cite>obj_from_target</cite>.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>object</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="plum.promotion.add_conversion_method">
 <code class="descclassname">plum.promotion.</code><code class="descname">add_conversion_method</code><span class="sig-paren">(</span><em>type_from</em>, <em>type_to</em>, <em>f</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/promotion.html#add_conversion_method"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.promotion.add_conversion_method" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a conversion method to convert an object from one type to another.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>type_from</strong> (<em>type</em>) – Type to convert from.</li>
-<li><strong>type_to</strong> (<em>type</em>) – Type to convert to.</li>
-<li><strong>f</strong> (<em>function</em>) – Function that converts an object of type <cite>type_from</cite> to
-type <cite>type_to</cite>.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>type_from</strong> (<em>type</em>) – Type to convert from.</p></li>
+<li><p><strong>type_to</strong> (<em>type</em>) – Type to convert to.</p></li>
+<li><p><strong>f</strong> (<em>function</em>) – Function that converts an object of type <cite>type_from</cite> to
+type <cite>type_to</cite>.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
@@ -212,55 +206,46 @@ type <cite>type_to</cite>.</li>
 <code class="descclassname">plum.promotion.</code><code class="descname">conversion_method</code><span class="sig-paren">(</span><em>type_from</em>, <em>type_to</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/promotion.html#conversion_method"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.promotion.conversion_method" title="Permalink to this definition">¶</a></dt>
 <dd><p>Decorator to add a conversion method to convert an object from one
 type to another.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>type_from</strong> (<em>type</em>) – Type to convert from.</li>
-<li><strong>type_to</strong> (<em>type</em>) – Type to convert to.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>type_from</strong> (<em>type</em>) – Type to convert from.</p></li>
+<li><p><strong>type_to</strong> (<em>type</em>) – Type to convert to.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="plum.promotion.add_promotion_rule">
 <code class="descclassname">plum.promotion.</code><code class="descname">add_promotion_rule</code><a class="reference internal" href="../_modules/plum/promotion.html#add_promotion_rule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.promotion.add_promotion_rule" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a promotion rule.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>type1</strong> (<em>type</em>) – First type to promote.</li>
-<li><strong>type2</strong> (<em>type</em>) – Second type to promote.</li>
-<li><strong>type_to</strong> (<em>type</em>) – Type to convert to.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>type1</strong> (<em>type</em>) – First type to promote.</p></li>
+<li><p><strong>type2</strong> (<em>type</em>) – Second type to promote.</p></li>
+<li><p><strong>type_to</strong> (<em>type</em>) – Type to convert to.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="plum.promotion.promote">
 <code class="descclassname">plum.promotion.</code><code class="descname">promote</code><a class="reference internal" href="../_modules/plum/promotion.html#promote"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.promotion.promote" title="Permalink to this definition">¶</a></dt>
 <dd><p>Promote objects to a common type.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>*objs</strong> (<em>object</em>) – Objects to convert.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><cite>objs</cite>, but all converted to a common type.</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">tuple</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>*objs</strong> (<em>object</em>) – Objects to convert.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><cite>objs</cite>, but all converted to a common type.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
 </dd></dl>
 
 </div>
@@ -276,7 +261,7 @@ type to another.</p>
         <a href="plum.resolvable.html" class="btn btn-neutral float-right" title="plum.resolvable module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="plum.parametric.html" class="btn btn-neutral" title="plum.parametric module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="plum.parametric.html" class="btn btn-neutral float-left" title="plum.parametric module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -285,7 +270,7 @@ type to another.</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, Wessel Bruinsma.
+        &copy; Copyright 2017, Wessel Bruinsma
 
     </p>
   </div>
@@ -302,33 +287,16 @@ type to another.</p>
   
 
 
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../',
-            VERSION:'0.1.0',
-            LANGUAGE:'None',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../_static/jquery.js"></script>
-      <script type="text/javascript" src="../_static/underscore.js"></script>
-      <script type="text/javascript" src="../_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  <script type="text/javascript" src="../_static/js/theme.js"></script>
-
   <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>

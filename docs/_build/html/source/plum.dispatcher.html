@@ -17,34 +17,36 @@
   
 
   
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="plum.function module" href="plum.function.html" />
     <link rel="prev" title="Application Programming Interface" href="../api.html" /> 
-
-  
-  <script src="../_static/js/modernizr.min.js"></script>
-
 </head>
 
 <body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -168,37 +170,27 @@
 <em class="property">class </em><code class="descclassname">plum.dispatcher.</code><code class="descname">Dispatcher</code><span class="sig-paren">(</span><em>in_class=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/dispatcher.html#Dispatcher"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.dispatcher.Dispatcher" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A namespace for functions.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>in_class</strong> (<em>type</em><em>, </em><em>optional</em>) – Class to which the namespace is associated.</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>in_class</strong> (<em>type</em><em>, </em><em>optional</em>) – Class to which the namespace is associated.</p>
+</dd>
+</dl>
 <dl class="method">
 <dt id="plum.dispatcher.Dispatcher.annotations">
 <code class="descname">annotations</code><span class="sig-paren">(</span><em>precedence=0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/dispatcher.html#Dispatcher.annotations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.dispatcher.Dispatcher.annotations" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dispatch from annotations.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>precedence</strong> (<em>int</em><em>, </em><em>optional</em>) – Precedence of the signature. Defaults to
-<cite>0</cite>.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Decorator.</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">function</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="staticmethod">
-<dt id="plum.dispatcher.Dispatcher.clear_all_cache">
-<em class="property">static </em><code class="descname">clear_all_cache</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/dispatcher.html#Dispatcher.clear_all_cache"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.dispatcher.Dispatcher.clear_all_cache" title="Permalink to this definition">¶</a></dt>
-<dd><p>Clear all cache.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>precedence</strong> (<em>int</em><em>, </em><em>optional</em>) – Precedence of the signature. Defaults to
+<cite>0</cite>.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Decorator.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>function</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -211,27 +203,23 @@
 <dt id="plum.dispatcher.Dispatcher.multi">
 <code class="descname">multi</code><span class="sig-paren">(</span><em>*signatures</em>, <em>**kw_args</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/dispatcher.html#Dispatcher.multi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.dispatcher.Dispatcher.multi" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a decorator for multiple given signatures.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>*tuple</strong><strong>[</strong><strong>type</strong><strong>]</strong> (<em>type</em>) – Signatures.</li>
-<li><strong>precedence</strong> (<em>int</em><em>, </em><em>optional</em>) – Precedence of the signatures. Defaults
-to <cite>0</cite>.</li>
-<li><strong>return_type</strong> (<em>type</em><em>, </em><em>optional</em>) – Expected return type. Defaults to
-<cite>object.</cite></li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*tuple</strong><strong>[</strong><strong>type</strong><strong>]</strong> (<em>type</em>) – Signatures.</p></li>
+<li><p><strong>precedence</strong> (<em>int</em><em>, </em><em>optional</em>) – Precedence of the signatures. Defaults
+to <cite>0</cite>.</p></li>
+<li><p><strong>return_type</strong> (<em>type</em><em>, </em><em>optional</em>) – Expected return type. Defaults to
+<cite>object.</cite></p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Decorator.</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">function</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Decorator.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>function</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -240,6 +228,13 @@ to <cite>0</cite>.</li>
 <dt id="plum.dispatcher.dispatch">
 <code class="descclassname">plum.dispatcher.</code><code class="descname">dispatch</code><em class="property"> = &lt;plum.dispatcher.Dispatcher object&gt;</em><a class="headerlink" href="#plum.dispatcher.dispatch" title="Permalink to this definition">¶</a></dt>
 <dd><p>A default dispatcher for convenience purposes.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="plum.dispatcher.clear_all_cache">
+<code class="descclassname">plum.dispatcher.</code><code class="descname">clear_all_cache</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/dispatcher.html#clear_all_cache"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.dispatcher.clear_all_cache" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clear all cache, including the cache of subclass checks. This
+should be called if types are modified.</p>
 </dd></dl>
 
 </div>
@@ -255,7 +250,7 @@ to <cite>0</cite>.</li>
         <a href="plum.function.html" class="btn btn-neutral float-right" title="plum.function module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="../api.html" class="btn btn-neutral" title="Application Programming Interface" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="../api.html" class="btn btn-neutral float-left" title="Application Programming Interface" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -264,7 +259,7 @@ to <cite>0</cite>.</li>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, Wessel Bruinsma.
+        &copy; Copyright 2017, Wessel Bruinsma
 
     </p>
   </div>
@@ -281,33 +276,16 @@ to <cite>0</cite>.</li>
   
 
 
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../',
-            VERSION:'0.1.0',
-            LANGUAGE:'None',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../_static/jquery.js"></script>
-      <script type="text/javascript" src="../_static/underscore.js"></script>
-      <script type="text/javascript" src="../_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  <script type="text/javascript" src="../_static/js/theme.js"></script>
-
   <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>

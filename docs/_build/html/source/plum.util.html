@@ -17,33 +17,35 @@
   
 
   
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="prev" title="plum.type module" href="plum.type.html" /> 
-
-  
-  <script src="../_static/js/modernizr.min.js"></script>
-
 </head>
 
 <body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -166,18 +168,17 @@
 <dt id="plum.util.multihash">
 <code class="descclassname">plum.util.</code><code class="descname">multihash</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/util.html#multihash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.util.multihash" title="Permalink to this definition">¶</a></dt>
 <dd><p>Multi-argument order-sensitive hash.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>*args</strong> – Objects to hash.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Hash.</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">int</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>*args</strong> – Objects to hash.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Hash.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="class">
@@ -190,23 +191,22 @@
 <dt id="plum.util.Comparable.is_comparable">
 <code class="descname">is_comparable</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/util.html#Comparable.is_comparable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.util.Comparable.is_comparable" title="Permalink to this definition">¶</a></dt>
 <dd><p>Check whether this object is comparable with another one.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>other</strong> (<a class="reference internal" href="#plum.util.Comparable" title="plum.util.Comparable"><code class="xref py py-class docutils literal notranslate"><span class="pre">util.Comparable</span></code></a>) – Object to check comparability
-with.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="docutils">
-<dt><cite>True</cite> if the object is comparable with <cite>other</cite> and <cite>False</cite></dt>
-<dd>otherwise.</dd>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>other</strong> (<a class="reference internal" href="#plum.util.Comparable" title="plum.util.Comparable"><code class="xref py py-class docutils literal notranslate"><span class="pre">util.Comparable</span></code></a>) – Object to check comparability
+with.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt><cite>True</cite> if the object is comparable with <cite>other</cite> and <cite>False</cite></dt><dd><p>otherwise.</p>
+</dd>
 </dl>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">bool</td>
-</tr>
-</tbody>
-</table>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -215,26 +215,22 @@ with.</td>
 <dt id="plum.util.get_default">
 <code class="descclassname">plum.util.</code><code class="descname">get_default</code><span class="sig-paren">(</span><em>dictionary</em>, <em>key</em>, <em>default</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/plum/util.html#get_default"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#plum.util.get_default" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get a value from a dictionary, assuming a default value.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>dictionary</strong> (<em>dict</em>) – Dictionary.</li>
-<li><strong>key</strong> (<em>hashable</em>) – Key of value to get.</li>
-<li><strong>default</strong> (<em>object</em>) – Default value, in case the key is not in the
-dictionary.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dictionary</strong> (<em>dict</em>) – Dictionary.</p></li>
+<li><p><strong>key</strong> (<em>hashable</em>) – Key of value to get.</p></li>
+<li><p><strong>default</strong> (<em>object</em>) – Default value, in case the key is not in the
+dictionary.</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Value associated to key or the default value.</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">object</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Value associated to key or the default value.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>object</p>
+</dd>
+</dl>
 </dd></dl>
 
 </div>
@@ -248,7 +244,7 @@ dictionary.</li>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
       
-        <a href="plum.type.html" class="btn btn-neutral" title="plum.type module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="plum.type.html" class="btn btn-neutral float-left" title="plum.type module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -257,7 +253,7 @@ dictionary.</li>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, Wessel Bruinsma.
+        &copy; Copyright 2017, Wessel Bruinsma
 
     </p>
   </div>
@@ -274,33 +270,16 @@ dictionary.</li>
   
 
 
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../',
-            VERSION:'0.1.0',
-            LANGUAGE:'None',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="../_static/jquery.js"></script>
-      <script type="text/javascript" src="../_static/underscore.js"></script>
-      <script type="text/javascript" src="../_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  <script type="text/javascript" src="../_static/js/theme.js"></script>
-
   <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>
