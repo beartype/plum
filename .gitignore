@@ -17,3 +17,9 @@ cover
 # Other
 .DS_Store
 *.swp
+
+# Cython build files
+*.html
+*.c
+*.so
+*.o
