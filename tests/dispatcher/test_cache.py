@@ -34,8 +34,8 @@ def test_cache_function_call_performance_and_correctness():
     # call.
     yield le, dur_plum, 15 * dur_native, 'compare native'
 
-    # A first call should not be more than 300 times slower than a cached call.
-    yield le, dur_plum_first, 300 * dur_plum, 'compare first'
+    # A first call should not be more than 1000 times slower than a cached call.
+    yield le, dur_plum_first, 1000 * dur_plum, 'compare first'
 
     # The cached call should be at least 20 times faster than a first call.
     yield le, dur_plum, dur_plum_first / 20, 'cache performance'
@@ -95,7 +95,7 @@ def test_cache_class_call_performance():
     dur_plum_first = benchmark(a, (1,), n=1)
     dur_plum = benchmark(a, (1,))
     yield le, dur_plum, 25 * dur_native, 'compare native call'
-    yield le, dur_plum_first, 300 * dur_plum, 'compare first call'
+    yield le, dur_plum_first, 1000 * dur_plum, 'compare first call'
     yield le, dur_plum, dur_plum_first / 10, 'cache performance call'
 
     # Test performance of method calls.
@@ -103,7 +103,7 @@ def test_cache_class_call_performance():
     dur_plum_first = benchmark(lambda x: a.go(x), (1,), n=1)
     dur_plum = benchmark(lambda x: a.go(x), (1,))
     yield le, dur_plum, 25 * dur_native, 'compare native method'
-    yield le, dur_plum_first, 300 * dur_plum, 'compare first method'
+    yield le, dur_plum_first, 1000 * dur_plum, 'compare first method'
     yield le, dur_plum, dur_plum_first / 10, 'cache performance method'
 
     # Test performance of static calls.
@@ -111,7 +111,7 @@ def test_cache_class_call_performance():
     dur_plum_first = benchmark(lambda x: A.go_again(a, x), (1,), n=1)
     dur_plum = benchmark(lambda x: A.go_again(a, x), (1,))
     yield le, dur_plum, 25 * dur_native, 'compare native static'
-    yield le, dur_plum_first, 300 * dur_plum, 'compare first static'
+    yield le, dur_plum_first, 1000 * dur_plum, 'compare first static'
     yield le, dur_plum, dur_plum_first / 10, 'cache performance static'
 
 
