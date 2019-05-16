@@ -9,6 +9,7 @@ Features:
             ☐ Test.
             ☐ Keyword argument to Dispatcher.
     Efficiency:
+        ☐ Further optimise Function.__call__ with Cython. @critical
         ☐ Improved type resolution algorithm.
         ☐ More efficient caching strategy.
     Other:
