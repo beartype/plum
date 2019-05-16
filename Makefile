@@ -1,4 +1,4 @@
-.PHONY: docmake docopen docinit docremove docupdate init install test clean
+.PHONY: docmake docopen docinit docremove docupdate install test clean
 
 PACKAGE := plum
 
@@ -41,11 +41,9 @@ docupdate: docmake
 	git push origin gh-pages
 	git checkout $(BRANCH)
 
-init:
-	pip install -r requirements.txt
-
 install:
 	pip install -r requirements.txt -e .
+	python setup.py build_ext -i
 
 test:
 	python -m nose tests --with-coverage --cover-html --cover-package=$(PACKAGE) -v --logging-filter=$(PACKAGE)
