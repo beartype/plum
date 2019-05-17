@@ -7,8 +7,8 @@ from setuptools import find_packages, setup, Extension
 with open('README.md') as f:
     readme = f.read()
 
-with open('LICENSE') as f:
-    license = f.read()
+with open('LICENCE') as f:
+    licence = f.read()
 
 setup(
     name='plum',
@@ -18,7 +18,7 @@ setup(
     author='Wessel Bruinsma',
     author_email='wessel.p.bruinsma@gmail.com',
     url='https://github.com/wesselb/plum',
-    license=license,
+    license=licence,
     packages=find_packages(exclude=('tests', 'docs')),
     ext_modules=[Extension('plum.function',
                            ['plum/function.py'])])
