@@ -2,72 +2,87 @@
 
 from __future__ import absolute_import, division, print_function
 
-from . import Union, PromisedType, as_type, TypeType, ResolutionError, Self, \
-    VarArgs, Type, Referentiable, is_object, is_type
-from . import ok, eq, neq, le, raises, nle, isnotinstance, isnotsubclass, \
-    assert_issubclass, assert_isinstance
+import pytest
+
+from plum import (
+    Union,
+    PromisedType,
+    as_type,
+    TypeType,
+    ResolutionError,
+    Self,
+    VarArgs,
+    Type,
+    Referentiable,
+    is_object,
+    is_type
+)
 
 
 def test_varargs():
-    yield eq, hash(VarArgs(int)), hash(VarArgs(int))
-    yield eq, repr(VarArgs(int)), 'VarArgs({!r})'.format(Type(int))
-    yield eq, VarArgs(int).expand(2), (Type(int), Type(int))
-    yield ok, not VarArgs(int).parametric
+    assert hash(VarArgs(int)) == hash(VarArgs(int))
+    assert repr(VarArgs(int)) == 'VarArgs({!r})'.format(Type(int))
+    assert VarArgs(int).expand(2) == (Type(int), Type(int))
+    assert not VarArgs(int).parametric
 
 
 def test_comparabletype():
-    yield assert_isinstance, 1, Union(int)
-    yield isnotinstance, '1', Union(int)
-    yield assert_isinstance, '1', Union(int, str)
-    yield assert_issubclass, Union(int), Union(int)
-    yield assert_issubclass, Union(int), Union(int, str)
-    yield isnotsubclass, Union(int, str), Union(int)
-    yield eq, Union(int).mro(), int.mro()
-    yield raises, RuntimeError, lambda: Union(int, str).mro()
+    assert isinstance(1, Union(int))
+    assert not isinstance('1', Union(int))
+    assert isinstance('1', Union(int, str))
+    assert issubclass(Union(int), Union(int))
+    assert issubclass(Union(int), Union(int, str))
+    assert not issubclass(Union(int, str), Union(int))
+    assert Union(int).mro() == int.mro()
+    with pytest.raises(RuntimeError):
+        Union(int, str).mro()
 
 
 def test_union():
-    yield eq, hash(Union(int, str)), hash(Union(str, int))
-    yield eq, repr(Union(int, str)), repr(Union(int, str))
-    yield eq, set(Union(int, str).get_types()), {str, int}
-    yield ok, not Union(int).parametric
+    assert hash(Union(int, str)) == hash(Union(str, int))
+    assert repr(Union(int, str)) == repr(Union(int, str))
+    assert set(Union(int, str).get_types()) == {str, int}
+    assert not Union(int).parametric
 
     # Test equivalence between `Union` and `Type`.
-    yield eq, hash(Union(int)), hash(Type(int))
-    yield neq, hash(Union(int, str)), hash(Type(int))
-    yield eq, repr(Union(int)), repr(Type(int))
-    yield neq, repr(Union(int, str)), repr(Type(int))
+    assert hash(Union(int)) == hash(Type(int))
+    assert hash(Union(int, str)) != hash(Type(int))
+    assert repr(Union(int)) == repr(Type(int))
+    assert repr(Union(int, str)) != repr(Type(int))
 
     # Test lazy conversion to set.
     t = Union(int, int, str)
-    yield assert_isinstance, t._types, tuple
+    assert isinstance(t._types, tuple)
     t.get_types()
-    yield assert_isinstance, t._types, set
+    assert isinstance(t._types, set)
 
     # Test aliases.
-    yield eq, repr(Union(int, alias='MyUnion')), 'tests.test_type.MyUnion'
-    yield eq, repr(Union(int, str, alias='MyUnion')), 'tests.test_type.MyUnion'
+    assert repr(Union(int, alias='MyUnion')) == 'tests.test_type.MyUnion'
+    assert repr(Union(int, str, alias='MyUnion')) == 'tests.test_type.MyUnion'
 
 
 def test_type():
-    yield eq, hash(Type(int)), hash(Type(int))
-    yield neq, hash(Type(int)), hash(Type(str))
-    yield eq, repr(Type(int)), '{}.{}'.format(int.__module__, int.__name__)
-    yield eq, Type(int).get_types(), (int,)
-    yield ok, not Type(int).parametric
+    assert hash(Type(int)) == hash(Type(int))
+    assert hash(Type(int)) != hash(Type(str))
+    assert repr(Type(int)) == '{}.{}'.format(int.__module__, int.__name__)
+    assert Type(int).get_types() == (int,)
+    assert not Type(int).parametric
 
 
 def test_promisedtype():
     t = PromisedType()
-    yield raises, ResolutionError, lambda: hash(t)
-    yield raises, ResolutionError, lambda: repr(t)
-    yield raises, ResolutionError, lambda: t.get_types()
+    with pytest.raises(ResolutionError):
+        hash(t)
+    with pytest.raises(ResolutionError):
+        repr(t)
+    with pytest.raises(ResolutionError):
+        t.get_types()
 
     t.deliver(Type(int))
-    yield eq, hash(t), hash(Type(int))
-    yield eq, repr(t), repr(Type(int))
-    yield eq, t.get_types(), Type(int).get_types()
-    yield ok, not t.parametric
+    assert hash(t) == hash(Type(int))
+    assert repr(t) == repr(Type(int))
+    assert t.get_types() == Type(int).get_types()
+    assert not t.parametric
 
 
 class A(Referentiable):
@@ -75,43 +90,45 @@ class A(Referentiable):
 
 
 def test_self():
-    yield eq, A.self, as_type(A)
+    assert A.self == as_type(A)
 
 
 def test_typetype():
     Promised = PromisedType()
     Promised.deliver(int)
 
-    yield le, as_type(type(int)), TypeType
-    yield le, as_type(type(Promised)), TypeType
-    yield le, as_type(type({int})), TypeType
-    yield le, as_type(type([int])), TypeType
+    assert as_type(type(int)) <= TypeType
+    assert as_type(type(Promised)) <= TypeType
+    assert as_type(type({int})) <= TypeType
+    assert as_type(type([int])) <= TypeType
 
-    yield nle, as_type(int), TypeType
-    yield nle, as_type(Promised), TypeType
-    yield nle, as_type({int}), TypeType
+    assert not (as_type(int) <= TypeType)
+    assert not (as_type(Promised) <= TypeType)
+    assert not (as_type({int}) <= TypeType)
 
 
 def test_astype():
     # Need `ok` here: printing will resolve `Self`.
-    yield ok, isinstance(as_type(Self), Self)
-    yield assert_isinstance, as_type([]), VarArgs
-    yield assert_isinstance, as_type([int]), VarArgs
-    yield raises, TypeError, lambda: as_type([int, str])
-    yield eq, as_type({int, str}), Union(int, str)
-    yield eq, as_type(Type(int)), Type(int)
-    yield eq, as_type(int), Type(int)
-    yield raises, RuntimeError, lambda: as_type(1)
+    assert isinstance(as_type(Self), Self)
+    assert isinstance(as_type([]), VarArgs)
+    assert isinstance(as_type([int]), VarArgs)
+    with pytest.raises(TypeError):
+        as_type([int, str])
+    assert as_type({int, str}) == Union(int, str)
+    assert as_type(Type(int)) == Type(int)
+    assert as_type(int) == Type(int)
+    with pytest.raises(RuntimeError):
+        as_type(1)
 
 
 def test_is_object():
-    yield ok, is_object(Type(object))
-    yield ok, not is_object(Type(int))
+    assert is_object(Type(object))
+    assert not is_object(Type(int))
 
 
 def test_is_type():
-    yield ok, is_type(int)
-    yield ok, is_type({int})
-    yield ok, is_type([int])
-    yield ok, is_type(Type(int))
-    yield ok, not is_type(1)
+    assert is_type(int)
+    assert is_type({int})
+    assert is_type([int])
+    assert is_type(Type(int))
+    assert not is_type(1)

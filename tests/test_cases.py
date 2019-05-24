@@ -2,9 +2,16 @@
 
 from __future__ import absolute_import, division, print_function
 
-from . import Self, Dispatcher, PromisedType, \
-    Referentiable, NotFoundLookupError, AmbiguousLookupError
-from . import eq, raises
+import pytest
+
+from plum import (
+    Self,
+    Dispatcher,
+    PromisedType,
+    Referentiable,
+    NotFoundLookupError,
+    AmbiguousLookupError
+)
 from .test_signature import Num, Re, FP
 
 
@@ -94,11 +101,11 @@ PromisedHammer.deliver(Hammer)
 def test_method_dispatch():
     device = Device()
 
-    yield eq, device.do(), 'doing nothing'
-    yield eq, device.do(FP(), FP()), 'doing a real and a number'
-    yield eq, device.do(Re(), Re()), 'doing a real and a number'
-    yield eq, device.do(Num(), Re()), 'doing two numbers'
-    yield eq, device.do(device), 'doing a device'
+    assert device.do() == 'doing nothing'
+    assert device.do(FP(), FP()) == 'doing a real and a number'
+    assert device.do(Re(), Re()) == 'doing a real and a number'
+    assert device.do(Num(), Re()) == 'doing two numbers'
+    assert device.do(device) == 'doing a device'
 
 
 def test_inheritance():
@@ -106,25 +113,25 @@ def test_inheritance():
     calc = Calculator(1)
     hammer = Hammer()
 
-    yield eq, device + calc, 'unknown device'
-    yield eq, Device.__add__(device, calc), 'unknown device'
-    yield eq, calc + device, 'unknown device'
-    yield eq, Calculator.__add__(calc, device), 'unknown device'
-    yield eq, device + hammer, 'unknown device'
-    yield eq, Device.__add__(device, hammer), 'unknown device'
-    yield eq, hammer + device, 'unknown device'
-    yield eq, Hammer.__add__(hammer, device), 'unknown device'
-    yield eq, hammer + hammer, 'super hammer'
-    yield eq, Hammer.__add__(hammer, hammer), 'super hammer'
-    yield eq, calc + calc, 'super calculator'
-    yield eq, Calculator.__add__(calc, calc), 'super calculator'
-    yield eq, hammer + calc, 'destroyed calculator'
-    yield eq, Hammer.__add__(hammer, calc), 'destroyed calculator'
-    yield eq, calc + hammer, 'destroyed calculator'
-    yield eq, Calculator.__add__(calc, hammer), 'destroyed calculator'
-    yield eq, calc.compute(ComputableObject()), 'result'
-    yield eq, calc.compute(object, ComputableObject()), 'a result'
-    yield eq, calc.compute(ComputableObject(), object), 'another result'
+    assert device + calc == 'unknown device'
+    assert Device.__add__(device, calc) == 'unknown device'
+    assert calc + device == 'unknown device'
+    assert Calculator.__add__(calc, device) == 'unknown device'
+    assert device + hammer == 'unknown device'
+    assert Device.__add__(device, hammer) == 'unknown device'
+    assert hammer + device == 'unknown device'
+    assert Hammer.__add__(hammer, device) == 'unknown device'
+    assert hammer + hammer == 'super hammer'
+    assert Hammer.__add__(hammer, hammer) == 'super hammer'
+    assert calc + calc == 'super calculator'
+    assert Calculator.__add__(calc, calc) == 'super calculator'
+    assert hammer + calc == 'destroyed calculator'
+    assert Hammer.__add__(hammer, calc) == 'destroyed calculator'
+    assert calc + hammer == 'destroyed calculator'
+    assert Calculator.__add__(calc, hammer) == 'destroyed calculator'
+    assert calc.compute(ComputableObject()) == 'result'
+    assert calc.compute(object, ComputableObject()) == 'a result'
+    assert calc.compute(ComputableObject(), object) == 'another result'
 
 
 def test_inheritance_exceptions():
@@ -132,15 +139,18 @@ def test_inheritance_exceptions():
     o = ComputableObject()
 
     # Test instantiation.
-    yield raises, NotFoundLookupError, lambda: Calculator('1')
+    with pytest.raises(NotFoundLookupError):
+        Calculator('1')
 
     # Test method lookup.
-    yield raises, NotFoundLookupError, lambda: calc.compute(1)
+    with pytest.raises(NotFoundLookupError):
+        calc.compute(1)
 
     # Test method ambiguity.
-    yield raises, AmbiguousLookupError, lambda: calc.compute(o, o)
-    yield eq, calc.compute(object, o), 'a result'
-    yield eq, calc.compute(o, object), 'another result'
+    with pytest.raises(AmbiguousLookupError):
+        calc.compute(o, o)
+    assert calc.compute(object, o) == 'a result'
+    assert calc.compute(o, object) == 'another result'
 
 
 _dispatch = Dispatcher()
@@ -187,17 +197,21 @@ def f(*args):
 
 
 def test_varargs():
-    yield eq, f(), 'fallback'
-    yield eq, f(Num()), 'number'
-    yield eq, f(Num(), object), 'fallback'
-    yield eq, f(object, Num()), 'fallback'
-    yield eq, f(Num(), Num()), 'two numbers'
-    yield eq, f(Num(), Num(), Num()), 'two or more numbers'
-    yield raises, LookupError, lambda: f(FP(), FP(), FP())
-    yield raises, LookupError, lambda: f(FP(), Re(), FP())
-    yield raises, LookupError, lambda: f(FP(), Num(), FP())
-    yield eq, f(FP(), Num(), Re()), 'a float, a number, and more reals'
-    yield eq, f(Re(), Num(), FP()), 'a real, a number, and more floats'
-    yield eq, f(Num(), FP(), FP()), 'two numbers and more reals'
-    yield eq, f(Num(), Num(), FP()), 'two numbers and more reals'
-    yield raises, LookupError, lambda: f(FP(), FP())
+    assert f() == 'fallback'
+    assert f(Num()) == 'number'
+    assert f(Num(), object) == 'fallback'
+    assert f(object, Num()) == 'fallback'
+    assert f(Num(), Num()) == 'two numbers'
+    assert f(Num(), Num(), Num()) == 'two or more numbers'
+    with pytest.raises(LookupError):
+        f(FP(), FP(), FP())
+    with pytest.raises(LookupError):
+        f(FP(), Re(), FP())
+    with pytest.raises(LookupError):
+        f(FP(), Num(), FP())
+    assert f(FP(), Num(), Re()) == 'a float, a number, and more reals'
+    assert f(Re(), Num(), FP()) == 'a real, a number, and more floats'
+    assert f(Num(), FP(), FP()) == 'two numbers and more reals'
+    assert f(Num(), Num(), FP()) == 'two numbers and more reals'
+    with pytest.raises(LookupError):
+        f(FP(), FP())

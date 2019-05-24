@@ -2,9 +2,12 @@
 
 from __future__ import absolute_import, division, print_function
 
-from . import Dispatcher, Referentiable, Self, Union, add_conversion_method
-from . import eq, raises
-from ..test_promotion import save_convert_methods, restore_convert_methods
+import pytest
+
+from plum import Dispatcher, Referentiable, Self, Union, \
+    add_conversion_method, convert
+from plum.promotion import _convert
+from ..test_promotion import ConvertCache
 
 
 def test_return_type():
@@ -14,10 +17,12 @@ def test_return_type():
     def f(x):
         return x
 
-    yield eq, f(1), 1
-    yield eq, f.invoke(int)(1), 1
-    yield raises, TypeError, lambda: f('1')
-    yield raises, TypeError, lambda: f.invoke(str)('1')
+    assert f(1) == 1
+    assert f.invoke(int)(1) == 1
+    with pytest.raises(TypeError):
+        f('1')
+    with pytest.raises(TypeError):
+        f.invoke(str)('1')
 
 
 def test_extension():
@@ -31,8 +36,8 @@ def test_extension():
     def f(x):
         return str(x)
 
-    yield eq, f(1.0), '1.0'
-    yield eq, f.invoke(float)(1.0), '1.0'
+    assert f(1.0) == '1.0'
+    assert f.invoke(float)(1.0) == '1.0'
 
 
 def test_multi():
@@ -42,10 +47,12 @@ def test_multi():
     def g(x):
         return x
 
-    yield eq, g(1), 1
-    yield eq, g.invoke(int)(1), 1
-    yield raises, TypeError, lambda: g('1')
-    yield raises, TypeError, lambda: g.invoke(str)('1')
+    assert g(1) == 1
+    assert g.invoke(int)(1) == 1
+    with pytest.raises(TypeError):
+        g('1')
+    with pytest.raises(TypeError):
+        g.invoke(str)('1')
 
 
 def test_inheritance():
@@ -62,27 +69,26 @@ def test_inheritance():
 
     b = B()
 
-    yield eq, b.do(1), 1
-    yield eq, b.do(b), b
-    yield raises, TypeError, lambda: b.do('1')
-    yield eq, b.do(1.0), 'hello from A'
+    assert b.do(1) == 1
+    assert b.do(b) == b
+    with pytest.raises(TypeError):
+        b.do('1')
+    assert b.do(1.0) == 'hello from A'
 
 
 def test_conversion():
     dispatch = Dispatcher()
 
-    convert_methods = save_convert_methods()
+    with ConvertCache():
+        @dispatch({int, str}, return_type=int)
+        def f(x):
+            return x
 
-    @dispatch({int, str}, return_type=int)
-    def f(x):
-        return x
+        assert f(1) == 1
+        with pytest.raises(TypeError):
+            f('1')
 
-    yield eq, f(1), 1
-    yield raises, TypeError, lambda: f('1')
+        add_conversion_method(str, int, int)
 
-    add_conversion_method(str, int, int)
-
-    yield eq, f(1), 1
-    yield eq, f('1'), 1
-
-    restore_convert_methods(convert_methods)
+        assert f(1) == 1
+        assert f('1') == 1

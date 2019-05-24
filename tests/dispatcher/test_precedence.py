@@ -2,8 +2,9 @@
 
 from __future__ import absolute_import, division, print_function
 
-from . import Dispatcher, AmbiguousLookupError
-from . import eq, raises
+import pytest
+
+from plum import Dispatcher, AmbiguousLookupError
 
 _dispatch = Dispatcher()
 
@@ -49,13 +50,14 @@ def test_precedence():
     el = Element()
     spel = SpecialisedElement()
 
-    yield eq, type(mul(zero, el)), ZeroElement
-    yield eq, type(mul(el, spel)), SpecialisedElement
-    yield raises, AmbiguousLookupError, lambda: mul(zero, spel)
+    assert type(mul(zero, el)) == ZeroElement
+    assert type(mul(el, spel)) == SpecialisedElement
+    with pytest.raises(AmbiguousLookupError):
+        mul(zero, spel)
 
-    yield eq, type(mul_precedence(zero, el)), ZeroElement
-    yield eq, type(mul_precedence(el, spel)), SpecialisedElement
-    yield eq, type(mul_precedence(zero, spel)), ZeroElement
+    assert type(mul_precedence(zero, el)) == ZeroElement
+    assert type(mul_precedence(el, spel)) == SpecialisedElement
+    assert type(mul_precedence(zero, spel)) == ZeroElement
 
 
 def test_extension():
@@ -73,9 +75,9 @@ def test_extension():
     def g(x):
         return 'int or float'
 
-    yield eq, g('1'), 'int or str'
-    yield eq, g(1.0), 'int or float'
-    yield eq, g(1), 'int or float'
+    assert g('1') == 'int or str'
+    assert g(1.0) == 'int or float'
+    assert g(1) == 'int or float'
 
 
 def test_multi():
@@ -93,6 +95,6 @@ def test_multi():
     def g(x):
         return 'int or float, or float'
 
-    yield eq, g('1'), 'int or str, or object or str'
-    yield eq, g(1.0), 'int or float, or float'
-    yield eq, g(1), 'int or float, or float'
+    assert g('1') == 'int or str, or object or str'
+    assert g(1.0) == 'int or float, or float'
+    assert g(1) == 'int or float, or float'

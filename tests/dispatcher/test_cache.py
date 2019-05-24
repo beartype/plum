@@ -2,9 +2,9 @@
 
 from __future__ import absolute_import, division, print_function
 
+from plum import Dispatcher, List, clear_all_cache, Referentiable, Self
 from plum.type import subclasscheck_cache
-from . import Dispatcher, List, clear_all_cache, Referentiable, Self
-from . import eq, le, benchmark
+from ..util import benchmark
 
 
 def test_cache_function_call_performance_and_correctness():
@@ -32,21 +32,21 @@ def test_cache_function_call_performance_and_correctness():
 
     # A cached call should not be more than 15 times slower than a native
     # call.
-    yield le, dur_plum, 15 * dur_native, 'compare native'
+    assert dur_plum <= 15 * dur_native, 'compare native'
 
     # A first call should not be more than 1000 times slower than a cached call.
-    yield le, dur_plum_first, 1000 * dur_plum, 'compare first'
+    assert dur_plum_first <= 1000 * dur_plum, 'compare first'
 
     # The cached call should be at least 20 times faster than a first call.
-    yield le, dur_plum, dur_plum_first / 20, 'cache performance'
+    assert dur_plum <= dur_plum_first / 20, 'cache performance'
 
     # Test cache correctness.
-    yield eq, f(1), None, 'cache correctness 1'
+    assert f(1) is None, 'cache correctness 1'
 
     @dispatch(int)
     def f(x): return 1
 
-    yield eq, f(1), 1, 'cache correctness 2'
+    assert f(1) == 1, 'cache correctness 2'
 
 
 def test_cache_class_call_performance():
@@ -94,25 +94,25 @@ def test_cache_class_call_performance():
     dur_native = benchmark(a_native, (1,))
     dur_plum_first = benchmark(a, (1,), n=1)
     dur_plum = benchmark(a, (1,))
-    yield le, dur_plum, 25 * dur_native, 'compare native call'
-    yield le, dur_plum_first, 1000 * dur_plum, 'compare first call'
-    yield le, dur_plum, dur_plum_first / 10, 'cache performance call'
+    assert dur_plum <= 25 * dur_native, 'compare native call'
+    assert dur_plum_first <= 1000 * dur_plum, 'compare first call'
+    assert dur_plum <= dur_plum_first / 10, 'cache performance call'
 
     # Test performance of method calls.
     dur_native = benchmark(lambda x: a_native.go(x), (1,))
     dur_plum_first = benchmark(lambda x: a.go(x), (1,), n=1)
     dur_plum = benchmark(lambda x: a.go(x), (1,))
-    yield le, dur_plum, 25 * dur_native, 'compare native method'
-    yield le, dur_plum_first, 1000 * dur_plum, 'compare first method'
-    yield le, dur_plum, dur_plum_first / 10, 'cache performance method'
+    assert dur_plum <= 25 * dur_native, 'compare native method'
+    assert dur_plum_first <= 1000 * dur_plum, 'compare first method'
+    assert dur_plum <= dur_plum_first / 10, 'cache performance method'
 
     # Test performance of static calls.
     dur_native = benchmark(lambda x: ANative.go_again(a_native, x), (1,))
     dur_plum_first = benchmark(lambda x: A.go_again(a, x), (1,), n=1)
     dur_plum = benchmark(lambda x: A.go_again(a, x), (1,))
-    yield le, dur_plum, 25 * dur_native, 'compare native static'
-    yield le, dur_plum_first, 1000 * dur_plum, 'compare first static'
-    yield le, dur_plum, dur_plum_first / 10, 'cache performance static'
+    assert dur_plum <= 25 * dur_native, 'compare native static'
+    assert dur_plum_first <= 1000 * dur_plum, 'compare first static'
+    assert dur_plum <= dur_plum_first / 10, 'cache performance static'
 
 
 def test_cache_clearing():
@@ -129,22 +129,22 @@ def test_cache_clearing():
     f(1)
 
     # Check that cache is used.
-    yield eq, len(f.methods), 2
-    yield eq, len(f.precedences), 2
-    yield eq, f._parametric, True
+    assert len(f.methods) == 2
+    assert len(f.precedences) == 2
+    assert f._parametric
 
     dispatch.clear_cache()
 
     # Check that cache is cleared.
-    yield eq, len(f.methods), 0
-    yield eq, len(f.precedences), 0
-    yield eq, f._parametric, False
+    assert len(f.methods) == 0
+    assert len(f.precedences) == 0
+    assert not f._parametric
 
     f(1)
     clear_all_cache()
 
     # Again check that cache is cleared.
-    yield eq, len(f.methods), 0
-    yield eq, len(f.precedences), 0
-    yield eq, len(subclasscheck_cache), 0
-    yield eq, f._parametric, False
+    assert len(f.methods) == 0
+    assert len(f.precedences) == 0
+    assert len(subclasscheck_cache) == 0
+    assert not f._parametric
