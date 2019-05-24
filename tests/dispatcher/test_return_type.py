@@ -4,10 +4,15 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-from plum import Dispatcher, Referentiable, Self, Union, \
-    add_conversion_method, convert
-from plum.promotion import _convert
-from ..test_promotion import ConvertCache
+from plum import (
+    Dispatcher,
+    Referentiable,
+    Self,
+    Union,
+    add_conversion_method
+)
+# noinspection PyUnresolvedReferences
+from ..test_promotion import convert
 
 
 def test_return_type():
@@ -76,19 +81,18 @@ def test_inheritance():
     assert b.do(1.0) == 'hello from A'
 
 
-def test_conversion():
+def test_conversion(convert):
     dispatch = Dispatcher()
 
-    with ConvertCache():
-        @dispatch({int, str}, return_type=int)
-        def f(x):
-            return x
+    @dispatch({int, str}, return_type=int)
+    def f(x):
+        return x
 
-        assert f(1) == 1
-        with pytest.raises(TypeError):
-            f('1')
+    assert f(1) == 1
+    with pytest.raises(TypeError):
+        f('1')
 
-        add_conversion_method(str, int, int)
+    add_conversion_method(str, int, int)
 
-        assert f(1) == 1
-        assert f('1') == 1
+    assert f(1) == 1
+    assert f('1') == 1
