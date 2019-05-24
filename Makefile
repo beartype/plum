@@ -43,6 +43,7 @@ docupdate: docmake
 
 install:
 	pip install --upgrade pip
+	pip install cython pytest pytest-cov coveralls
 	pip install -r requirements.txt -e .
 	python setup.py build_ext -i
 
