@@ -19,8 +19,8 @@ from .test_signature import Num, Re, FP
 def convert():
     # Save methods.
     _convert._resolve_pending_registrations()
-    methods = _convert.methods.copy()
-    resolved = _convert._resolved.copy()
+    methods = dict(_convert.methods)
+    resolved = list(_convert._resolved)
 
     yield plum.convert
 
