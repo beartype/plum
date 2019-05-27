@@ -4,7 +4,7 @@ python:
   - 3.6
 before_install:
   - pip install --upgrade pip
-  - pip install cython pytest pytest-cov coveralls
+  - pip install --upgrade cython pytest pytest-cov coveralls
 install:
   - pip install --no-cache-dir -U -r requirements.txt | cat
 script:
