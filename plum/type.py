@@ -5,7 +5,11 @@ from __future__ import absolute_import, print_function, division
 import abc
 import inspect
 import logging
-import typing
+
+try:  # pragma: no cover
+    import typing
+except ImportError:  # pragma: no cover
+    import types as typing
 
 from .resolvable import Resolvable, Reference, Promise
 from .util import multihash, Comparable, get_default
@@ -230,9 +234,9 @@ class Self(Reference, PromisedType):
 
 
 # Determine the type of a type or generic. This changes between Python versions.
-if hasattr(typing, '_GenericAlias'):  # pragma: no cover
-    _TypeOrGeneric = typing._GenericAlias
-else:  # pragma: no cover
+try:  # pragma: no cover
+    _TypeOrGeneric = (type, typing._GenericAlias)
+except AttributeError:  # pragma: no cover
     _TypeOrGeneric = type
 
 

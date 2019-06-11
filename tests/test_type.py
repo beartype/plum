@@ -2,8 +2,12 @@
 
 from __future__ import absolute_import, division, print_function
 
-import typing
 import pytest
+
+try:  # pragma: no cover
+    from typing import Callable
+except ImportError:  # pragma: no cover
+    from types import FunctionType as Callable
 
 from plum import (
     Union,
@@ -124,7 +128,7 @@ def test_astype():
 
 def test_astype_generic():
     # Test that generics are handled correctly.
-    assert as_type(typing.Callable) <= as_type(object)
+    assert as_type(Callable) <= as_type(object)
 
 
 def test_is_object():
