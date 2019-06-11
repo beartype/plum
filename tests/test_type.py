@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import, division, print_function
 
+import typing
 import pytest
 
 from plum import (
@@ -119,6 +120,11 @@ def test_astype():
     assert as_type(int) == Type(int)
     with pytest.raises(RuntimeError):
         as_type(1)
+
+
+def test_astype_generic():
+    # Test that generics are handled correctly.
+    assert as_type(typing.Callable) <= as_type(object)
 
 
 def test_is_object():

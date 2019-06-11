@@ -5,6 +5,7 @@ from __future__ import absolute_import, print_function, division
 import abc
 import inspect
 import logging
+import typing
 
 from .resolvable import Resolvable, Reference, Promise
 from .util import multihash, Comparable, get_default
@@ -228,6 +229,13 @@ class Self(Reference, PromisedType):
     """
 
 
+# Determine the type of a type or generic. This changes between Python versions.
+if hasattr(typing, '_GenericAlias'):  # pragma: no cover
+    _TypeOrGeneric = typing._GenericAlias
+else:  # pragma: no cover
+    _TypeOrGeneric = type
+
+
 def as_type(obj):
     """Convert object to a type.
 
@@ -257,8 +265,9 @@ def as_type(obj):
     if isinstance(obj, set):
         return Union(*obj)
 
-    # If `obj` is a `type`, handle shorthands; otherwise, wrap it in `Type`.
-    if isinstance(obj, type):
+    # If `obj` is a `type` or generic, handle shorthands; otherwise, wrap it in
+    # `Type`.
+    if isinstance(obj, _TypeOrGeneric):
         # :class:`.type.Self` has a shorthand notation that doesn't require the
         # user to instantiate it.
         if obj is Self:
