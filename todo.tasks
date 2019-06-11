@@ -19,6 +19,8 @@ Features:
 
  Other:
     ☐ Is there a better alternative to numeric method precedences?
+    ☐ Refactor tests to use PyTest: remove raises, fixtures, and parametrisation. @high
+
 
 ＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿
 Archive:
