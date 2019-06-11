@@ -16,6 +16,7 @@ Features:
         ☐ Improved formatting of error messages.
     Documentation:
         ☐ Union aliases.
+        ☐ Callable type.
 
  Other:
     ☐ Is there a better alternative to numeric method precedences?
