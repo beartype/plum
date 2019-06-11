@@ -167,7 +167,7 @@
 <span id="plum-function-module"></span><h1>plum.function module<a class="headerlink" href="#module-plum.function" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="plum.function.Function">
-<em class="property">class </em><code class="descclassname">plum.function.</code><code class="descname">Function</code><a class="headerlink" href="#plum.function.Function" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">plum.function.</code><code class="descname">Function</code><span class="sig-paren">(</span><em>f</em>, <em>in_class=None</em><span class="sig-paren">)</span><a class="headerlink" href="#plum.function.Function" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A function.</p>
 <dl class="field-list simple">
@@ -178,9 +178,9 @@
 </ul>
 </dd>
 </dl>
-<dl class="attribute">
+<dl class="method">
 <dt id="plum.function.Function.clear_cache">
-<code class="descname">clear_cache</code><a class="headerlink" href="#plum.function.Function.clear_cache" title="Permalink to this definition">¶</a></dt>
+<code class="descname">clear_cache</code><span class="sig-paren">(</span><em>reregister=True</em><span class="sig-paren">)</span><a class="headerlink" href="#plum.function.Function.clear_cache" title="Permalink to this definition">¶</a></dt>
 <dd><p>Clear cache.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -190,21 +190,21 @@ Defaults to <cite>True</cite>.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="method">
 <dt id="plum.function.Function.extend">
-<code class="descname">extend</code><a class="headerlink" href="#plum.function.Function.extend" title="Permalink to this definition">¶</a></dt>
+<code class="descname">extend</code><span class="sig-paren">(</span><em>*types</em>, <em>**kw_args</em><span class="sig-paren">)</span><a class="headerlink" href="#plum.function.Function.extend" title="Permalink to this definition">¶</a></dt>
 <dd><p>A decorator to extend the function with another signature.</p>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="method">
 <dt id="plum.function.Function.extend_multi">
-<code class="descname">extend_multi</code><a class="headerlink" href="#plum.function.Function.extend_multi" title="Permalink to this definition">¶</a></dt>
+<code class="descname">extend_multi</code><span class="sig-paren">(</span><em>*signatures</em>, <em>**kw_args</em><span class="sig-paren">)</span><a class="headerlink" href="#plum.function.Function.extend_multi" title="Permalink to this definition">¶</a></dt>
 <dd><p>A decorator to extend the function with multiple signatures.</p>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="method">
 <dt id="plum.function.Function.invoke">
-<code class="descname">invoke</code><a class="headerlink" href="#plum.function.Function.invoke" title="Permalink to this definition">¶</a></dt>
+<code class="descname">invoke</code><span class="sig-paren">(</span><em>*types</em><span class="sig-paren">)</span><a class="headerlink" href="#plum.function.Function.invoke" title="Permalink to this definition">¶</a></dt>
 <dd><p>Invoke a particular method.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -219,9 +219,9 @@ Defaults to <cite>True</cite>.</p>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="method">
 <dt id="plum.function.Function.register">
-<code class="descname">register</code><a class="headerlink" href="#plum.function.Function.register" title="Permalink to this definition">¶</a></dt>
+<code class="descname">register</code><span class="sig-paren">(</span><em>signature</em>, <em>f</em>, <em>precedence=0</em>, <em>return_type=&lt;class 'object'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#plum.function.Function.register" title="Permalink to this definition">¶</a></dt>
 <dd><p>Register a method.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -237,9 +237,9 @@ to <cite>object</cite>.</p></li>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="method">
 <dt id="plum.function.Function.resolve_method">
-<code class="descname">resolve_method</code><a class="headerlink" href="#plum.function.Function.resolve_method" title="Permalink to this definition">¶</a></dt>
+<code class="descname">resolve_method</code><span class="sig-paren">(</span><em>*types</em><span class="sig-paren">)</span><a class="headerlink" href="#plum.function.Function.resolve_method" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the method and return type corresponding to types of arguments.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -254,9 +254,9 @@ to <cite>object</cite>.</p></li>
 </dl>
 </dd></dl>
 
-<dl class="attribute">
+<dl class="method">
 <dt id="plum.function.Function.resolve_signature">
-<code class="descname">resolve_signature</code><a class="headerlink" href="#plum.function.Function.resolve_signature" title="Permalink to this definition">¶</a></dt>
+<code class="descname">resolve_signature</code><span class="sig-paren">(</span><em>signature</em><span class="sig-paren">)</span><a class="headerlink" href="#plum.function.Function.resolve_signature" title="Permalink to this definition">¶</a></dt>
 <dd><p>Resolve a signature to get the most specific signature amongst the
 signatures of all applicable methods.</p>
 <dl class="field-list simple">

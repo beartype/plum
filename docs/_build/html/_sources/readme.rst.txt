@@ -285,6 +285,7 @@ diagonal dispatch:
         @dispatch(Self)
         def __add__(self, other):
             return 'rational'
+            
 
     real = Real()
     rational = Rational()
