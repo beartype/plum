@@ -4,11 +4,6 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 
-try:  # pragma: no cover
-    from typing import Callable
-except ImportError:  # pragma: no cover
-    from types import FunctionType as Callable
-
 from plum import (
     Union,
     PromisedType,
@@ -20,7 +15,8 @@ from plum import (
     Type,
     Referentiable,
     is_object,
-    is_type
+    is_type,
+    Callable
 )
 
 
@@ -126,11 +122,6 @@ def test_astype():
         as_type(1)
 
 
-def test_astype_generic():
-    # Test that generics are handled correctly.
-    assert as_type(Callable) <= as_type(object)
-
-
 def test_is_object():
     assert is_object(Type(object))
     assert not is_object(Type(int))
@@ -142,3 +133,24 @@ def test_is_type():
     assert is_type([int])
     assert is_type(Type(int))
     assert not is_type(1)
+
+
+def test_callable():
+    class A(object):
+        pass
+
+    class B(object):
+        def __call__(self):
+            pass
+
+    # Check `__instancecheck__`.
+    assert not isinstance(1, Callable)
+    assert isinstance(lambda x: x, Callable)
+    assert not isinstance(A(), Callable)
+    assert isinstance(B(), Callable)
+
+    # Check `__subclasscheck__`.
+    assert not issubclass(int, Callable)
+    assert issubclass(type(lambda x: x), Callable)
+    assert not issubclass(A, Callable)
+    assert issubclass(B, Callable)

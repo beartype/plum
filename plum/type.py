@@ -5,11 +5,7 @@ from __future__ import absolute_import, print_function, division
 import abc
 import inspect
 import logging
-
-try:  # pragma: no cover
-    import typing
-except ImportError:  # pragma: no cover
-    import types as typing
+from types import FunctionType
 
 from .resolvable import Resolvable, Reference, Promise
 from .util import multihash, Comparable, get_default
@@ -23,7 +19,8 @@ __all__ = ['VarArgs',
            'TypeType',
            'as_type',
            'is_object',
-           'is_type']
+           'is_type',
+           'Callable']
 log = logging.getLogger(__name__)
 
 
@@ -233,13 +230,6 @@ class Self(Reference, PromisedType):
     """
 
 
-# Determine the type of a type or generic. This changes between Python versions.
-try:  # pragma: no cover
-    _TypeOrGeneric = (type, typing._GenericAlias)
-except AttributeError:  # pragma: no cover
-    _TypeOrGeneric = type
-
-
 def as_type(obj):
     """Convert object to a type.
 
@@ -269,9 +259,8 @@ def as_type(obj):
     if isinstance(obj, set):
         return Union(*obj)
 
-    # If `obj` is a `type` or generic, handle shorthands; otherwise, wrap it in
-    # `Type`.
-    if isinstance(obj, _TypeOrGeneric):
+    # If `obj` is a `type`, handle shorthands; otherwise, wrap it in a `Type`.
+    if isinstance(obj, type):
         # :class:`.type.Self` has a shorthand notation that doesn't require the
         # user to instantiate it.
         if obj is Self:
@@ -308,3 +297,24 @@ def is_type(t):
 
 TypeType = Union(type, AbstractType, list, set)
 """The type of a Plum type, including shorthands."""
+
+
+class CallableType(type):
+    """A metaclass that implements the type of `Callable`."""
+
+    def __subclasscheck__(self, subclass):
+        # Check whether it is a function.
+        if issubclass(subclass, FunctionType):
+            return True
+
+        # Check whether it is a callable class.
+        try:
+            return isinstance(subclass.__call__, FunctionType)
+        except AttributeError:  # pragma: no cover
+            return False  # `__call__` is not a normal method.
+
+    def __instancecheck__(self, instance):
+        return callable(instance)
+
+
+Callable = CallableType('Callable', (type,), {})  #: Type for callable objects.
