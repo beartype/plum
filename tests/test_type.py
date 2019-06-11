@@ -154,3 +154,4 @@ def test_callable():
     assert issubclass(type(lambda x: x), Callable)
     assert not issubclass(A, Callable)
     assert issubclass(B, Callable)
+    assert issubclass(Callable, Callable)

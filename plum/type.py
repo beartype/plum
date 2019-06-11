@@ -5,7 +5,7 @@ from __future__ import absolute_import, print_function, division
 import abc
 import inspect
 import logging
-from types import FunctionType
+from types import FunctionType, MethodType
 
 from .resolvable import Resolvable, Reference, Promise
 from .util import multihash, Comparable, get_default
@@ -303,13 +303,17 @@ class CallableType(type):
     """A metaclass that implements the type of `Callable`."""
 
     def __subclasscheck__(self, subclass):
+        # Check whether it is a subclass of `Callable`.
+        if type.__subclasscheck__(self, subclass):
+            return True
+
         # Check whether it is a function.
         if issubclass(subclass, FunctionType):
             return True
 
-        # Check whether it is a callable class.
+        # Finally, check whether it is a callable class.
         try:
-            return isinstance(subclass.__call__, FunctionType)
+            return isinstance(subclass.__call__, (MethodType, FunctionType))
         except AttributeError:  # pragma: no cover
             return False  # `__call__` is not a normal method.
 
