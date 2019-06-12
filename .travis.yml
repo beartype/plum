@@ -8,6 +8,7 @@ matrix:
       dist: xenial
       sudo: true
 install:
+  - pip install --upgrade pip
   - pip install --no-cache-dir -U -r requirements.txt | cat
 script:
   - pytest -v --cov=plum --cov-report term-missing
