@@ -1,2 +1,7 @@
-numpy
-six
+# Requirements for development, testing, and documentation.
+-e .
+sphinx
+sphinx-rtd-theme
+pytest
+pytest-cov
+coveralls

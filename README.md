@@ -25,14 +25,8 @@ Everybody likes multiple dispatch, just like everybody likes plums.
 
 ## Installation
 
-The package is tested for Python 2.7 and Python 3.6, which are the versions 
-recommended to use.
-To install the package, use the following sequence of commands:
-
 ```
-git clone https://github.com/wesselb/plum
-cd plum
-make install
+pip install plum
 ```
 
 ## Basic Usage

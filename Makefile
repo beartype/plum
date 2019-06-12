@@ -42,10 +42,7 @@ docupdate: docmake
 	git checkout $(BRANCH)
 
 install:
-	pip install --upgrade pip
-	pip install cython pytest pytest-cov coveralls
-	pip install -r requirements.txt -e .
-	python setup.py build_ext -i
+	pip install -r requirements.txt
 
 test:
 	pytest -v --cov=$(PACKAGE) --cov-report html:cover --cov-report term-missing

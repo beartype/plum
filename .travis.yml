@@ -7,9 +7,6 @@ matrix:
     - python: 3.7
       dist: xenial
       sudo: true
-before_install:
-  - pip install --upgrade pip
-  - pip install --upgrade cython pytest pytest-cov coveralls
 install:
   - pip install --no-cache-dir -U -r requirements.txt | cat
 script:
