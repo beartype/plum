@@ -4,7 +4,7 @@ from __future__ import absolute_import, division, print_function
 
 from setuptools import find_packages, setup, Extension
 
-requirements = ['numpy', 'six']
+requirements = ['numpy>=1.16', 'six']
 
 setup(packages=find_packages(exclude=['docs']),
       install_requires=requirements,
