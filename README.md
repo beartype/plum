@@ -26,6 +26,7 @@ Everybody likes multiple dispatch, just like everybody likes plums.
 ## Installation
 
 ```
+pip install numpy cython   # These must be installed first.
 pip install plum-dispatch
 ```
 
