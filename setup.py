@@ -9,5 +9,6 @@ requirements = ['numpy', 'six']
 setup(packages=find_packages(exclude=['docs']),
       install_requires=requirements,
       ext_modules=[Extension('plum.function',
-                             ['plum/function.py'])])
+                             ['plum/function.py'])],
+      include_package_data=True)
 
