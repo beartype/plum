@@ -13,7 +13,6 @@ eq = assert_equal
 neq = assert_not_equal
 ge = assert_greater_equal
 gt = assert_greater
-raises = assert_raises
 ok = ok_
 
 
