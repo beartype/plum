@@ -4,11 +4,9 @@ from __future__ import absolute_import, division, print_function
 
 import logging
 
-from plum.type import is_object
-
 from .resolvable import Promise
 from .signature import Signature
-from .type import as_type, is_type
+from .type import as_type, is_type, is_object
 from .util import get_default
 
 __all__ = ['Function', 'AmbiguousLookupError', 'NotFoundLookupError']
