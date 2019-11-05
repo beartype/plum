@@ -6,7 +6,8 @@ from nose.tools import (
     assert_less_equal,
     assert_not_equal,
     assert_greater,
-    assert_greater_equal, ok_
+    assert_greater_equal,
+    ok_
 )
 
 le = assert_less_equal
