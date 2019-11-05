@@ -1,13 +1,9 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import absolute_import, division, print_function
-
 import logging
 
 from .dispatcher import Dispatcher
 from .function import promised_convert
-from .type import as_type, TypeType
 from .parametric import type_of
+from .type import as_type, TypeType
 
 __all__ = ['convert',
            'add_conversion_method',

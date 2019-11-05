@@ -1,13 +1,10 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import absolute_import, division, print_function
-
 import logging
 
 from .type import as_type, VarArgs
 from .util import Comparable, multihash
 
 __all__ = ['Signature']
+
 log = logging.getLogger(__name__)
 
 

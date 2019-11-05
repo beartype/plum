@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import absolute_import, division, print_function
-
 import abc
 import logging
 
 __all__ = ['multihash', 'Comparable', 'get_default']
+
 log = logging.getLogger(__name__)
 
 

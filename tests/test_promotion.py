@@ -1,16 +1,12 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import absolute_import, division, print_function
-
 import pytest
 
+import plum
 from plum import (
     add_conversion_method,
     add_promotion_rule,
     promote,
     conversion_method
 )
-import plum
 from plum.promotion import _convert
 from .test_signature import Num, Re, FP
 

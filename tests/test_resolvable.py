@@ -1,8 +1,5 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import absolute_import, division, print_function
-
 import abc
+
 import pytest
 
 from plum import Referentiable, Reference, Promise, ResolutionError

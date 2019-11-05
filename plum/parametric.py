@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import absolute_import, division, print_function
-
 import logging
 
 from .dispatcher import Dispatcher
-from .type import ComparableType, as_type, TypeType, \
+from .type import (
+    ComparableType, as_type, TypeType,
     promised_type_of as promised_type_of2, is_type
+)
 from .util import multihash
 from .function import promised_type_of as promised_type_of1
 
@@ -34,6 +32,7 @@ def _get_id(x):
 
 class CovariantType(type):
     """A metaclass that implements *covariance* of parametric types."""
+
     def __subclasscheck__(self, subclass):
         if hasattr(subclass, '_is_parametric'):
             # Check that they are instances of the same parametric type.

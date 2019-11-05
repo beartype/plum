@@ -50,12 +50,22 @@ referentiables = []  #: Referentiable classes.
 
 
 def Referentiable(*args):
-    """Create a metaclass that tracks referentiables."""
+    """Create a metaclass that tracks referentiables.
+
+    Args:
+        base (type): Type to subtype. Defaults to `type`.
+
+    Returns:
+        type: Referentiable metaclass that subtypes `base`.
+    """
     if len(args) > 1:
+        # Function was passed as metaclass without calling it.
         return Referentiable()(*args)
     elif len(args) == 1:
+        # Function was passed a metaclass to subtype.
         Base = args[0]
     else:
+        # Function was not passed a metaclass to subtype. Default to `type`.
         Base = type
 
     class Meta(Base):

@@ -1,14 +1,10 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import absolute_import, division, print_function
-
-import logging
 import inspect
+import logging
 
 from .function import Function
 from .signature import Signature as Sig
-from .util import get_default
 from .type import subclasscheck_cache
+from .util import get_default
 
 __all__ = ['Dispatcher', 'dispatch', 'clear_all_cache']
 log = logging.getLogger(__name__)

@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import absolute_import, division, print_function
-
 from plum import Dispatcher, List, clear_all_cache, Referentiable, Self
 from plum.type import subclasscheck_cache
 from ..util import benchmark
