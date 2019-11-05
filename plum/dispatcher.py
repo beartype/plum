@@ -14,7 +14,7 @@ __all__ = ['Dispatcher', 'dispatch', 'clear_all_cache']
 log = logging.getLogger(__name__)
 
 
-class Dispatcher(object):
+class Dispatcher:
     """A namespace for functions.
 
     Args:

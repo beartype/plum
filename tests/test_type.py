@@ -86,7 +86,7 @@ def test_promisedtype():
     assert not t.parametric
 
 
-class A(Referentiable):
+class A(metaclass=Referentiable):
     self = Self()
 
 
@@ -136,10 +136,10 @@ def test_is_type():
 
 
 def test_callable():
-    class A(object):
+    class A:
         pass
 
-    class B(object):
+    class B:
         def __call__(self):
             pass
 

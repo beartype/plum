@@ -26,7 +26,7 @@ def test():
     class Base2: pass
 
     @parametric
-    class A(Base1, object): pass
+    class A(Base1): pass
 
     assert issubclass(A, Base1)
     assert not issubclass(A, Base2)
@@ -61,7 +61,7 @@ def test():
 
 def test_argument():
     @parametric
-    class A(object):
+    class A:
         def __init__(self, x):
             self.x = x
 
@@ -82,7 +82,7 @@ def test_kind():
     assert Kind2(1) == Kind2(1)
 
     # Test providing a superclass, where the default should be `object`.
-    class SuperClass(object):
+    class SuperClass:
         pass
 
     Kind3 = kind(SuperClass)

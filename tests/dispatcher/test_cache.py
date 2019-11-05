@@ -50,7 +50,7 @@ def test_cache_function_call_performance_and_correctness():
 
 
 def test_cache_class_call_performance():
-    class ANative(object):
+    class ANative:
         def __call__(self, x):
             pass
 
@@ -60,7 +60,7 @@ def test_cache_class_call_performance():
         def go_again(self, x):
             pass
 
-    class A(Referentiable):
+    class A(metaclass=Referentiable):
         _dispatch = Dispatcher(in_class=Self)
 
         @_dispatch(int)

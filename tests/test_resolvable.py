@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import, division, print_function
 
+import abc
 import pytest
 
 from plum import Referentiable, Reference, Promise, ResolutionError
@@ -16,7 +17,7 @@ def test_promise():
 
 
 def test_reference():
-    class A(Referentiable):
+    class A(metaclass=Referentiable):
         pass
 
     ref = Reference()
@@ -25,3 +26,13 @@ def test_reference():
     ref.pos += 1
     with pytest.raises(ResolutionError):
         ref.resolve()
+
+
+def test_referentiable_metaclass_wrapping():
+    class A(metaclass=Referentiable(abc.ABCMeta)):
+        @abc.abstractmethod
+        def do(self):
+            pass
+
+    with pytest.raises(TypeError):
+        A()

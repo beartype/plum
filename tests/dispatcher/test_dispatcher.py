@@ -23,7 +23,7 @@ def test_double_definition():
 def test_metadata_and_printing():
     dispatch = Dispatcher()
 
-    class A(Referentiable):
+    class A(metaclass=Referentiable):
         _dispatch = Dispatcher(in_class=Self)
 
         @_dispatch()
@@ -126,18 +126,18 @@ def test_invoke():
 
 
 def test_invoke_inheritance():
-    class A(object):
+    class A(metaclass=Referentiable):
         def do(self, x):
             return 'fallback'
 
-    class B(A, Referentiable):
+    class B(A):
         _dispatch = Dispatcher(in_class=Self)
 
         @_dispatch(int)
         def do(self, x):
             return 'int'
 
-    class C(B, Referentiable):
+    class C(B):
         _dispatch = Dispatcher(in_class=Self)
 
         @_dispatch(str)

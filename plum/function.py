@@ -49,7 +49,7 @@ def _convert(obj, target_type):
 default_obj_type = as_type(object)
 
 
-class WrappedMethod(object):
+class WrappedMethod:
     """Wrap a method, copying metadata and handling bound and unbound calls and
     conversion to the right return type.
 
@@ -90,7 +90,7 @@ class WrappedMethod(object):
         return self._method.invoke(*types)
 
 
-class Function(object):
+class Function:
     """A function.
 
     Args:

@@ -15,11 +15,11 @@ from plum import (
 from .test_signature import Num, Re, FP
 
 
-class ComputableObject(object):
+class ComputableObject:
     pass
 
 
-class Device(Referentiable):
+class Device(metaclass=Referentiable):
     _dispatch = Dispatcher(in_class=Self)
 
     @_dispatch()
@@ -61,7 +61,7 @@ PromisedCalculator = PromisedType()
 PromisedHammer = PromisedType()
 
 
-class Hammer(Device, Referentiable):
+class Hammer(Device):
     _dispatch = Dispatcher(in_class=Self)
 
     @_dispatch(PromisedHammer)
@@ -73,7 +73,7 @@ class Hammer(Device, Referentiable):
         return 'destroyed calculator'
 
 
-class Calculator(Device, Referentiable):
+class Calculator(Device):
     _dispatch = Dispatcher(in_class=Self)
 
     @_dispatch(int)

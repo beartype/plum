@@ -61,11 +61,11 @@ def test_multi():
 
 
 def test_inheritance():
-    class A(object):
+    class A(metaclass=Referentiable):
         def do(self, x):
             return 'hello from A'
 
-    class B(A, Referentiable):
+    class B(A):
         _dispatch = Dispatcher(in_class=Self)
 
         @_dispatch(Union(int, Self, str), return_type=Union(int, Self))

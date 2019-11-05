@@ -21,7 +21,7 @@ def multihash(*args):
     return hash(args)
 
 
-class Comparable(object):
+class Comparable:
     """A mixin that makes instances of the class comparable.
 
     Requires the subclass to just implement `__le__`.

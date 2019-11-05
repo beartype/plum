@@ -9,7 +9,7 @@ from plum import Dispatcher, AmbiguousLookupError
 _dispatch = Dispatcher()
 
 
-class Element(object):
+class Element:
     pass
 
 

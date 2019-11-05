@@ -6,6 +6,8 @@
 
 Everybody likes multiple dispatch, just like everybody likes plums.
 
+*Note:* Plum requires Python 3.6 or higher.
+
 * [Installation](#installation)
 * [Basic Usage](#basic-usage)
 * [Advanced Features by Example](#advanced-features-by-example)
@@ -252,7 +254,7 @@ However, inheritance can be used to achieve a form of diagonal dispatch:
 ```python
 from plum import Dispatcher, Referentiable, Self
 
-class Real(Referentiable):
+class Real(metaclass=Referentiable):
     dispatch = Dispatcher(in_class=Self)
 
     @dispatch(Self)
@@ -260,7 +262,7 @@ class Real(Referentiable):
         return 'real'
         
 
-class Rational(Real, Referentiable):
+class Rational(Real):
     dispatch = Dispatcher(in_class=Self)
 
     @dispatch(Self)
@@ -297,7 +299,7 @@ from numbers import Number
 from plum import convert
 
 
-class Rational(object):
+class Rational:
     def __init__(self, num, denom):
         self.num = num
         self.denom = denom
@@ -392,7 +394,7 @@ precedence levels of methods, which are used to break ambiguity:
 ```python
 from plum import dispatch
 
-class Element(object):
+class Element:
     pass
 
 
@@ -454,7 +456,7 @@ The decorator `parametric` can be used to create parametric classes:
 from plum import dispatch, parametric
 
 @parametric
-class A(object):  # Must be a new-style class!
+class A:
     pass
     
     

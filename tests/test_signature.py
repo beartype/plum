@@ -14,7 +14,7 @@ def test_instantiation():
         Sig([int, str])
 
 
-class Num(object):
+class Num:
     pass
 
 

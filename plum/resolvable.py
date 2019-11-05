@@ -1,10 +1,5 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import division, print_function, absolute_import
-
 import abc
 import logging
-import six
 
 __all__ = ['ResolutionError',
            'Resolvable',
@@ -18,7 +13,7 @@ class ResolutionError(RuntimeError):
     """Object could not be resolved."""
 
 
-class Resolvable(six.with_metaclass(abc.ABCMeta, object)):
+class Resolvable(abc.ABC):
     """An object that can be resolved and compared."""
 
     @abc.abstractmethod
@@ -51,27 +46,34 @@ class Promise(Resolvable):
             return self._obj
 
 
-class ReferentiableTracker(type):
-    """Metaclass that tracks referentiables."""
-    referentiables = []
-
-    def __init__(cls, name, bases, dct):
-        ReferentiableTracker.referentiables.append(cls)
-        type.__init__(cls, name, bases, dct)
+referentiables = []  #: Referentiable classes.
 
 
-class Referentiable(six.with_metaclass(ReferentiableTracker, object)):
-    """A class that can be referenced through :class:`.resolvable.Reference`."""
+def Referentiable(*args):
+    """Create a metaclass that tracks referentiables."""
+    if len(args) > 1:
+        return Referentiable()(*args)
+    elif len(args) == 1:
+        Base = args[0]
+    else:
+        Base = type
+
+    class Meta(Base):
+        def __new__(cls, name, bases, dct):
+            instance = Base.__new__(cls, name, bases, dct)
+            referentiables.append(instance)
+            return instance
+
+    return Meta
 
 
 class Reference(Resolvable):
     """Resolves to the last subclass of :class:`.resolvable.Referentiable`."""
 
     def __init__(self):
-        self.pos = len(ReferentiableTracker.referentiables)
+        self.pos = len(referentiables)
 
     def resolve(self):
-        referentiables = Referentiable.referentiables
         if len(referentiables) - 1 < self.pos:
             raise ResolutionError(
                 'Requesting referentiable {}, whereas only {} exist(s).'

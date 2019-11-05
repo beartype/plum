@@ -24,7 +24,7 @@ __all__ = ['VarArgs',
 log = logging.getLogger(__name__)
 
 
-class AbstractType(object):
+class AbstractType:
     """An abstract class defining the top of the Plum type hierarchy.
 
     Any instance of a subclass of :class:`.type.AbstractType` will be henceforth
