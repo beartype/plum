@@ -6,8 +6,6 @@
 
 Everybody likes multiple dispatch, just like everybody likes plums.
 
-*Note:* Plum requires Python 3.6 or higher.
-
 * [Installation](#installation)
 * [Basic Usage](#basic-usage)
 * [Advanced Features by Example](#advanced-features-by-example)
@@ -26,6 +24,8 @@ Everybody likes multiple dispatch, just like everybody likes plums.
     - [Directly Invoke a Method](#directly-invoke-a-method)
 
 ## Installation
+
+Plum requires Python 3.6 or higher.
 
 ```bash
 pip install plum-dispatch
