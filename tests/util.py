@@ -1,23 +1,5 @@
 from time import time
 
-from nose.tools import (
-    assert_equal,
-    assert_less,
-    assert_less_equal,
-    assert_not_equal,
-    assert_greater,
-    assert_greater_equal,
-    ok_
-)
-
-le = assert_less_equal
-lt = assert_less
-eq = assert_equal
-neq = assert_not_equal
-ge = assert_greater_equal
-gt = assert_greater
-ok = ok_
-
 
 def benchmark(f, args, n=1000):
     """Benchmark the performance of a function `f` called with arguments

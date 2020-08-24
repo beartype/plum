@@ -289,6 +289,16 @@ class Function:
                 for c in self._class.mro()[1:]:
                     try:
                         method = getattr(c, self._f.__name__)
+
+                        # Ignore abstract methods.
+                        if (
+                                hasattr(method, '__isabstractmethod__') and
+                                method.__isabstractmethod__
+                        ):
+                            method = None
+                            continue
+
+                        # We found a good candidate. Break.
                         break
                     except AttributeError:
                         pass

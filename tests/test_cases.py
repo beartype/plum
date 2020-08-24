@@ -1,3 +1,4 @@
+import abc
 import pytest
 
 from plum import (
@@ -211,3 +212,25 @@ def test_varargs():
     assert f(Num(), Num(), FP()) == 'two numbers and more reals'
     with pytest.raises(LookupError):
         f(FP(), FP())
+
+
+def test_abc_abstractmethod():
+    class A(metaclass=Referentiable):
+
+        @abc.abstractmethod
+        def f(self, x):
+            pass
+
+    class B(A):
+        _dispatch = Dispatcher(in_class=Self)
+
+        @_dispatch(int)
+        def f(self, x):
+            return x
+
+    b = B()
+
+    # Check that the abstract method is not dispatched to.
+    assert b.f(1) == 1
+    with pytest.raises(NotFoundLookupError):
+        b.f('1')
