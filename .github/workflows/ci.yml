@@ -27,6 +27,7 @@ jobs:
           COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
           COVERALLS_PARALLEL: true
         run: |
+          rm plum/function.*.so
           pytest -v --cov=plum --cov-report term-missing
           coveralls
   coveralls:
