@@ -7,10 +7,12 @@ def test_double_definition():
     dispatch = Dispatcher()
 
     @dispatch(int)
-    def f(x): pass
+    def f(x):
+        pass
 
     @dispatch(int)
-    def f(x): pass
+    def f(x):
+        pass
 
     with pytest.raises(RuntimeError):
         f(1)
@@ -30,27 +32,28 @@ def test_metadata_and_printing():
     def f():
         """docstring of f"""
 
-    assert f.__name__ == 'f'
-    assert f.__doc__ == 'docstring of f'
-    assert f.__module__ == 'tests.dispatcher.test_dispatcher'
-    assert repr(f) == '<function {} with 1 method(s)>'.format(f._f)
-    assert f.invoke().__name__ == 'f'
-    assert f.invoke().__doc__ == 'docstring of f'
-    assert f.invoke().__module__ == 'tests.dispatcher.test_dispatcher'
+    assert f.__name__ == "f"
+    assert f.__doc__ == "docstring of f"
+    assert f.__module__ == "tests.dispatcher.test_dispatcher"
+    assert repr(f) == "<function {} with 1 method(s)>".format(f._f)
+    assert f.invoke().__name__ == "f"
+    assert f.invoke().__doc__ == "docstring of f"
+    assert f.invoke().__module__ == "tests.dispatcher.test_dispatcher"
     assert repr(f.invoke()) == repr(f._f)
 
     a = A()
     g = a.g
 
-    assert g.__name__ == 'g'
-    assert g.__doc__ == 'docstring of g'
-    assert g.__module__ == 'tests.dispatcher.test_dispatcher'
-    assert repr(g) == '<function {} with 1 method(s)>' \
-                      ''.format(A._dispatch._functions['g']._f)
-    assert g.invoke().__name__ == 'g'
-    assert g.invoke().__doc__ == 'docstring of g'
-    assert g.invoke().__module__ == 'tests.dispatcher.test_dispatcher'
-    assert repr(g.invoke()) == repr(A._dispatch._functions['g']._f)
+    assert g.__name__ == "g"
+    assert g.__doc__ == "docstring of g"
+    assert g.__module__ == "tests.dispatcher.test_dispatcher"
+    assert repr(g) == "<function {} with 1 method(s)>" "".format(
+        A._dispatch._functions["g"]._f
+    )
+    assert g.invoke().__name__ == "g"
+    assert g.invoke().__doc__ == "docstring of g"
+    assert g.invoke().__module__ == "tests.dispatcher.test_dispatcher"
+    assert repr(g.invoke()) == repr(A._dispatch._functions["g"]._f)
 
 
 def test_extension():
@@ -58,20 +61,20 @@ def test_extension():
 
     @dispatch()
     def f():
-        return 'fallback'
+        return "fallback"
 
     @f.extend(int)
     def f(x):
-        return 'int'
+        return "int"
 
     @f.extend_multi((str,), (float,))
     def f(x):
-        return 'str or float'
+        return "str or float"
 
-    assert f() == 'fallback'
-    assert f(1) == 'int'
-    assert f('1') == 'str or float'
-    assert f(1.0) == 'str or float'
+    assert f() == "fallback"
+    assert f(1) == "int"
+    assert f("1") == "str or float"
+    assert f(1.0) == "str or float"
 
 
 def test_multi():
@@ -79,15 +82,15 @@ def test_multi():
 
     @dispatch(object)
     def f(x):
-        return 'fallback'
+        return "fallback"
 
     @dispatch.multi([int], [str])
     def f(x):
-        return 'int or str'
+        return "int or str"
 
-    assert f(1) == 'int or str'
-    assert f('1') == 'int or str'
-    assert f(1.) == 'fallback'
+    assert f(1) == "int or str"
+    assert f("1") == "int or str"
+    assert f(1.0) == "fallback"
 
 
 def test_invoke():
@@ -95,62 +98,62 @@ def test_invoke():
 
     @dispatch()
     def f():
-        return 'fallback'
+        return "fallback"
 
     @dispatch(int)
     def f(x):
-        return 'int'
+        return "int"
 
     @dispatch(str)
     def f(x):
-        return 'str'
+        return "str"
 
     @dispatch({int, str, float})
     def f(x):
-        return 'int, str, or float'
+        return "int, str, or float"
 
-    assert f() == 'fallback'
-    assert f(1) == 'int'
-    assert f('1') == 'str'
-    assert f(1.0) == 'int, str, or float'
-    assert f.invoke()() == 'fallback'
-    assert f.invoke(int)('1') == 'int'
-    assert f.invoke(str)(1) == 'str'
-    assert f.invoke(float)(1) == 'int, str, or float'
-    assert f.invoke({int, str})(1) == 'int, str, or float'
-    assert f.invoke({int, str, float})(1) == 'int, str, or float'
+    assert f() == "fallback"
+    assert f(1) == "int"
+    assert f("1") == "str"
+    assert f(1.0) == "int, str, or float"
+    assert f.invoke()() == "fallback"
+    assert f.invoke(int)("1") == "int"
+    assert f.invoke(str)(1) == "str"
+    assert f.invoke(float)(1) == "int, str, or float"
+    assert f.invoke({int, str})(1) == "int, str, or float"
+    assert f.invoke({int, str, float})(1) == "int, str, or float"
 
 
 def test_invoke_inheritance():
     class A(metaclass=Referentiable):
         def do(self, x):
-            return 'fallback'
+            return "fallback"
 
     class B(A):
         _dispatch = Dispatcher(in_class=Self)
 
         @_dispatch(int)
         def do(self, x):
-            return 'int'
+            return "int"
 
     class C(B):
         _dispatch = Dispatcher(in_class=Self)
 
         @_dispatch(str)
         def do(self, x):
-            return 'str'
+            return "str"
 
     c = C()
 
     # Test bound calls.
-    assert c.do.invoke(str)('1') == 'str'
-    assert c.do.invoke(int)(1) == 'int'
-    assert c.do.invoke(float)(1.0) == 'fallback'
+    assert c.do.invoke(str)("1") == "str"
+    assert c.do.invoke(int)(1) == "int"
+    assert c.do.invoke(float)(1.0) == "fallback"
 
     # Test unbound calls.
-    assert C.do.invoke(str)(c, '1') == 'str'
-    assert C.do.invoke(int)(c, 1) == 'int'
-    assert C.do.invoke(float)(c, 1.0) == 'fallback'
+    assert C.do.invoke(str)(c, "1") == "str"
+    assert C.do.invoke(int)(c, 1) == "int"
+    assert C.do.invoke(float)(c, 1.0) == "fallback"
 
 
 def test_parametric_tracking():

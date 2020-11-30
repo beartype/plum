@@ -1,7 +1,7 @@
 import abc
 import logging
 
-__all__ = ['multihash', 'Comparable', 'get_default']
+__all__ = ["multihash", "Comparable", "get_default"]
 
 log = logging.getLogger(__name__)
 
@@ -23,6 +23,7 @@ class Comparable:
 
     Requires the subclass to just implement `__le__`.
     """
+
     __metaclass__ = abc.ABCMeta
 
     def __eq__(self, other):

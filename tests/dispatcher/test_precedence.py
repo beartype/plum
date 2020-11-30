@@ -61,19 +61,19 @@ def test_extension():
 
     @dispatch()
     def g(x):
-        return 'fallback'
+        return "fallback"
 
     @g.extend({int, str}, precedence=1)
     def g(x):
-        return 'int or str'
+        return "int or str"
 
     @g.extend({int, float}, precedence=2)
     def g(x):
-        return 'int or float'
+        return "int or float"
 
-    assert g('1') == 'int or str'
-    assert g(1.0) == 'int or float'
-    assert g(1) == 'int or float'
+    assert g("1") == "int or str"
+    assert g(1.0) == "int or float"
+    assert g(1) == "int or float"
 
 
 def test_multi():
@@ -81,16 +81,16 @@ def test_multi():
 
     @dispatch()
     def g():
-        return 'fallback'
+        return "fallback"
 
     @dispatch.multi(({int, str},), ({object, str},), precedence=1)
     def g(x):
-        return 'int or str, or object or str'
+        return "int or str, or object or str"
 
     @dispatch.multi(({int, float},), (float,), precedence=2)
     def g(x):
-        return 'int or float, or float'
+        return "int or float, or float"
 
-    assert g('1') == 'int or str, or object or str'
-    assert g(1.0) == 'int or float, or float'
-    assert g(1) == 'int or float, or float'
+    assert g("1") == "int or str, or object or str"
+    assert g(1.0) == "int or float, or float"
+    assert g(1) == "int or float, or float"

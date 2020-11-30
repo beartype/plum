@@ -6,7 +6,7 @@ from .signature import Signature as Sig
 from .type import subclasscheck_cache
 from .util import get_default
 
-__all__ = ['Dispatcher', 'dispatch', 'clear_all_cache']
+__all__ = ["Dispatcher", "dispatch", "clear_all_cache"]
 log = logging.getLogger(__name__)
 
 
@@ -34,11 +34,11 @@ class Dispatcher:
         Returns:
             function: Decorator.
         """
-        precedence = get_default(kw_args, 'precedence', 0)
-        return_type = get_default(kw_args, 'return_type', object)
-        return self._create_decorator([Sig(*types)],
-                                      precedence=precedence,
-                                      return_type=return_type)
+        precedence = get_default(kw_args, "precedence", 0)
+        return_type = get_default(kw_args, "return_type", object)
+        return self._create_decorator(
+            [Sig(*types)], precedence=precedence, return_type=return_type
+        )
 
     def multi(self, *signatures, **kw_args):
         """Create a decorator for multiple given signatures.
@@ -53,11 +53,13 @@ class Dispatcher:
         Returns:
             function: Decorator.
         """
-        precedence = get_default(kw_args, 'precedence', 0)
-        return_type = get_default(kw_args, 'return_type', object)
-        return self._create_decorator([Sig(*types) for types in signatures],
-                                      precedence=precedence,
-                                      return_type=return_type)
+        precedence = get_default(kw_args, "precedence", 0)
+        return_type = get_default(kw_args, "return_type", object)
+        return self._create_decorator(
+            [Sig(*types) for types in signatures],
+            precedence=precedence,
+            return_type=return_type,
+        )
 
     def _create_decorator(self, signatures, precedence, return_type):
         def decorator(f):
@@ -69,10 +71,7 @@ class Dispatcher:
 
             # Register the new method.
             for signature in signatures:
-                self._functions[name].register(signature,
-                                               f,
-                                               precedence,
-                                               return_type)
+                self._functions[name].register(signature, f, precedence, return_type)
 
             # Return the function.
             return self._functions[name]
@@ -111,7 +110,7 @@ class Dispatcher:
 
             # Get possible return type.
             try:
-                return_type = spec.annotations['return']
+                return_type = spec.annotations["return"]
             except KeyError:
                 return_type = object
 
@@ -119,9 +118,7 @@ class Dispatcher:
             signature = Sig(*types)
 
             # Create and call decorator.
-            return self._create_decorator([signature],
-                                          precedence,
-                                          return_type)(f)
+            return self._create_decorator([signature], precedence, return_type)(f)
 
         return decorator
 

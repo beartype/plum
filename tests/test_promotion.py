@@ -1,12 +1,7 @@
 import pytest
 
 import plum
-from plum import (
-    add_conversion_method,
-    add_promotion_rule,
-    promote,
-    conversion_method
-)
+from plum import add_conversion_method, add_promotion_rule, promote, conversion_method
 from plum.promotion import _convert
 from .test_signature import Num, Re, FP
 
@@ -60,64 +55,64 @@ def test_conversion(convert):
 def test_promotion(convert):
     assert promote() == ()
     assert promote(1) == (1,)
-    assert promote(1.) == (1.,)
+    assert promote(1.0) == (1.0,)
     assert promote(1, 1) == (1, 1)
-    assert promote(1., 1.) == (1., 1.)
+    assert promote(1.0, 1.0) == (1.0, 1.0)
     assert promote(1, 1, 1) == (1, 1, 1)
-    assert promote(1., 1., 1.) == (1., 1., 1.)
+    assert promote(1.0, 1.0, 1.0) == (1.0, 1.0, 1.0)
     with pytest.raises(TypeError):
-        promote(1, 1.)
+        promote(1, 1.0)
     with pytest.raises(TypeError):
-        promote(1., 1)
+        promote(1.0, 1)
 
     add_promotion_rule(int, float, float)
 
     with pytest.raises(TypeError):
-        promote(1, 1.)
+        promote(1, 1.0)
     with pytest.raises(TypeError):
-        promote(1., 1)
+        promote(1.0, 1)
 
     add_conversion_method(int, float, float)
 
-    assert promote(1, 1.) == (1., 1.)
-    assert promote(1, 1, 1.) == (1., 1., 1.)
-    assert promote(1., 1., 1) == (1., 1., 1.)
+    assert promote(1, 1.0) == (1.0, 1.0)
+    assert promote(1, 1, 1.0) == (1.0, 1.0, 1.0)
+    assert promote(1.0, 1.0, 1) == (1.0, 1.0, 1.0)
 
     with pytest.raises(TypeError):
-        promote(1, '1')
+        promote(1, "1")
     with pytest.raises(TypeError):
-        promote('1', 1)
+        promote("1", 1)
     with pytest.raises(TypeError):
-        promote(1., '1')
+        promote(1.0, "1")
     with pytest.raises(TypeError):
-        promote('1', 1.)
+        promote("1", 1.0)
 
     add_promotion_rule(str, {int, float}, {int, float})
     add_conversion_method(str, {int, float}, float)
 
-    assert promote(1, '1', '1') == (1., 1., 1.)
-    assert promote('1', 1, 1) == (1., 1., 1.)
-    assert promote(1., '1', 1) == (1., 1., 1.)
-    assert promote('1', 1., 1) == (1., 1., 1.)
+    assert promote(1, "1", "1") == (1.0, 1.0, 1.0)
+    assert promote("1", 1, 1) == (1.0, 1.0, 1.0)
+    assert promote(1.0, "1", 1) == (1.0, 1.0, 1.0)
+    assert promote("1", 1.0, 1) == (1.0, 1.0, 1.0)
 
     add_promotion_rule(str, int, float)
     add_promotion_rule(str, float, float)
-    add_conversion_method(str, float, lambda x: 'lel')
+    add_conversion_method(str, float, lambda x: "lel")
 
-    assert promote(1, '1', 1.) == (1., 'lel', 1.)
-    assert promote('1', 1, 1.) == ('lel', 1., 1.)
-    assert promote(1., '1', 1) == (1., 'lel', 1.)
-    assert promote('1', 1., '1') == ('lel', 1., 'lel')
+    assert promote(1, "1", 1.0) == (1.0, "lel", 1.0)
+    assert promote("1", 1, 1.0) == ("lel", 1.0, 1.0)
+    assert promote(1.0, "1", 1) == (1.0, "lel", 1.0)
+    assert promote("1", 1.0, "1") == ("lel", 1.0, "lel")
 
 
 def test_inheritance(convert):
     add_promotion_rule(Num, FP, Num)
     add_promotion_rule(Num, Re, Num)
     add_promotion_rule(FP, Re, Num)
-    add_conversion_method(FP, Num, lambda x: 'Num from FP')
-    add_conversion_method(Re, Num, lambda x: 'Num from Re')
+    add_conversion_method(FP, Num, lambda x: "Num from FP")
+    add_conversion_method(Re, Num, lambda x: "Num from Re")
 
     n = Num()
-    assert promote(n, FP()) == (n, 'Num from FP')
-    assert promote(Re(), n) == ('Num from Re', n)
-    assert promote(Re(), FP()) == ('Num from Re', 'Num from FP')
+    assert promote(n, FP()) == (n, "Num from FP")
+    assert promote(Re(), n) == ("Num from Re", n)
+    assert promote(Re(), FP()) == ("Num from Re", "Num from FP")

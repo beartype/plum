@@ -23,7 +23,7 @@ class FP(Re):
 
 
 def test_properties():
-    assert repr(Sig(Num)) == '({!r})'.format(Type(Num))
+    assert repr(Sig(Num)) == "({!r})".format(Type(Num))
     assert hash(Sig(Num)) == hash(Sig(Num))
     assert hash(Sig(Num)) != hash(Type(Num))
     assert len(Sig(Num)) == 1
@@ -47,10 +47,12 @@ def test_comparisons():
 
 
 def test_varargs_properties():
-    assert Sig(Num, Num, [Num]).expand_varargs_to(Sig(Num)) == (
-        Type(Num), Type(Num))
+    assert Sig(Num, Num, [Num]).expand_varargs_to(Sig(Num)) == (Type(Num), Type(Num))
     assert Sig(Num, [Num]).expand_varargs_to(Sig(Num, Num, Num)) == (
-        Type(Num), Type(Num), Type(Num))
+        Type(Num),
+        Type(Num),
+        Type(Num),
+    )
     assert Sig(Num).expand_varargs_to(Sig(Num, Num)) == (Type(Num),)
     assert Sig(Num, [FP]).base == (Type(Num),)
     assert Sig([Num]).has_varargs()

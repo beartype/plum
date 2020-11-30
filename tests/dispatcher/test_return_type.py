@@ -1,12 +1,6 @@
 import pytest
 
-from plum import (
-    Dispatcher,
-    Referentiable,
-    Self,
-    Union,
-    add_conversion_method
-)
+from plum import Dispatcher, Referentiable, Self, Union, add_conversion_method
 # noinspection PyUnresolvedReferences
 from ..test_promotion import convert
 
@@ -21,9 +15,9 @@ def test_return_type():
     assert f(1) == 1
     assert f.invoke(int)(1) == 1
     with pytest.raises(TypeError):
-        f('1')
+        f("1")
     with pytest.raises(TypeError):
-        f.invoke(str)('1')
+        f.invoke(str)("1")
 
 
 def test_extension():
@@ -37,8 +31,8 @@ def test_extension():
     def f(x):
         return str(x)
 
-    assert f(1.0) == '1.0'
-    assert f.invoke(float)(1.0) == '1.0'
+    assert f(1.0) == "1.0"
+    assert f.invoke(float)(1.0) == "1.0"
 
 
 def test_multi():
@@ -51,15 +45,15 @@ def test_multi():
     assert g(1) == 1
     assert g.invoke(int)(1) == 1
     with pytest.raises(TypeError):
-        g('1')
+        g("1")
     with pytest.raises(TypeError):
-        g.invoke(str)('1')
+        g.invoke(str)("1")
 
 
 def test_inheritance():
     class A(metaclass=Referentiable):
         def do(self, x):
-            return 'hello from A'
+            return "hello from A"
 
     class B(A):
         _dispatch = Dispatcher(in_class=Self)
@@ -73,8 +67,8 @@ def test_inheritance():
     assert b.do(1) == 1
     assert b.do(b) == b
     with pytest.raises(TypeError):
-        b.do('1')
-    assert b.do(1.0) == 'hello from A'
+        b.do("1")
+    assert b.do(1.0) == "hello from A"
 
 
 def test_conversion(convert):
@@ -86,9 +80,9 @@ def test_conversion(convert):
 
     assert f(1) == 1
     with pytest.raises(TypeError):
-        f('1')
+        f("1")
 
     add_conversion_method(str, int, int)
 
     assert f(1) == 1
-    assert f('1') == 1
+    assert f("1") == 1

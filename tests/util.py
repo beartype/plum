@@ -17,12 +17,8 @@ def benchmark(f, args, n=1000):
     return dur * 1e6 / n
 
 
-def call(f, method, args, res):
-    assert_equal(getattr(f, method)(*args), res)
-
-
 def nle(x, y):
-    assert (not (x <= y))
+    assert not (x <= y)
 
 
 def assert_isinstance(x, y):

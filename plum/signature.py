@@ -3,7 +3,7 @@ import logging
 from .type import as_type, VarArgs
 from .util import Comparable, multihash
 
-__all__ = ['Signature']
+__all__ = ["Signature"]
 
 log = logging.getLogger(__name__)
 
@@ -21,10 +21,10 @@ class Signature(Comparable):
 
         # Ensure that only the last type possibly represents varargs.
         if any([isinstance(t, VarArgs) for t in self.types[:-1]]):
-            raise TypeError('Only the last type can represent varargs.')
+            raise TypeError("Only the last type can represent varargs.")
 
     def __repr__(self):
-        return '({})'.format(', '.join(map(repr, self.types)))
+        return "({})".format(", ".join(map(repr, self.types)))
 
     def __hash__(self):
         return multihash(Signature, *self.types)
@@ -52,9 +52,11 @@ class Signature(Comparable):
         # Check varargs.
         if self.has_varargs() and not other.has_varargs():
             return False
-        elif (self.has_varargs() and
-              other.has_varargs() and
-              self.varargs_type > other.varargs_type):
+        elif (
+            self.has_varargs()
+            and other.has_varargs()
+            and self.varargs_type > other.varargs_type
+        ):
             return False
 
         # Check compatibility.
@@ -62,8 +64,14 @@ class Signature(Comparable):
             return False
 
         # Finally, compare.
-        return all([x <= y for x, y in zip(self.expand_varargs_to(other),
-                                           other.expand_varargs_to(self))])
+        return all(
+            [
+                x <= y
+                for x, y in zip(
+                    self.expand_varargs_to(other), other.expand_varargs_to(self)
+                )
+            ]
+        )
 
     @property
     def base(self):
@@ -82,8 +90,9 @@ class Signature(Comparable):
     def varargs_type(self):
         """Type of the varargs."""
         if not self.has_varargs():
-            raise RuntimeError('Type of varargs requested, but tuple does not '
-                               'have varargs.')
+            raise RuntimeError(
+                "Type of varargs requested, but tuple does not have varargs."
+            )
         return self.types[-1].type
 
     def is_compatible(self, other):
@@ -96,6 +105,8 @@ class Signature(Comparable):
         Returns:
             bool: Compatibility.
         """
-        return (len(self) == len(other)
-                or (len(self) > len(other) and other.has_varargs())
-                or (len(self) < len(other) and self.has_varargs()))
+        return (
+            len(self) == len(other)
+            or (len(self) > len(other) and other.has_varargs())
+            or (len(self) < len(other) and self.has_varargs())
+        )

@@ -6,17 +6,19 @@ from types import FunctionType, MethodType
 from .resolvable import Resolvable, Reference, Promise
 from .util import multihash, Comparable, get_default
 
-__all__ = ['VarArgs',
-           'Union',
-           'Type',
-           'ResolvableType',
-           'PromisedType',
-           'Self',
-           'TypeType',
-           'as_type',
-           'is_object',
-           'is_type',
-           'Callable']
+__all__ = [
+    "VarArgs",
+    "Union",
+    "Type",
+    "ResolvableType",
+    "PromisedType",
+    "Self",
+    "TypeType",
+    "as_type",
+    "is_object",
+    "is_type",
+    "Callable",
+]
 log = logging.getLogger(__name__)
 
 
@@ -59,7 +61,7 @@ class VarArgs(AbstractType):
         return multihash(VarArgs, self.type)
 
     def __repr__(self):
-        return 'VarArgs({})'.format(repr(self.type))
+        return "VarArgs({})".format(repr(self.type))
 
     def expand(self, num):
         """Expand the varargs to a tuple of types.
@@ -93,8 +95,7 @@ class ComparableType(AbstractType, Comparable):
         try:
             return subclasscheck_cache[key]
         except KeyError:
-            check = all([issubclass(t, self.get_types())
-                         for t in subclass.get_types()])
+            check = all([issubclass(t, self.get_types()) for t in subclass.get_types()])
             subclasscheck_cache[key] = check  # Cache result of check.
             return check
 
@@ -112,8 +113,7 @@ class ComparableType(AbstractType, Comparable):
     def mro(self):
         types = self.get_types()
         if len(types) != 1:
-            raise RuntimeError('Exactly one type must be encapsulated to get '
-                               'the MRO.')
+            raise RuntimeError("Exactly one type must be encapsulated to get the MRO.")
         return types[0].mro()
 
 
@@ -130,12 +130,12 @@ class Union(ComparableType):
         self._types = tuple(as_type(t) for t in types)
 
         # Constuct alias if one is given.
-        alias = get_default(kw_args, 'alias', None)
+        alias = get_default(kw_args, "alias", None)
         if alias:
             frame = inspect.stack()[1]
             module = inspect.getmodule(frame[0])
             if module:
-                self.alias = '{}.{}'.format(module.__name__, alias)
+                self.alias = f"{module.__name__}.{alias}"
             else:  # pragma: no cover
                 self.alias = alias
         else:
@@ -163,7 +163,7 @@ class Union(ComparableType):
         if len(self._types) == 1:
             return repr(list(self._types)[0])
         else:
-            return '{{{}}}'.format(', '.join(repr(t) for t in self._types))
+            return "{" + ", ".join(repr(t) for t in self._types) + "}"
 
     def get_types(self):
         self._to_set()
@@ -189,10 +189,10 @@ class Type(ComparableType):
         return multihash(Type, self._type)
 
     def __repr__(self):
-        return '{}.{}'.format(self._type.__module__, self._type.__name__)
+        return f"{self._type.__module__}.{self._type.__name__}"
 
     def get_types(self):
-        return self._type,
+        return (self._type,)
 
 
 class ResolvableType(ComparableType, Resolvable):
@@ -242,10 +242,11 @@ def as_type(obj):
     # A list is used as shorthand notation for varargs.
     if isinstance(obj, list):
         if len(obj) > 1:
-            raise TypeError('Invalid type specification: "{}". Varargs has to '
-                            'be specified in one of the following ways: [], '
-                            '[Type], VarArgs(), or VarArgs(Type).'
-                            ''.format(str(obj)))
+            raise TypeError(
+                f'Invalid type specification: "{obj}". Varargs has to '
+                "be specified in one of the following ways: "
+                "[], [Type], VarArgs(), or VarArgs(Type)."
+            )
         elif len(obj) == 1:
             return VarArgs(as_type(obj[0]))
         else:  # `len(obj) == 0`.
@@ -264,7 +265,7 @@ def as_type(obj):
 
         return Type(obj)
 
-    raise RuntimeError('Could not convert "{}" to a type.'.format(obj))
+    raise RuntimeError(f'Could not convert "{obj}" to a type.')
 
 
 def is_object(t):
@@ -317,4 +318,4 @@ class CallableType(type):
         return callable(instance)
 
 
-Callable = CallableType('Callable', (type,), {})  #: Type for callable objects.
+Callable = CallableType("Callable", (type,), {})  #: Type for callable objects.

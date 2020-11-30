@@ -12,21 +12,21 @@ from plum import (
     Referentiable,
     is_object,
     is_type,
-    Callable
+    Callable,
 )
 
 
 def test_varargs():
     assert hash(VarArgs(int)) == hash(VarArgs(int))
-    assert repr(VarArgs(int)) == 'VarArgs({!r})'.format(Type(int))
+    assert repr(VarArgs(int)) == "VarArgs({!r})".format(Type(int))
     assert VarArgs(int).expand(2) == (Type(int), Type(int))
     assert not VarArgs(int).parametric
 
 
 def test_comparabletype():
     assert isinstance(1, Union(int))
-    assert not isinstance('1', Union(int))
-    assert isinstance('1', Union(int, str))
+    assert not isinstance("1", Union(int))
+    assert isinstance("1", Union(int, str))
     assert issubclass(Union(int), Union(int))
     assert issubclass(Union(int), Union(int, str))
     assert not issubclass(Union(int, str), Union(int))
@@ -54,14 +54,14 @@ def test_union():
     assert isinstance(t._types, set)
 
     # Test aliases.
-    assert repr(Union(int, alias='MyUnion')) == 'tests.test_type.MyUnion'
-    assert repr(Union(int, str, alias='MyUnion')) == 'tests.test_type.MyUnion'
+    assert repr(Union(int, alias="MyUnion")) == "tests.test_type.MyUnion"
+    assert repr(Union(int, str, alias="MyUnion")) == "tests.test_type.MyUnion"
 
 
 def test_type():
     assert hash(Type(int)) == hash(Type(int))
     assert hash(Type(int)) != hash(Type(str))
-    assert repr(Type(int)) == '{}.{}'.format(int.__module__, int.__name__)
+    assert repr(Type(int)) == "{}.{}".format(int.__module__, int.__name__)
     assert Type(int).get_types() == (int,)
     assert not Type(int).parametric
 

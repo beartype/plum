@@ -31,7 +31,7 @@ def test_comparable():
 
 
 def test_get_default():
-    d = {'key': 'value'}
+    d = {"key": "value"}
 
-    assert get_default(d, 'key', 1) == 'value'
-    assert get_default(d, 'key2', 1) == 1
+    assert get_default(d, "key", 1) == "value"
+    assert get_default(d, "key2", 1) == 1

@@ -1,11 +1,7 @@
 import abc
 import logging
 
-__all__ = ['ResolutionError',
-           'Resolvable',
-           'Promise',
-           'Referentiable',
-           'Reference']
+__all__ = ["ResolutionError", "Resolvable", "Promise", "Referentiable", "Reference"]
 log = logging.getLogger(__name__)
 
 
@@ -41,7 +37,7 @@ class Promise(Resolvable):
 
     def resolve(self):
         if self._obj is None:
-            raise ResolutionError('Promise was not kept.')
+            raise ResolutionError("Promise was not kept.")
         else:
             return self._obj
 
@@ -86,7 +82,8 @@ class Reference(Resolvable):
     def resolve(self):
         if len(referentiables) - 1 < self.pos:
             raise ResolutionError(
-                'Requesting referentiable {}, whereas only {} exist(s).'
-                ''.format(self.pos + 1, len(referentiables)))
+                f"Requesting referentiable {self.pos + 1}, "
+                f"whereas only {len(referentiables)} exist(s)."
+            )
         else:
             return referentiables[self.pos]

@@ -1,20 +1,17 @@
 import logging
 
 from .dispatcher import Dispatcher
+from .function import promised_type_of as promised_type_of1
 from .type import (
-    ComparableType, as_type, TypeType,
-    promised_type_of as promised_type_of2, is_type
+    ComparableType,
+    as_type,
+    TypeType,
+    promised_type_of as promised_type_of2,
+    is_type,
 )
 from .util import multihash
-from .function import promised_type_of as promised_type_of1
 
-__all__ = ['parametric',
-           'type_parameter',
-           'kind',
-           'Kind',
-           'List',
-           'Tuple',
-           'type_of']
+__all__ = ["parametric", "type_parameter", "kind", "Kind", "List", "Tuple", "type_of"]
 log = logging.getLogger(__name__)
 
 _dispatch = Dispatcher()
@@ -34,7 +31,7 @@ class CovariantType(type):
     """A metaclass that implements *covariance* of parametric types."""
 
     def __subclasscheck__(self, subclass):
-        if hasattr(subclass, '_is_parametric'):
+        if hasattr(subclass, "_is_parametric"):
             # Check that they are instances of the same parametric type.
             if subclass.__bases__ == self.__bases__:
                 par_subclass = type_parameter(subclass)
@@ -52,8 +49,9 @@ def parametric(Class):
     subclasses = {}
 
     if not issubclass(Class, object):  # pragma: no cover
-        raise RuntimeError('To let {} be a parametric class, it must be a '
-                           'new-style class.')
+        raise RuntimeError(
+            f"To let {Class} be a parametric class, it must be a new-style class."
+        )
 
     def __new__(cls, *ps):
         # Convert type parameters.
@@ -61,16 +59,18 @@ def parametric(Class):
 
         # Only create new subclass if it doesn't exist already.
         if ps not in subclasses:
+
             def __new__(cls, *args, **kw_args):
                 return Class.__new__(cls)
 
             # Create subclass.
-            name = Class.__name__ + '{' + ','.join(str(p) for p in ps) + '}'
-            SubClass = type.__new__(CovariantType,
-                                    name,
-                                    (ParametricClass,),
-                                    {'__new__': __new__,
-                                     '_is_parametric': True})
+            name = Class.__name__ + "{" + ",".join(str(p) for p in ps) + "}"
+            SubClass = type.__new__(
+                CovariantType,
+                name,
+                (ParametricClass,),
+                {"__new__": __new__, "_is_parametric": True},
+            )
             SubClass._type_parameter = ps[0] if len(ps) == 1 else ps
             SubClass.__module__ = Class.__module__
 
@@ -84,9 +84,7 @@ def parametric(Class):
         return subclasses[ps]
 
     # Create parametric class.
-    ParametricClass = type(Class.__name__,
-                           (Class,),
-                           {'__new__': __new__})
+    ParametricClass = type(Class.__name__, (Class,), {"__new__": __new__})
     ParametricClass.__module__ = Class.__module__
 
     # Attempt to correct docstring.
@@ -154,10 +152,10 @@ class List(ComparableType):
         return multihash(List, self._el_type)
 
     def __repr__(self):
-        return 'ListType({})'.format(self._el_type)
+        return f"ListType({self._el_type})"
 
     def get_types(self):
-        return _ParametricList(self._el_type),
+        return (_ParametricList(self._el_type),)
 
     @property
     def parametric(self):
@@ -183,10 +181,10 @@ class Tuple(ComparableType):
         return multihash(Tuple, self._el_type)
 
     def __repr__(self):
-        return 'TupleType({})'.format(self._el_type)
+        return f"TupleType({self._el_type})"
 
     def get_types(self):
-        return _ParametricTuple(self._el_type),
+        return (_ParametricTuple(self._el_type),)
 
     @property
     def parametric(self):

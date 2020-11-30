@@ -5,11 +5,13 @@ from .function import promised_convert
 from .parametric import type_of
 from .type import as_type, TypeType
 
-__all__ = ['convert',
-           'add_conversion_method',
-           'conversion_method',
-           'add_promotion_rule',
-           'promote']
+__all__ = [
+    "convert",
+    "add_conversion_method",
+    "conversion_method",
+    "add_promotion_rule",
+    "promote",
+]
 log = logging.getLogger(__name__)
 
 _dispatch = Dispatcher()
@@ -40,8 +42,7 @@ def _convert(obj, type_to):
     if type_from <= type_to:
         return obj
     else:
-        raise TypeError('Cannot convert a "{}" to a "{}".'
-                        ''.format(type_from, type_to))
+        raise TypeError(f'Cannot convert a "{type_from}" to a "{type_to}".')
 
 
 def add_conversion_method(type_from, type_to, f):
@@ -89,8 +90,7 @@ def _promotion_rule(type1, type2):
     elif type2 <= type1:
         return type1
     else:
-        raise TypeError('No promotion rule for "{}" and "{}".'
-                        ''.format(type1, type2))
+        raise TypeError(f'No promotion rule for "{type1}" and "{type2}".')
 
 
 @_dispatch(object, object, object)

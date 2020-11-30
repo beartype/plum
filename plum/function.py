@@ -5,7 +5,7 @@ from .signature import Signature
 from .type import as_type, is_type, is_object
 from .util import get_default
 
-__all__ = ['Function', 'AmbiguousLookupError', 'NotFoundLookupError']
+__all__ = ["Function", "AmbiguousLookupError", "NotFoundLookupError"]
 log = logging.getLogger(__name__)
 
 
@@ -93,6 +93,7 @@ class Function:
         f (function): Function that is wrapped.
         in_class (type, optional): Class of which the function is part.
     """
+
     _instances = []
 
     def __init__(self, f, in_class=None):
@@ -123,16 +124,18 @@ class Function:
 
     def extend_multi(self, *signatures, **kw_args):
         """A decorator to extend the function with multiple signatures."""
-        precedence = get_default(kw_args, 'precedence', 0)
-        return_type = get_default(kw_args, 'return_type', object)
+        precedence = get_default(kw_args, "precedence", 0)
+        return_type = get_default(kw_args, "return_type", object)
 
         def decorator(f):
             # Register the new method.
             for signature in signatures:
-                self.register(Signature(*signature),
-                              f,
-                              precedence=precedence,
-                              return_type=return_type)
+                self.register(
+                    Signature(*signature),
+                    f,
+                    precedence=precedence,
+                    return_type=return_type,
+                )
 
             # Return the function.
             return self
@@ -180,9 +183,10 @@ class Function:
             # Check that a method with the same signature hasn't been defined
             # already.
             if signature in self.methods:
-                raise RuntimeError('For function "{}", the method with '
-                                   'signature {} has been defined multiple '
-                                   'times.'.format(self._f.__name__, signature))
+                raise RuntimeError(
+                    f'For function "{self._f.__name__}", the method with '
+                    f"signature {signature} has been defined multiple times."
+                )
 
             # If the return type is `object`, then set it to `default_obj_type`.
             # This allows for a fast check to speed up cached calls.
@@ -239,20 +243,21 @@ class Function:
 
             # Could not resolve the ambiguity, so error. First, make a nice list
             # of the candidates and their precedences.
-            listed_candidates = '\n  '.join(['{} (precedence: {})'
-                                             ''.format(c, self.precedences[c])
-                                             for c in candidates])
+            listed_candidates = "\n  ".join(
+                [f"{c} (precedence: {self.precedences[c]})" for c in candidates]
+            )
             raise AmbiguousLookupError(
-                'For function "{}", signature {} is ambiguous among the '
-                'following:\n  {}'.format(self._f.__name__, signature,
-                                          listed_candidates))
+                f'For function "{self._f.__name__}", signature {signature} is '
+                f"ambiguous among the following:\n  {listed_candidates}"
+            )
         elif len(candidates) == 1:
             return candidates[0]
         else:
-            class_message = ' of {}'.format(self._class) if self._class else ''
+            class_message = f" of {self._class}" if self._class else ""
             raise NotFoundLookupError(
-                'For function "{}"{}, signature {} could not be resolved.'
-                ''.format(self._f.__name__, class_message, signature))
+                f'For function "{self._f.__name__}"{class_message}, '
+                f"signature {signature} could not be resolved."
+            )
 
     def resolve_method(self, *types):
         """Get the method and return type corresponding to types of arguments.
@@ -278,8 +283,7 @@ class Function:
 
         if self._class:
             try:
-                method, return_type = \
-                    self.methods[self.resolve_signature(signature)]
+                method, return_type = self.methods[self.resolve_signature(signature)]
             except NotFoundLookupError as e:
                 method = None
                 return_type = as_type(object)
@@ -292,8 +296,8 @@ class Function:
 
                         # Ignore abstract methods.
                         if (
-                                hasattr(method, '__isabstractmethod__') and
-                                method.__isabstractmethod__
+                            hasattr(method, "__isabstractmethod__")
+                            and method.__isabstractmethod__
                         ):
                             method = None
                             continue
@@ -316,8 +320,7 @@ class Function:
                     raise e
         else:
             # Not in a class. Simply resolve.
-            method, return_type \
-                = self.methods[self.resolve_signature(signature)]
+            method, return_type = self.methods[self.resolve_signature(signature)]
 
         # Cache lookup.
         self._cache[types] = (method, return_type)
@@ -384,8 +387,9 @@ class Function:
         return WrappedMethod(self, instance=instance)
 
     def __repr__(self):
-        return '<function {} with {} method(s)>' \
-               ''.format(self._f, len(self._pending) + len(self._resolved))
+        return "<function {} with {} method(s)>" "".format(
+            self._f, len(self._pending) + len(self._resolved)
+        )
 
 
 def find_most_specific(signatures):

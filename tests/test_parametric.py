@@ -11,18 +11,21 @@ from plum import (
     as_type,
     PromisedType,
     Dispatcher,
-    TypeType
+    TypeType,
 )
 from plum.parametric import _types_of_iterable
 
 
 def test():
-    class Base1: pass
+    class Base1:
+        pass
 
-    class Base2: pass
+    class Base2:
+        pass
 
     @parametric
-    class A(Base1): pass
+    class A(Base1):
+        pass
 
     assert issubclass(A, Base1)
     assert not issubclass(A, Base2)
@@ -47,8 +50,8 @@ def test():
 
     # Test type parameter extraction.
     assert type_parameter(A(1)()) == 1
-    assert type_parameter(A('1')()) == '1'
-    assert type_parameter(A(1.)()) == 1.
+    assert type_parameter(A("1")()) == "1"
+    assert type_parameter(A(1.0)()) == 1.0
     assert type_parameter(A(1, 2)()) == (1, 2)
     assert type_parameter(A(a1)()) == id(a1)
     assert type_parameter(A(a1, a2)()) == (id(a1), id(a2))
@@ -61,9 +64,9 @@ def test_argument():
         def __init__(self, x):
             self.x = x
 
-    a = A(1)(5.)
+    a = A(1)(5.0)
 
-    assert a.x == 5.
+    assert a.x == 5.0
 
 
 def test_kind():
@@ -89,23 +92,23 @@ def test_kind():
 
 def test_types_of_iterables():
     assert _types_of_iterable([1]) == Type(int)
-    assert _types_of_iterable(['1']) == Type(str)
-    assert _types_of_iterable([1, '1']) == Union(int, str)
+    assert _types_of_iterable(["1"]) == Type(str)
+    assert _types_of_iterable([1, "1"]) == Union(int, str)
     assert _types_of_iterable((1,)) == Type(int)
-    assert _types_of_iterable(('1',)) == Type(str)
-    assert _types_of_iterable((1, '1')) == Union(int, str)
+    assert _types_of_iterable(("1",)) == Type(str)
+    assert _types_of_iterable((1, "1")) == Union(int, str)
 
 
 def test_type_of():
     assert type_of(1) == Type(int)
-    assert type_of('1') == Type(str)
+    assert type_of("1") == Type(str)
     assert type_of([1]) == List(int)
-    assert type_of([1, '1']) == List({int, str})
-    assert type_of([1, '1', (1,)]) == List({int, str, Tuple(int)})
+    assert type_of([1, "1"]) == List({int, str})
+    assert type_of([1, "1", (1,)]) == List({int, str, Tuple(int)})
     assert type_of((1,)) == Tuple(int)
-    assert type_of(('1',)) == Tuple(str)
-    assert type_of((1, '1')) == Tuple({int, str})
-    assert type_of((1, '1', [1])) == Tuple({int, str, List(int)})
+    assert type_of(("1",)) == Tuple(str)
+    assert type_of((1, "1")) == Tuple({int, str})
+    assert type_of((1, "1", [1])) == Tuple({int, str, List(int)})
 
 
 def test_listtype():
@@ -114,7 +117,7 @@ def test_listtype():
     assert hash(List(int)) != hash(List(str))
     assert hash(List(List(int))) == hash(List(List(int)))
     assert hash(List(List(int))) != hash(List(List(str)))
-    assert repr(List(int)) == 'ListType({})'.format(repr(Type(int)))
+    assert repr(List(int)) == "ListType({})".format(repr(Type(int)))
     assert issubclass(List(int).get_types()[0], list)
     assert not issubclass(List(int).get_types()[0], int)
     assert not issubclass(List(int).get_types()[0], tuple)
@@ -136,28 +139,28 @@ def test_listtype():
 
     @dispatch(object)
     def f(x):
-        return 'fallback'
+        return "fallback"
 
     @dispatch(list)
     def f(x):
-        return 'list'
+        return "list"
 
     @dispatch(List(int))
     def f(x):
-        return 'list of int'
+        return "list of int"
 
     @dispatch(List(List(int)))
     def f(x):
-        return 'list of list of int'
+        return "list of list of int"
 
-    assert f([1]) == 'list of int'
-    assert f(1) == 'fallback'
-    assert f([1, 2]) == 'list of int'
-    assert f([1, 2, '3']) == 'list'
-    assert f([[1]]) == 'list of list of int'
-    assert f([[1], [1]]) == 'list of list of int'
-    assert f([[1], [1, 2]]) == 'list of list of int'
-    assert f([[1], [1, 2, '3']]) == 'list'
+    assert f([1]) == "list of int"
+    assert f(1) == "fallback"
+    assert f([1, 2]) == "list of int"
+    assert f([1, 2, "3"]) == "list"
+    assert f([[1]]) == "list of list of int"
+    assert f([[1], [1]]) == "list of list of int"
+    assert f([[1], [1, 2]]) == "list of list of int"
+    assert f([[1], [1, 2, "3"]]) == "list"
 
 
 def test_tupletype():
@@ -166,7 +169,7 @@ def test_tupletype():
     assert hash(Tuple(int)) != hash(Tuple(str))
     assert hash(Tuple(Tuple(int))) == hash(Tuple(Tuple(int)))
     assert hash(Tuple(Tuple(int))) != hash(Tuple(Tuple(str)))
-    assert repr(Tuple(int)) == 'TupleType({})'.format(repr(Type(int)))
+    assert repr(Tuple(int)) == "TupleType({})".format(repr(Type(int)))
     assert issubclass(Tuple(int).get_types()[0], tuple)
     assert not issubclass(Tuple(int).get_types()[0], int)
     assert not issubclass(Tuple(int).get_types()[0], list)
@@ -188,28 +191,28 @@ def test_tupletype():
 
     @dispatch(object)
     def f(x):
-        return 'fallback'
+        return "fallback"
 
     @dispatch(tuple)
     def f(x):
-        return 'tup'
+        return "tup"
 
     @dispatch(Tuple(int))
     def f(x):
-        return 'tup of int'
+        return "tup of int"
 
     @dispatch(Tuple(Tuple(int)))
     def f(x):
-        return 'tup of tup of int'
+        return "tup of tup of int"
 
-    assert f((1,)) == 'tup of int'
-    assert f(1) == 'fallback'
-    assert f((1, 2)) == 'tup of int'
-    assert f((1, 2, '3')) == 'tup'
-    assert f(((1,),)) == 'tup of tup of int'
-    assert f(((1,), (1,))) == 'tup of tup of int'
-    assert f(((1,), (1, 2))) == 'tup of tup of int'
-    assert f(((1,), (1, 2, '3'))) == 'tup'
+    assert f((1,)) == "tup of int"
+    assert f(1) == "fallback"
+    assert f((1, 2)) == "tup of int"
+    assert f((1, 2, "3")) == "tup"
+    assert f(((1,),)) == "tup of tup of int"
+    assert f(((1,), (1,))) == "tup of tup of int"
+    assert f(((1,), (1, 2))) == "tup of tup of int"
+    assert f(((1,), (1, 2, "3"))) == "tup"
 
 
 def test_covariance():
