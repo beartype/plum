@@ -387,8 +387,9 @@ class Function:
         return WrappedMethod(self, instance=instance)
 
     def __repr__(self):
-        return "<function {} with {} method(s)>" "".format(
-            self._f, len(self._pending) + len(self._resolved)
+        return (
+            f"<function {self._f} with "
+            f"{len(self._pending) +len(self._resolved)} method(s)>"
         )
 
 

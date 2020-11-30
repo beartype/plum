@@ -47,9 +47,8 @@ def test_metadata_and_printing():
     assert g.__name__ == "g"
     assert g.__doc__ == "docstring of g"
     assert g.__module__ == "tests.dispatcher.test_dispatcher"
-    assert repr(g) == "<function {} with 1 method(s)>" "".format(
-        A._dispatch._functions["g"]._f
-    )
+    assert repr(g) == f'<function {A._dispatch._functions["g"]._f} with 1 method(s)>'
+
     assert g.invoke().__name__ == "g"
     assert g.invoke().__doc__ == "docstring of g"
     assert g.invoke().__module__ == "tests.dispatcher.test_dispatcher"
