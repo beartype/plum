@@ -42,16 +42,16 @@ from plum import dispatch
 
 @dispatch(str)
 def f(x):
-    return 'This is a string!'
+    return "This is a string!"
     
 
 @dispatch(int)
 def f(x):
-    return 'This is an integer!'
+    return "This is an integer!"
 ```
 
 ```python
->>> f('1')
+>>> f("1")
 'This is a string!'
 
 >>> f(1)
@@ -75,12 +75,12 @@ from numbers import Number
 
 @dispatch(Number)
 def f(x):
-    return 'This is a number!'
+    return "This is a number!"
 ```
 
-Since a `float` is a `Number`, `f(1.0)` will return `'This is a number!'`.
+Since a `float` is a `Number`, `f(1.0)` will return `"This is a number!"`.
 But an `int` is also a `Number`, so `f(1)` can either return 
-`'This is an integer!'` or `'This is a number!'`.
+`"This is an integer!"` or `"This is a number!"`.
 The rule of multiple dispatch is that the *most specific* method is chosen:
 
 
@@ -114,7 +114,7 @@ def int_to_str(x: int) -> str:
     
 @dispatch.annotations()
 def int_to_str(x):
-    raise ValueError('I only take integers!')
+    raise ValueError("I only take integers!")
 ```
 
 ```python
@@ -134,19 +134,19 @@ from plum import dispatch
 
 @dispatch(object)
 def f(x):
-    print('fallback')
+    print("fallback")
 
 
 @dispatch({int, str})
 def f(x):
-    print('int or str')
+    print("int or str")
 ```
 
 ```
 >>> f(1)
 int or str
 
->>> f('1')
+>>> f("1")
 int or str
 
 >>> f(1.0)
@@ -165,30 +165,30 @@ from plum import dispatch, Tuple, List
 
 @dispatch({tuple, list})
 def f(x):
-    print('tuple or list')
+    print("tuple or list")
     
     
 @dispatch(Tuple(int))
 def f(x):
-    print('tuple of int')
+    print("tuple of int")
     
     
 @dispatch(List(int))
 def f(x):
-    print('list of int')
+    print("list of int")
 ```
 
 ```python
 >>> f([1, 2])
 'list of int'
 
->>> f([1, '2'])
+>>> f([1, "2"])
 'tuple or list'
 
 >>> f((1, 2))
 'tuple of int'
 
->>> f((1, '2'))
+>>> f((1, "2"))
 'tuple or list'
 ```
 
@@ -201,12 +201,12 @@ from plum import dispatch
 
 @dispatch(int)
 def f(x):
-    print('single argument')
+    print("single argument")
     
 
 @dispatch(int, [int])
 def f(x, *xs):
-    print('multiple arguments')
+    print("multiple arguments")
 ```
 
 ```
@@ -236,12 +236,12 @@ def f(x):
 >>> f(1)
 1
 
->>> f('1')
+>>> f("1")
 TypeError: Expected return type "builtins.int", but got type "builtins.str".
 
 >>> add_conversion_method(type_from=str, type_to=int, f=int)
 
->>> f('1')
+>>> f("1")
 1
 
 ```
@@ -260,7 +260,7 @@ class Real(metaclass=Referentiable):
 
     @dispatch(Self)
     def __add__(self, other):
-        return 'real'
+        return "real"
         
 
 class Rational(Real):
@@ -268,7 +268,7 @@ class Rational(Real):
 
     @dispatch(Self)
     def __add__(self, other):
-        return 'rational'
+        return "rational"
         
 
 real = Real()
@@ -409,22 +409,22 @@ class SpecialisedElement(Element):
 
 @dispatch(ZeroElement, Element)
 def mul_no_precedence(a, b):
-    return 'zero'
+    return "zero"
 
 
 @dispatch(Element, SpecialisedElement)
 def mul_no_precedence(a, b):
-    return 'specialised operation'
+    return "specialised operation"
     
 
 @dispatch(ZeroElement, Element, precedence=1)
 def mul(a, b):
-    return 'zero'
+    return "zero"
 
 
 @dispatch(Element, SpecialisedElement)
 def mul(a, b):
-    return 'specialised operation'
+    return "specialised operation"
 ```
 
 ```python
@@ -463,17 +463,17 @@ class A:
     
 @dispatch(A)
 def f(x):
-    return 'fallback'
+    return "fallback"
     
     
 @dispatch(A(1))
 def f(x):
-    return '1'
+    return "1"
     
     
 @dispatch(A(2))
 def f(x):
-    return '2'
+    return "2"
 ```
 
 ```python
@@ -531,7 +531,7 @@ from package import f
 
 @f.extend(int)
 def f(x):
-    return 'new behaviour'
+    return "new behaviour"
 ```
 
 ```python
@@ -551,22 +551,22 @@ from plum import dispatch
 
 @dispatch(int)
 def f(x):
-    return 'int'
+    return "int"
     
     
 @dispatch(str)
 def f(x):
-    return 'str'
+    return "str"
 ```
 
 ```python
 >>> f(1)
 'int'
 
->>> f('1')
+>>> f("1")
 'str'
 
->>> f.invoke(int)('1')
+>>> f.invoke(int)("1")
 'int'
 
 >>> f.invoke(str)(1)
