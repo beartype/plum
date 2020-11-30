@@ -9,7 +9,7 @@ Everybody likes multiple dispatch, just like everybody likes plums.
 
 * [Installation](#installation)
 * [Basic Usage](#basic-usage)
-* [Advanced Features by Example](#advanced-features-by-example)
+* [Features by Example](#features-by-example)
     - [Dispatch From Type Annotations](#dispatch-from-type-annotations)
     - [Union Types](#union-types)
     - [Parametric Types](#parametric-types)
