@@ -72,6 +72,15 @@ def conversion_method(type_from, type_to):
     return add_method
 
 
+# Add some common conversion methods.
+add_conversion_method(object, tuple, lambda x: (x,))
+add_conversion_method(tuple, tuple, lambda x: x)
+add_conversion_method(list, tuple, tuple)
+add_conversion_method(object, list, lambda x: (x,))
+add_conversion_method(list, list, lambda x: x)
+add_conversion_method(tuple, list, list)
+
+
 @_dispatch(object, object)
 def _promotion_rule(type1, type2):
     """Promotion rule.

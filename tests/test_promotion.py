@@ -52,6 +52,22 @@ def test_conversion(convert):
     assert convert(r, FP) == 3.0
 
 
+def test_default_conversion_methods():
+    # Conversion to `tuple`.
+    assert plum.convert(1, tuple) == (1,)
+    assert plum.convert((1,), tuple) == (1,)
+    assert plum.convert(((1,),), tuple) == ((1,),)
+    assert plum.convert([1], tuple) == (1,)
+    assert plum.convert([(1,)], tuple) == ((1,),)
+
+    # Conversion to `list`.
+    assert plum.convert(1, list) == (1,)
+    assert plum.convert((1,), list) == [1]
+    assert plum.convert(((1,),), list) == [(1,)]
+    assert plum.convert([1], list) == [1]
+    assert plum.convert([(1,)], list) == [(1,)]
+
+
 def test_promotion(convert):
     assert promote() == ()
     assert promote(1) == (1,)
