@@ -1,21 +1,20 @@
-import pytest
-
 from plum import Dispatcher, Referentiable, Self, List
 
 
-def test_double_definition():
+def test_redefinition():
     dispatch = Dispatcher()
 
     @dispatch(int)
     def f(x):
-        pass
+        return "first"
+
+    assert f(1) == "first"
 
     @dispatch(int)
     def f(x):
-        pass
+        return "second"
 
-    with pytest.raises(RuntimeError):
-        f(1)
+    assert f(1) == "second"
 
 
 def test_metadata_and_printing():

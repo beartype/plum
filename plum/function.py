@@ -178,16 +178,11 @@ class Function:
         for signature, f, precedence, return_type in self._pending:
             registered = True
 
-            # Check that a method with the same signature hasn't been defined
-            # already.
-            if signature in self.methods:
-                raise RuntimeError(
-                    f'For function "{self._f.__name__}", the method with '
-                    f"signature {signature} has been defined multiple times."
-                )
+            # If a method with the same signature has already been defined, then that
+            # is fine: we simply overwrite that method.
 
-            # If the return type is `object`, then set it to `default_obj_type`.
-            # This allows for a fast check to speed up cached calls.
+            # If the return type is `object`, then set it to `default_obj_type`. This
+            # allows for a fast check to speed up cached calls.
             return_type = as_type(return_type)
             if is_object(return_type):
                 return_type = default_obj_type
@@ -207,8 +202,8 @@ class Function:
             self._pending = []
 
             # Clear cache.
-            # TODO: Do something more clever, but be careful with the tracking
-            # of parametric types.
+            # TODO: Do something more clever, but be careful with the tracking of
+            # parametric types.
             self.clear_cache(reregister=False)
 
     def resolve_signature(self, signature):
