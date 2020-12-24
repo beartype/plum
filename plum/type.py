@@ -4,7 +4,7 @@ import logging
 from types import FunctionType, MethodType
 
 from .resolvable import Resolvable, Reference, Promise
-from .util import multihash, Comparable, get_default
+from .util import multihash, Comparable
 
 __all__ = [
     "VarArgs",
@@ -125,12 +125,11 @@ class Union(ComparableType):
         alias (str, optional): Give the union a name.
     """
 
-    def __init__(self, *types, **kw_args):
+    def __init__(self, *types, alias=None):
         # Lazily convert to a set to avoid resolution errors.
         self._types = tuple(as_type(t) for t in types)
 
         # Constuct alias if one is given.
-        alias = get_default(kw_args, "alias", None)
         if alias:
             frame = inspect.stack()[1]
             module = inspect.getmodule(frame[0])

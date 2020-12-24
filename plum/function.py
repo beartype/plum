@@ -3,9 +3,9 @@ import logging
 from .resolvable import Promise
 from .signature import Signature
 from .type import as_type, is_type, is_object
-from .util import get_default
 
 __all__ = ["Function", "AmbiguousLookupError", "NotFoundLookupError"]
+
 log = logging.getLogger(__name__)
 
 
@@ -51,8 +51,8 @@ class WrappedMethod:
 
     Args:
         method (function): Method to wrap.
-        instance (tuple, optional): Instance in the case of a bound call.
-            Defaults to `None`.
+        instance (tuple, optional): Instance in the case of a bound call. Defaults to
+            `None`.
         return_type (ptype, optional): Return type. Defaults to `object`.
     """
 
@@ -122,10 +122,8 @@ class Function:
         """A decorator to extend the function with another signature."""
         return self.extend_multi(types, **kw_args)
 
-    def extend_multi(self, *signatures, **kw_args):
+    def extend_multi(self, *signatures, precedence=0, return_type=object):
         """A decorator to extend the function with multiple signatures."""
-        precedence = get_default(kw_args, "precedence", 0)
-        return_type = get_default(kw_args, "return_type", object)
 
         def decorator(f):
             # Register the new method.
@@ -146,8 +144,8 @@ class Function:
         """Clear cache.
 
         Args:
-            reregister (bool, optional): Also reregister all methods.
-                Defaults to `True`.
+            reregister (bool, optional): Also reregister all methods. Defaults to
+                `True`.
         """
         self._cache.clear()
         if reregister:

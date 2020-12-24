@@ -12,6 +12,7 @@ __all__ = [
     "add_promotion_rule",
     "promote",
 ]
+
 log = logging.getLogger(__name__)
 
 _dispatch = Dispatcher()

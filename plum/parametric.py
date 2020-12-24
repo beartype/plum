@@ -12,6 +12,7 @@ from .type import (
 from .util import multihash
 
 __all__ = ["parametric", "type_parameter", "kind", "Kind", "List", "Tuple", "type_of"]
+
 log = logging.getLogger(__name__)
 
 _dispatch = Dispatcher()

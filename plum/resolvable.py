@@ -2,6 +2,7 @@ import abc
 import logging
 
 __all__ = ["ResolutionError", "Resolvable", "Promise", "Referentiable", "Reference"]
+
 log = logging.getLogger(__name__)
 
 

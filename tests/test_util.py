@@ -1,6 +1,6 @@
 import numpy as np
 
-from plum.util import multihash, Comparable, get_default
+from plum.util import multihash, Comparable
 
 
 def test_multihash():
@@ -30,8 +30,3 @@ def test_comparable():
     assert not Number(1).is_comparable(Number(np.nan))
 
 
-def test_get_default():
-    d = {"key": "value"}
-
-    assert get_default(d, "key", 1) == "value"
-    assert get_default(d, "key2", 1) == 1
