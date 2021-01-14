@@ -29,7 +29,7 @@ jobs:
         run: |
           rm plum/function.*.so
           pytest -v --cov=plum --cov-report term-missing
-          coveralls
+          coveralls --service=github
   coveralls:
     name: Finish coverage
     needs: test
