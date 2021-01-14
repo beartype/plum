@@ -80,6 +80,7 @@ add_conversion_method(list, tuple, tuple)
 add_conversion_method(object, list, lambda x: (x,))
 add_conversion_method(list, list, lambda x: x)
 add_conversion_method(tuple, list, list)
+add_conversion_method(bytes, str, lambda x: x.decode("utf-8", "replace"))
 
 
 @_dispatch(object, object)

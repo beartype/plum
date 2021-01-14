@@ -67,6 +67,9 @@ def test_default_conversion_methods():
     assert plum.convert([1], list) == [1]
     assert plum.convert([(1,)], list) == [(1,)]
 
+    # Convert to `str`.
+    assert plum.convert("test".encode(), str) == "test"
+
 
 def test_promotion(convert):
     assert promote() == ()
