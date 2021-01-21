@@ -40,13 +40,13 @@ Multiple dispatch allows you to implement multiple *methods* for the same
 ```python
 from plum import dispatch
 
-@dispatch(str)
-def f(x):
+@dispatch
+def f(x: str):
     return "This is a string!"
     
 
-@dispatch(int)
-def f(x):
+@dispatch
+def f(x: int):
     return "This is an integer!"
 ```
 
@@ -73,8 +73,8 @@ all numbers:
 from numbers import Number
 
 
-@dispatch(Number)
-def f(x):
+@dispatch
+def f(x: Number):
     return "This is a number!"
 ```
 
@@ -96,35 +96,6 @@ For an excellent and way more detailed overview of multiple dispatch, see the
 
 ## Features by Example
 
-### Dispatch From Type Annotations
-
-`Dispatcher.annotations` is an experimental feature that can be used to 
-dispatch on a function's type annotations:
-
-```python
-from plum import dispatch, add_conversion_method
-
-add_conversion_method(type_from=int, type_to=str, f=str)
-
-
-@dispatch.annotations()
-def int_to_str(x: int) -> str:
-    return x
-    
-    
-@dispatch.annotations()
-def int_to_str(x):
-    raise ValueError("I only take integers!")
-```
-
-```python
->>> int_to_str(1.0)
-ValueError: I only take integers!
-
->>> int_to_str(1)
-'1'
-```
-
 ### Union Types
 
 Sets can be used to instantiate union types:
@@ -132,13 +103,13 @@ Sets can be used to instantiate union types:
 ```python
 from plum import dispatch
 
-@dispatch(object)
+@dispatch
 def f(x):
     print("fallback")
 
 
-@dispatch({int, str})
-def f(x):
+@dispatch
+def f(x: {int, str}):
     print("int or str")
 ```
 
@@ -161,20 +132,22 @@ Importantly, the type system is *covariant*, as opposed to Julia's type
 system, which is *invariant*.
 
 ```python
-from plum import dispatch, Tuple, List
+from typing import Tuple, List
 
-@dispatch({tuple, list})
-def f(x):
+from plum import dispatch
+
+@dispatch
+def f(x: {tuple, list}):
     print("tuple or list")
     
     
-@dispatch(Tuple(int))
-def f(x):
+@dispatch
+def f(x: Tuple[int]):
     print("tuple of int")
     
     
-@dispatch(List(int))
-def f(x):
+@dispatch
+def f(x: List[int]):
     print("list of int")
 ```
 
@@ -194,18 +167,18 @@ def f(x):
 
 ### Variable Arguments
 
-A list can be used to specify variable arguments:
+A variable number of arguments can be used without any problem.
 
 ```python
 from plum import dispatch
 
-@dispatch(int)
-def f(x):
+@dispatch
+def f(x: int):
     print("single argument")
     
 
-@dispatch(int, [int])
-def f(x, *xs):
+@dispatch
+def f(x: int, *xs: int):
     print("multiple arguments")
 ```
 
@@ -222,13 +195,13 @@ multiple arguments
 
 ### Return Types
 
-The keyword argument `return_type` can be set to specify return types:
+Return types can be used without any problem.
 
 ```python
 from plum import dispatch, add_conversion_method
 
-@dispatch({int, str}, return_type=int)
-def f(x):
+@dispatch
+def f(x: {int, str}) -> int:
     return x
 ```
 
@@ -237,7 +210,7 @@ def f(x):
 1
 
 >>> f("1")
-TypeError: Expected return type "builtins.int", but got type "builtins.str".
+TypeError: Cannot convert a "builtins.str" to a "builtins.int".
 
 >>> add_conversion_method(type_from=str, type_to=int, f=int)
 
@@ -258,16 +231,16 @@ from plum import Dispatcher, Referentiable, Self
 class Real(metaclass=Referentiable):
     dispatch = Dispatcher(in_class=Self)
 
-    @dispatch(Self)
-    def __add__(self, other):
+    @dispatch
+    def __add__(self, other: Self):
         return "real"
         
 
 class Rational(Real):
     dispatch = Dispatcher(in_class=Self)
 
-    @dispatch(Self)
-    def __add__(self, other):
+    @dispatch
+    def __add__(self, other: Self):
         return "rational"
         
 
@@ -351,18 +324,18 @@ The function `promote` can be used to promote objects to a common type:
 ```python
 from plum import dispatch, promote, add_promotion_rule, add_conversion_method
 
-@dispatch(object, object)
+@dispatch
 def add(x, y):
     return add(*promote(x, y))
     
     
-@dispatch(int, int)
-def add(x, y):
+@dispatch
+def add(x: int, y: int):
     return x + y
     
     
-@dispatch(float, float)
-def add(x, y):
+@dispatch
+def add(x: float, y: float):
     return x + y
 ```
 
@@ -407,23 +380,23 @@ class SpecialisedElement(Element):
     pass
 
 
-@dispatch(ZeroElement, Element)
-def mul_no_precedence(a, b):
+@dispatch
+def mul_no_precedence(a: ZeroElement, b: Element):
     return "zero"
 
 
-@dispatch(Element, SpecialisedElement)
-def mul_no_precedence(a, b):
+@dispatch
+def mul_no_precedence(a: Element, b: SpecialisedElement):
     return "specialised operation"
     
 
-@dispatch(ZeroElement, Element, precedence=1)
-def mul(a, b):
+@dispatch(precedence=1)
+def mul(a: ZeroElement, b: Element):
     return "zero"
 
 
-@dispatch(Element, SpecialisedElement)
-def mul(a, b):
+@dispatch
+def mul(a: Element, b: SpecialisedElement):
     return "specialised operation"
 ```
 
@@ -462,16 +435,16 @@ class A:
     
     
 @dispatch(A)
-def f(x):
+def f(x: A):
     return "fallback"
     
     
-@dispatch(A(1))
+@dispatch(A[1])
 def f(x):
     return "1"
     
     
-@dispatch(A(2))
+@dispatch(A[2])
 def f(x):
     return "2"
 ```
@@ -480,22 +453,22 @@ def f(x):
 >>> A
 __main__.A
 
->>> A(1)
-__main__.A{1}
+>>> A[1]
+__main__.A[1]
 
->>> issubclass(A(1), A)
+>>> issubclass(A[1], A)
 True
 
->>> A(1)()
-<__main__.A{1} at 0x10c2bab70>
+>>> A[1]()
+<__main__.A[1] at 0x10c2bab70>
 
->>> f(A(1)())
+>>> f(A[1]())
 '1'
 
->>> f(A(2)())
+>>> f(A[2]())
 '2'
 
->>> f(A(3)())
+>>> f(A[3]())
 'fallback'
 ```
 
@@ -507,7 +480,7 @@ True
 from plum import dispatch
 
 @dispatch.multi((int, int), (float, float))
-def add(x, y):
+def add(x: {int, float}, y: {int, float}):
     return x + y
 ```
 
@@ -529,8 +502,8 @@ NotFoundLookupError: For function "add", signature (builtins.int, builtins.float
 ```python
 from package import f
 
-@f.extend(int)
-def f(x):
+@f.extend
+def f(x: int):
     return "new behaviour"
 ```
 
@@ -549,13 +522,13 @@ def f(x):
 ```python
 from plum import dispatch
 
-@dispatch(int)
-def f(x):
+@dispatch
+def f(x: int):
     return "int"
     
     
-@dispatch(str)
-def f(x):
+@dispatch
+def f(x: str):
     return "str"
 ```
 

@@ -137,20 +137,20 @@ def test_listtype():
     # Test correctness.
     dispatch = Dispatcher()
 
-    @dispatch(object)
+    @dispatch
     def f(x):
         return "fallback"
 
-    @dispatch(list)
-    def f(x):
+    @dispatch
+    def f(x: list):
         return "list"
 
-    @dispatch(List(int))
-    def f(x):
+    @dispatch
+    def f(x: List(int)):
         return "list of int"
 
-    @dispatch(List(List(int)))
-    def f(x):
+    @dispatch
+    def f(x: List(List(int))):
         return "list of list of int"
 
     assert f([1]) == "list of int"
@@ -189,20 +189,20 @@ def test_tupletype():
     # Test correctness.
     dispatch = Dispatcher()
 
-    @dispatch(object)
+    @dispatch
     def f(x):
         return "fallback"
 
-    @dispatch(tuple)
-    def f(x):
+    @dispatch
+    def f(x: tuple):
         return "tup"
 
-    @dispatch(Tuple(int))
-    def f(x):
+    @dispatch
+    def f(x: Tuple(int)):
         return "tup of int"
 
-    @dispatch(Tuple(Tuple(int)))
-    def f(x):
+    @dispatch
+    def f(x: Tuple(Tuple(int))):
         return "tup of tup of int"
 
     assert f((1,)) == "tup of int"

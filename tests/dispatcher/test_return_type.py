@@ -1,6 +1,7 @@
 import pytest
 
 from plum import Dispatcher, Referentiable, Self, Union, add_conversion_method
+
 # noinspection PyUnresolvedReferences
 from ..test_promotion import convert
 
@@ -8,8 +9,8 @@ from ..test_promotion import convert
 def test_return_type():
     dispatch = Dispatcher()
 
-    @dispatch({int, str}, return_type=int)
-    def f(x):
+    @dispatch
+    def f(x: {int, str}) -> int:
         return x
 
     assert f(1) == 1
@@ -23,12 +24,12 @@ def test_return_type():
 def test_extension():
     dispatch = Dispatcher()
 
-    @dispatch(int)
-    def f(x):
+    @dispatch
+    def f(x: int):
         return x
 
-    @f.extend(float, return_type=str)
-    def f(x):
+    @f.extend
+    def f(x: float) -> str:
         return str(x)
 
     assert f(1.0) == "1.0"
@@ -39,7 +40,7 @@ def test_multi():
     dispatch = Dispatcher()
 
     @dispatch.multi((int,), (str,), return_type=int)
-    def g(x):
+    def g(x: {int, str}) -> int:
         return x
 
     assert g(1) == 1
@@ -58,8 +59,8 @@ def test_inheritance():
     class B(A):
         _dispatch = Dispatcher(in_class=Self)
 
-        @_dispatch(Union(int, Self, str), return_type=Union(int, Self))
-        def do(self, x):
+        @_dispatch
+        def do(self, x: Union(int, Self, str)) -> Union(int, Self):
             return x
 
     b = B()
@@ -74,8 +75,8 @@ def test_inheritance():
 def test_conversion(convert):
     dispatch = Dispatcher()
 
-    @dispatch({int, str}, return_type=int)
-    def f(x):
+    @dispatch
+    def f(x: {int, str}) -> int:
         return x
 
     assert f(1) == 1

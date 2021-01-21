@@ -1,4 +1,4 @@
-from plum import Dispatcher, List, clear_all_cache, Referentiable, Self
+from plum import Dispatcher, clear_all_cache, Referentiable, Self, List
 from plum.type import subclasscheck_cache
 from ..util import benchmark
 
@@ -10,16 +10,16 @@ def test_cache_function_call_performance_and_correctness():
     def f_native(x):
         pass
 
-    @dispatch(object)
+    @dispatch
     def f(x):
         pass
 
-    @dispatch({int, float})
-    def f(x):
+    @dispatch
+    def f(x: {int, float}):
         pass
 
-    @dispatch({int, float, str})
-    def f(x):
+    @dispatch
+    def f(x: {int, float, str}):
         pass
 
     dur_native = benchmark(f_native, (1,))
@@ -39,8 +39,8 @@ def test_cache_function_call_performance_and_correctness():
     # Test cache correctness.
     assert f(1) is None, "cache correctness 1"
 
-    @dispatch(int)
-    def f(x):
+    @dispatch
+    def f(x: int):
         return 1
 
     assert f(1) == 1, "cache correctness 2"
@@ -60,28 +60,28 @@ def test_cache_class_call_performance():
     class A(metaclass=Referentiable):
         _dispatch = Dispatcher(in_class=Self)
 
-        @_dispatch(int)
-        def __call__(self, x):
+        @_dispatch
+        def __call__(self, x: int):
             pass
 
-        @_dispatch(str)
-        def __call__(self, x):
+        @_dispatch
+        def __call__(self, x: str):
             pass
 
-        @_dispatch(int)
-        def go(self, x):
+        @_dispatch
+        def go(self, x: int):
             pass
 
-        @_dispatch(str)
-        def go(self, x):
+        @_dispatch
+        def go(self, x: str):
             pass
 
-        @_dispatch(int)
-        def go_again(self, x):
+        @_dispatch
+        def go_again(self, x: int):
             pass
 
-        @_dispatch(str)
-        def go_again(self, x):
+        @_dispatch
+        def go_again(self, x: str):
             pass
 
     a_native = ANative()
@@ -115,12 +115,12 @@ def test_cache_class_call_performance():
 def test_cache_clearing():
     dispatch = Dispatcher()
 
-    @dispatch(object)
-    def f(x):
+    @dispatch
+    def f(x: object):
         return 1
 
-    @dispatch(List(int))
-    def f(x):
+    @dispatch
+    def f(x: List(int)):
         return 1
 
     f(1)

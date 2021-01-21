@@ -17,26 +17,26 @@ class SpecialisedElement(Element):
     pass
 
 
-@_dispatch(ZeroElement, Element)
-def mul(a, b):
+@_dispatch
+def mul(a: ZeroElement, b: Element):
     # Return zero.
     return a
 
 
-@_dispatch(Element, SpecialisedElement)
-def mul(a, b):
+@_dispatch
+def mul(a: Element, b: SpecialisedElement):
     # Perform a specialised operation.
     return b
 
 
-@_dispatch(ZeroElement, Element, precedence=1)
-def mul_precedence(a, b):
+@_dispatch(precedence=1)
+def mul_precedence(a: ZeroElement, b: Element):
     # Return zero.
     return a
 
 
-@_dispatch(Element, SpecialisedElement)
-def mul_precedence(a, b):
+@_dispatch
+def mul_precedence(a: Element, b: SpecialisedElement):
     # Perform a specialised operation.
     return b
 
@@ -59,16 +59,16 @@ def test_precedence():
 def test_extension():
     dispatch = Dispatcher()
 
-    @dispatch()
+    @dispatch
     def g(x):
         return "fallback"
 
-    @g.extend({int, str}, precedence=1)
-    def g(x):
+    @g.extend(precedence=1)
+    def g(x: {int, str}):
         return "int or str"
 
-    @g.extend({int, float}, precedence=2)
-    def g(x):
+    @g.extend(precedence=2)
+    def g(x: {int, float}):
         return "int or float"
 
     assert g("1") == "int or str"
@@ -79,7 +79,7 @@ def test_extension():
 def test_multi():
     dispatch = Dispatcher()
 
-    @dispatch()
+    @dispatch
     def g():
         return "fallback"
 
@@ -88,7 +88,7 @@ def test_multi():
         return "int or str, or object or str"
 
     @dispatch.multi(({int, float},), (float,), precedence=2)
-    def g(x):
+    def g(x: {int, float}):
         return "int or float, or float"
 
     assert g("1") == "int or str, or object or str"

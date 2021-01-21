@@ -18,8 +18,8 @@ log = logging.getLogger(__name__)
 _dispatch = Dispatcher()
 
 
-@_dispatch(object, TypeType)
-def convert(obj, type_to):
+@_dispatch
+def convert(obj, type_to: TypeType):
     """Convert an object to a particular type.
 
     Args:
@@ -36,7 +36,7 @@ def convert(obj, type_to):
 promised_convert.deliver(convert)
 
 
-@_dispatch(object, object)
+@_dispatch
 def _convert(obj, type_to):
     type_from = type_of(obj)
     type_to = as_type(type_to)
@@ -55,7 +55,9 @@ def add_conversion_method(type_from, type_to, f):
         f (function): Function that converts an object of type `type_from` to
             type `type_to`.
     """
-    _convert.extend(type_from, type_to)(lambda obj, _: f(obj))
+    @_convert.extend
+    def perform_conversion(obj: type_from, _: type_to):
+        return f(obj)
 
 
 def conversion_method(type_from, type_to):
@@ -83,7 +85,7 @@ add_conversion_method(tuple, list, list)
 add_conversion_method(bytes, str, lambda x: x.decode("utf-8", "replace"))
 
 
-@_dispatch(object, object)
+@_dispatch
 def _promotion_rule(type1, type2):
     """Promotion rule.
 
@@ -104,7 +106,7 @@ def _promotion_rule(type1, type2):
         raise TypeError(f'No promotion rule for "{type1}" and "{type2}".')
 
 
-@_dispatch(object, object, object)
+@_dispatch
 def add_promotion_rule(type1, type2, type_to):
     """Add a promotion rule.
 
@@ -113,13 +115,20 @@ def add_promotion_rule(type1, type2, type_to):
         type2 (type): Second type to promote.
         type_to (type): Type to convert to.
     """
-    _promotion_rule.extend(type1, type2)(lambda t1, t2: type_to)
+
+    @_promotion_rule.extend
+    def rule(t1: type1, t2: type2):
+        return type_to
+
     if as_type(type1) != as_type(type2):
-        _promotion_rule.extend(type2, type1)(lambda t1, t2: type_to)
+
+        @_promotion_rule.extend
+        def rule(t1: type2, t2: type1):
+            return type_to
 
 
-@_dispatch(object, object, [object])
-def promote(*objs):
+@_dispatch
+def promote(obj1, obj2, *objs):
     """Promote objects to a common type.
 
     Args:
@@ -128,6 +137,9 @@ def promote(*objs):
     Returns:
         tuple: `objs`, but all converted to a common type.
     """
+    # Convert to a single tuple.
+    objs = (obj1, obj2) + objs
+
     # Get the types of the objects.
     types = [type_of(obj) for obj in objs]
 
@@ -140,7 +152,7 @@ def promote(*objs):
     return tuple(convert(obj, common_type) for obj in objs)
 
 
-@_dispatch(object)
+@_dispatch
 def promote(obj):
     # Promote should always return a tuple to avoid edge cases.
     return (obj,)

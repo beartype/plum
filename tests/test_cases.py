@@ -20,24 +20,24 @@ class ComputableObject:
 class Device(metaclass=Referentiable):
     _dispatch = Dispatcher(in_class=Self)
 
-    @_dispatch()
+    @_dispatch
     def __init__(self):
         pass
 
-    @_dispatch(Num, Num)
-    def do(self, x, y):
+    @_dispatch
+    def do(self, x: Num, y: Num):
         return "doing two numbers"
 
-    @_dispatch()
+    @_dispatch
     def do(self):
         return "doing nothing"
 
-    @_dispatch(Self)
-    def do(self, other):
+    @_dispatch
+    def do(self, other: Self):
         return "doing a device"
 
-    @_dispatch(Re, Num)
-    def do(self, x, y):
+    @_dispatch
+    def do(self, x: Re, y: Num):
         return "doing a real and a number"
 
     def __add__(self, other):
@@ -46,12 +46,12 @@ class Device(metaclass=Referentiable):
     def __radd__(self, other):
         return other + self
 
-    @_dispatch(object, ComputableObject)
-    def compute(self, a, b):
+    @_dispatch
+    def compute(self, a, b: ComputableObject):
         return "a result"
 
-    @_dispatch(ComputableObject, object)
-    def compute(self, a, b):
+    @_dispatch
+    def compute(self, a: ComputableObject, b):
         return "another result"
 
 
@@ -62,33 +62,33 @@ PromisedHammer = PromisedType()
 class Hammer(Device):
     _dispatch = Dispatcher(in_class=Self)
 
-    @_dispatch(PromisedHammer)
-    def __add__(self, other):
+    @_dispatch
+    def __add__(self, other: PromisedHammer):
         return "super hammer"
 
-    @_dispatch(PromisedCalculator)
-    def __add__(self, other):
+    @_dispatch
+    def __add__(self, other: PromisedCalculator):
         return "destroyed calculator"
 
 
 class Calculator(Device):
     _dispatch = Dispatcher(in_class=Self)
 
-    @_dispatch(int)
-    def __init__(self, size):
+    @_dispatch
+    def __init__(self, size: int):
         self.size = size
         Device.__init__(self)
 
-    @_dispatch(PromisedCalculator)
-    def __add__(self, other):
+    @_dispatch
+    def __add__(self, other: PromisedCalculator):
         return "super calculator"
 
-    @_dispatch(PromisedHammer)
-    def __add__(self, other):
+    @_dispatch
+    def __add__(self, other: PromisedHammer):
         return "destroyed calculator"
 
-    @_dispatch(ComputableObject)
-    def compute(self, obj):
+    @_dispatch
+    def compute(self, obj: ComputableObject):
         return "result"
 
 
@@ -154,42 +154,42 @@ def test_inheritance_exceptions():
 _dispatch = Dispatcher()
 
 
-@_dispatch(Num)
-def f(a):
+@_dispatch
+def f(a: Num):
     return "number"
 
 
-@_dispatch(Num, Num)
-def f(a, b):
+@_dispatch
+def f(a: Num, b: Num):
     return "two numbers"
 
 
-@_dispatch(Num, FP)
-def f(a, b):
+@_dispatch
+def f(a: Num, b: FP):
     return "a number and a float"
 
 
-@_dispatch(Num, Num, [Num])
-def f(a, b, *cs):
+@_dispatch
+def f(a: Num, b: Num, *cs: Num):
     return "two or more numbers"
 
 
-@_dispatch(Num, Num, [Re])
-def f(a, b, *cs):
+@_dispatch
+def f(a: Num, b: Num, *cs: Re):
     return "two numbers and more reals"
 
 
-@_dispatch(FP, Num, [Re])
-def f(a, b, c, *ds):
+@_dispatch
+def f(a: FP, b: Num, *cs: Re):
     return "a float, a number, and more reals"
 
 
-@_dispatch(Re, Num, [FP])
-def f(a, b, c, *ds):
+@_dispatch
+def f(a: Re, b: Num, *cs: FP):
     return "a real, a number, and more floats"
 
 
-@_dispatch([])
+@_dispatch
 def f(*args):
     return "fallback"
 
@@ -224,8 +224,8 @@ def test_abc_abstractmethod():
     class B(A):
         _dispatch = Dispatcher(in_class=Self)
 
-        @_dispatch(int)
-        def f(self, x):
+        @_dispatch
+        def f(self, x: int):
             return x
 
     b = B()

@@ -1,12 +1,65 @@
 import logging
+import inspect
 
 from .resolvable import Promise
 from .signature import Signature
 from .type import as_type, is_type, is_object
 
-__all__ = ["Function", "AmbiguousLookupError", "NotFoundLookupError"]
+__all__ = [
+    "extract_signature",
+    "Function",
+    "AmbiguousLookupError",
+    "NotFoundLookupError",
+]
 
 log = logging.getLogger(__name__)
+
+
+def extract_signature(f, in_class=None):
+    """Extract the signature from a function.
+
+    Args:
+        f (function): Function to extract signature from.
+        in_class (bool or type, optional): Class that `f` is part of. Can also be set to
+            `True` or `False` to indicate that the function `f` is or is not part of
+            a class. Defaults to that `f` is not part of a class.
+
+    Returns:
+        tuple[:class:`.signature.Signature`, type]: Signature and return type of the
+            function.
+    """
+    # Extract specification.
+    spec = inspect.getfullargspec(f)
+
+    # Get types of arguments.
+    types = []
+    if in_class:
+        args = spec.args[1:]
+    else:
+        args = spec.args
+    for arg in args:
+        try:
+            types.append(spec.annotations[arg])
+        except KeyError:
+            types.append(object)
+
+    # Get possible varargs.
+    if spec.varargs:
+        try:
+            types.append([spec.annotations[spec.varargs]])
+        except KeyError:
+            types.append([object])
+
+    # Get possible return type.
+    try:
+        return_type = spec.annotations["return"]
+    except KeyError:
+        return_type = object
+
+    # Assemble signature.
+    signature = Signature(*types)
+
+    return signature, return_type
 
 
 class AmbiguousLookupError(LookupError):
@@ -118,21 +171,42 @@ class Function:
         self.__doc__ = f.__doc__
         self.__module__ = f.__module__
 
-    def extend(self, *types, **kw_args):
-        """A decorator to extend the function with another signature."""
-        return self.extend_multi(types, **kw_args)
+    def extend(self, f=None, precedence=0):
+        """A decorator to extend the function with another signature.
+
+        Args:
+            precedence (int, optional): Precedence of the signature. Defaults to `0`.
+
+        Returns:
+            function: Decorator.
+        """
+        if f is None:
+            return lambda f_: self.extend(f_, precedence=precedence)
+
+        signature, return_type = extract_signature(f, in_class=self._class)
+        return self.extend_multi(
+            signature, precedence=precedence, return_type=return_type
+        )(f)
 
     def extend_multi(self, *signatures, precedence=0, return_type=object):
-        """A decorator to extend the function with multiple signatures."""
+        """A decorator to extend the function with multiple signatures.
+
+        Args:
+            *signatures (tuple[type] or :class:`.signature.Signature`): Signatures.
+            precedence (int, optional): Precedence of the signatures. Defaults to `0`.
+            return_type (type, optional): Expected return type. Defaults to `object.`
+
+        Returns:
+            function: Decorator.
+        """
 
         def decorator(f):
             # Register the new method.
             for signature in signatures:
+                if not isinstance(signature, Signature):
+                    signature = Signature(*signature)
                 self.register(
-                    Signature(*signature),
-                    f,
-                    precedence=precedence,
-                    return_type=return_type,
+                    signature, f, precedence=precedence, return_type=return_type
                 )
 
             # Return the function.
@@ -202,7 +276,7 @@ class Function:
             self._pending = []
 
             # Clear cache.
-            # TODO: Do something more clever, but be careful with the tracking of
+            # TODO: Do something more clever, but be careful about the tracking of
             # parametric types.
             self.clear_cache(reregister=False)
 

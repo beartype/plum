@@ -4,14 +4,14 @@ from plum import Dispatcher, Referentiable, Self, List
 def test_redefinition():
     dispatch = Dispatcher()
 
-    @dispatch(int)
-    def f(x):
+    @dispatch
+    def f(x: int):
         return "first"
 
     assert f(1) == "first"
 
-    @dispatch(int)
-    def f(x):
+    @dispatch
+    def f(x: int):
         return "second"
 
     assert f(1) == "second"
@@ -23,11 +23,11 @@ def test_metadata_and_printing():
     class A(metaclass=Referentiable):
         _dispatch = Dispatcher(in_class=Self)
 
-        @_dispatch()
+        @_dispatch
         def g(self):
             """docstring of g"""
 
-    @dispatch()
+    @dispatch
     def f():
         """docstring of f"""
 
@@ -57,16 +57,16 @@ def test_metadata_and_printing():
 def test_extension():
     dispatch = Dispatcher()
 
-    @dispatch()
+    @dispatch
     def f():
         return "fallback"
 
-    @f.extend(int)
-    def f(x):
+    @f.extend
+    def f(x: int):
         return "int"
 
     @f.extend_multi((str,), (float,))
-    def f(x):
+    def f(x: {str, float}):
         return "str or float"
 
     assert f() == "fallback"
@@ -78,12 +78,12 @@ def test_extension():
 def test_multi():
     dispatch = Dispatcher()
 
-    @dispatch(object)
+    @dispatch
     def f(x):
         return "fallback"
 
-    @dispatch.multi([int], [str])
-    def f(x):
+    @dispatch.multi((int,), (str,))
+    def f(x: {int, str}):
         return "int or str"
 
     assert f(1) == "int or str"
@@ -98,16 +98,16 @@ def test_invoke():
     def f():
         return "fallback"
 
-    @dispatch(int)
-    def f(x):
+    @dispatch
+    def f(x: int):
         return "int"
 
-    @dispatch(str)
-    def f(x):
+    @dispatch
+    def f(x: str):
         return "str"
 
-    @dispatch({int, str, float})
-    def f(x):
+    @dispatch
+    def f(x: {int, str, float}):
         return "int, str, or float"
 
     assert f() == "fallback"
@@ -130,15 +130,15 @@ def test_invoke_inheritance():
     class B(A):
         _dispatch = Dispatcher(in_class=Self)
 
-        @_dispatch(int)
-        def do(self, x):
+        @_dispatch
+        def do(self, x: int):
             return "int"
 
     class C(B):
         _dispatch = Dispatcher(in_class=Self)
 
-        @_dispatch(str)
-        def do(self, x):
+        @_dispatch
+        def do(self, x: str):
             return "str"
 
     c = C()
@@ -157,16 +157,16 @@ def test_invoke_inheritance():
 def test_parametric_tracking():
     dispatch = Dispatcher()
 
-    @dispatch(int)
-    def f(x):
+    @dispatch
+    def f(x: int):
         pass
 
     assert not f._parametric
     f(1)
     assert not f._parametric
 
-    @dispatch(List(int))
-    def f(x):
+    @dispatch
+    def f(x: List(int)):
         pass
 
     assert not f._parametric

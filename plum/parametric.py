@@ -18,13 +18,13 @@ log = logging.getLogger(__name__)
 _dispatch = Dispatcher()
 
 
-@_dispatch(object)
+@_dispatch
 def _get_id(x):
     return id(x)
 
 
-@_dispatch({int, float, str, TypeType})
-def _get_id(x):
+@_dispatch
+def _get_id(x: {int, float, str, TypeType}):
     return x
 
 
@@ -97,7 +97,7 @@ def parametric(Class):
     return ParametricClass
 
 
-@_dispatch(object)
+@_dispatch
 def type_parameter(x):
     """Get the type parameter of an instance of a parametric type.
 
