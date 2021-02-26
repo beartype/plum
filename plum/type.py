@@ -282,7 +282,7 @@ def as_type(obj):
     if hasattr(obj, "__module__") and obj.__module__ == "typing":
         # Print type as string and remove the module prefix.
         obj_str = str(obj)[len("typing.") :]
-        
+
         # Dissect the type.
         parts = obj_str.split("[")
         obj_str = parts[0]
