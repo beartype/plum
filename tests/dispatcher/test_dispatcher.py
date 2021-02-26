@@ -166,7 +166,7 @@ def test_parametric_tracking():
     assert not f._parametric
 
     @dispatch
-    def f(x: List(int)):
+    def f(x: List[int]):
         pass
 
     assert not f._parametric

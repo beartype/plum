@@ -60,7 +60,7 @@ def test_inheritance():
         _dispatch = Dispatcher(in_class=Self)
 
         @_dispatch
-        def do(self, x: Union(int, Self, str)) -> Union(int, Self):
+        def do(self, x: Union[int, Self, str]) -> Union[int, Self]:
             return x
 
     b = B()

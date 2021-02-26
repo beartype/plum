@@ -3,9 +3,9 @@ import logging
 from .dispatcher import Dispatcher
 from .function import promised_type_of as promised_type_of1
 from .type import (
+    TypeMeta,
     ComparableType,
     as_type,
-    TypeType,
     promised_type_of as promised_type_of2,
     is_type,
 )
@@ -18,17 +18,7 @@ log = logging.getLogger(__name__)
 _dispatch = Dispatcher()
 
 
-@_dispatch
-def _get_id(x):
-    return id(x)
-
-
-@_dispatch
-def _get_id(x: {int, float, str, TypeType}):
-    return x
-
-
-class CovariantType(type):
+class CovariantMeta(TypeMeta):
     """A metaclass that implements *covariance* of parametric types."""
 
     def __subclasscheck__(self, subclass):
@@ -37,9 +27,23 @@ class CovariantType(type):
             if subclass.__bases__ == self.__bases__:
                 par_subclass = type_parameter(subclass)
                 par_self = type_parameter(self)
-                # Check that the type parameters are types.
+
+                # Handle the case that the parameters are types.
                 if is_type(par_subclass) and is_type(par_self):
                     return as_type(par_subclass) <= as_type(par_self)
+
+                # Handle the case that the parameters are tuples of types.
+                if (
+                    isinstance(par_subclass, tuple)
+                    and isinstance(par_self, tuple)
+                    and len(par_subclass) == len(par_self)
+                    and all(is_type(pi_subclass) for pi_subclass in par_subclass)
+                    and all(is_type(pi_self) for pi_self in par_self)
+                ):
+                    return all(
+                        as_type(pi_subclass) <= as_type(pi_self)
+                        for pi_subclass, pi_self in zip(par_subclass, par_self)
+                    )
 
         # Default behaviour to `type`s subclass check.
         return type.__subclasscheck__(self, subclass)
@@ -55,9 +59,6 @@ def parametric(Class):
         )
 
     def __new__(cls, *ps):
-        # Convert type parameters.
-        ps = tuple(_get_id(p) for p in ps)
-
         # Only create new subclass if it doesn't exist already.
         if ps not in subclasses:
 
@@ -65,9 +66,9 @@ def parametric(Class):
                 return Class.__new__(cls)
 
             # Create subclass.
-            name = Class.__name__ + "{" + ",".join(str(p) for p in ps) + "}"
+            name = Class.__name__ + "[" + ",".join(str(p) for p in ps) + "]"
             SubClass = type.__new__(
-                CovariantType,
+                CovariantMeta,
                 name,
                 (ParametricClass,),
                 {"__new__": __new__, "_is_parametric": True},
@@ -85,7 +86,7 @@ def parametric(Class):
         return subclasses[ps]
 
     # Create parametric class.
-    ParametricClass = type(Class.__name__, (Class,), {"__new__": __new__})
+    ParametricClass = TypeMeta(Class.__name__, (Class,), {"__new__": __new__})
     ParametricClass.__module__ = Class.__module__
 
     # Attempt to correct docstring.
@@ -142,6 +143,9 @@ class _ParametricList(list):
 class List(ComparableType):
     """Parametric list Plum type.
 
+    IMPORTANT:
+        `List` should not be used to generically refer to a list! Use `list` instead.
+
     Args:
         el_type (type or ptype): Element type.
     """
@@ -153,7 +157,7 @@ class List(ComparableType):
         return multihash(List, self._el_type)
 
     def __repr__(self):
-        return f"ListType({self._el_type})"
+        return f"List[{self._el_type}]"
 
     def get_types(self):
         return (_ParametricList(self._el_type),)
@@ -171,21 +175,24 @@ class _ParametricTuple(tuple):
 class Tuple(ComparableType):
     """Parametric tuple Plum type.
 
+    IMPORTANT:
+        `Tuple` should not be used to generically refer to a tuple! Use `tuple` instead.
+
     Args:
-        el_type (type or ptype): Element type.
+        *el_types (type or ptype): Element types.
     """
 
-    def __init__(self, el_type):
-        self._el_type = as_type(el_type)
+    def __init__(self, *el_types):
+        self._el_types = tuple(as_type(el_type) for el_type in el_types)
 
     def __hash__(self):
-        return multihash(Tuple, self._el_type)
+        return multihash(Tuple, *self._el_types)
 
     def __repr__(self):
-        return f"TupleType({self._el_type})"
+        return f'Tuple[{", ".join(map(str, self._el_types))}]'
 
     def get_types(self):
-        return (_ParametricTuple(self._el_type),)
+        return (_ParametricTuple(*self._el_types),)
 
     @property
     def parametric(self):
@@ -213,7 +220,7 @@ def type_of(obj):
         return List(_types_of_iterable(obj))
 
     if isinstance(obj, tuple):
-        return Tuple(_types_of_iterable(obj))
+        return Tuple(*(type_of(x) for x in obj))
 
     return as_type(type(obj))
 

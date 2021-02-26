@@ -55,6 +55,7 @@ def add_conversion_method(type_from, type_to, f):
         f (function): Function that converts an object of type `type_from` to
             type `type_to`.
     """
+
     @_convert.extend
     def perform_conversion(obj: type_from, _: type_to):
         return f(obj)
@@ -145,7 +146,7 @@ def promote(obj1, obj2, *objs):
 
     # Find the common type.
     common_type = _promotion_rule.invoke(types[0], types[1])(types[0], types[1])
-    for t in types[2:]:
+    for i, t in enumerate(types[2:]):
         common_type = _promotion_rule.invoke(common_type, t)(common_type, t)
 
     # Convert objects and return.

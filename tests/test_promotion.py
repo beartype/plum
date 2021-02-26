@@ -109,7 +109,10 @@ def test_promotion(convert):
     add_promotion_rule(str, {int, float}, {int, float})
     add_conversion_method(str, {int, float}, float)
 
+    import plum.promotion
+
     assert promote(1, "1", "1") == (1.0, 1.0, 1.0)
+    print(plum.promotion._promotion_rule.methods)
     assert promote("1", 1, 1) == (1.0, 1.0, 1.0)
     assert promote(1.0, "1", 1) == (1.0, 1.0, 1.0)
     assert promote("1", 1.0, 1) == (1.0, 1.0, 1.0)

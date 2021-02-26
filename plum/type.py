@@ -22,14 +22,22 @@ __all__ = [
 log = logging.getLogger(__name__)
 
 
-class AbstractType:
+class TypeMeta(abc.ABCMeta):
+    """Types can also be instantiated with indexing."""
+
+    def __getitem__(self, p):
+        if isinstance(p, tuple):
+            return self(*p)
+        else:
+            return self(p)
+
+
+class AbstractType(metaclass=TypeMeta):
     """An abstract class defining the top of the Plum type hierarchy.
 
     Any instance of a subclass of :class:`.type.AbstractType` will be henceforth
     referred to be of type Plum type or `ptype`.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def __hash__(self):
@@ -111,6 +119,11 @@ class ComparableType(AbstractType, Comparable):
         """
 
     def mro(self):
+        """Get the MRO.
+
+        Returns:
+            tuple[type]: MRO.
+        """
         types = self.get_types()
         if len(types) != 1:
             raise RuntimeError("Exactly one type must be encapsulated to get the MRO.")
@@ -119,6 +132,10 @@ class ComparableType(AbstractType, Comparable):
 
 class Union(ComparableType):
     """A union of Plum types.
+
+    IMPORTANT:
+        `Union` should not be used to generically refer to anything! Use
+            `Union[object]` instead.
 
     Args:
         *types (type or ptype): Types or Plum types to encapsulate.
@@ -291,11 +308,11 @@ def is_type(t):
     return isinstance(t, TypeType.get_types())
 
 
-TypeType = Union(type, AbstractType, list, set)
+TypeType = Union[type, AbstractType, list, set]
 """The type of a Plum type, including shorthands."""
 
 
-class CallableType(type):
+class CallableMeta(type):
     """A metaclass that implements the type of `Callable`."""
 
     def __subclasscheck__(self, subclass):
@@ -317,4 +334,4 @@ class CallableType(type):
         return callable(instance)
 
 
-Callable = CallableType("Callable", (type,), {})  #: Type for callable objects.
+Callable = CallableMeta("Callable", (type,), {})  #: Type for callable objects.

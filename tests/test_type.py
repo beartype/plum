@@ -24,31 +24,31 @@ def test_varargs():
 
 
 def test_comparabletype():
-    assert isinstance(1, Union(int))
-    assert not isinstance("1", Union(int))
-    assert isinstance("1", Union(int, str))
-    assert issubclass(Union(int), Union(int))
-    assert issubclass(Union(int), Union(int, str))
-    assert not issubclass(Union(int, str), Union(int))
-    assert Union(int).mro() == int.mro()
+    assert isinstance(1, Union[int])
+    assert not isinstance("1", Union[int])
+    assert isinstance("1", Union[int, str])
+    assert issubclass(Union[int], Union[int])
+    assert issubclass(Union[int], Union[int, str])
+    assert not issubclass(Union[int, str], Union[int])
+    assert Union[int].mro() == int.mro()
     with pytest.raises(RuntimeError):
-        Union(int, str).mro()
+        Union[int, str].mro()
 
 
 def test_union():
-    assert hash(Union(int, str)) == hash(Union(str, int))
-    assert repr(Union(int, str)) == repr(Union(int, str))
-    assert set(Union(int, str).get_types()) == {str, int}
-    assert not Union(int).parametric
+    assert hash(Union[int, str]) == hash(Union[str, int])
+    assert repr(Union[int, str]) == repr(Union[int, str])
+    assert set(Union[int, str].get_types()) == {str, int}
+    assert not Union[int].parametric
 
     # Test equivalence between `Union` and `Type`.
-    assert hash(Union(int)) == hash(Type(int))
-    assert hash(Union(int, str)) != hash(Type(int))
-    assert repr(Union(int)) == repr(Type(int))
-    assert repr(Union(int, str)) != repr(Type(int))
+    assert hash(Union[int]) == hash(Type(int))
+    assert hash(Union[int, str]) != hash(Type(int))
+    assert repr(Union[int]) == repr(Type(int))
+    assert repr(Union[int, str]) != repr(Type(int))
 
     # Test lazy conversion to set.
-    t = Union(int, int, str)
+    t = Union[int, int, str]
     assert isinstance(t._types, tuple)
     t.get_types()
     assert isinstance(t._types, set)
@@ -111,7 +111,7 @@ def test_astype():
     assert isinstance(as_type([int]), VarArgs)
     with pytest.raises(TypeError):
         as_type([int, str])
-    assert as_type({int, str}) == Union(int, str)
+    assert as_type({int, str}) == Union[int, str]
     assert as_type(Type(int)) == Type(int)
     assert as_type(int) == Type(int)
     with pytest.raises(RuntimeError):

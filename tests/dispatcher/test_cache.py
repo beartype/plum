@@ -120,7 +120,7 @@ def test_cache_clearing():
         return 1
 
     @dispatch
-    def f(x: List(int)):
+    def f(x: List[int]):
         return 1
 
     f(1)
