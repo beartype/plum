@@ -7,6 +7,8 @@
 
 Everybody likes multiple dispatch, just like everybody likes plums.
 
+_The current `master` is unreleased._
+
 * [Installation](#installation)
 * [Basic Usage](#basic-usage)
 * [Features by Example](#features-by-example)
@@ -437,18 +439,18 @@ class A:
     pass
     
     
-@dispatch(A)
+@dispatch
 def f(x: A):
     return "fallback"
     
     
-@dispatch(A[1])
-def f(x):
+@dispatch
+def f(x: A[1]):
     return "1"
     
     
-@dispatch(A[2])
-def f(x):
+@dispatch
+def f(x: A[2]):
     return "2"
 ```
 
