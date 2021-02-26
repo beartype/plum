@@ -142,8 +142,8 @@ def f(x: {tuple, list}):
     
     
 @dispatch
-def f(x: Tuple[int]):
-    print("tuple of int")
+def f(x: Tuple[int, int]):
+    print("tuple of two ints")
     
     
 @dispatch
@@ -159,7 +159,10 @@ def f(x: List[int]):
 'tuple or list'
 
 >>> f((1, 2))
-'tuple of int'
+'tuple of two ints'
+
+>>> f((1, 2, 3))
+'tuple or list'
 
 >>> f((1, "2"))
 'tuple or list'
