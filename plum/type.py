@@ -282,21 +282,24 @@ def as_type(obj):
     if hasattr(obj, "__module__") and obj.__module__ == "typing":
         # Print type as string and remove the module prefix.
         obj_str = str(obj)[len("typing.") :]
-        # Remove any type parameters.
-        obj_str = obj_str.split("[")[0]
+        
+        # Dissect the type.
+        parts = obj_str.split("[")
+        obj_str = parts[0]
+        obj_is_parametrised = len(parts) > 1
 
         if obj_str in ("Union", "Optional"):
-            if hasattr(obj, "__args__") and obj.__args__:
+            if obj_is_parametrised:
                 return Union(*(as_type(t) for t in obj.__args__))
             else:
                 return Union(object)
         elif obj_str == "List":
-            if hasattr(obj, "__args__") and obj.__args__:
+            if obj_is_parametrised:
                 return PromisedList.resolve()(*(as_type(t) for t in obj.__args__))
             else:
                 return Type(list)
         elif obj_str == "Tuple":
-            if hasattr(obj, "__args__") and obj.__args__:
+            if obj_is_parametrised:
                 return PromisedTuple.resolve()(*(as_type(t) for t in obj.__args__))
             else:
                 return Type(tuple)
