@@ -28,5 +28,3 @@ def test_comparable():
     assert Number(2) > Number(1)
     assert Number(1).is_comparable(Number(2))
     assert not Number(1).is_comparable(Number(np.nan))
-
-

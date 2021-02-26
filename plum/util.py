@@ -57,4 +57,3 @@ class Comparable:
                 otherwise.
         """
         return self < other or self == other or self > other
-
