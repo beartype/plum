@@ -280,26 +280,30 @@ def as_type(obj):
 
     # Handle mapping from `typing` module.
     if hasattr(obj, "__module__") and obj.__module__ == "typing":
-        if type(obj).__name__ == "_Union":
-            if obj.__args__:
+        # Print type as string and remove the module prefix.
+        obj_str = str(obj)[len("typing.") :]
+        # Remove any type parameters.
+        obj_str = obj_str.split("[")[0]
+
+        if obj_str in ("Union", "Optional"):
+            if hasattr(obj, "__args__") and obj.__args__:
                 return Union(*(as_type(t) for t in obj.__args__))
             else:
                 return Union(object)
-        elif hasattr(obj, "__name__"):
-            if obj.__name__ == "List":
-                if obj.__args__:
-                    return PromisedList.resolve()(*(as_type(t) for t in obj.__args__))
-                else:
-                    return Type(list)
-            elif obj.__name__ == "Tuple":
-                if obj.__args__:
-                    return PromisedTuple.resolve()(*(as_type(t) for t in obj.__args__))
-                else:
-                    return Type(tuple)
+        elif obj_str == "List":
+            if hasattr(obj, "__args__") and obj.__args__:
+                return PromisedList.resolve()(*(as_type(t) for t in obj.__args__))
+            else:
+                return Type(list)
+        elif obj_str == "Tuple":
+            if hasattr(obj, "__args__") and obj.__args__:
+                return PromisedTuple.resolve()(*(as_type(t) for t in obj.__args__))
+            else:
+                return Type(tuple)
 
         raise NotImplementedError(
             f"There is currently no support for {type(obj)}. "
-            f"Please open an issue here at https://github.com/wesselb/plum/issues."
+            f"Please open an issue here at https://github.com/wesselb/plum/issues"
         )  # pragma: no cover
 
     # If `obj` is a `type`, handle shorthands; otherwise, wrap it in a `Type`.

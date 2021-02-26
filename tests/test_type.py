@@ -124,6 +124,8 @@ def test_astype():
 def test_astype_typing_mapping():
     assert as_type(typing.Union[typing.Union[int], list]) == Union[Union[int], list]
     assert as_type(typing.Union) == Union[object]
+    assert as_type(typing.Optional[int]) == Union[int, type(None)]
+    assert as_type(typing.Optional) == Union[object]
     assert as_type(typing.List[typing.List[int]]) == List[List[int]]
     assert as_type(typing.List) == Type(list)
     assert as_type(typing.Tuple[typing.Tuple[int], list]) == Tuple[Tuple[int], list]
