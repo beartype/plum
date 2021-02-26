@@ -216,7 +216,7 @@ def test_varargs():
 
 
 def test_abc_abstractmethod():
-    class A(metaclass=Referentiable):
+    class A(metaclass=Referentiable(abc.ABCMeta)):
         @abc.abstractmethod
         def f(self, x):
             pass
@@ -228,9 +228,12 @@ def test_abc_abstractmethod():
         def f(self, x: int):
             return x
 
-    b = B()
+    # Check that ABC still works.
+    with pytest.raises(TypeError):
+        A()
 
     # Check that the abstract method is not dispatched to.
+    b = B()
     assert b.f(1) == 1
     with pytest.raises(NotFoundLookupError):
         b.f("1")
