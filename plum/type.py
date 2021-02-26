@@ -242,6 +242,12 @@ class Self(Reference, PromisedType):
     """
 
 
+# We already need parametric types, but due to the import order, they are not visible
+# yet.
+PromisedList = Promise()  # This will resolve to `.parametric.List`.
+PromisedTuple = Promise()  # This will resolve to `.parametric.Tuple`.
+
+
 def as_type(obj):
     """Convert object to a type.
 
@@ -271,6 +277,30 @@ def as_type(obj):
     # A set is used as shorthand notation for a union.
     if isinstance(obj, set):
         return Union(*obj)
+
+    # Handle mapping from `typing` module.
+    if hasattr(obj, "__module__") and obj.__module__ == "typing":
+        if type(obj).__name__ == "_Union":
+            if obj.__args__:
+                return Union(*(as_type(t) for t in obj.__args__))
+            else:
+                return Union(object)
+        elif hasattr(obj, "__name__"):
+            if obj.__name__ == "List":
+                if obj.__args__:
+                    return PromisedList.resolve()(*(as_type(t) for t in obj.__args__))
+                else:
+                    return Type(list)
+            elif obj.__name__ == "Tuple":
+                if obj.__args__:
+                    return PromisedTuple.resolve()(*(as_type(t) for t in obj.__args__))
+                else:
+                    return Type(tuple)
+
+        raise NotImplementedError(
+            f"There is currently no support for {type(obj)}. "
+            f"Please open an issue here at https://github.com/wesselb/plum/issues."
+        )  # pragma: no cover
 
     # If `obj` is a `type`, handle shorthands; otherwise, wrap it in a `Type`.
     if isinstance(obj, type):

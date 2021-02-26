@@ -1,18 +1,21 @@
 import pytest
+import typing
 
 from plum import (
-    Union,
+    Callable,
+    List,
     PromisedType,
-    as_type,
-    TypeType,
+    Referentiable,
     ResolutionError,
     Self,
-    VarArgs,
     Type,
-    Referentiable,
+    TypeType,
+    Union,
+    VarArgs,
+    as_type,
     is_object,
     is_type,
-    Callable,
+    Tuple,
 )
 
 
@@ -116,6 +119,15 @@ def test_astype():
     assert as_type(int) == Type(int)
     with pytest.raises(RuntimeError):
         as_type(1)
+
+
+def test_astype_typing_mapping():
+    assert as_type(typing.Union[typing.Union[int], list]) == Union[Union[int], list]
+    assert as_type(typing.Union) == Union[object]
+    assert as_type(typing.List[typing.List[int]]) == List[List[int]]
+    assert as_type(typing.List) == Type(list)
+    assert as_type(typing.Tuple[typing.Tuple[int], list]) == Tuple[Tuple[int], list]
+    assert as_type(typing.Tuple) == Type(tuple)
 
 
 def test_is_object():

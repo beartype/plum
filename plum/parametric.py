@@ -8,6 +8,8 @@ from .type import (
     as_type,
     promised_type_of as promised_type_of2,
     is_type,
+    PromisedTuple,
+    PromisedList,
 )
 from .util import multihash
 
@@ -167,6 +169,10 @@ class List(ComparableType):
         return True
 
 
+# Deliver `List`.
+PromisedList.deliver(List)
+
+
 @parametric
 class _ParametricTuple(tuple):
     """Parametric tuple type."""
@@ -197,6 +203,10 @@ class Tuple(ComparableType):
     @property
     def parametric(self):
         return True
+
+
+# Deliver `Tuple`.
+PromisedTuple.deliver(Tuple)
 
 
 def _types_of_iterable(xs):
