@@ -269,7 +269,7 @@ Value for option: a
 Value for option: b
 1
 
->>> f(1, options="b")  # But this won't.
+>>> f(1, option="b")  # But this won't.
 TypeError: f() got an unexpected keyword argument 'option'
 ```
 
