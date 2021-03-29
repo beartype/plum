@@ -72,7 +72,7 @@ def test_inheritance():
     assert b.do(1.0) == "hello from A"
 
 
-def test_inheritance_self_conversion():
+def test_inheritance_self_return():
     class A(metaclass=Referentiable):
         _dispatch = Dispatcher(in_class=Self)
 
