@@ -332,19 +332,19 @@ def f(x: List[int]):
 
 ```python
 >>> f([1, 2])
-'list of int'
+list of int
 
 >>> f([1, "2"])
-'tuple or list'
+tuple or list
 
 >>> f((1, 2))
-'tuple of two ints'
+tuple of two ints
 
 >>> f((1, 2, 3))
-'tuple or list'
+tuple or list
 
 >>> f((1, "2"))
-'tuple or list'
+tuple or list
 ```
 
 ### Variable Arguments
