@@ -17,7 +17,8 @@ _The current `master` is unreleased._
     - [Parametric Types](#parametric-types)
     - [Variable Arguments](#variable-arguments)
     - [Return Types](#return-types)
-    - [Inheritance](#inheritance)
+    - [Subclassing](#subclassing)
+        + [Diagonal Dispatch](#diagonal-dispatch)
     - [Conversion](#conversion)
     - [Promotion](#promotion)
     - [Method Precedence](#method-precedence)
@@ -224,7 +225,77 @@ TypeError: Cannot convert a "builtins.str" to a "builtins.int".
 
 ```
 
-### Inheritance
+### Subclassing
+
+Imagine the following design:
+
+```python
+from plum import dispatch
+
+class Real:
+    @dispatch
+    def __add__(self, other: Real):
+        pass # Do something here. 
+```
+
+If we try to run this, we get the following error:
+
+```
+NameError                                 Traceback (most recent call last)
+<ipython-input-1-2c6fe56c8a98> in <module>
+      1 from plum import dispatch
+      2
+----> 3 class Real:
+      4     @dispatch
+      5     def __add__(self, other: Real):
+
+<ipython-input-1-2c6fe56c8a98> in Real()
+      3 class Real:
+      4     @dispatch
+----> 5     def __add__(self, other: Real):
+      6         pass # Do something here.
+
+NameError: name 'Real' is not defined
+```
+
+The problem is that, when `__add__` is defined and the type hint for `other` is set,
+the name `Real` is not yet defined.
+To circumvent this issue, Plum provides the metaclass `Referentiable` and type `Self`.
+The proposed solution is to set the metaclass of `Real` to `Referentiable` and use
+`Self` as a substitute for `Real`:
+
+```python
+from plum import Dispatcher, Referentiable, Self
+
+class Real(metaclass=Referentiable):
+    dispatch = Dispatcher(in_class=Self)
+    
+    @dispatch
+    def __add__(self, other: Self):
+        pass # Do something here. 
+```
+
+Note that you must create another `dispatch` inside the class, which will only be 
+visible within the class.
+If you are already using a metaclass, like `abc.ABCMeta`, then you can apply 
+`Referentiable` as follows:
+
+```python
+import abc
+
+from plum import Dispatcher, Referentiable, Self
+
+class Real(metaclass=Referentiable(abc.ABCMeta)):
+    dispatch = Dispatcher(in_class=Self)
+    
+    @dispatch
+    def __add__(self, other: Self):
+        pass # Do something here. 
+```
+
+Plum synergises with `abc`.
+
+#### Diagonal Dispatch
 
 Since every class in Python can be subclassed, diagonal dispatch cannot be 
 implemented.
@@ -252,7 +323,6 @@ class Rational(Real):
 real = Real()
 rational = Rational()
 ```
-
 
 ```
 >>> real + real
