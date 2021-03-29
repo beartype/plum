@@ -9,18 +9,20 @@ Everybody likes multiple dispatch, just like everybody likes plums.
 
 _The current `master` is unreleased._
 
-* [Installation](#installation)
-* [Basic Usage](#basic-usage)
-* [Features by Example](#features-by-example)
-    - [Dispatch From Type Annotations](#dispatch-from-type-annotations)
-    - [Union Types](#union-types)
-    - [Parametric Types](#parametric-types)
-    - [Variable Arguments](#variable-arguments)
-    - [Return Types](#return-types)
-    - [Subclassing](#subclassing)
-        + [Diagonal Dispatch](#diagonal-dispatch)
+ * [Installation](#installation)
+ * [Basic Usage](#basic-usage)
+ * [Keyword Arguments and Default Values](#keyword-arguments-and-default-values)
+ * [Subclassing](#subclassing)
+     - [Diagonal Dispatch](#diagonal-dispatch)
+ * [Type System](#type-system)
+     - [Union Types](#union-types)
+     - [Parametric Types](#parametric-types)
+     - [Variable Arguments](#variable-arguments)
+     - [Return Types](#return-types)
+ * [Conversion and Promotion](#conversion-and-promotion)
     - [Conversion](#conversion)
     - [Promotion](#promotion)
+ * [Advanced Features](#advanced-features)
     - [Method Precedence](#method-precedence)
     - [Parametric Classes](#parametric-classes)
     - [Add Multiple Methods](#add-multiple-methods)
@@ -97,7 +99,182 @@ since an `int` is a `Number`, but a `Number` is not necessarily an `int`.
 For an excellent and way more detailed overview of multiple dispatch, see the
 [manual of the Julia Language](https://docs.julialang.org/en/).
 
-## Features by Example
+## Subclassing
+
+Imagine the following design:
+
+```python
+from plum import dispatch
+
+class Real:
+    
+    @dispatch
+    def __add__(self, other: Real):
+        pass # Do something here. 
+```
+
+If we try to run this, we get the following error:
+
+```
+NameError                                 Traceback (most recent call last)
+<ipython-input-1-2c6fe56c8a98> in <module>
+      1 from plum import dispatch
+      2
+----> 3 class Real:
+      4     @dispatch
+      5     def __add__(self, other: Real):
+
+<ipython-input-1-2c6fe56c8a98> in Real()
+      3 class Real:
+      4     @dispatch
+----> 5     def __add__(self, other: Real):
+      6         pass # Do something here.
+
+NameError: name 'Real' is not defined
+```
+
+The problem is that, when `__add__` is defined and the type hint for `other` is set,
+the name `Real` is not yet defined.
+To circumvent this issue, Plum provides the metaclass `Referentiable` and type `Self`.
+The proposed solution is to set the metaclass of `Real` to `Referentiable` and use
+`Self` as a substitute for `Real`:
+
+```python
+from plum import Dispatcher, Referentiable, Self
+
+class Real(metaclass=Referentiable):
+    dispatch = Dispatcher(in_class=Self)
+    
+    @dispatch
+    def __add__(self, other: Self):
+        pass # Do something here. 
+```
+
+Note that you must create another `dispatch` inside the class, which will only be
+visible within the class.
+If you are already using a metaclass, like `abc.ABCMeta`, then you can apply
+`Referentiable` as follows:
+
+```python
+import abc
+
+from plum import Dispatcher, Referentiable, Self
+
+class Real(metaclass=Referentiable(abc.ABCMeta)):
+    dispatch = Dispatcher(in_class=Self)
+    
+    @dispatch
+    def __add__(self, other: Self):
+        pass # Do something here. 
+```
+
+Plum synergises with `abc`.
+
+### Diagonal Dispatch
+
+Since every class in Python can be subclassed, diagonal dispatch cannot be
+implemented.
+However, inheritance can be used to achieve a form of diagonal dispatch:
+
+```python
+from plum import Dispatcher, Referentiable, Self
+
+class Real(metaclass=Referentiable):
+    dispatch = Dispatcher(in_class=Self)
+
+    @dispatch
+    def __add__(self, other: Self):
+        return "real"
+        
+
+class Rational(Real):
+    dispatch = Dispatcher(in_class=Self)
+
+    @dispatch
+    def __add__(self, other: Self):
+        return "rational"
+        
+
+real = Real()
+rational = Rational()
+```
+
+```
+>>> real + real
+'real'
+
+>>> real + rational
+'real'
+
+>>> rational + real
+'real'
+
+>>> rational + rational
+'rational'
+```
+
+## Keyword Arguments and Default Values
+
+Keyword arguments can be used, but are *not* dispatched on.
+As a convention, arguments with default values should always be called as keyword 
+arguments.
+
+Example:
+
+```python
+from plum import dispatch
+
+@dispatch
+def f(x, option="a"):
+    print(f"Value for option: {option}")
+    return x  # Do something.
+```
+
+```python
+>>> f(1)  # This is fine.
+Value for option: a
+1
+
+>>> f(1, option="b")  # This is also fine.
+Value for option: b
+1
+
+>>> f(1, "b")  # This will *not* work!
+NotFoundLookupError: For function "f", signature (builtins.int, builtins.str) could not be resolved.
+```
+
+If you want to use a default value for a position argument, use the following pattern
+instead:
+
+
+```python
+from plum import dispatch
+
+@dispatch
+def f(x, option):
+    print(f"Value for option: {option}")
+    return x  # Do something.
+
+
+@dispatch
+def f(x):
+    return f(x, "a")  # Use default value for `option`.
+```
+
+```python
+>>> f(1)  # This is fine.
+Value for option: a
+1
+
+>>> f(1, "b")  # And this will work!
+Value for option: b
+1
+
+>>> f(1, options="b")  # But this won't.
+TypeError: f() got an unexpected keyword argument 'option'
+```
+
+## Type System
 
 ### Union Types
 
@@ -225,119 +402,7 @@ TypeError: Cannot convert a "builtins.str" to a "builtins.int".
 
 ```
 
-### Subclassing
-
-Imagine the following design:
-
-```python
-from plum import dispatch
-
-class Real:
-    
-    @dispatch
-    def __add__(self, other: Real):
-        pass # Do something here. 
-```
-
-If we try to run this, we get the following error:
-
-```
-NameError                                 Traceback (most recent call last)
-<ipython-input-1-2c6fe56c8a98> in <module>
-      1 from plum import dispatch
-      2
-----> 3 class Real:
-      4     @dispatch
-      5     def __add__(self, other: Real):
-
-<ipython-input-1-2c6fe56c8a98> in Real()
-      3 class Real:
-      4     @dispatch
-----> 5     def __add__(self, other: Real):
-      6         pass # Do something here.
-
-NameError: name 'Real' is not defined
-```
-
-The problem is that, when `__add__` is defined and the type hint for `other` is set,
-the name `Real` is not yet defined.
-To circumvent this issue, Plum provides the metaclass `Referentiable` and type `Self`.
-The proposed solution is to set the metaclass of `Real` to `Referentiable` and use
-`Self` as a substitute for `Real`:
-
-```python
-from plum import Dispatcher, Referentiable, Self
-
-class Real(metaclass=Referentiable):
-    dispatch = Dispatcher(in_class=Self)
-    
-    @dispatch
-    def __add__(self, other: Self):
-        pass # Do something here. 
-```
-
-Note that you must create another `dispatch` inside the class, which will only be 
-visible within the class.
-If you are already using a metaclass, like `abc.ABCMeta`, then you can apply 
-`Referentiable` as follows:
-
-```python
-import abc
-
-from plum import Dispatcher, Referentiable, Self
-
-class Real(metaclass=Referentiable(abc.ABCMeta)):
-    dispatch = Dispatcher(in_class=Self)
-    
-    @dispatch
-    def __add__(self, other: Self):
-        pass # Do something here. 
-```
-
-Plum synergises with `abc`.
-
-#### Diagonal Dispatch
-
-Since every class in Python can be subclassed, diagonal dispatch cannot be 
-implemented.
-However, inheritance can be used to achieve a form of diagonal dispatch:
-
-```python
-from plum import Dispatcher, Referentiable, Self
-
-class Real(metaclass=Referentiable):
-    dispatch = Dispatcher(in_class=Self)
-
-    @dispatch
-    def __add__(self, other: Self):
-        return "real"
-        
-
-class Rational(Real):
-    dispatch = Dispatcher(in_class=Self)
-
-    @dispatch
-    def __add__(self, other: Self):
-        return "rational"
-        
-
-real = Real()
-rational = Rational()
-```
-
-```
->>> real + real
-'real'
-
->>> real + rational
-'real'
-
->>> rational + real
-'real'
-
->>> rational + rational
-'rational'
-```
+## Conversion and Promotion
 
 ### Conversion
 
@@ -435,6 +500,8 @@ TypeError: Cannot convert a "builtins.int" to a "builtins.float".
 >>> add(1, 2.0)
 3.0
 ```
+
+## Advanced Features
 
 ### Method Precedence
 
