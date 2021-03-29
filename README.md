@@ -233,6 +233,7 @@ Imagine the following design:
 from plum import dispatch
 
 class Real:
+    
     @dispatch
     def __add__(self, other: Real):
         pass # Do something here. 
