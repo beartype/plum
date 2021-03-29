@@ -72,6 +72,23 @@ def test_inheritance():
     assert b.do(1.0) == "hello from A"
 
 
+def test_inheritance_self_conversion():
+    class A(metaclass=Referentiable):
+        _dispatch = Dispatcher(in_class=Self)
+
+        @_dispatch
+        def do(self, x: Self, ok=True) -> Self:
+            if ok:
+                return x
+            else:
+                return 2
+
+    a = A()
+    assert a.do(a) is a
+    with pytest.raises(TypeError):
+        a.do(a, ok=False)
+
+
 def test_conversion(convert):
     dispatch = Dispatcher()
 

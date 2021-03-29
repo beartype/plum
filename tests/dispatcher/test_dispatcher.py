@@ -1,4 +1,19 @@
-from plum import Dispatcher, Referentiable, Self, List
+import pytest
+
+from plum import Dispatcher, Referentiable, Self, List, NotFoundLookupError
+
+
+def test_keywords():
+    dispatch = Dispatcher()
+
+    @dispatch
+    def f(x: int, option=None):
+        return x
+
+    assert f(2) == 2
+    assert f(2, option=None) == 2
+    with pytest.raises(NotFoundLookupError):
+        f(2, None)
 
 
 def test_redefinition():

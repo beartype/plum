@@ -1,7 +1,13 @@
 import abc
 import logging
 
-__all__ = ["ResolutionError", "Resolvable", "Promise", "Referentiable", "Reference"]
+__all__ = [
+    "ResolutionError",
+    "Resolvable",
+    "Promise",
+    "referentiables",
+    "Referentiable",
+]
 
 log = logging.getLogger(__name__)
 
@@ -73,18 +79,3 @@ def Referentiable(*args):
 
     return Meta
 
-
-class Reference(Resolvable):
-    """Resolves to the last subclass of :class:`.resolvable.Referentiable`."""
-
-    def __init__(self):
-        self.pos = len(referentiables)
-
-    def resolve(self):
-        if len(referentiables) - 1 < self.pos:
-            raise ResolutionError(
-                f"Requesting referentiable {self.pos + 1}, "
-                f"whereas only {len(referentiables)} exist(s)."
-            )
-        else:
-            return referentiables[self.pos]

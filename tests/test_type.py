@@ -5,6 +5,7 @@ from plum import (
     Callable,
     List,
     PromisedType,
+    ResolvableType,
     Referentiable,
     ResolutionError,
     Self,
@@ -108,8 +109,7 @@ def test_typetype():
 
 
 def test_astype():
-    # Need `ok` here: printing will resolve `Self`.
-    assert isinstance(as_type(Self), Self)
+    assert issubclass(type(as_type(Self)), ResolvableType)
     assert isinstance(as_type([]), VarArgs)
     assert isinstance(as_type([int]), VarArgs)
     with pytest.raises(TypeError):

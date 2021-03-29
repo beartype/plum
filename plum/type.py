@@ -3,7 +3,7 @@ import inspect
 import logging
 from types import FunctionType, MethodType
 
-from .resolvable import Resolvable, Reference, Promise
+from .resolvable import Resolvable, Promise, referentiables, ResolutionError
 from .util import multihash, Comparable
 
 __all__ = [
@@ -232,20 +232,46 @@ class PromisedType(ResolvableType, Promise):
     """A promised Plum type."""
 
 
-class Self(Reference, PromisedType):
-    """Reference Plum type.
-
-    Note:
-        Both :class:`.resolvable.Reference` and :class:`.type.PromisedType`
-        implement `resolve()`. We need that from :class:`.resolvable.Reference`,
-        so we inherit from :class:`.resolvable.Reference` first.
-    """
-
-
 # We already need parametric types, but due to the import order, they are not visible
-# yet.
+# yet. We therefore need to use promises.
+promised_parametric = Promise()  # This will resolve to `.parametric.parametric`.
+# This will resolve to `.parametric.type_parameter`.
+promised_type_parameter = Promise()
 PromisedList = Promise()  # This will resolve to `.parametric.List`.
 PromisedTuple = Promise()  # This will resolve to `.parametric.Tuple`.
+
+# We need to make the parametric class lazily due to the above promises.
+_reference = {}
+
+
+def Self():
+    """Make a type for the currently referenced class.
+
+    Returns:
+        ptype: Type for the currently referenced class.
+    """
+    # Create the reference class, which is a parametric class. We need to use a
+    # parametric class: if `self = Self()`, and `t = type(self)`, then giving `t` to
+    # `as_type` will instantiate another `Self`, which will have a wrong reference!
+    try:
+        Reference = _reference["Reference"]
+    except KeyError:
+
+        @promised_parametric.resolve()
+        class Reference(PromisedType):
+            def resolve(self):
+                pos = promised_type_parameter.resolve()(self)
+                if pos >= len(referentiables):
+                    raise ResolutionError(
+                        f"Requesting referentiable {pos + 1}, "
+                        f"whereas only {len(referentiables)} exist(s)."
+                    )
+                else:
+                    return referentiables[pos]
+
+        _reference["Reference"] = Reference
+
+    return Reference[len(referentiables)]()
 
 
 def as_type(obj):
@@ -309,13 +335,13 @@ def as_type(obj):
             f"Please open an issue here at https://github.com/wesselb/plum/issues"
         )  # pragma: no cover
 
-    # If `obj` is a `type`, handle shorthands; otherwise, wrap it in a `Type`.
-    if isinstance(obj, type):
-        # :class:`.type.Self` has a shorthand notation that doesn't require the
-        # user to instantiate it.
-        if obj is Self:
-            return obj()
+    # :class:`.type.Self` has a shorthand notation that doesn't require the user to
+    # instantiate it.
+    if obj is Self:
+        return obj()
 
+    # If `obj` is a `type`, wrap it in a `Type`.
+    if isinstance(obj, type):
         return Type(obj)
 
     raise RuntimeError(f'Could not convert "{obj}" to a type.')

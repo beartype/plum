@@ -2,7 +2,7 @@ import abc
 
 import pytest
 
-from plum import Referentiable, Reference, Promise, ResolutionError
+from plum import Referentiable, Self, Promise, ResolutionError
 
 
 def test_promise():
@@ -17,10 +17,10 @@ def test_reference():
     class A(metaclass=Referentiable):
         pass
 
-    ref = Reference()
-    ref.pos -= 1  # Reference is created *outside* the class definition.
+    ref = Self()
+    ref._type_parameter -= 1  # Reference is created *outside* the class definition.
     assert ref.resolve() == A
-    ref.pos += 1
+    ref._type_parameter += 1
     with pytest.raises(ResolutionError):
         ref.resolve()
 

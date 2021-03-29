@@ -7,6 +7,8 @@ from .type import (
     ComparableType,
     as_type,
     promised_type_of as promised_type_of2,
+    promised_parametric,
+    promised_type_parameter,
     is_type,
     PromisedTuple,
     PromisedList,
@@ -100,6 +102,9 @@ def parametric(Class):
     return ParametricClass
 
 
+promised_parametric.deliver(parametric)
+
+
 @_dispatch
 def type_parameter(x):
     """Get the type parameter of an instance of a parametric type.
@@ -111,6 +116,9 @@ def type_parameter(x):
         object: Type parameter.
     """
     return x._type_parameter
+
+
+promised_type_parameter.deliver(type_parameter)
 
 
 def kind(SuperClass=object):

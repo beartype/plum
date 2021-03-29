@@ -1,5 +1,5 @@
-import logging
 import inspect
+import logging
 
 from .resolvable import Promise
 from .signature import Signature
@@ -33,11 +33,14 @@ def extract_signature(f, in_class=None):
 
     # Get types of arguments.
     types = []
+    # Cut off potential `self`.
     if in_class:
         args = spec.args[1:]
     else:
         args = spec.args
-    for arg in args:
+    # Cut off keyword arguments: arguments which are given a default value.
+    num_defaults = len(spec.defaults) if spec.defaults else 0
+    for arg in args[: len(args) - num_defaults]:
         try:
             types.append(spec.annotations[arg])
         except KeyError:
@@ -240,10 +243,12 @@ class Function:
             f (function): Function that implements the method.
             precedence (int, optional): Precedence of the function. Defaults
                 to `0`.
-            return_type (type, optional): Return type of the function. Defaults
+            return_type (type or ptype, optional): Return type of the function. Defaults
                 to `object`.
         """
-        self._pending.append((signature, f, precedence, return_type))
+        # We must be careful to convert `return_type` to a Plum type here to resolve
+        # uninstantiated instance of `Self` at the right time.
+        self._pending.append((signature, f, precedence, as_type(return_type)))
 
     def _resolve_pending_registrations(self):
         registered = False
@@ -257,11 +262,10 @@ class Function:
 
             # If the return type is `object`, then set it to `default_obj_type`. This
             # allows for a fast check to speed up cached calls.
-            return_type = as_type(return_type)
             if is_object(return_type):
                 return_type = default_obj_type
 
-            # Make sure to convert return type to Plum type.
+            # Return type should already be a Plum type!
             self.methods[signature] = (f, return_type)
             self.precedences[signature] = precedence
 
@@ -456,7 +460,7 @@ class Function:
     def __repr__(self):
         return (
             f"<function {self._f} with "
-            f"{len(self._pending) +len(self._resolved)} method(s)>"
+            f"{len(self._pending) + len(self._resolved)} method(s)>"
         )
 
 
