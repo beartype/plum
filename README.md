@@ -242,7 +242,7 @@ Value for option: b
 NotFoundLookupError: For function "f", signature (builtins.int, builtins.str) could not be resolved.
 ```
 
-If you want to use a default value for a position argument, use the following pattern
+If you want to use a default value for a positional argument, use the following pattern
 instead:
 
 
