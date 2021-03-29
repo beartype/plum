@@ -55,7 +55,7 @@ def f(x: int):
     return "This is an integer!"
 ```
 
-```python
+```
 >>> f("1")
 'This is a string!'
 
@@ -77,7 +77,6 @@ all numbers:
 ```python
 from numbers import Number
 
-
 @dispatch
 def f(x: Number):
     return "This is a number!"
@@ -89,7 +88,7 @@ But an `int` is also a `Number`, so `f(1)` can either return
 The rule of multiple dispatch is that the *most specific* method is chosen:
 
 
-```python
+```
 >>> f(1)
 'This is an integer!'
 ```
@@ -230,7 +229,7 @@ def f(x, option="a"):
     return x  # Do something.
 ```
 
-```python
+```
 >>> f(1)  # This is fine.
 Value for option: a
 1
@@ -261,7 +260,7 @@ def f(x):
     return f(x, "a")  # Use default value for `option`.
 ```
 
-```python
+```
 >>> f(1)  # This is fine.
 Value for option: a
 1
@@ -331,7 +330,7 @@ def f(x: List[int]):
     print("list of int")
 ```
 
-```python
+```
 >>> f([1, 2])
 'list of int'
 
@@ -388,7 +387,7 @@ def f(x: {int, str}) -> int:
     return x
 ```
 
-```python
+```
 >>> f(1)
 1
 
@@ -420,7 +419,7 @@ class Rational:
         self.denom = denom
 ```
 
-```python
+```
 >>> convert(0.5, Number)
 0.5
 
@@ -480,7 +479,7 @@ def add(x: float, y: float):
     return x + y
 ```
 
-```python
+```
 >>> add(1, 2)
 3
 
@@ -543,7 +542,7 @@ def mul(a: Element, b: SpecialisedElement):
     return "specialised operation"
 ```
 
-```python
+```
 >>> zero = ZeroElement()
 
 >>> specialised_element = SpecialisedElement()
@@ -592,7 +591,7 @@ def f(x: A[2]):
     return "2"
 ```
 
-```python
+```
 >>> A
 __main__.A
 
@@ -627,7 +626,7 @@ def add(x: {int, float}, y: {int, float}):
     return x + y
 ```
 
-```python
+```
 >>> add(1, 1)
 2
 
@@ -650,7 +649,7 @@ def f(x: int):
     return "new behaviour"
 ```
 
-```python
+```
 >>> f(1.0)
 'old behaviour'
 
@@ -675,7 +674,7 @@ def f(x: str):
     return "str"
 ```
 
-```python
+```
 >>> f(1)
 'int'
 
