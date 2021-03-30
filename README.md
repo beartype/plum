@@ -14,6 +14,7 @@ _The current `master` is unreleased._
  * [Keyword Arguments and Default Values](#keyword-arguments-and-default-values)
  * [Subclassing](#subclassing)
      - [Diagonal Dispatch](#diagonal-dispatch)
+ * [Comparison with `multipledispatch`](#comparison-with-multipledispatch)
  * [Type System](#type-system)
      - [Union Types](#union-types)
      - [Parametric Types](#parametric-types)
@@ -272,6 +273,188 @@ Value for option: b
 >>> f(1, option="b")  # But this won't.
 TypeError: f() got an unexpected keyword argument 'option'
 ```
+
+## Comparison with `multipledispatch`
+
+As an alternative to Plum, there is
+[multipledispatch](https://github.com/mrocklin/multipledispatch), which also is a 
+great solution.
+Plum was developed to provide a slightly more featureful implementation of multiple 
+dispatch.
+
+#### Plum's caching mechanism is optimised to minimise overhead.
+
+```python
+from multipledispatch import dispatch as dispatch_md
+from plum import dispatch as dispatch_plum
+
+@dispatch_md(int)
+def f_md(x):
+   return x
+
+
+@dispatch_plum
+def f_plum(x: int):
+   return x
+
+
+def f_native(x):
+    return x
+```
+
+```python
+>>> f_md(1); f_plum(1);  # Run once to populate cache.
+
+>>> %timeit f_native(1)
+82.4 ns ± 0.162 ns per loop (mean ± std. dev. of 7 runs, 10000000 loops each)
+
+>>> %timeit f_md(1)
+811 ns ± 4 ns per loop (mean ± std. dev. of 7 runs, 1000000 loops each)
+
+>>> %timeit f_plum(1)
+434 ns ± 2.74 ns per loop (mean ± std. dev. of 7 runs, 1000000 loops each)
+```
+ 
+ 
+#### Plum synergises with OOP.
+Consider the following snippet:
+   
+```python
+from multipledispatch import dispatch
+
+class A:
+
+    def f(self, x):
+        print("Fallback!")
+        
+
+class B:
+
+    @dispatch(int)
+    def f(self, x):
+        print(x)
+```
+   
+```python
+>>> b = B()
+
+>>> b.f(1)
+1
+
+>>> b.f("1")
+NotImplementedError: Could not find signature for f: <str>
+```
+
+This behaviour might be undesirable: since `B.f` isn't matched, we could want `A.f` 
+to be tried next.
+Plum supports this:
+
+```python
+from plum import Dispatcher, Referentiable, Self
+
+class A(metaclass=Referentiable):
+    dispatch = Dispatcher(in_class=Self)
+
+    def f(self, x):
+        print("Fallback")
+
+
+class B(A):
+    dispatch = Dispatcher(in_class=Self)
+
+    @dispatch
+    def f(self, x: int):
+        print(x)
+```
+
+```python
+>>> b = B()
+
+>>> b.f(1)
+1
+
+>>> b.f("1")
+fallback
+```
+
+#### [Plum provides a mechanism to dispatch on the class type when creating the class.](#subclassing)
+
+#### [Plum supports parametric types from `typing`](#parametric-types).
+   
+#### Plum attempts to stay close to Julia's type system.
+For example, `multipledispatch`'s union type is not a true union type:
+
+```python
+from multipledispatch import dispatch
+
+@dispatch((object, int), int)
+def f(x, y):
+    print("First")
+    
+
+@dispatch(int, object)
+def f(x, y):
+    print("Second")
+```
+
+```python
+>>> f(1, 1)
+First
+```
+
+Because the union of `object` and `int` is `object`, `f(1, 1)` should raise an 
+ambiguity error!
+For example, compare with Julia:
+
+```julia
+julia> f(x::Union{Any, Int}, y::Int) = println("First")
+f (generic function with 1 method)
+
+julia> f(x::Int, y::Any) = println("Second")
+f (generic function with 2 methods)
+
+julia> f(3, 3)
+ERROR: MethodError: f(::Int64, ::Int64) is ambiguous. Candidates:
+  f(x, y::Int64) in Main at REPL[1]:1
+  f(x::Int64, y) in Main at REPL[2]:1
+```
+
+Plum does provide a true union type:
+
+```python
+from plum import dispatch
+
+@dispatch
+def f(x: {object, int}, y: int):
+    print("First")
+
+
+@dispatch
+def f(x: int, y: object):
+    print("Second")
+```
+
+```python
+>>> f(1, 1)
+AmbiguousLookupError: For function "f", signature (builtins.int, builtins.int) is ambiguous among the following:
+  ({builtins.int, builtins.object}, builtins.int) (precedence: 0)
+  (builtins.int, builtins.object) (precedence: 0)
+```
+
+Just to sanity check that things are indeed working correctly:
+
+```python
+>>> f(1.0, 1)
+First
+
+>>> f(1, 1.0)
+Second
+```
+
+#### [Plum implements method precedence.](#method-precedence)
+Method precedence can be a very powerful tool to simplify more complicated designs.
+
+#### [Plum provides generic `convert` and `promote` functions.](#conversion-and-promotion)
 
 ## Type System
 
