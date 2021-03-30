@@ -68,7 +68,7 @@ will be raised:
 
 ```python
 >>> f(1.0)
-NotFoundLookupError: For function "f", signature (builtins.float) could not be resolved.
+NotFoundLookupError: For function "f", signature (builtins.float,) could not be resolved.
 ```
 
 Instead of implementing a method for `float`s, let's implement a method for 
@@ -556,7 +556,7 @@ def mul(a: Element, b: SpecialisedElement):
 'specialised operation'
 
 >>> mul_no_precedence(zero, specialised_element)
-AmbiguousLookupError: For function "mul_no_precedence", signature (__main__.ZeroElement, __main__.SpecialisedElement) is ambiguous among the following:
+AmbiguousLookupError: For function "mul_no_precedence", signature Signature(__main__.ZeroElement, __main__.SpecialisedElement) is ambiguous among the following:
   (__main__.ZeroElement, __main__.Element) (precedence: 0)
   (__main__.Element, __main__.SpecialisedElement) (precedence: 0)
 

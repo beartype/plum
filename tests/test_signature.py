@@ -23,11 +23,16 @@ class FP(Re):
 
 
 def test_properties():
-    assert repr(Sig(Num)) == "({!r})".format(Type(Num))
     assert hash(Sig(Num)) == hash(Sig(Num))
     assert hash(Sig(Num)) != hash(Type(Num))
     assert len(Sig(Num)) == 1
     assert len(Sig(Num, [Num])) == 1
+
+
+def test_representation():
+    assert repr(Sig()) == "()"
+    assert repr(Sig(Num)) == f"({Type(Num)!r},)"
+    assert repr(Sig(Num, Re)) == f"({Type(Num)!r}, {Type(Re)!r})"
 
 
 def test_comparability():

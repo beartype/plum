@@ -24,7 +24,12 @@ class Signature(Comparable):
             raise TypeError("Only the last type can represent varargs.")
 
     def __repr__(self):
-        return "({})".format(", ".join(map(repr, self.types)))
+        if len(self.types) == 0:
+            return "()"
+        elif len(self.types) == 1:
+            return f"({self.types[0]!r},)"
+        else:
+            return "({})".format(", ".join(map(repr, self.types)))
 
     def __hash__(self):
         return multihash(Signature, *self.types)
