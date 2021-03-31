@@ -282,7 +282,7 @@ great solution.
 Plum was developed to provide a slightly more featureful implementation of multiple 
 dispatch.
 
-#### Plum's caching mechanism is optimised to minimise overhead.
+#### Like `multipledispatch`, Plum's caching mechanism is optimised to minimise overhead.
 
 ```python
 from multipledispatch import dispatch as dispatch_md
@@ -314,7 +314,6 @@ def f_native(x):
 >>> %timeit f_plum(1)
 434 ns ± 2.74 ns per loop (mean ± std. dev. of 7 runs, 1000000 loops each)
 ```
- 
  
 #### Plum synergises with OOP.
 Consider the following snippet:
@@ -739,7 +738,7 @@ def mul(a: Element, b: SpecialisedElement):
 'specialised operation'
 
 >>> mul_no_precedence(zero, specialised_element)
-AmbiguousLookupError: For function "mul_no_precedence", signature Signature(__main__.ZeroElement, __main__.SpecialisedElement) is ambiguous among the following:
+AmbiguousLookupError: For function "mul_no_precedence", signature (__main__.ZeroElement, __main__.SpecialisedElement) is ambiguous among the following:
   (__main__.ZeroElement, __main__.Element) (precedence: 0)
   (__main__.Element, __main__.SpecialisedElement) (precedence: 0)
 
