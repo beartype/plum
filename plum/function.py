@@ -1,6 +1,5 @@
 import inspect
 import logging
-from functools import partial, WRAPPER_ASSIGNMENTS
 
 from .resolvable import Promise
 from .signature import Signature
@@ -28,12 +27,10 @@ class Wrapped:
         self.f = f
         self.reference = reference
 
-        # Copy assignments.
-        for attr in WRAPPER_ASSIGNMENTS:
-            try:
-                setattr(self, attr, getattr(reference, attr))
-            except AttributeError:
-                pass
+        # Copy relevant metadata.
+        self.__name__ = reference.__name__
+        self.__module__ = reference.__module__
+        self.__doc__ = reference.__doc__
 
     def __call__(self, *args, **kw_args):
         return self.f(*args, **kw_args)
@@ -446,7 +443,10 @@ class Function:
             return self
         else:
             # Call is bound.
-            partial_f = wraps(self)(partial(self, instance))
+
+            @wraps(self)
+            def wrapped_self(*args, **kw_args):
+                return self(instance, *args, **kw_args)
 
             # We need to wrap `self.invoke` to ensure that the type of the instance and
             # the instance are prepended appropriately.
@@ -462,9 +462,9 @@ class Function:
                 return wrapped_method
 
             # Make sure that `invoke` is available in `partial_f`.
-            partial_f.invoke = wrapped_invoke
+            wrapped_self.invoke = wrapped_invoke
 
-            return partial_f
+            return wrapped_self
 
     def __repr__(self):
         return (

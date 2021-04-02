@@ -91,7 +91,7 @@ def test_cache_class_call_performance():
     dur_native = benchmark(a_native, (1,))
     dur_plum_first = benchmark(a, (1,), n=1)
     dur_plum = benchmark(a, (1,))
-    assert dur_plum <= 25 * dur_native, "compare native call"
+    assert dur_plum <= 40 * dur_native, "compare native call"
     assert dur_plum_first <= 1000 * dur_plum, "compare first call"
     assert dur_plum <= dur_plum_first / 10, "cache performance call"
 
@@ -99,7 +99,7 @@ def test_cache_class_call_performance():
     dur_native = benchmark(lambda x: a_native.go(x), (1,))
     dur_plum_first = benchmark(lambda x: a.go(x), (1,), n=1)
     dur_plum = benchmark(lambda x: a.go(x), (1,))
-    assert dur_plum <= 25 * dur_native, "compare native method"
+    assert dur_plum <= 40 * dur_native, "compare native method"
     assert dur_plum_first <= 1000 * dur_plum, "compare first method"
     assert dur_plum <= dur_plum_first / 10, "cache performance method"
 
@@ -107,7 +107,7 @@ def test_cache_class_call_performance():
     dur_native = benchmark(lambda x: ANative.go_again(a_native, x), (1,))
     dur_plum_first = benchmark(lambda x: A.go_again(a, x), (1,), n=1)
     dur_plum = benchmark(lambda x: A.go_again(a, x), (1,))
-    assert dur_plum <= 25 * dur_native, "compare native static"
+    assert dur_plum <= 40 * dur_native, "compare native static"
     assert dur_plum_first <= 1000 * dur_plum, "compare first static"
     assert dur_plum <= dur_plum_first / 10, "cache performance static"
 
