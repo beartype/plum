@@ -1,9 +1,10 @@
 import inspect
 import logging
+from functools import partial, WRAPPER_ASSIGNMENTS
 
 from .resolvable import Promise
 from .signature import Signature
-from .type import as_type, is_type, is_object
+from .type import as_type, is_object
 
 __all__ = [
     "extract_signature",
@@ -15,14 +16,53 @@ __all__ = [
 log = logging.getLogger(__name__)
 
 
-def extract_signature(f, in_class=None):
+class Wrapped:
+    """A wrapped callable, which also wraps `__repr__`.
+
+    Args:
+        f (function): Implementation.
+        reference (object): Callable to wrap.
+    """
+
+    def __init__(self, f, reference):
+        self.f = f
+        self.reference = reference
+
+        # Copy assignments.
+        for attr in WRAPPER_ASSIGNMENTS:
+            try:
+                setattr(self, attr, getattr(reference, attr))
+            except AttributeError:
+                pass
+
+    def __call__(self, *args, **kw_args):
+        return self.f(*args, **kw_args)
+
+    def __repr__(self):
+        return repr(self.reference)
+
+
+def wraps(reference):
+    """Create a wrapped callable. This also wraps `__repr__`.
+
+    Args:
+        reference (object): Callable to wrap.
+
+    Returns:
+        function: Decorator.
+    """
+
+    def decorator(f):
+        return Wrapped(f, reference)
+
+    return decorator
+
+
+def extract_signature(f):
     """Extract the signature from a function.
 
     Args:
         f (function): Function to extract signature from.
-        in_class (bool or type, optional): Class that `f` is part of. Can also be set to
-            `True` or `False` to indicate that the function `f` is or is not part of
-            a class. Defaults to that `f` is not part of a class.
 
     Returns:
         tuple[:class:`.signature.Signature`, type]: Signature and return type of the
@@ -33,14 +73,9 @@ def extract_signature(f, in_class=None):
 
     # Get types of arguments.
     types = []
-    # Cut off potential `self`.
-    if in_class:
-        args = spec.args[1:]
-    else:
-        args = spec.args
     # Cut off keyword arguments: arguments which are given a default value.
     num_defaults = len(spec.defaults) if spec.defaults else 0
-    for arg in args[: len(args) - num_defaults]:
+    for arg in spec.args[: len(spec.args) - num_defaults]:
         try:
             types.append(spec.annotations[arg])
         except KeyError:
@@ -101,47 +136,6 @@ def _convert(obj, target_type):
 default_obj_type = as_type(object)
 
 
-class WrappedMethod:
-    """Wrap a method, copying metadata and handling bound and unbound calls and
-    conversion to the right return type.
-
-    Args:
-        method (function): Method to wrap.
-        instance (tuple, optional): Instance in the case of a bound call. Defaults to
-            `None`.
-        return_type (ptype, optional): Return type. Defaults to `object`.
-    """
-
-    def __init__(self, method, instance=None, return_type=default_obj_type):
-        self._method = method
-        self._instance = instance
-        self._return_type = return_type
-
-        # Copy metadata.
-        self.__name__ = method.__name__
-        self.__doc__ = method.__doc__
-        self.__module__ = method.__module__
-
-    def __call__(self, *args, **kw_args):
-        if self._instance is not None:
-            args = (self._instance,) + args
-
-        # Optimise the common case that the return type is `object`.
-        if self._return_type is default_obj_type:
-            return self._method(*args, **kw_args)
-        else:
-            return _convert(self._method(*args, **kw_args), self._return_type)
-
-    def __repr__(self):
-        return repr(self._method)
-
-    def invoke(self, *types):
-        if self._instance is not None:
-            types = (self._instance,) + types
-
-        return self._method.invoke(*types)
-
-
 class Function:
     """A function.
 
@@ -186,7 +180,7 @@ class Function:
         if f is None:
             return lambda f_: self.extend(f_, precedence=precedence)
 
-        signature, return_type = extract_signature(f, in_class=self._class)
+        signature, return_type = extract_signature(f)
         return self.extend_multi(
             signature, precedence=precedence, return_type=return_type
         )(f)
@@ -403,18 +397,12 @@ class Function:
         if len(self._pending) != 0:
             self._resolve_pending_registrations()
 
-        # Get types of arg.
-        if self._class:
-            sig_args = args[1:]
-        else:
-            sig_args = args
-
         # Get types of arguments for signature. Only use `type_of` if
         # necessary, because it incurs a significant performance hit.
         if not self._parametric:
-            sig_types = tuple([type(x) for x in sig_args])
+            sig_types = tuple([type(x) for x in args])
         else:
-            sig_types = tuple([promised_type_of.resolve()(x) for x in sig_args])
+            sig_types = tuple([promised_type_of.resolve()(x) for x in args])
 
         try:
             # Attempt to use cache. This will also be done in
@@ -444,18 +432,39 @@ class Function:
         Returns:
             function: Method.
         """
-        # Check whether the call is bound or unbound.
-        bound = len(types) >= 1 and not is_type(types[0])
-
-        # Split instance in the case of a bound call.
-        instance, types = (types[0], types[1:]) if bound else (None, types)
-
-        # Get method and return type, and perform call.
         method, return_type = self.resolve_method(*[as_type(t) for t in types])
-        return WrappedMethod(method, instance=instance, return_type=return_type)
+
+        @wraps(self._f)
+        def wrapped_method(*args, **kw_args):
+            return _convert(method(*args, **kw_args), return_type)
+
+        return wrapped_method
 
     def __get__(self, instance, cls=None):
-        return WrappedMethod(self, instance=instance)
+        if instance is None:
+            # Call is unbound.
+            return self
+        else:
+            # Call is bound.
+            partial_f = wraps(self)(partial(self, instance))
+
+            # We need to wrap `self.invoke` to ensure that the type of the instance and
+            # the instance are prepended appropriately.
+
+            @wraps(self.invoke)
+            def wrapped_invoke(*types):
+                method = self.invoke(type(instance), *types)
+
+                @wraps(self._f)
+                def wrapped_method(*args, **kw_args):
+                    return method(instance, *args, **kw_args)
+
+                return wrapped_method
+
+            # Make sure that `invoke` is available in `partial_f`.
+            partial_f.invoke = wrapped_invoke
+
+            return partial_f
 
     def __repr__(self):
         return (

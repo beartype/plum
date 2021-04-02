@@ -32,7 +32,7 @@ class Dispatcher:
         if f is None:
             return lambda f_: self(f_, precedence=precedence)
 
-        signature, return_type = extract_signature(f, in_class=self._class)
+        signature, return_type = extract_signature(f)
         return self._add_method(f, [signature], precedence, return_type)
 
     def multi(self, *signatures, precedence=0, return_type=object):

@@ -164,9 +164,9 @@ def test_invoke_inheritance():
     assert c.do.invoke(float)(1.0) == "fallback"
 
     # Test unbound calls.
-    assert C.do.invoke(str)(c, "1") == "str"
-    assert C.do.invoke(int)(c, 1) == "int"
-    assert C.do.invoke(float)(c, 1.0) == "fallback"
+    assert C.do.invoke(C, str)(c, "1") == "str"
+    assert C.do.invoke(C, int)(c, 1) == "int"
+    assert C.do.invoke(C, float)(c, 1.0) == "fallback"
 
 
 def test_parametric_tracking():
