@@ -1,4 +1,4 @@
-from plum import  Dispatcher, clear_all_cache, Referentiable, Self, List
+from plum import  Dispatcher, clear_all_cache, List
 from plum.type import subclasscheck_cache
 from ..util import benchmark
 

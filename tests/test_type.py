@@ -6,7 +6,6 @@ from plum import (
     List,
     PromisedType,
     ResolvableType,
-    Referentiable,
     ResolutionError,
     Self,
     Type,
@@ -86,7 +85,7 @@ def test_promisedtype():
     assert not t.parametric
 
 
-class A(metaclass=Referentiable):
+class A:
     self = Self()
 
 
