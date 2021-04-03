@@ -1,4 +1,5 @@
 import abc
+import builtins
 import logging
 
 __all__ = [
@@ -51,6 +52,31 @@ class Promise(Resolvable):
 
 referentiables = []  #: Referentiable classes.
 
+# Hook into `builtins.__build_class__` to track class creation. Here be dragons...
+if hasattr(builtins, "__build_class__"):
+    _builtin_build_class = builtins.__build_class__
+
+    def __build_class__(*args, **kw_args):
+        instance = _builtin_build_class(*args, **kw_args)
+        # This will be called before `Referentiable.__new__`.
+        if len(referentiables) == 0 or referentiables[-1] is not instance:
+            if hasattr(instance, "__track__") and not instance.__track__:
+                pass  # Don't track the class.
+            else:
+                referentiables.append(instance)
+        return instance
+
+    builtins.__build_class__ = __build_class__
+else:  # pragma: no cover
+    log.warning(
+        '"builtins.__build_class__" not available. '
+        'Please be careful to set the metaclass to "Referentiable" wherever '
+        "dispatch within a class is used."
+    )
+
+
+# As a backup, expose a metaclass to track referentiables.
+
 
 def Referentiable(*args):
     """Create a metaclass that tracks referentiables.
@@ -72,10 +98,12 @@ def Referentiable(*args):
         Base = type
 
     class Meta(Base):
-        def __new__(cls, name, bases, dct):
-            instance = Base.__new__(cls, name, bases, dct)
+        __track__ = False
+
+        def __new__(*args, **kw_args):
+            instance = Base.__new__(*args, **kw_args)
+            # This will be called before `builtins.__build_class__`.
             referentiables.append(instance)
             return instance
 
     return Meta
-

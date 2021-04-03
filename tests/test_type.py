@@ -91,6 +91,7 @@ class A(metaclass=Referentiable):
 
 
 def test_self():
+    assert isinstance(Self, type)
     assert A.self == as_type(A)
 
 

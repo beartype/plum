@@ -1,6 +1,6 @@
 import numpy as np
 
-from plum import dispatch, Dispatcher, Referentiable, Self
+from plum import dispatch, Dispatcher
 from tests.util import benchmark
 
 
@@ -43,8 +43,8 @@ class A:
         pass
 
 
-class B(metaclass=Referentiable):
-    _dispatch = Dispatcher(in_class=Self)
+class B:
+    _dispatch = Dispatcher()
 
     @_dispatch
     def __call__(self, x: int):

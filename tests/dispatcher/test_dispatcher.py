@@ -1,6 +1,6 @@
 import pytest
 
-from plum import Dispatcher, Referentiable, Self, List, NotFoundLookupError
+from plum import Dispatcher, List, NotFoundLookupError
 
 
 def test_keywords():
@@ -35,8 +35,8 @@ def test_redefinition():
 def test_metadata_and_printing():
     dispatch = Dispatcher()
 
-    class A(metaclass=Referentiable):
-        _dispatch = Dispatcher(in_class=Self)
+    class A:
+        _dispatch = Dispatcher()
 
         @_dispatch
         def g(self):
@@ -138,19 +138,19 @@ def test_invoke():
 
 
 def test_invoke_inheritance():
-    class A(metaclass=Referentiable):
+    class A:
         def do(self, x):
             return "fallback"
 
     class B(A):
-        _dispatch = Dispatcher(in_class=Self)
+        _dispatch = Dispatcher()
 
         @_dispatch
         def do(self, x: int):
             return "int"
 
     class C(B):
-        _dispatch = Dispatcher(in_class=Self)
+        _dispatch = Dispatcher()
 
         @_dispatch
         def do(self, x: str):
@@ -187,3 +187,199 @@ def test_parametric_tracking():
     assert not f._parametric
     f(1)
     assert f._parametric
+
+
+def test_context():
+    # Automatically determine context if `in_class` is not set.
+
+    dispatch = Dispatcher()
+
+    class A:
+        @dispatch
+        def do(self):
+            pass
+
+    a = A()
+    a.do()
+
+    keys = set(dispatch._functions.keys())
+    assert keys == {"tests.dispatcher.test_dispatcher.test_context.<locals>.A.do"}
+
+    # This should not happen if `in_class` is set.
+
+    class A:
+        dispatch = Dispatcher()
+
+        @dispatch
+        def do(self):
+            pass
+
+    a = A()
+    a.do()
+
+    assert A.dispatch._functions.keys() == {"do"}
+
+    # It should also not happen if `context` is explicitly set.
+
+    dispatch = Dispatcher()
+
+    class A:
+        @dispatch(context="context")
+        def do(self):
+            pass
+
+    a = A()
+    a.do()
+
+    assert dispatch._functions.keys() == {"context.do"}
+
+
+def test_class():
+    class Other:
+        pass
+
+    # Automatically determine class if `in_class` is not set.
+
+    dispatch = Dispatcher()
+
+    class A:
+        @dispatch
+        def do(self):
+            pass
+
+    a = A()
+    a.do()
+
+    assert len(dispatch._functions) == 1
+    assert list(dispatch._functions.values())[0]._class.get_types() == (A,)
+
+    # This should not happen if `in_class` is set.
+
+    dispatch = Dispatcher(in_class=Other)
+
+    class A:
+        @dispatch
+        def do(self):
+            pass
+
+    a = A()
+    a.do()
+
+    assert len(dispatch._functions) == 1
+    assert list(dispatch._functions.values())[0]._class.get_types() == (Other,)
+
+    # It should also not happen if `in_class` is explicitly set.
+
+    dispatch = Dispatcher(in_class=Other)
+
+    class OtherTwo:
+        pass
+
+    class A:
+        @dispatch(in_class=OtherTwo)
+        def do(self):
+            pass
+
+    a = A()
+    a.do()
+
+    assert len(dispatch._functions) == 1
+    assert list(dispatch._functions.values())[0]._class.get_types() == (OtherTwo,)
+
+
+def test_context_multi():
+    # Automatically determine context if `in_class` is not set.
+
+    dispatch = Dispatcher()
+
+    class A:
+        @dispatch.multi((object,))
+        def do(self):
+            pass
+
+    a = A()
+    a.do()
+
+    keys = set(dispatch._functions.keys())
+    assert keys == {"tests.dispatcher.test_dispatcher.test_context_multi.<locals>.A.do"}
+
+    # This should not happen if `in_class` is set.
+
+    class A:
+        dispatch = Dispatcher()
+
+        @dispatch.multi((object,))
+        def do(self):
+            pass
+
+    a = A()
+    a.do()
+
+    assert A.dispatch._functions.keys() == {"do"}
+
+    # It should also not happen if `context` is explicitly set.
+
+    dispatch = Dispatcher()
+
+    class A:
+        @dispatch.multi((object,), context="context")
+        def do(self):
+            pass
+
+    a = A()
+    a.do()
+
+    assert dispatch._functions.keys() == {"context.do"}
+
+
+def test_class_multi():
+    class Other:
+        pass
+
+    # Automatically determine class if `in_class` is not set.
+
+    dispatch = Dispatcher()
+
+    class A:
+        @dispatch.multi((object,))
+        def do(self):
+            pass
+
+    a = A()
+    a.do()
+
+    assert len(dispatch._functions) == 1
+    assert list(dispatch._functions.values())[0]._class.get_types() == (A,)
+
+    # This should not happen if `in_class` is set.
+
+    dispatch = Dispatcher(in_class=Other)
+
+    class A:
+        @dispatch.multi((object,))
+        def do(self):
+            pass
+
+    a = A()
+    a.do()
+
+    assert len(dispatch._functions) == 1
+    assert list(dispatch._functions.values())[0]._class.get_types() == (Other,)
+
+    # It should also not happen if `in_class` is explicitly set.
+
+    dispatch = Dispatcher(in_class=Other)
+
+    class OtherTwo:
+        pass
+
+    class A:
+        @dispatch.multi((object,), in_class=OtherTwo)
+        def do(self):
+            pass
+
+    a = A()
+    a.do()
+
+    assert len(dispatch._functions) == 1
+    assert list(dispatch._functions.values())[0]._class.get_types() == (OtherTwo,)

@@ -1,4 +1,4 @@
-from plum import Dispatcher, clear_all_cache, Referentiable, Self, List
+from plum import  Dispatcher, clear_all_cache, Referentiable, Self, List
 from plum.type import subclasscheck_cache
 from ..util import benchmark
 
@@ -57,8 +57,8 @@ def test_cache_class_call_performance():
         def go_again(self, x):
             pass
 
-    class A(metaclass=Referentiable):
-        _dispatch = Dispatcher(in_class=Self)
+    class A:
+        _dispatch = Dispatcher()
 
         @_dispatch
         def __call__(self, x: int):

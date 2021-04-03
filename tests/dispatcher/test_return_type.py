@@ -1,7 +1,11 @@
 import pytest
 
-from plum import Dispatcher, Referentiable, Self, Union, add_conversion_method
-
+from plum import (
+    Dispatcher,
+    Self,
+    Union,
+    add_conversion_method,
+)
 # noinspection PyUnresolvedReferences
 from ..test_promotion import convert
 
@@ -52,12 +56,12 @@ def test_multi():
 
 
 def test_inheritance():
-    class A(metaclass=Referentiable):
+    class A:
         def do(self, x):
             return "hello from A"
 
     class B(A):
-        _dispatch = Dispatcher(in_class=Self)
+        _dispatch = Dispatcher()
 
         @_dispatch
         def do(self, x: Union[int, Self, str]) -> Union[int, Self]:
@@ -73,8 +77,8 @@ def test_inheritance():
 
 
 def test_inheritance_self_return():
-    class A(metaclass=Referentiable):
-        _dispatch = Dispatcher(in_class=Self)
+    class A:
+        _dispatch = Dispatcher()
 
         @_dispatch
         def do(self, x: Self, ok=True) -> Self:

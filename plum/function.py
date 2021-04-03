@@ -242,6 +242,7 @@ class Function:
         self._pending.append((signature, f, precedence, as_type(return_type)))
 
     def _resolve_pending_registrations(self):
+        # Keep track of whether anything registered.
         registered = False
 
         # Perform any pending registrations.

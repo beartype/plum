@@ -6,7 +6,6 @@ from plum import (
     Self,
     Dispatcher,
     PromisedType,
-    Referentiable,
     NotFoundLookupError,
     AmbiguousLookupError,
 )
@@ -17,8 +16,8 @@ class ComputableObject:
     pass
 
 
-class Device(metaclass=Referentiable):
-    _dispatch = Dispatcher(in_class=Self)
+class Device:
+    _dispatch = Dispatcher()
 
     @_dispatch
     def __init__(self):
@@ -60,7 +59,7 @@ PromisedHammer = PromisedType()
 
 
 class Hammer(Device):
-    _dispatch = Dispatcher(in_class=Self)
+    _dispatch = Dispatcher()
 
     @_dispatch
     def __add__(self, other: PromisedHammer):
@@ -72,7 +71,7 @@ class Hammer(Device):
 
 
 class Calculator(Device):
-    _dispatch = Dispatcher(in_class=Self)
+    _dispatch = Dispatcher()
 
     @_dispatch
     def __init__(self, size: int):
@@ -216,13 +215,13 @@ def test_varargs():
 
 
 def test_abc_abstractmethod():
-    class A(metaclass=Referentiable(abc.ABCMeta)):
+    class A(metaclass=abc.ABCMeta):
         @abc.abstractmethod
         def f(self, x):
             pass
 
     class B(A):
-        _dispatch = Dispatcher(in_class=Self)
+        _dispatch = Dispatcher()
 
         @_dispatch
         def f(self, x: int):

@@ -3,7 +3,12 @@ import inspect
 import logging
 from types import FunctionType, MethodType
 
-from .resolvable import Resolvable, Promise, referentiables, ResolutionError
+from .resolvable import (
+    Resolvable,
+    Promise,
+    referentiables,
+    ResolutionError,
+)
 from .util import multihash, Comparable
 
 __all__ = [
@@ -244,34 +249,33 @@ PromisedTuple = Promise()  # This will resolve to `.parametric.Tuple`.
 _reference = {}
 
 
-def Self():
-    """Make a type for the currently referenced class.
+class Self:
+    """Type for the currently referenced class."""
 
-    Returns:
-        ptype: Type for the currently referenced class.
-    """
-    # Create the reference class, which is a parametric class. We need to use a
-    # parametric class: if `self = Self()`, and `t = type(self)`, then giving `t` to
-    # `as_type` will instantiate another `Self`, which will have a wrong reference!
-    try:
-        Reference = _reference["Reference"]
-    except KeyError:
+    def __new__(cls, *args, **kw_args):
+        # Create the reference class, which is a parametric class. We need to use a
+        # parametric class: if `self = Self()`, and `t = type(self)`, then giving `t` to
+        # `as_type` will instantiate another `Self`, which will have a wrong reference!
+        try:
+            Reference = _reference["Reference"]
+        except KeyError:
 
-        @promised_parametric.resolve()
-        class Reference(PromisedType):
-            def resolve(self):
-                pos = promised_type_parameter.resolve()(self)
-                if pos >= len(referentiables):
-                    raise ResolutionError(
-                        f"Requesting referentiable {pos + 1}, "
-                        f"whereas only {len(referentiables)} exist(s)."
-                    )
-                else:
-                    return referentiables[pos]
+            @promised_parametric.resolve()
+            class Reference(PromisedType):
+                def resolve(self):
+                    pos = promised_type_parameter.resolve()(self)
+                    if pos >= len(referentiables):
+                        raise ResolutionError(
+                            f"Requesting referentiable {pos + 1}, "
+                            f"whereas only {len(referentiables)} exist(s). "
+                            f'Did you forget to set a metaclass to "Referentiable"?'
+                        )
+                    else:
+                        return referentiables[pos]
 
-        _reference["Reference"] = Reference
+            _reference["Reference"] = Reference
 
-    return Reference[len(referentiables)]()
+        return Reference[len(referentiables)]()
 
 
 def as_type(obj):

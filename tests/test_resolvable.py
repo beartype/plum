@@ -2,7 +2,7 @@ import abc
 
 import pytest
 
-from plum import Referentiable, Self, Promise, ResolutionError
+from plum import Dispatcher, Referentiable, Self, Promise, ResolutionError
 
 
 def test_promise():
@@ -14,15 +14,27 @@ def test_promise():
 
 
 def test_reference():
-    class A(metaclass=Referentiable):
+    class A:
         pass
 
     ref = Self()
     ref._type_parameter -= 1  # Reference is created *outside* the class definition.
-    assert ref.resolve() == A
+    assert ref.resolve() is A
     ref._type_parameter += 1
     with pytest.raises(ResolutionError):
         ref.resolve()
+
+
+def test_referentiable():
+    class A(metaclass=Referentiable):
+        dispatch = Dispatcher()
+
+        @dispatch
+        def do(self: Self):
+            return self
+
+    a = A()
+    assert a.do() is a
 
 
 def test_referentiable_metaclass_wrapping():
