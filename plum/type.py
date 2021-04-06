@@ -327,7 +327,10 @@ def ptype(obj, context=None):
         # Remove a potential argument.
         obj_str = obj_str.split("(")[0]
 
-        if obj_str in ("Union", "Optional"):
+        if obj_str[0] == "<":  # pragma: no cover
+            # The type is private. This is a type of a `typing` type.
+            pass
+        elif obj_str in ("Union", "Optional"):
             if obj_is_parametrised:
                 return Union(*(ptype(t, context=context) for t in obj.__args__))
             else:
@@ -351,8 +354,8 @@ def ptype(obj, context=None):
             obj = obj.__forward_arg__
         else:
             raise NotImplementedError(
-                f"There is currently no support for {type(obj)}. "
-                f"Please open an issue here at https://github.com/wesselb/plum/issues"
+                f'There is currently no support for "typing.{obj.__name__}". '
+                f"Please open an issue at https://github.com/wesselb/plum/issues"
             )  # pragma: no cover
 
     # Strings are qualified names.
