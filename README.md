@@ -142,7 +142,7 @@ In a design like this, the methods for `f` recorded by `dispatch` are _global_:
 
 This can be convenient, but it could also be undesirable, because it means that anyone 
 can attach new behaviour to your functions.
-To keep you functions private, you can create new dispatchers:
+To keep your functions private, you can create new dispatchers:
 
 **package/\_\_init\_\_.py**
 
