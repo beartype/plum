@@ -1,6 +1,6 @@
 import logging
 
-from .type import as_type, VarArgs
+from .type import ptype, VarArgs
 from .util import Comparable, multihash
 
 __all__ = ["Signature"]
@@ -16,20 +16,15 @@ class Signature(Comparable):
     """
 
     def __init__(self, *types):
-        # Ensure that all types are types.
-        self.types = tuple(as_type(t) for t in types)
+        # Ensure that all types are Plum types.
+        self.types = tuple(ptype(t) for t in types)
 
         # Ensure that only the last type possibly represents varargs.
         if any([isinstance(t, VarArgs) for t in self.types[:-1]]):
             raise TypeError("Only the last type can represent varargs.")
 
     def __repr__(self):
-        if len(self.types) == 0:
-            return "()"
-        elif len(self.types) == 1:
-            return f"({self.types[0]!r},)"
-        else:
-            return "({})".format(", ".join(map(repr, self.types)))
+        return "Signature({})".format(", ".join(map(repr, self.types)))
 
     def __hash__(self):
         return multihash(Signature, *self.types)
