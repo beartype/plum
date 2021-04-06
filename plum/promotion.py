@@ -3,7 +3,7 @@ import logging
 from .dispatcher import Dispatcher
 from .function import promised_convert
 from .parametric import type_of
-from .type import as_type, TypeType
+from .type import ptype, TypeType
 
 __all__ = [
     "convert",
@@ -27,7 +27,7 @@ def convert(obj, type_to: TypeType):
         type_to (type): Type to convert to.
 
     Returns:
-        object: `object_to_covert` converted to type of `obj_from_target`.
+        object: `obj` converted to type `type_to`.
     """
     return _convert.invoke(type_of(obj), type_to)(obj, type_to)
 
@@ -39,7 +39,7 @@ promised_convert.deliver(convert)
 @_dispatch
 def _convert(obj, type_to):
     type_from = type_of(obj)
-    type_to = as_type(type_to)
+    type_to = ptype(type_to)
     if type_from <= type_to:
         return obj
     else:
@@ -97,8 +97,8 @@ def _promotion_rule(type1, type2):
     Returns:
         type: Type to convert to.
     """
-    type1 = as_type(type1)
-    type2 = as_type(type2)
+    type1 = ptype(type1)
+    type2 = ptype(type2)
     if type1 <= type2:
         return type2
     elif type2 <= type1:
@@ -121,7 +121,7 @@ def add_promotion_rule(type1, type2, type_to):
     def rule(t1: type1, t2: type2):
         return type_to
 
-    if as_type(type1) != as_type(type2):
+    if ptype(type1) != ptype(type2):
 
         @_promotion_rule.extend
         def rule(t1: type2, t2: type1):
@@ -150,7 +150,7 @@ def promote(obj1, obj2, *objs):
         common_type = _promotion_rule.invoke(common_type, t)(common_type, t)
 
     # Convert objects and return.
-    return tuple(convert(obj, common_type) for obj in objs)
+    return tuple(convert(obj, ptype(common_type)) for obj in objs)
 
 
 @_dispatch

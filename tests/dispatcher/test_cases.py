@@ -2,13 +2,8 @@ import abc
 
 import pytest
 
-from plum import (
-    Self,
-    Dispatcher,
-    PromisedType,
-    NotFoundLookupError,
-    AmbiguousLookupError,
-)
+from plum import Dispatcher, NotFoundLookupError, AmbiguousLookupError
+from plum.type import PromisedType
 from .test_signature import Num, Re, FP
 
 
@@ -32,7 +27,7 @@ class Device:
         return "doing nothing"
 
     @_dispatch
-    def do(self, other: Self):
+    def do(self, other: "Device"):
         return "doing a device"
 
     @_dispatch

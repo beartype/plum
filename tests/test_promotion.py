@@ -1,3 +1,5 @@
+from typing import Union
+
 import pytest
 
 import plum
@@ -106,13 +108,10 @@ def test_promotion(convert):
     with pytest.raises(TypeError):
         promote("1", 1.0)
 
-    add_promotion_rule(str, {int, float}, {int, float})
-    add_conversion_method(str, {int, float}, float)
-
-    import plum.promotion
+    add_promotion_rule(str, Union[int, float], Union[int, float])
+    add_conversion_method(str, Union[int, float], float)
 
     assert promote(1, "1", "1") == (1.0, 1.0, 1.0)
-    print(plum.promotion._promotion_rule.methods)
     assert promote("1", 1, 1) == (1.0, 1.0, 1.0)
     assert promote(1.0, "1", 1) == (1.0, 1.0, 1.0)
     assert promote("1", 1.0, 1) == (1.0, 1.0, 1.0)
