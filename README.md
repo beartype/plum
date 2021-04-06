@@ -11,9 +11,10 @@ _The current `master` is unreleased._
 
  * [Installation](#installation)
  * [Basic Usage](#basic-usage)
+ * [Scope of Functions](#scope-of-functions)
+ * [Classes](#classes)
+   - [Diagonal Dispatch](#diagonal-dispatch)
  * [Keyword Arguments and Default Values](#keyword-arguments-and-default-values)
- * [Subclassing](#subclassing)
-     - [Diagonal Dispatch](#diagonal-dispatch)
  * [Comparison with `multipledispatch`](#comparison-with-multipledispatch)
  * [Type System](#type-system)
      - [Union Types](#union-types)
@@ -69,7 +70,7 @@ will be raised:
 
 ```python
 >>> f(1.0)
-NotFoundLookupError: For function "f", signature (builtins.float,) could not be resolved.
+NotFoundLookupError: For function "f", signature Signature(builtins.float,) could not be resolved.
 ```
 
 Instead of implementing a method for `float`s, let's implement a method for 
@@ -99,7 +100,195 @@ since an `int` is a `Number`, but a `Number` is not necessarily an `int`.
 For an excellent and way more detailed overview of multiple dispatch, see the
 [manual of the Julia Language](https://docs.julialang.org/en/).
 
-## Subclassing
+## Scope of Functions
+
+Consider the following package design.
+
+#### package/\_\_init\_\_.py
+
+```python
+import a
+import b
+```
+
+#### package/a.py
+
+```python
+from plum import dispatch
+
+@dispatch
+def f(x: int):
+   return "int"
+```
+
+#### package/b.py
+
+```python
+from plum import dispatch
+
+@dispatch
+def f(x: float):
+   return "float"
+```
+
+In a design like this, the methods for `f` recorded by `dispatch` are _global_:
+
+```python
+>>> from package.a import f
+
+>>> f(1.0)
+'float'
+```
+
+This can be convenient, but it could also be undesirable, because it means that anyone 
+can attach new behaviour to your functions.
+To keep you functions private, you can create new dispatchers:
+
+#### package/\_\_init\_\_.py
+
+```python
+import a
+import b
+```
+
+#### package/a.py
+
+```python
+from plum import Dispatcher
+
+dispatch = Dispatcher()
+
+
+@dispatch
+def f(x: int):
+   return "int"
+```
+
+#### package/b.py
+
+```python
+from plum import Dispatcher
+
+dispatch = Dispatcher()
+
+
+@dispatch
+def f(x: float):
+   return "float"
+```
+
+
+```python
+>>> from package.a import f
+
+>>> f(1)
+'int'
+
+>>> f(1.0)
+NotFoundLookupError: For function "f", signature Signature(builtins.float) could not be resolved.
+
+>>> from package.b import f
+
+>>> f(1)
+NotFoundLookupError: For function "f", signature Signature(builtins.int) could not be resolved.
+
+>>> f(1.0)
+'float'
+```
+
+
+
+
+## Classes
+
+You can use dispatch within classes:
+
+```python
+from plum import dispatch
+
+class Real:
+   @dispatch
+   def __add__(self, other: int):
+      return "int added"
+   
+   @dispatch
+   def __add__(self, other: float):
+      return "float added"
+```
+
+```python
+>>> real = Real()
+
+>>> real + 1
+'int added'
+
+>>> real + 1.0
+'float added'
+```
+
+One surprising behaviour is that, within a module, methods for a class are "permanently
+recorded".
+Therefore, when you redefine a class, the functions in the new definition still 
+implement the methods for the old definition:
+
+```python
+from plum import dispatch
+
+class Real:
+   @dispatch
+   def __add__(self, other: int):
+      return "int added"
+   
+   
+class Real:
+   @dispatch
+   def __add__(self, other: float):
+      return "float added"
+```
+
+```python
+>>> real = Real()
+
+>>> real + 1
+'int added'
+
+>>> real + 1.0
+'float added'
+```
+
+To avoid this behaviour, to keep the methods belong to a class separate to one 
+definition, it is recommended to create a  separate dispatcher for every class:
+
+```python
+from plum import Dispatcher
+
+class Real:
+   dispatch = Dispatcher()
+
+   @dispatch
+   def __add__(self, other: int):
+      return "int added"
+
+   
+class Real:
+   dispatch = Dispatcher()
+
+   @dispatch
+   def __add__(self, other: float):
+      return "float added"
+```
+
+```python
+>>> real = Real()
+
+>>> real + 1
+NotFoundLookupError: For function "__add__" of <class '__main__.Real'>, signature Signature(__main__.Real, builtins.int) could not be resolved.
+
+>>> real + 1.0
+'float added'
+```
+
+### Self References
 
 Imagine the following design:
 
@@ -107,7 +296,6 @@ Imagine the following design:
 from plum import dispatch
 
 class Real:
-    
     @dispatch
     def __add__(self, other: Real):
         pass # Do something here. 
@@ -133,42 +321,18 @@ NameError                                 Traceback (most recent call last)
 NameError: name 'Real' is not defined
 ```
 
-The problem is that, when `__add__` is defined and the type hint for `other` is set,
-the name `Real` is not yet defined.
-To circumvent this issue, Plum provides the metaclass `Referentiable` and type `Self`.
-The proposed solution is to set the metaclass of `Real` to `Referentiable` and use
-`Self` as a substitute for `Real`:
+The problem is that name `Real` is not yet defined, when `__add__` is defined and 
+the type hint for `other` is set.
+To circumvent this issue, you can use a forward reference:
 
 ```python
-from plum import Dispatcher, Referentiable, Self
+from plum import dispatch
 
-class Real(metaclass=Referentiable):
-    dispatch = Dispatcher(in_class=Self)
-    
+class Real:
     @dispatch
-    def __add__(self, other: Self):
+    def __add__(self, other: "Real"):
         pass # Do something here. 
 ```
-
-Note that you must create another `dispatch` inside the class, which will only be
-visible within the class.
-If you are already using a metaclass, like `abc.ABCMeta`, then you can apply
-`Referentiable` as follows:
-
-```python
-import abc
-
-from plum import Dispatcher, Referentiable, Self
-
-class Real(metaclass=Referentiable(abc.ABCMeta)):
-    dispatch = Dispatcher(in_class=Self)
-    
-    @dispatch
-    def __add__(self, other: Self):
-        pass # Do something here. 
-```
-
-Plum synergises with `abc`.
 
 ### Diagonal Dispatch
 
@@ -177,21 +341,17 @@ implemented.
 However, inheritance can be used to achieve a form of diagonal dispatch:
 
 ```python
-from plum import Dispatcher, Referentiable, Self
+from plum import dispatch
 
-class Real(metaclass=Referentiable):
-    dispatch = Dispatcher(in_class=Self)
-
+class Real:
     @dispatch
-    def __add__(self, other: Self):
+    def __add__(self, other: "Real"):
         return "real"
         
 
 class Rational(Real):
-    dispatch = Dispatcher(in_class=Self)
-
     @dispatch
-    def __add__(self, other: Self):
+    def __add__(self, other: "Rational"):
         return "rational"
         
 
@@ -226,21 +386,18 @@ from plum import dispatch
 
 @dispatch
 def f(x, option="a"):
-    print(f"Value for option: {option}")
-    return x  # Do something.
+    return f"Value for option: {option}"
 ```
 
 ```python
->>> f(1)  # This is fine.
-Value for option: a
-1
+>>> f(1)              # This is fine.
+'Value for option: a'
 
 >>> f(1, option="b")  # This is also fine.
-Value for option: b
-1
+'Value for option: b'
 
->>> f(1, "b")  # This will *not* work!
-NotFoundLookupError: For function "f", signature (builtins.int, builtins.str) could not be resolved.
+>>> f(1, "b")         # This will *not* work!
+NotFoundLookupError: For function "f", signature Signature(builtins.int, builtins.str) could not be resolved.
 ```
 
 If you want to use a default value for a positional argument, use the following pattern
@@ -252,8 +409,7 @@ from plum import dispatch
 
 @dispatch
 def f(x, option):
-    print(f"Value for option: {option}")
-    return x  # Do something.
+    return f"Value for option: {option}"
 
 
 @dispatch
@@ -262,13 +418,11 @@ def f(x):
 ```
 
 ```python
->>> f(1)  # This is fine.
-Value for option: a
-1
+>>> f(1)              # This is fine.
+'Value for option: a'
 
->>> f(1, "b")  # And this will work!
-Value for option: b
-1
+>>> f(1, "b")         # And this will work!
+'Value for option: b'
 
 >>> f(1, option="b")  # But this won't.
 TypeError: f() got an unexpected keyword argument 'option'
@@ -309,10 +463,10 @@ def f_native(x):
 82.4 ns ± 0.162 ns per loop (mean ± std. dev. of 7 runs, 10000000 loops each)
 
 >>> %timeit f_md(1)
-811 ns ± 4 ns per loop (mean ± std. dev. of 7 runs, 1000000 loops each)
+845 ns ± 77.1 ns per loop (mean ± std. dev. of 7 runs, 1000000 loops each)
 
 >>> %timeit f_plum(1)
-434 ns ± 2.74 ns per loop (mean ± std. dev. of 7 runs, 1000000 loops each)
+404 ns ± 2.83 ns per loop (mean ± std. dev. of 7 runs, 1000000 loops each)
 ```
  
 #### Plum synergises with OOP.
@@ -322,16 +476,14 @@ Consider the following snippet:
 from multipledispatch import dispatch
 
 class A:
-
     def f(self, x):
-        print("Fallback!")
+        return "fallback"
         
 
 class B:
-
     @dispatch(int)
     def f(self, x):
-        print(x)
+        return x
 ```
    
 ```python
@@ -349,21 +501,17 @@ to be tried next.
 Plum supports this:
 
 ```python
-from plum import Dispatcher, Referentiable, Self
+from plum import dispatch
 
-class A(metaclass=Referentiable):
-    dispatch = Dispatcher(in_class=Self)
-
+class A:
     def f(self, x):
-        print("Fallback")
+        return "fallback"
 
 
 class B(A):
-    dispatch = Dispatcher(in_class=Self)
-
     @dispatch
     def f(self, x: int):
-        print(x)
+        return x
 ```
 
 ```python
@@ -373,10 +521,10 @@ class B(A):
 1
 
 >>> b.f("1")
-fallback
+'fallback'
 ```
 
-#### [Plum provides a mechanism to dispatch on the class type when creating the class.](#subclassing)
+#### [Plum supports forward references.](#subclassing)
 
 #### [Plum supports parametric types from `typing`](#parametric-types).
    
@@ -388,17 +536,17 @@ from multipledispatch import dispatch
 
 @dispatch((object, int), int)
 def f(x, y):
-    print("First")
+    return "first"
     
 
 @dispatch(int, object)
 def f(x, y):
-    print("Second")
+    return "second"
 ```
 
 ```python
 >>> f(1, 1)
-First
+'first'
 ```
 
 Because the union of `object` and `int` is `object`, `f(1, 1)` should raise an 
@@ -406,10 +554,10 @@ ambiguity error!
 For example, compare with Julia:
 
 ```julia
-julia> f(x::Union{Any, Int}, y::Int) = println("First")
+julia> f(x::Union{Any, Int}, y::Int) = "first"
 f (generic function with 1 method)
 
-julia> f(x::Int, y::Any) = println("Second")
+julia> f(x::Int, y::Any) = "second"
 f (generic function with 2 methods)
 
 julia> f(3, 3)
@@ -421,33 +569,35 @@ ERROR: MethodError: f(::Int64, ::Int64) is ambiguous. Candidates:
 Plum does provide a true union type:
 
 ```python
+from typing import Union
+
 from plum import dispatch
 
 @dispatch
-def f(x: {object, int}, y: int):
-    print("First")
+def f(x: Union[object, int], y: int):
+    return "first"
 
 
 @dispatch
 def f(x: int, y: object):
-    print("Second")
+    return "second"
 ```
 
 ```python
 >>> f(1, 1)
-AmbiguousLookupError: For function "f", signature (builtins.int, builtins.int) is ambiguous among the following:
-  ({builtins.int, builtins.object}, builtins.int) (precedence: 0)
-  (builtins.int, builtins.object) (precedence: 0)
+AmbiguousLookupError: For function "f", signature Signature(builtins.int, builtins.int) is ambiguous among the following:
+  Signature(builtins.object, builtins.int) (precedence: 0)
+  Signature(builtins.int, builtins.object) (precedence: 0)
 ```
 
 Just to sanity check that things are indeed working correctly:
 
 ```python
 >>> f(1.0, 1)
-First
+'first'
 
 >>> f(1, 1.0)
-Second
+'second'
 ```
 
 #### [Plum implements method precedence.](#method-precedence)
@@ -459,74 +609,76 @@ Method precedence can be a very powerful tool to simplify more complicated desig
 
 ### Union Types
 
-Sets can be used to instantiate union types:
+`typing.Union` can be used to instantiate union types:
 
 ```python
+from typing import Union
+
 from plum import dispatch
 
 @dispatch
 def f(x):
-    print("fallback")
+    return "fallback"
 
 
 @dispatch
-def f(x: {int, str}):
-    print("int or str")
+def f(x: Union[int, str]):
+    return "int or str"
 ```
 
 ```python
 >>> f(1)
-int or str
+'int or str'
 
 >>> f("1")
-int or str
+'int or str'
 
 >>> f(1.0)
-fallback
+'fallback'
 ```
 
 ### Parametric Types
 
-The parametric types `Tuple` and `List` can be used to dispatch on tuples 
+The parametric types `typing.Tuple` and `typing.List` can be used to dispatch on tuples 
 and lists with particular types of elements.
 Importantly, the type system is *covariant*, as opposed to Julia's type 
 system, which is *invariant*.
 
 ```python
-from typing import Tuple, List
+from typing import Union, Tuple, List
 
 from plum import dispatch
 
 @dispatch
-def f(x: {tuple, list}):
-    print("tuple or list")
+def f(x: Union[tuple, list]):
+    return "tuple or list"
     
     
 @dispatch
 def f(x: Tuple[int, int]):
-    print("tuple of two ints")
+    return "tuple of two ints"
     
     
 @dispatch
 def f(x: List[int]):
-    print("list of int")
+    return "list of int"
 ```
 
 ```python
 >>> f([1, 2])
-list of int
+'list of int'
 
 >>> f([1, "2"])
-tuple or list
+'tuple or list'
 
 >>> f((1, 2))
-tuple of two ints
+'tuple of two ints'
 
 >>> f((1, 2, 3))
-tuple or list
+'tuple or list'
 
 >>> f((1, "2"))
-tuple or list
+'tuple or list'
 ```
 
 ### Variable Arguments
@@ -538,23 +690,23 @@ from plum import dispatch
 
 @dispatch
 def f(x: int):
-    print("single argument")
+    return "single argument"
     
 
 @dispatch
 def f(x: int, *xs: int):
-    print("multiple arguments")
+    return "multiple arguments"
 ```
 
 ```python
 >>> f(1)
-single argument
+'single argument'
 
 >>> f(1, 2)
-multiple arguments
+'multiple arguments'
 
 >>> f(1, 2, 3)
-multiple arguments
+'multiple arguments'
 ```
 
 ### Return Types
@@ -562,10 +714,12 @@ multiple arguments
 Return types can be used without any problem.
 
 ```python
+from typing import Union
+
 from plum import dispatch, add_conversion_method
 
 @dispatch
-def f(x: {int, str}) -> int:
+def f(x: Union[int, str]) -> int:
     return x
 ```
 
@@ -738,9 +892,9 @@ def mul(a: Element, b: SpecialisedElement):
 'specialised operation'
 
 >>> mul_no_precedence(zero, specialised_element)
-AmbiguousLookupError: For function "mul_no_precedence", signature (__main__.ZeroElement, __main__.SpecialisedElement) is ambiguous among the following:
-  (__main__.ZeroElement, __main__.Element) (precedence: 0)
-  (__main__.Element, __main__.SpecialisedElement) (precedence: 0)
+AmbiguousLookupError: For function "mul_no_precedence", signature Signature(__main__.ZeroElement, __main__.SpecialisedElement) is ambiguous among the following:
+  Signature(__main__.ZeroElement, __main__.Element) (precedence: 0)
+  Signature(__main__.Element, __main__.SpecialisedElement) (precedence: 0)
 
 >>> mul(zero, specialised_element)
 'zero'
@@ -801,10 +955,12 @@ True
 `Dispatcher.multi` can be used to implement multiple methods at once:
 
 ```python
+from typing import Union
+
 from plum import dispatch
 
 @dispatch.multi((int, int), (float, float))
-def add(x: {int, float}, y: {int, float}):
+def add(x: Union[int, float], y: Union[int, float]):
     return x + y
 ```
 
@@ -816,7 +972,7 @@ def add(x: {int, float}, y: {int, float}):
 2.0
 
 >>> add(1, 1.0)
-NotFoundLookupError: For function "add", signature (builtins.int, builtins.float) could not be resolved.
+NotFoundLookupError: For function "add", signature Signature(builtins.int, builtins.float) could not be resolved.
 ```
 
 ### Extend a Function From Another Package
