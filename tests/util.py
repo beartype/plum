@@ -15,23 +15,3 @@ def benchmark(f, args, n=1000):
         f(*args)
     dur = time() - start
     return dur * 1e6 / n
-
-
-def nle(x, y):
-    assert not (x <= y)
-
-
-def assert_isinstance(x, y):
-    assert isinstance(x, y)
-
-
-def assert_issubclass(x, y):
-    assert issubclass(x, y)
-
-
-def isnotinstance(x, y):
-    assert not isinstance(x, y)
-
-
-def isnotsubclass(x, y):
-    assert not issubclass(x, y)
