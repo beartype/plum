@@ -1,21 +1,30 @@
 import logging
 
 from .dispatcher import Dispatcher
-from .function import promised_type_of as promised_type_of1
+from .function import (
+    promised_type_of as promised_type_of1,
+)
 from .type import (
     TypeMeta,
-    ComparableType,
-    as_type,
     promised_type_of as promised_type_of2,
-    promised_parametric,
-    promised_type_parameter,
-    is_type,
-    PromisedTuple,
+    ComparableType,
+    Union,
     PromisedList,
+    PromisedTuple,
+    ptype,
+    is_type,
 )
 from .util import multihash
 
-__all__ = ["parametric", "type_parameter", "kind", "Kind", "List", "Tuple", "type_of"]
+__all__ = [
+    "parametric",
+    "type_parameter",
+    "kind",
+    "Kind",
+    "List",
+    "Tuple",
+    "type_of",
+]
 
 log = logging.getLogger(__name__)
 
@@ -34,7 +43,7 @@ class CovariantMeta(TypeMeta):
 
                 # Handle the case that the parameters are types.
                 if is_type(par_subclass) and is_type(par_self):
-                    return as_type(par_subclass) <= as_type(par_self)
+                    return ptype(par_subclass) <= ptype(par_self)
 
                 # Handle the case that the parameters are tuples of types.
                 if (
@@ -45,7 +54,7 @@ class CovariantMeta(TypeMeta):
                     and all(is_type(pi_self) for pi_self in par_self)
                 ):
                     return all(
-                        as_type(pi_subclass) <= as_type(pi_self)
+                        ptype(pi_subclass) <= ptype(pi_self)
                         for pi_subclass, pi_self in zip(par_subclass, par_self)
                     )
 
@@ -102,9 +111,6 @@ def parametric(Class):
     return ParametricClass
 
 
-promised_parametric.deliver(parametric)
-
-
 @_dispatch
 def type_parameter(x):
     """Get the type parameter of an instance of a parametric type.
@@ -116,9 +122,6 @@ def type_parameter(x):
         object: Type parameter.
     """
     return x._type_parameter
-
-
-promised_type_parameter.deliver(type_parameter)
 
 
 def kind(SuperClass=object):
@@ -161,7 +164,7 @@ class List(ComparableType):
     """
 
     def __init__(self, el_type):
-        self._el_type = as_type(el_type)
+        self._el_type = ptype(el_type)
 
     def __hash__(self):
         return multihash(List, self._el_type)
@@ -197,7 +200,7 @@ class Tuple(ComparableType):
     """
 
     def __init__(self, *el_types):
-        self._el_types = tuple(as_type(el_type) for el_type in el_types)
+        self._el_types = tuple(ptype(el_type) for el_type in el_types)
 
     def __hash__(self):
         return multihash(Tuple, *self._el_types)
@@ -222,7 +225,7 @@ def _types_of_iterable(xs):
     if len(types) == 1:
         return list(types)[0]
     else:
-        return as_type(types)
+        return Union(*types)
 
 
 def type_of(obj):
@@ -240,7 +243,7 @@ def type_of(obj):
     if isinstance(obj, tuple):
         return Tuple(*(type_of(x) for x in obj))
 
-    return as_type(type(obj))
+    return ptype(type(obj))
 
 
 # Deliver `type_of`.

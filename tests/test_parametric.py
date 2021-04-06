@@ -1,22 +1,23 @@
 from plum import (
+    Dispatcher,
     parametric,
     type_parameter,
-    Kind,
     kind,
-    Type,
-    Union,
+    Kind,
     type_of,
-    List,
-    Tuple,
-    as_type,
-    PromisedType,
-    Dispatcher,
-    TypeType,
 )
-from plum.parametric import _types_of_iterable
+from plum.parametric import _types_of_iterable, List, Tuple
+from plum.type import Union, Type, PromisedType, ptype
 
 
-def test():
+def test_covariance():
+    assert issubclass(List[int], List[object])
+    assert issubclass(List[List[int]], List[List[object]])
+    assert not issubclass(List[int], List[str])
+    assert not issubclass(List[list], List[int])
+
+
+def test_parametric():
     class Base1:
         pass
 
@@ -98,27 +99,6 @@ def test_kind():
     assert issubclass(Kind2[1], object)
 
 
-def test_types_of_iterables():
-    assert _types_of_iterable([1]) == Type(int)
-    assert _types_of_iterable(["1"]) == Type(str)
-    assert _types_of_iterable([1, "1"]) == Union[int, str]
-    assert _types_of_iterable((1,)) == Type(int)
-    assert _types_of_iterable(("1",)) == Type(str)
-    assert _types_of_iterable((1, "1")) == Union[int, str]
-
-
-def test_type_of():
-    assert type_of(1) == Type(int)
-    assert type_of("1") == Type(str)
-    assert type_of([1]) == List[int]
-    assert type_of([1, "1"]) == List[{int, str}]
-    assert type_of([1, "1", (1,)]) == List[{int, str, Tuple[int]}]
-    assert type_of((1,)) == Tuple[int]
-    assert type_of(("1",)) == Tuple[str]
-    assert type_of((1, "1")) == Tuple[int, str]
-    assert type_of((1, "1", [1])) == Tuple[int, str, List[int]]
-
-
 def test_listtype():
     # Standard type tests.
     assert hash(List[int]) == hash(List[int])
@@ -136,8 +116,8 @@ def test_listtype():
 
     # Check tracking of parametric.
     assert List[int].parametric
-    assert as_type([List[int]]).parametric
-    assert as_type({List[int]}).parametric
+    assert ptype(List[List[int]]).parametric
+    assert ptype(Union[List[int]]).parametric
     promise = PromisedType()
     promise.deliver(List[int])
     assert promise.resolve().parametric
@@ -188,8 +168,8 @@ def test_tupletype():
 
     # Check tracking of parametric.
     assert Tuple[int].parametric
-    assert as_type([Tuple[int]]).parametric
-    assert as_type({Tuple[int]}).parametric
+    assert ptype(List[Tuple[int]]).parametric
+    assert ptype(Union[Tuple[int]]).parametric
     promise = PromisedType()
     promise.deliver(Tuple[int])
     assert promise.resolve().parametric
@@ -235,9 +215,22 @@ def test_tupletype():
     assert f(((1,), (1, 2))) == "tup"
 
 
-def test_covariance():
-    assert issubclass(List[int], List[object])
-    assert issubclass(List[List[int]], List[List[object]])
-    assert not issubclass(List[int], List[str])
-    assert not issubclass(List[list], List[int])
-    assert issubclass(List[list], List[TypeType])
+def test_types_of_iterables():
+    assert _types_of_iterable([1]) == Type(int)
+    assert _types_of_iterable(["1"]) == Type(str)
+    assert _types_of_iterable([1, "1"]) == Union[int, str]
+    assert _types_of_iterable((1,)) == Type(int)
+    assert _types_of_iterable(("1",)) == Type(str)
+    assert _types_of_iterable((1, "1")) == Union[int, str]
+
+
+def test_type_of():
+    assert type_of(1) == Type(int)
+    assert type_of("1") == Type(str)
+    assert type_of([1]) == List[int]
+    assert type_of([1, "1"]) == List[Union[int, str]]
+    assert type_of([1, "1", (1,)]) == List[Union[int, str, Tuple[int]]]
+    assert type_of((1,)) == Tuple[int]
+    assert type_of(("1",)) == Tuple[str]
+    assert type_of((1, "1")) == Tuple[int, str]
+    assert type_of((1, "1", [1])) == Tuple[int, str, List[int]]
