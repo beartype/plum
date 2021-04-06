@@ -4,7 +4,10 @@ import pytest
 
 from plum import Dispatcher, NotFoundLookupError, AmbiguousLookupError
 from plum.type import PromisedType
-from .test_signature import Num, Re, FP
+from tests.test_signature import Num, Re, FP
+
+
+dispatch = Dispatcher()
 
 
 class ComputableObject:
@@ -12,25 +15,23 @@ class ComputableObject:
 
 
 class Device:
-    _dispatch = Dispatcher()
-
-    @_dispatch
+    @dispatch
     def __init__(self):
         pass
 
-    @_dispatch
+    @dispatch
     def do(self, x: Num, y: Num):
         return "doing two numbers"
 
-    @_dispatch
+    @dispatch
     def do(self):
         return "doing nothing"
 
-    @_dispatch
+    @dispatch
     def do(self, other: "Device"):
         return "doing a device"
 
-    @_dispatch
+    @dispatch
     def do(self, x: Re, y: Num):
         return "doing a real and a number"
 
@@ -40,11 +41,11 @@ class Device:
     def __radd__(self, other):
         return other + self
 
-    @_dispatch
+    @dispatch
     def compute(self, a, b: ComputableObject):
         return "a result"
 
-    @_dispatch
+    @dispatch
     def compute(self, a: ComputableObject, b):
         return "another result"
 
@@ -54,34 +55,30 @@ PromisedHammer = PromisedType()
 
 
 class Hammer(Device):
-    _dispatch = Dispatcher()
-
-    @_dispatch
+    @dispatch
     def __add__(self, other: PromisedHammer):
         return "super hammer"
 
-    @_dispatch
+    @dispatch
     def __add__(self, other: PromisedCalculator):
         return "destroyed calculator"
 
 
 class Calculator(Device):
-    _dispatch = Dispatcher()
-
-    @_dispatch
+    @dispatch
     def __init__(self, size: int):
         self.size = size
         Device.__init__(self)
 
-    @_dispatch
+    @dispatch
     def __add__(self, other: PromisedCalculator):
         return "super calculator"
 
-    @_dispatch
+    @dispatch
     def __add__(self, other: PromisedHammer):
         return "destroyed calculator"
 
-    @_dispatch
+    @dispatch
     def compute(self, obj: ComputableObject):
         return "result"
 
@@ -145,45 +142,42 @@ def test_inheritance_exceptions():
     assert calc.compute(o, object) == "another result"
 
 
-_dispatch = Dispatcher()
-
-
-@_dispatch
+@dispatch
 def f(a: Num):
     return "number"
 
 
-@_dispatch
+@dispatch
 def f(a: Num, b: Num):
     return "two numbers"
 
 
-@_dispatch
+@dispatch
 def f(a: Num, b: FP):
     return "a number and a float"
 
 
-@_dispatch
+@dispatch
 def f(a: Num, b: Num, *cs: Num):
     return "two or more numbers"
 
 
-@_dispatch
+@dispatch
 def f(a: Num, b: Num, *cs: Re):
     return "two numbers and more reals"
 
 
-@_dispatch
+@dispatch
 def f(a: FP, b: Num, *cs: Re):
     return "a float, a number, and more reals"
 
 
-@_dispatch
+@dispatch
 def f(a: Re, b: Num, *cs: FP):
     return "a real, a number, and more floats"
 
 
-@_dispatch
+@dispatch
 def f(*args):
     return "fallback"
 
@@ -216,9 +210,7 @@ def test_abc_abstractmethod():
             pass
 
     class B(A):
-        _dispatch = Dispatcher()
-
-        @_dispatch
+        @dispatch
         def f(self, x: int):
             return x
 

@@ -1,3 +1,5 @@
+from typing import Union
+
 import pytest
 
 from plum import Dispatcher, AmbiguousLookupError
@@ -64,11 +66,11 @@ def test_extension():
         return "fallback"
 
     @g.extend(precedence=1)
-    def g(x: {int, str}):
+    def g(x: Union[int, str]):
         return "int or str"
 
     @g.extend(precedence=2)
-    def g(x: {int, float}):
+    def g(x: Union[int, float]):
         return "int or float"
 
     assert g("1") == "int or str"
@@ -83,12 +85,12 @@ def test_multi():
     def g():
         return "fallback"
 
-    @dispatch.multi(({int, str},), ({object, str},), precedence=1)
+    @dispatch.multi((Union[int, str],), (Union[object, str],), precedence=1)
     def g(x):
         return "int or str, or object or str"
 
-    @dispatch.multi(({int, float},), (float,), precedence=2)
-    def g(x: {int, float}):
+    @dispatch.multi((Union[int, float],), (float,), precedence=2)
+    def g(x: Union[int, float]):
         return "int or float, or float"
 
     assert g("1") == "int or str, or object or str"

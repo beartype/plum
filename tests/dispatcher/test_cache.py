@@ -1,4 +1,6 @@
-from plum import  Dispatcher, clear_all_cache, List
+from typing import Union, List
+
+from plum import Dispatcher, clear_all_cache
 from plum.type import subclasscheck_cache
 from ..util import benchmark
 
@@ -15,19 +17,18 @@ def test_cache_function_call_performance_and_correctness():
         pass
 
     @dispatch
-    def f(x: {int, float}):
+    def f(x: Union[int, float]):
         pass
 
     @dispatch
-    def f(x: {int, float, str}):
+    def f(x: Union[int, float, str]):
         pass
 
     dur_native = benchmark(f_native, (1,))
     dur_plum_first = benchmark(f, (1,), n=1)
     dur_plum = benchmark(f, (1,))
 
-    # A cached call should not be more than 15 times slower than a native
-    # call.
+    # A cached call should not be more than 15 times slower than a native call.
     assert dur_plum <= 15 * dur_native, "compare native"
 
     # A first call should not be more than 1000 times slower than a cached call.
@@ -91,7 +92,7 @@ def test_cache_class_call_performance():
     dur_native = benchmark(a_native, (1,))
     dur_plum_first = benchmark(a, (1,), n=1)
     dur_plum = benchmark(a, (1,))
-    assert dur_plum <= 40 * dur_native, "compare native call"
+    assert dur_plum <= 25 * dur_native, "compare native call"
     assert dur_plum_first <= 1000 * dur_plum, "compare first call"
     assert dur_plum <= dur_plum_first / 10, "cache performance call"
 
@@ -99,7 +100,7 @@ def test_cache_class_call_performance():
     dur_native = benchmark(lambda x: a_native.go(x), (1,))
     dur_plum_first = benchmark(lambda x: a.go(x), (1,), n=1)
     dur_plum = benchmark(lambda x: a.go(x), (1,))
-    assert dur_plum <= 40 * dur_native, "compare native method"
+    assert dur_plum <= 25 * dur_native, "compare native method"
     assert dur_plum_first <= 1000 * dur_plum, "compare first method"
     assert dur_plum <= dur_plum_first / 10, "cache performance method"
 
@@ -107,7 +108,7 @@ def test_cache_class_call_performance():
     dur_native = benchmark(lambda x: ANative.go_again(a_native, x), (1,))
     dur_plum_first = benchmark(lambda x: A.go_again(a, x), (1,), n=1)
     dur_plum = benchmark(lambda x: A.go_again(a, x), (1,))
-    assert dur_plum <= 40 * dur_native, "compare native static"
+    assert dur_plum <= 25 * dur_native, "compare native static"
     assert dur_plum_first <= 1000 * dur_plum, "compare first static"
     assert dur_plum <= dur_plum_first / 10, "cache performance static"
 

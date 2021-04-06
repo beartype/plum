@@ -1,58 +1,26 @@
 import inspect
 import logging
+from functools import wraps
 
 from .resolvable import Promise
 from .signature import Signature
-from .type import as_type, is_object
+from .type import ptype, is_object, VarArgs, deliver_reference
 
 __all__ = [
     "extract_signature",
-    "Function",
     "AmbiguousLookupError",
     "NotFoundLookupError",
+    "promised_convert",
+    "promised_type_of",
+    "Function"
 ]
 
 log = logging.getLogger(__name__)
 
 
-class Wrapped:
-    """A wrapped callable, which also wraps `__repr__`.
-
-    Args:
-        f (function): Implementation.
-        reference (object): Callable to wrap.
-    """
-
-    def __init__(self, f, reference):
-        self.f = f
-        self.reference = reference
-
-        # Copy relevant metadata.
-        self.__name__ = reference.__name__
-        self.__module__ = reference.__module__
-        self.__doc__ = reference.__doc__
-
-    def __call__(self, *args, **kw_args):
-        return self.f(*args, **kw_args)
-
-    def __repr__(self):
-        return repr(self.reference)
-
-
-def wraps(reference):
-    """Create a wrapped callable. This also wraps `__repr__`.
-
-    Args:
-        reference (object): Callable to wrap.
-
-    Returns:
-        function: Decorator.
-    """
-
-    def decorator(f):
-        return Wrapped(f, reference)
-
-    return decorator
+# This is a default instance of the Plum `object` type, which is used to speed up
+# cached calls.
+default_obj_type = ptype(object)
 
 
 def extract_signature(f):
@@ -62,34 +30,36 @@ def extract_signature(f):
         f (function): Function to extract signature from.
 
     Returns:
-        tuple[:class:`.signature.Signature`, type]: Signature and return type of the
+        tuple[:class:`.signature.Signature`, ptype]: Signature and return type of the
             function.
     """
     # Extract specification.
     spec = inspect.getfullargspec(f)
 
-    # Get types of arguments.
+    # Get types of arguments. We need to already convert the types with `as_type` to
+    # convert types given as strings in the context of the function to their fully
+    # qualified names.
     types = []
     # Cut off keyword arguments: arguments which are given a default value.
     num_defaults = len(spec.defaults) if spec.defaults else 0
     for arg in spec.args[: len(spec.args) - num_defaults]:
         try:
-            types.append(spec.annotations[arg])
+            types.append(ptype(spec.annotations[arg], context=f))
         except KeyError:
-            types.append(object)
+            types.append(default_obj_type)
 
     # Get possible varargs.
     if spec.varargs:
         try:
-            types.append([spec.annotations[spec.varargs]])
+            types.append(VarArgs(ptype(spec.annotations[spec.varargs], context=f)))
         except KeyError:
-            types.append([object])
+            types.append(VarArgs(default_obj_type))
 
     # Get possible return type.
     try:
-        return_type = spec.annotations["return"]
+        return_type = ptype(spec.annotations["return"], context=f)
     except KeyError:
-        return_type = object
+        return_type = default_obj_type
 
     # Assemble signature.
     signature = Signature(*types)
@@ -102,8 +72,7 @@ class AmbiguousLookupError(LookupError):
 
 
 class NotFoundLookupError(LookupError):
-    """A signature cannot be resolved because no applicable method can be
-    found."""
+    """A signature cannot be resolved because no applicable method can be found."""
 
 
 # These promises are necessary to avoid circular imports.
@@ -112,7 +81,7 @@ promised_type_of = Promise()  # This will resolve to `.parametric.type_of`.
 
 
 def _convert(obj, target_type):
-    """Convert an object to a particular type. Converts if `target_type` is not
+    """Convert an object to a particular type. Only converts if `target_type` is not
     `object`.
 
     Args:
@@ -126,11 +95,6 @@ def _convert(obj, target_type):
         return obj
     else:
         return promised_convert.resolve()(obj, target_type)
-
-
-# This is a default instance of the Plum `object` type, which is used to
-# speed up cached calls.
-default_obj_type = as_type(object)
 
 
 class Function:
@@ -155,7 +119,7 @@ class Function:
         self._parametric = False
 
         self._cache = {}
-        self._class = as_type(in_class) if in_class else None
+        self._class = ptype(in_class) if in_class else None
 
         self._pending = []
         self._resolved = []
@@ -237,9 +201,11 @@ class Function:
             return_type (type or ptype, optional): Return type of the function. Defaults
                 to `object`.
         """
-        # We must be careful to convert `return_type` to a Plum type here to resolve
-        # uninstantiated instance of `Self` at the right time.
-        self._pending.append((signature, f, precedence, as_type(return_type)))
+        # The return type may contain strings, which need to be converted Plum types
+        # in the context of `f`.
+        self._pending.append(
+            (signature, f, precedence, ptype(return_type, context=f))
+        )
 
     def _resolve_pending_registrations(self):
         # Keep track of whether anything registered.
@@ -257,7 +223,6 @@ class Function:
             if is_object(return_type):
                 return_type = default_obj_type
 
-            # Return type should already be a Plum type!
             self.methods[signature] = (f, return_type)
             self.precedences[signature] = precedence
 
@@ -272,8 +237,7 @@ class Function:
             self._pending = []
 
             # Clear cache.
-            # TODO: Do something more clever, but be careful about the tracking of
-            # parametric types.
+            # TODO: Be more clever, but careful about the tracking of parametric types.
             self.clear_cache(reregister=False)
 
     def resolve_signature(self, signature):
@@ -349,7 +313,7 @@ class Function:
                 method, return_type = self.methods[self.resolve_signature(signature)]
             except NotFoundLookupError as e:
                 method = None
-                return_type = as_type(object)
+                return_type = ptype(object)
 
                 # Walk through the classes in the class's MRO, except for this
                 # class, and try to get the method.
@@ -430,7 +394,7 @@ class Function:
         Returns:
             function: Method.
         """
-        method, return_type = self.resolve_method(*[as_type(t) for t in types])
+        method, return_type = self.resolve_method(*[ptype(t) for t in types])
 
         @wraps(self._f)
         def wrapped_method(*args, **kw_args):
@@ -438,40 +402,54 @@ class Function:
 
         return wrapped_method
 
-    def __get__(self, instance, cls=None):
-        if instance is None:
-            # Call is unbound.
-            return self
+    def __get__(self, instance, owner):
+        # Critical! This is the moment to deliver references.
+        deliver_reference(owner)
+        if instance:
+            return _BoundFunction(self, instance)
         else:
-            # Call is bound.
-
-            @wraps(self)
-            def wrapped_self(*args, **kw_args):
-                return self(instance, *args, **kw_args)
-
-            # We need to wrap `self.invoke` to ensure that the type of the instance and
-            # the instance are prepended appropriately.
-
-            @wraps(self.invoke)
-            def wrapped_invoke(*types):
-                method = self.invoke(type(instance), *types)
-
-                @wraps(self._f)
-                def wrapped_method(*args, **kw_args):
-                    return method(instance, *args, **kw_args)
-
-                return wrapped_method
-
-            # Make sure that `invoke` is available in `partial_f`.
-            wrapped_self.invoke = wrapped_invoke
-
-            return wrapped_self
+            return self
 
     def __repr__(self):
         return (
             f"<function {self._f} with "
             f"{len(self._pending) + len(self._resolved)} method(s)>"
         )
+
+
+class _BoundFunction:
+    """A bound instance of `.function.Function`.
+
+    Args:
+        f (:class:`.function.Function`): Bound function.
+        instance (object): Instance to which the function is bound.
+    """
+
+    def __init__(self, f, instance):
+        self.f = f
+        self.instance = instance
+
+        # Copy relevant metadata.
+        self.__name__ = f.__name__
+        self.__module__ = f.__module__
+        self.__doc__ = f.__doc__
+
+    def __call__(self, *args, **kw_args):
+        return self.f(self.instance, *args, **kw_args)
+
+    def invoke(self, *types):
+        """See :meth:`.function.invoke`."""
+
+        @wraps(self.f._f)
+        def wrapped_method(*args, **kw_args):
+            return self.f.invoke(type(self.instance), *types)(
+                self.instance, *args, **kw_args
+            )
+
+        return wrapped_method
+
+    def __repr__(self):
+        return repr(self.f)
 
 
 def find_most_specific(signatures):

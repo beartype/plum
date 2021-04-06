@@ -1,11 +1,8 @@
 import pytest
+from typing import Union
 
-from plum import (
-    Dispatcher,
-    Self,
-    Union,
-    add_conversion_method,
-)
+from plum import Dispatcher, add_conversion_method
+
 # noinspection PyUnresolvedReferences
 from ..test_promotion import convert
 
@@ -14,7 +11,7 @@ def test_return_type():
     dispatch = Dispatcher()
 
     @dispatch
-    def f(x: {int, str}) -> int:
+    def f(x: Union[int, str]) -> int:
         return x
 
     assert f(1) == 1
@@ -44,7 +41,7 @@ def test_multi():
     dispatch = Dispatcher()
 
     @dispatch.multi((int,), (str,), return_type=int)
-    def g(x: {int, str}) -> int:
+    def g(x: Union[int, str]) -> int:
         return x
 
     assert g(1) == 1
@@ -64,7 +61,7 @@ def test_inheritance():
         _dispatch = Dispatcher()
 
         @_dispatch
-        def do(self, x: Union[int, Self, str]) -> Union[int, Self]:
+        def do(self, x: Union[int, "B", str]) -> Union[int, "B"]:
             return x
 
     b = B()
@@ -81,7 +78,7 @@ def test_inheritance_self_return():
         _dispatch = Dispatcher()
 
         @_dispatch
-        def do(self, x: Self, ok=True) -> Self:
+        def do(self, x: "A", ok=True) -> "A":
             if ok:
                 return x
             else:
@@ -97,7 +94,7 @@ def test_conversion(convert):
     dispatch = Dispatcher()
 
     @dispatch
-    def f(x: {int, str}) -> int:
+    def f(x: Union[int, str]) -> int:
         return x
 
     assert f(1) == 1

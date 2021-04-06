@@ -1,6 +1,7 @@
 import pytest
+from typing import Union, List
 
-from plum import Dispatcher, List, NotFoundLookupError
+from plum import Dispatcher, NotFoundLookupError
 
 
 def test_keywords():
@@ -49,24 +50,42 @@ def test_metadata_and_printing():
     assert f.__name__ == "f"
     assert f.__doc__ == "docstring of f"
     assert f.__module__ == "tests.dispatcher.test_dispatcher"
-    assert repr(f) == "<function {} with 1 method(s)>".format(f._f)
+    assert repr(f) == f"<function {f._f} with 1 method(s)>"
     assert f.invoke().__name__ == "f"
     assert f.invoke().__doc__ == "docstring of f"
     assert f.invoke().__module__ == "tests.dispatcher.test_dispatcher"
-    assert repr(f.invoke()) == repr(f._f)
+    n = len(hex(id(f))) + 1  # Do not check memory address and extra ">".
+    assert repr(f.invoke())[:-n] == repr(f._f)[:-n]
 
     a = A()
     g = a.g
 
+    g_name = "tests.dispatcher.test_dispatcher.test_metadata_and_printing.<locals>.A.g"
     assert g.__name__ == "g"
     assert g.__doc__ == "docstring of g"
     assert g.__module__ == "tests.dispatcher.test_dispatcher"
-    assert repr(g) == f'<function {A._dispatch._functions["g"]._f} with 1 method(s)>'
+    assert repr(g) == f"<function {A._dispatch._functions[g_name]._f} with 1 method(s)>"
 
     assert g.invoke().__name__ == "g"
     assert g.invoke().__doc__ == "docstring of g"
     assert g.invoke().__module__ == "tests.dispatcher.test_dispatcher"
-    assert repr(g.invoke()) == repr(A._dispatch._functions["g"]._f)
+    assert repr(g.invoke())[:-n] == repr(A._dispatch._functions[g_name]._f)[:-n]
+
+
+def test_multi():
+    dispatch = Dispatcher()
+
+    @dispatch
+    def f(x):
+        return "fallback"
+
+    @dispatch.multi((int,), (str,))
+    def f(x: Union[int, str]):
+        return "int or str"
+
+    assert f(1) == "int or str"
+    assert f("1") == "int or str"
+    assert f(1.0) == "fallback"
 
 
 def test_extension():
@@ -81,29 +100,13 @@ def test_extension():
         return "int"
 
     @f.extend_multi((str,), (float,))
-    def f(x: {str, float}):
+    def f(x: Union[str, float]):
         return "str or float"
 
     assert f() == "fallback"
     assert f(1) == "int"
     assert f("1") == "str or float"
     assert f(1.0) == "str or float"
-
-
-def test_multi():
-    dispatch = Dispatcher()
-
-    @dispatch
-    def f(x):
-        return "fallback"
-
-    @dispatch.multi((int,), (str,))
-    def f(x: {int, str}):
-        return "int or str"
-
-    assert f(1) == "int or str"
-    assert f("1") == "int or str"
-    assert f(1.0) == "fallback"
 
 
 def test_invoke():
@@ -122,7 +125,7 @@ def test_invoke():
         return "str"
 
     @dispatch
-    def f(x: {int, str, float}):
+    def f(x: Union[int, str, float]):
         return "int, str, or float"
 
     assert f() == "fallback"
@@ -133,26 +136,24 @@ def test_invoke():
     assert f.invoke(int)("1") == "int"
     assert f.invoke(str)(1) == "str"
     assert f.invoke(float)(1) == "int, str, or float"
-    assert f.invoke({int, str})(1) == "int, str, or float"
-    assert f.invoke({int, str, float})(1) == "int, str, or float"
+    assert f.invoke(Union[int, str])(1) == "int, str, or float"
+    assert f.invoke(Union[int, str, float])(1) == "int, str, or float"
 
 
 def test_invoke_inheritance():
+    dispatch = Dispatcher()
+
     class A:
         def do(self, x):
             return "fallback"
 
     class B(A):
-        _dispatch = Dispatcher()
-
-        @_dispatch
+        @dispatch
         def do(self, x: int):
             return "int"
 
     class C(B):
-        _dispatch = Dispatcher()
-
-        @_dispatch
+        @dispatch
         def do(self, x: str):
             return "str"
 
@@ -187,199 +188,3 @@ def test_parametric_tracking():
     assert not f._parametric
     f(1)
     assert f._parametric
-
-
-def test_context():
-    # Automatically determine context if `in_class` is not set.
-
-    dispatch = Dispatcher()
-
-    class A:
-        @dispatch
-        def do(self):
-            pass
-
-    a = A()
-    a.do()
-
-    keys = set(dispatch._functions.keys())
-    assert keys == {"tests.dispatcher.test_dispatcher.test_context.<locals>.A.do"}
-
-    # This should not happen if `in_class` is set.
-
-    class A:
-        dispatch = Dispatcher()
-
-        @dispatch
-        def do(self):
-            pass
-
-    a = A()
-    a.do()
-
-    assert A.dispatch._functions.keys() == {"do"}
-
-    # It should also not happen if `context` is explicitly set.
-
-    dispatch = Dispatcher()
-
-    class A:
-        @dispatch(context="context")
-        def do(self):
-            pass
-
-    a = A()
-    a.do()
-
-    assert dispatch._functions.keys() == {"context.do"}
-
-
-def test_class():
-    class Other:
-        pass
-
-    # Automatically determine class if `in_class` is not set.
-
-    dispatch = Dispatcher()
-
-    class A:
-        @dispatch
-        def do(self):
-            pass
-
-    a = A()
-    a.do()
-
-    assert len(dispatch._functions) == 1
-    assert list(dispatch._functions.values())[0]._class.get_types() == (A,)
-
-    # This should not happen if `in_class` is set.
-
-    dispatch = Dispatcher(in_class=Other)
-
-    class A:
-        @dispatch
-        def do(self):
-            pass
-
-    a = A()
-    a.do()
-
-    assert len(dispatch._functions) == 1
-    assert list(dispatch._functions.values())[0]._class.get_types() == (Other,)
-
-    # It should also not happen if `in_class` is explicitly set.
-
-    dispatch = Dispatcher(in_class=Other)
-
-    class OtherTwo:
-        pass
-
-    class A:
-        @dispatch(in_class=OtherTwo)
-        def do(self):
-            pass
-
-    a = A()
-    a.do()
-
-    assert len(dispatch._functions) == 1
-    assert list(dispatch._functions.values())[0]._class.get_types() == (OtherTwo,)
-
-
-def test_context_multi():
-    # Automatically determine context if `in_class` is not set.
-
-    dispatch = Dispatcher()
-
-    class A:
-        @dispatch.multi((object,))
-        def do(self):
-            pass
-
-    a = A()
-    a.do()
-
-    keys = set(dispatch._functions.keys())
-    assert keys == {"tests.dispatcher.test_dispatcher.test_context_multi.<locals>.A.do"}
-
-    # This should not happen if `in_class` is set.
-
-    class A:
-        dispatch = Dispatcher()
-
-        @dispatch.multi((object,))
-        def do(self):
-            pass
-
-    a = A()
-    a.do()
-
-    assert A.dispatch._functions.keys() == {"do"}
-
-    # It should also not happen if `context` is explicitly set.
-
-    dispatch = Dispatcher()
-
-    class A:
-        @dispatch.multi((object,), context="context")
-        def do(self):
-            pass
-
-    a = A()
-    a.do()
-
-    assert dispatch._functions.keys() == {"context.do"}
-
-
-def test_class_multi():
-    class Other:
-        pass
-
-    # Automatically determine class if `in_class` is not set.
-
-    dispatch = Dispatcher()
-
-    class A:
-        @dispatch.multi((object,))
-        def do(self):
-            pass
-
-    a = A()
-    a.do()
-
-    assert len(dispatch._functions) == 1
-    assert list(dispatch._functions.values())[0]._class.get_types() == (A,)
-
-    # This should not happen if `in_class` is set.
-
-    dispatch = Dispatcher(in_class=Other)
-
-    class A:
-        @dispatch.multi((object,))
-        def do(self):
-            pass
-
-    a = A()
-    a.do()
-
-    assert len(dispatch._functions) == 1
-    assert list(dispatch._functions.values())[0]._class.get_types() == (Other,)
-
-    # It should also not happen if `in_class` is explicitly set.
-
-    dispatch = Dispatcher(in_class=Other)
-
-    class OtherTwo:
-        pass
-
-    class A:
-        @dispatch.multi((object,), in_class=OtherTwo)
-        def do(self):
-            pass
-
-    a = A()
-    a.do()
-
-    assert len(dispatch._functions) == 1
-    assert list(dispatch._functions.values())[0]._class.get_types() == (OtherTwo,)
