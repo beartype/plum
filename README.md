@@ -104,14 +104,14 @@ For an excellent and way more detailed overview of multiple dispatch, see the
 
 Consider the following package design.
 
-#### package/\_\_init\_\_.py
+**package/\_\_init\_\_.py**
 
 ```python
 import a
 import b
 ```
 
-#### package/a.py
+**package/a.py**
 
 ```python
 from plum import dispatch
@@ -121,7 +121,7 @@ def f(x: int):
    return "int"
 ```
 
-#### package/b.py
+**package/b.py**
 
 ```python
 from plum import dispatch
@@ -144,14 +144,14 @@ This can be convenient, but it could also be undesirable, because it means that 
 can attach new behaviour to your functions.
 To keep you functions private, you can create new dispatchers:
 
-#### package/\_\_init\_\_.py
+**package/\_\_init\_\_.py**
 
 ```python
 import a
 import b
 ```
 
-#### package/a.py
+**package/a.py**
 
 ```python
 from plum import Dispatcher
@@ -164,7 +164,7 @@ def f(x: int):
    return "int"
 ```
 
-#### package/b.py
+**package/b.py**
 
 ```python
 from plum import Dispatcher
@@ -195,8 +195,6 @@ NotFoundLookupError: For function "f", signature Signature(builtins.int) could n
 >>> f(1.0)
 'float'
 ```
-
-
 
 
 ## Classes
