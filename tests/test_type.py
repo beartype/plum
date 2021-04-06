@@ -144,7 +144,11 @@ def test_astype_typing_mapping():
     assert ptype(typing.List) == Type(list)
     assert ptype(typing.Tuple[typing.Tuple[int], list]) == Tuple[Tuple[int], list]
     assert ptype(typing.Tuple) == Type(tuple)
-    t = ptype(typing._ForwardRef("builtins.int"))
+    if hasattr(typing, "ForwardRef"):
+        t = ptype(typing.ForwardRef("builtins.int"))
+    else:
+        # The `typing` package is different for Python 3.6.
+        t = ptype(typing._ForwardRef("builtins.int"))
     deliver_reference(int)
     assert t == Type(int)
 
