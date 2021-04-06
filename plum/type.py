@@ -346,7 +346,7 @@ def ptype(obj, context=None):
                 )
             else:
                 return Type(tuple)
-        elif obj_str == "_ForwardRef":
+        elif obj_str == "ForwardRef" or obj_str == "_ForwardRef":
             # This depends on the implementation below!
             obj = obj.__forward_arg__
         else:
