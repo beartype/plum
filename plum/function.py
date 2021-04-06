@@ -129,7 +129,7 @@ class Function:
         self.__doc__ = f.__doc__
         self.__module__ = f.__module__
 
-    def extend(self, f=None, precedence=0):
+    def dispatch(self, f=None, precedence=0):
         """A decorator to extend the function with another signature.
 
         Args:
@@ -139,14 +139,14 @@ class Function:
             function: Decorator.
         """
         if f is None:
-            return lambda f_: self.extend(f_, precedence=precedence)
+            return lambda f_: self.dispatch(f_, precedence=precedence)
 
         signature, return_type = extract_signature(f)
-        return self.extend_multi(
+        return self.dispatch_multi(
             signature, precedence=precedence, return_type=return_type
         )(f)
 
-    def extend_multi(self, *signatures, precedence=0, return_type=object):
+    def dispatch_multi(self, *signatures, precedence=0, return_type=object):
         """A decorator to extend the function with multiple signatures.
 
         Args:

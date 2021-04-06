@@ -95,11 +95,11 @@ def test_extension():
     def f():
         return "fallback"
 
-    @f.extend
+    @f.dispatch
     def f(x: int):
         return "int"
 
-    @f.extend_multi((str,), (float,))
+    @f.dispatch_multi((str,), (float,))
     def f(x: Union[str, float]):
         return "str or float"
 

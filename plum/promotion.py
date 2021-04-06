@@ -56,7 +56,7 @@ def add_conversion_method(type_from, type_to, f):
             type `type_to`.
     """
 
-    @_convert.extend
+    @_convert.dispatch
     def perform_conversion(obj: type_from, _: type_to):
         return f(obj)
 
@@ -117,13 +117,13 @@ def add_promotion_rule(type1, type2, type_to):
         type_to (type): Type to convert to.
     """
 
-    @_promotion_rule.extend
+    @_promotion_rule.dispatch
     def rule(t1: type1, t2: type2):
         return type_to
 
     if ptype(type1) != ptype(type2):
 
-        @_promotion_rule.extend
+        @_promotion_rule.dispatch
         def rule(t1: type2, t2: type1):
             return type_to
 

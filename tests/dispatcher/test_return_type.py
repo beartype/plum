@@ -29,7 +29,7 @@ def test_extension():
     def f(x: int):
         return x
 
-    @f.extend
+    @f.dispatch
     def f(x: float) -> str:
         return str(x)
 

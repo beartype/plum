@@ -975,12 +975,13 @@ NotFoundLookupError: For function "add", signature Signature(builtins.int, built
 
 ### Extend a Function From Another Package
 
-`Function.extend` can be used to extend a particular function:
+`Function.dispatch` can be used to extend a particular function from an external 
+package:
 
 ```python
 from package import f
 
-@f.extend
+@f.dispatch
 def f(x: int):
     return "new behaviour"
 ```

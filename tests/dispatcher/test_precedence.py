@@ -65,11 +65,11 @@ def test_extension():
     def g(x):
         return "fallback"
 
-    @g.extend(precedence=1)
+    @g.dispatch(precedence=1)
     def g(x: Union[int, str]):
         return "int or str"
 
-    @g.extend(precedence=2)
+    @g.dispatch(precedence=2)
     def g(x: Union[int, float]):
         return "int or float"
 
