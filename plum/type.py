@@ -328,7 +328,8 @@ def ptype(obj, context=None):
         obj_str = obj_str.split("(")[0]
 
         if obj_str[0] == "<":  # pragma: no cover
-            # The type is private. This is a type of a `typing` type.
+            # The type is private. This is a type of a `typing` type. This case is
+            # necessary for Python 3.7+.
             pass
         elif obj_str in ("Union", "Optional"):
             if obj_is_parametrised:

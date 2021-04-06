@@ -152,11 +152,6 @@ def test_astype_typing_mapping():
     deliver_reference(int)
     assert t == Type(int)
 
-    # Check types of `typing` types.
-    assert ptype(type(typing.Union)) == Type(type(typing.Union))
-    assert ptype(type(typing.Union[int])) == Type(type(typing.Union[int]))
-    assert ptype(type(typing.Union[int, list])) == Type(type(typing.Union[int, list]))
-
     # Check propagation of conversion of strings.
     ptype("tests.test_type.test_astype_typing_mapping.<locals>.A")
     deliver_reference(A)
