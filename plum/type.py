@@ -1,28 +1,27 @@
 import abc
 import inspect
 import logging
-from types import FunctionType, MethodType
 
-from .resolvable import (
-    Resolvable,
-    Promise,
-    referentiables,
-    ResolutionError,
-)
-from .util import multihash, Comparable
+from .resolvable import Resolvable, Promise, ResolutionError
+from .util import multihash, Comparable, get_context
 
 __all__ = [
+    "TypeMeta",
     "VarArgs",
+    "promised_type_of",
+    "subclasscheck_cache",
+    "ComparableType",
     "Union",
     "Type",
     "ResolvableType",
     "PromisedType",
-    "Self",
+    "deliver_reference",
+    "PromisedList",
+    "PromisedTuple",
+    "ptype",
     "TypeType",
-    "as_type",
     "is_object",
     "is_type",
-    "Callable",
 ]
 log = logging.getLogger(__name__)
 
@@ -68,7 +67,7 @@ class VarArgs(AbstractType):
     """
 
     def __init__(self, type=object):
-        self.type = as_type(type)
+        self.type = ptype(type)
 
     def __hash__(self):
         return multihash(VarArgs, self.type)
@@ -149,7 +148,7 @@ class Union(ComparableType):
 
     def __init__(self, *types, alias=None):
         # Lazily convert to a set to avoid resolution errors.
-        self._types = tuple(as_type(t) for t in types)
+        self._types = tuple(ptype(t) for t in types)
 
         # Constuct alias if one is given.
         if alias:
@@ -184,7 +183,7 @@ class Union(ComparableType):
         if len(self._types) == 1:
             return repr(list(self._types)[0])
         else:
-            return "{" + ", ".join(repr(t) for t in self._types) + "}"
+            return "Union[" + ", ".join(repr(t) for t in self._types) + "]"
 
     def get_types(self):
         self._to_set()
@@ -220,69 +219,91 @@ class ResolvableType(ComparableType, Resolvable):
     """A resolvable Plum type."""
 
     def __hash__(self):
-        return hash(as_type(self.resolve()))
+        return hash(ptype(self.resolve()))
 
     def __repr__(self):
         return repr(self.resolve())
 
     def get_types(self):
-        return as_type(self.resolve()).get_types()
+        return ptype(self.resolve()).get_types()
 
     @property
     def parametric(self):
-        return as_type(self.resolve()).parametric
+        return ptype(self.resolve()).parametric
 
 
 class PromisedType(ResolvableType, Promise):
     """A promised Plum type."""
 
 
-# We already need parametric types, but due to the import order, they are not visible
-# yet. We therefore need to use promises.
-promised_parametric = Promise()  # This will resolve to `.parametric.parametric`.
-# This will resolve to `.parametric.type_parameter`.
-promised_type_parameter = Promise()
+_references = {}  # Map from qualified names to associated classes.
+
+
+def get_reference(qualified_name):
+    """Get a type referring to a fully qualified name.
+
+    Args:
+        qualified_name (str): Fully qualified name.
+
+    Returns:
+        ptype: Type referring to `qualified_name`.
+    """
+    if qualified_name in _references and _references[qualified_name]:
+        return Type(_references[qualified_name])
+    else:
+        _references[qualified_name] = None
+        return QualifiedNameType(qualified_name)
+
+
+_processed_owners = set()  # Keep track of which owners are processed.
+
+
+def deliver_reference(owner):
+    """Deliver all types in the MRO of `owner`. For performance, every `owner` will
+    only be processed once.
+
+    Args:
+        owner (type): Reference to deliver.
+    """
+    if owner not in _processed_owners:
+        for reference in owner.__mro__:
+            qualified_name = f"{reference.__module__}.{reference.__qualname__}"
+            if qualified_name in _references:
+                _references[qualified_name] = reference
+        _processed_owners.add(owner)
+
+
+class QualifiedNameType(ResolvableType):
+    """A Plum type referring to a type with a particular fully qualified name.
+
+    Args:
+        qualified_name (str): Fully qualified name to refer to.
+    """
+
+    def __init__(self, qualified_name):
+        self.qualified_name = qualified_name
+
+    def resolve(self):
+        if _references[self.qualified_name]:
+            return _references[self.qualified_name]
+        else:
+            raise ResolutionError(
+                f'Requesting reference to "{self.qualified_name}", but this reference '
+                f"is not available."
+            )
+
+
 PromisedList = Promise()  # This will resolve to `.parametric.List`.
 PromisedTuple = Promise()  # This will resolve to `.parametric.Tuple`.
 
-# We need to make the parametric class lazily due to the above promises.
-_reference = {}
 
-
-class Self:
-    """Type for the currently referenced class."""
-
-    def __new__(cls, *args, **kw_args):
-        # Create the reference class, which is a parametric class. We need to use a
-        # parametric class: if `self = Self()`, and `t = type(self)`, then giving `t` to
-        # `as_type` will instantiate another `Self`, which will have a wrong reference!
-        try:
-            Reference = _reference["Reference"]
-        except KeyError:
-
-            @promised_parametric.resolve()
-            class Reference(PromisedType):
-                def resolve(self):
-                    pos = promised_type_parameter.resolve()(self)
-                    if pos >= len(referentiables):
-                        raise ResolutionError(
-                            f"Requesting referentiable {pos + 1}, "
-                            f"whereas only {len(referentiables)} exist(s). "
-                            f'Did you forget to set a metaclass to "Referentiable"?'
-                        )
-                    else:
-                        return referentiables[pos]
-
-            _reference["Reference"] = Reference
-
-        return Reference[len(referentiables)]()
-
-
-def as_type(obj):
+def ptype(obj, context=None):
     """Convert object to a type.
 
     Args:
         obj (object): Object to convert to type.
+        context (str, optional): Context, which convert an unqualified name to a
+            qualified name.
 
     Returns:
         :class:`.type.AbstractType`: Plum type corresponding to `obj`.
@@ -291,64 +312,74 @@ def as_type(obj):
     if isinstance(obj, AbstractType):
         return obj
 
-    # A list is used as shorthand notation for varargs.
-    if isinstance(obj, list):
-        if len(obj) > 1:
-            raise TypeError(
-                f'Invalid type specification: "{obj}". Varargs has to '
-                "be specified in one of the following ways: "
-                "[], [Type], VarArgs(), or VarArgs(Type)."
-            )
-        elif len(obj) == 1:
-            return VarArgs(as_type(obj[0]))
-        else:  # `len(obj) == 0`.
-            return VarArgs()
-
-    # A set is used as shorthand notation for a union.
-    if isinstance(obj, set):
-        return Union(*obj)
-
     # Handle mapping from `typing` module.
     if hasattr(obj, "__module__") and obj.__module__ == "typing":
         # Print type as string and remove the module prefix.
-        obj_str = str(obj)[len("typing.") :]
+        obj_str = str(obj)
+        if obj_str.startswith("typing."):
+            obj_str = str(obj)[len("typing.") :]
 
         # Dissect the type.
         parts = obj_str.split("[")
         obj_str = parts[0]
         obj_is_parametrised = len(parts) > 1
 
+        # Remove a potential argument.
+        obj_str = obj_str.split("(")[0]
+
         if obj_str in ("Union", "Optional"):
             if obj_is_parametrised:
-                return Union(*(as_type(t) for t in obj.__args__))
+                return Union(*(ptype(t, context=context) for t in obj.__args__))
             else:
                 return Union(object)
         elif obj_str == "List":
             if obj_is_parametrised:
-                return PromisedList.resolve()(*(as_type(t) for t in obj.__args__))
+                return PromisedList.resolve()(
+                    *(ptype(t, context=context) for t in obj.__args__)
+                )
             else:
                 return Type(list)
         elif obj_str == "Tuple":
             if obj_is_parametrised:
-                return PromisedTuple.resolve()(*(as_type(t) for t in obj.__args__))
+                return PromisedTuple.resolve()(
+                    *(ptype(t, context=context) for t in obj.__args__)
+                )
             else:
                 return Type(tuple)
+        elif obj_str == "_ForwardRef":
+            # This depends on the implementation below!
+            obj = obj.__forward_arg__
+        else:
+            raise NotImplementedError(
+                f"There is currently no support for {type(obj)}. "
+                f"Please open an issue here at https://github.com/wesselb/plum/issues"
+            )  # pragma: no cover
 
-        raise NotImplementedError(
-            f"There is currently no support for {type(obj)}. "
-            f"Please open an issue here at https://github.com/wesselb/plum/issues"
-        )  # pragma: no cover
-
-    # :class:`.type.Self` has a shorthand notation that doesn't require the user to
-    # instantiate it.
-    if obj is Self:
-        return obj()
+    # Strings are qualified names.
+    if isinstance(obj, str):
+        # If there is a dot in `obj`, assume that it is a fully qualified name.
+        if "." in obj:
+            qualified_name = obj
+        else:
+            # It it not a fully qualified name. Attempt to get it from `context`.
+            if context:
+                qualified_name = f"{get_context(context)}.{obj}"
+            else:
+                raise TypeError(
+                    f'Type "{obj}" is given as a string and without context. '
+                    f"Cannot automatically infer fully qualified name."
+                )
+        return get_reference(qualified_name)
 
     # If `obj` is a `type`, wrap it in a `Type`.
     if isinstance(obj, type):
         return Type(obj)
 
     raise RuntimeError(f'Could not convert "{obj}" to a type.')
+
+
+TypeType = Union[type, AbstractType]
+"""ptype: The type of a Plum type, including shorthands."""
 
 
 def is_object(t):
@@ -373,32 +404,3 @@ def is_type(t):
         bool: `t` is `object`.
     """
     return isinstance(t, TypeType.get_types())
-
-
-TypeType = Union[type, AbstractType, list, set]
-"""The type of a Plum type, including shorthands."""
-
-
-class CallableMeta(type):
-    """A metaclass that implements the type of `Callable`."""
-
-    def __subclasscheck__(self, subclass):
-        # Check whether it is a subclass of `Callable`.
-        if type.__subclasscheck__(self, subclass):
-            return True
-
-        # Check whether it is a function.
-        if issubclass(subclass, FunctionType):
-            return True
-
-        # Finally, check whether it is a callable class.
-        try:
-            return isinstance(subclass.__call__, (MethodType, FunctionType))
-        except AttributeError:  # pragma: no cover
-            return False  # `__call__` is not a normal method.
-
-    def __instancecheck__(self, instance):
-        return callable(instance)
-
-
-Callable = CallableMeta("Callable", (type,), {})  #: Type for callable objects.

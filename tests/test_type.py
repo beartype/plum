@@ -1,29 +1,30 @@
-import pytest
 import typing
 
-from plum import (
-    Callable,
-    List,
-    PromisedType,
-    ResolvableType,
-    ResolutionError,
-    Self,
-    Type,
-    TypeType,
-    Union,
+import pytest
+
+from plum.parametric import List, Tuple
+from plum.resolvable import ResolutionError
+from plum.type import (
     VarArgs,
-    as_type,
+    Union,
+    Type,
+    PromisedType,
+    deliver_reference,
+    get_reference,
+    ptype,
     is_object,
     is_type,
-    Tuple,
+    TypeType,
 )
+from plum.type import _processed_owners
 
 
 def test_varargs():
     assert hash(VarArgs(int)) == hash(VarArgs(int))
-    assert repr(VarArgs(int)) == "VarArgs({!r})".format(Type(int))
+    assert repr(VarArgs(int)) == f"VarArgs({Type(int)!r})"
     assert VarArgs(int).expand(2) == (Type(int), Type(int))
     assert not VarArgs(int).parametric
+    assert VarArgs(List[int]).parametric
 
 
 def test_comparabletype():
@@ -64,9 +65,10 @@ def test_union():
 def test_type():
     assert hash(Type(int)) == hash(Type(int))
     assert hash(Type(int)) != hash(Type(str))
-    assert repr(Type(int)) == "{}.{}".format(int.__module__, int.__name__)
+    assert repr(Type(int)) == f"{int.__module__}.{int.__name__}"
     assert Type(int).get_types() == (int,)
     assert not Type(int).parametric
+    assert not Type(List[int]).parametric
 
 
 def test_promisedtype():
@@ -84,52 +86,85 @@ def test_promisedtype():
     assert t.get_types() == Type(int).get_types()
     assert not t.parametric
 
+    t = PromisedType()
+    t.deliver(List[int])
+    assert t.parametric
 
-class A:
-    self = Self()
+
+def test_qualifiednametype():
+    class A:
+        pass
+
+    name = "tests.test_type.test_qualifiednametype.<locals>.A"
+    t = get_reference(name)
+
+    with pytest.raises(ResolutionError):
+        t.resolve()
+
+    # Check delivery process.
+    assert A not in _processed_owners
+    deliver_reference(A)
+    assert A in _processed_owners
+    assert t == Type(A)
+
+    # Check caching.
+    assert get_reference(name) == Type(A)
 
 
-def test_self():
-    assert isinstance(Self, type)
-    assert A.self == as_type(A)
+def test_astype():
+    class A:
+        pass
+
+    t = Type(int)
+    assert ptype(t) is t
+    assert ptype(int) == t
+
+    # Check conversion of strings.
+    name = "tests.test_type.test_astype.<locals>.A"
+    t = ptype(name)
+    deliver_reference(A)
+    assert t == Type(A)
+    assert ptype("A", context=lambda: None) == Type(A)
+    with pytest.raises(TypeError):
+        ptype("A")
+
+    with pytest.raises(RuntimeError):
+        ptype(1)
+
+
+def test_astype_typing_mapping():
+    class A:
+        pass
+
+    assert ptype(typing.Union[typing.Union[int], list]) == Union[Union[int], list]
+    assert ptype(typing.Union) == Union[object]
+    assert ptype(typing.Optional[int]) == Union[int, type(None)]
+    assert ptype(typing.Optional) == Union[object]
+    assert ptype(typing.List[typing.List[int]]) == List[List[int]]
+    assert ptype(typing.List) == Type(list)
+    assert ptype(typing.Tuple[typing.Tuple[int], list]) == Tuple[Tuple[int], list]
+    assert ptype(typing.Tuple) == Type(tuple)
+    t = ptype(typing._ForwardRef("builtins.int"))
+    deliver_reference(int)
+    assert t == Type(int)
+
+    # Check propagation of conversion of strings.
+    ptype("tests.test_type.test_astype_typing_mapping.<locals>.A")
+    deliver_reference(A)
+    assert ptype(typing.Union["A"], context=lambda: None) == ptype(Union[A])
+    assert ptype(typing.List["A"], context=lambda: None) == ptype(List[A])
+    assert ptype(typing.Tuple["A"], context=lambda: None) == ptype(Tuple[A])
 
 
 def test_typetype():
     Promised = PromisedType()
     Promised.deliver(int)
 
-    assert as_type(type(int)) <= TypeType
-    assert as_type(type(Promised)) <= TypeType
-    assert as_type(type({int})) <= TypeType
-    assert as_type(type([int])) <= TypeType
+    assert ptype(type(int)) <= TypeType
+    assert ptype(type(Promised)) <= TypeType
 
-    assert not (as_type(int) <= TypeType)
-    assert not (as_type(Promised) <= TypeType)
-    assert not (as_type({int}) <= TypeType)
-
-
-def test_astype():
-    assert issubclass(type(as_type(Self)), ResolvableType)
-    assert isinstance(as_type([]), VarArgs)
-    assert isinstance(as_type([int]), VarArgs)
-    with pytest.raises(TypeError):
-        as_type([int, str])
-    assert as_type({int, str}) == Union[int, str]
-    assert as_type(Type(int)) == Type(int)
-    assert as_type(int) == Type(int)
-    with pytest.raises(RuntimeError):
-        as_type(1)
-
-
-def test_astype_typing_mapping():
-    assert as_type(typing.Union[typing.Union[int], list]) == Union[Union[int], list]
-    assert as_type(typing.Union) == Union[object]
-    assert as_type(typing.Optional[int]) == Union[int, type(None)]
-    assert as_type(typing.Optional) == Union[object]
-    assert as_type(typing.List[typing.List[int]]) == List[List[int]]
-    assert as_type(typing.List) == Type(list)
-    assert as_type(typing.Tuple[typing.Tuple[int], list]) == Tuple[Tuple[int], list]
-    assert as_type(typing.Tuple) == Type(tuple)
+    assert not (ptype(int) <= TypeType)
+    assert not (ptype(Promised) <= TypeType)
 
 
 def test_is_object():
@@ -139,29 +174,5 @@ def test_is_object():
 
 def test_is_type():
     assert is_type(int)
-    assert is_type({int})
-    assert is_type([int])
     assert is_type(Type(int))
     assert not is_type(1)
-
-
-def test_callable():
-    class A:
-        pass
-
-    class B:
-        def __call__(self):
-            pass
-
-    # Check `__instancecheck__`.
-    assert not isinstance(1, Callable)
-    assert isinstance(lambda x: x, Callable)
-    assert not isinstance(A(), Callable)
-    assert isinstance(B(), Callable)
-
-    # Check `__subclasscheck__`.
-    assert not issubclass(int, Callable)
-    assert issubclass(type(lambda x: x), Callable)
-    assert not issubclass(A, Callable)
-    assert issubclass(B, Callable)
-    assert issubclass(Callable, Callable)
