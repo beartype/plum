@@ -254,7 +254,7 @@ class Real:
 'float added'
 ```
 
-To avoid this behaviour, to keep the methods belong to a class separate to one 
+To avoid this behaviour, to keep the methods belonging to a class separate to one 
 definition, it is recommended to create a  separate dispatcher for every class:
 
 ```python
