@@ -522,7 +522,7 @@ class B(A):
 'fallback'
 ```
 
-#### [Plum supports forward references.](#subclassing)
+#### [Plum supports forward references.](#classes)
 
 #### [Plum supports parametric types from `typing`](#parametric-types).
    
