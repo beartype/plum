@@ -13,14 +13,15 @@ _The current `master` is unreleased._
  * [Basic Usage](#basic-usage)
  * [Scope of Functions](#scope-of-functions)
  * [Classes](#classes)
-   - [Diagonal Dispatch](#diagonal-dispatch)
+    - [Forward References](#forward-references)
+    - [Diagonal Dispatch](#diagonal-dispatch)
  * [Keyword Arguments and Default Values](#keyword-arguments-and-default-values)
  * [Comparison with `multipledispatch`](#comparison-with-multipledispatch)
  * [Type System](#type-system)
-     - [Union Types](#union-types)
-     - [Parametric Types](#parametric-types)
-     - [Variable Arguments](#variable-arguments)
-     - [Return Types](#return-types)
+    - [Union Types](#union-types)
+    - [Parametric Types](#parametric-types)
+    - [Variable Arguments](#variable-arguments)
+    - [Return Types](#return-types)
  * [Conversion and Promotion](#conversion-and-promotion)
     - [Conversion](#conversion)
     - [Promotion](#promotion)
@@ -272,10 +273,11 @@ class Real:
 
 #### Word of Caution
 
-A forward reference `"A"` will resolve to the next class `A` that is defined _in 
+A forward reference `"A"` will resolve to the next class `A` that is defined _and in 
 which dispatch is used_.
 In particular, this works for self references.
 In is recommended to only use forward references for self references.
+For more advanced use cases of forward references, you can use `plum.type.PromisedType`.
 
 ### Diagonal Dispatch
 
