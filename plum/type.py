@@ -337,6 +337,8 @@ def ptype(obj):
         elif obj_str == "ForwardRef" or obj_str == "_ForwardRef":
             # This depends on the implementation below!
             obj = obj.__forward_arg__
+        elif obj_str == "Any":
+            return Type(object)
         else:
             raise NotImplementedError(
                 f'There is currently no support for "typing.{obj.__name__}". '

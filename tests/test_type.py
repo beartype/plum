@@ -138,14 +138,23 @@ def test_astype_typing_mapping():
     class A:
         pass
 
+    # `Union`:
     assert ptype(typing.Union[typing.Union[int], list]) == Union[Union[int], list]
     assert ptype(typing.Union) == Union[object]
+
+    # `Optional`:
     assert ptype(typing.Optional[int]) == Union[int, type(None)]
     assert ptype(typing.Optional) == Union[object]
+
+    # `List`:
     assert ptype(typing.List[typing.List[int]]) == List[List[int]]
     assert ptype(typing.List) == Type(list)
+
+    # `Tuple`:
     assert ptype(typing.Tuple[typing.Tuple[int], list]) == Tuple[Tuple[int], list]
     assert ptype(typing.Tuple) == Type(tuple)
+
+    # `ForwardRef`:
     if hasattr(typing, "ForwardRef"):
         t = ptype(typing.ForwardRef("int"))
     else:
@@ -153,6 +162,9 @@ def test_astype_typing_mapping():
         t = ptype(typing._ForwardRef("int"))
     deliver_forward_reference(int)
     assert t == Type(int)
+
+    # `Any`:
+    assert ptype(typing.Any) == ptype(object)
 
     # Check propagation of conversion of strings.
     t = ptype(typing.Union["A"])
