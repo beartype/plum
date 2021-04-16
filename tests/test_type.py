@@ -9,14 +9,13 @@ from plum.type import (
     Union,
     Type,
     PromisedType,
-    deliver_reference,
-    get_reference,
+    deliver_forward_reference,
+    get_forward_reference,
     ptype,
     is_object,
     is_type,
     TypeType,
 )
-from plum.type import _processed_owners
 
 
 def test_varargs():
@@ -91,24 +90,31 @@ def test_promisedtype():
     assert t.parametric
 
 
-def test_qualifiednametype():
+def test_forwardreferencedtype():
     class A:
         pass
 
-    name = "tests.test_type.test_qualifiednametype.<locals>.A"
-    t = get_reference(name)
+    class B:
+        pass
+
+    t_a = get_forward_reference("A")
+    t_b = get_forward_reference("B")
 
     with pytest.raises(ResolutionError):
-        t.resolve()
+        t_a.resolve()
+    with pytest.raises(ResolutionError):
+        t_b.resolve()
 
-    # Check delivery process.
-    assert A not in _processed_owners
-    deliver_reference(A)
-    assert A in _processed_owners
-    assert t == Type(A)
+    deliver_forward_reference(A)
 
-    # Check caching.
-    assert get_reference(name) == Type(A)
+    assert t_a == Type(A)
+    with pytest.raises(ResolutionError):
+        t_b.resolve()
+
+    deliver_forward_reference(B)
+
+    assert t_a == Type(A)
+    assert t_b == Type(B)
 
 
 def test_astype():
@@ -120,13 +126,9 @@ def test_astype():
     assert ptype(int) == t
 
     # Check conversion of strings.
-    name = "tests.test_type.test_astype.<locals>.A"
-    t = ptype(name)
-    deliver_reference(A)
+    t = ptype("A")
+    deliver_forward_reference(A)
     assert t == Type(A)
-    assert ptype("A", context=lambda: None) == Type(A)
-    with pytest.raises(TypeError):
-        ptype("A")
 
     with pytest.raises(RuntimeError):
         ptype(1)
@@ -145,19 +147,25 @@ def test_astype_typing_mapping():
     assert ptype(typing.Tuple[typing.Tuple[int], list]) == Tuple[Tuple[int], list]
     assert ptype(typing.Tuple) == Type(tuple)
     if hasattr(typing, "ForwardRef"):
-        t = ptype(typing.ForwardRef("builtins.int"))
+        t = ptype(typing.ForwardRef("int"))
     else:
         # The `typing` package is different for Python 3.6.
-        t = ptype(typing._ForwardRef("builtins.int"))
-    deliver_reference(int)
+        t = ptype(typing._ForwardRef("int"))
+    deliver_forward_reference(int)
     assert t == Type(int)
 
     # Check propagation of conversion of strings.
-    ptype("tests.test_type.test_astype_typing_mapping.<locals>.A")
-    deliver_reference(A)
-    assert ptype(typing.Union["A"], context=lambda: None) == ptype(Union[A])
-    assert ptype(typing.List["A"], context=lambda: None) == ptype(List[A])
-    assert ptype(typing.Tuple["A"], context=lambda: None) == ptype(Tuple[A])
+    t = ptype(typing.Union["A"])
+    deliver_forward_reference(A)
+    assert t == ptype(Union[A])
+
+    t = ptype(typing.List["A"])
+    deliver_forward_reference(A)
+    assert t == ptype(List[A])
+
+    t = ptype(typing.Tuple["A"])
+    deliver_forward_reference(A)
+    assert t == ptype(Tuple[A])
 
 
 def test_typetype():

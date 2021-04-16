@@ -2,8 +2,8 @@ import abc
 import inspect
 import logging
 
-from .resolvable import Resolvable, Promise, ResolutionError
-from .util import multihash, Comparable, get_context
+from .resolvable import Resolvable, Promise
+from .util import multihash, Comparable
 
 __all__ = [
     "TypeMeta",
@@ -15,7 +15,7 @@ __all__ = [
     "Type",
     "ResolvableType",
     "PromisedType",
-    "deliver_reference",
+    "deliver_forward_reference",
     "PromisedList",
     "PromisedTuple",
     "ptype",
@@ -222,7 +222,7 @@ class ResolvableType(ComparableType, Resolvable):
         return hash(ptype(self.resolve()))
 
     def __repr__(self):
-        return repr(self.resolve())
+        return repr(ptype(self.resolve()))
 
     def get_types(self):
         return ptype(self.resolve()).get_types()
@@ -236,74 +236,62 @@ class PromisedType(ResolvableType, Promise):
     """A promised Plum type."""
 
 
-_references = {}  # Map from qualified names to associated classes.
+_unresolved_forward_references = []
 
 
-def get_reference(qualified_name):
-    """Get a type referring to a fully qualified name.
+def get_forward_reference(name):
+    """Get a type referring to a forward referenced type.
 
     Args:
-        qualified_name (str): Fully qualified name.
+        name (str): Name of type.
 
     Returns:
-        ptype: Type referring to `qualified_name`.
+        ptype: Type referring to `name`.
     """
-    if qualified_name in _references and _references[qualified_name]:
-        return Type(_references[qualified_name])
-    else:
-        _references[qualified_name] = None
-        return QualifiedNameType(qualified_name)
+    reference = ForwardReferencedType(name)
+    _unresolved_forward_references.append(reference)
+    return reference
 
 
-_processed_owners = set()  # Keep track of which owners are processed.
-
-
-def deliver_reference(owner):
-    """Deliver all types in the MRO of `owner`. For performance, every `owner` will
-    only be processed once.
+def deliver_forward_reference(type):
+    """Deliver a forward reference.
 
     Args:
-        owner (type): Reference to deliver.
+        type (type): Type to deliver.
     """
-    if owner not in _processed_owners:
-        for reference in owner.__mro__:
-            qualified_name = f"{reference.__module__}.{reference.__qualname__}"
-            if qualified_name in _references:
-                _references[qualified_name] = reference
-        _processed_owners.add(owner)
-
-
-class QualifiedNameType(ResolvableType):
-    """A Plum type referring to a type with a particular fully qualified name.
-
-    Args:
-        qualified_name (str): Fully qualified name to refer to.
-    """
-
-    def __init__(self, qualified_name):
-        self.qualified_name = qualified_name
-
-    def resolve(self):
-        if _references[self.qualified_name]:
-            return _references[self.qualified_name]
+    currently_unresolved_forward_references = _unresolved_forward_references.copy()
+    _unresolved_forward_references.clear()
+    for reference in currently_unresolved_forward_references:
+        if reference.name == type.__name__:
+            reference.deliver(Type(type))
         else:
-            raise ResolutionError(
-                f'Requesting reference to "{self.qualified_name}", but this reference '
-                f"is not available."
-            )
+            _unresolved_forward_references.append(reference)
+
+
+class ForwardReferencedType(PromisedType):
+    """A Plum type referring to forward-references type.
+
+    Args:
+        name (str): Name of the type.
+
+    Attributes:
+        name (str): Name of the type.
+    """
+
+    def __init__(self, name):
+        self.name = name
+        PromisedType.__init__(self)
 
 
 PromisedList = Promise()  # This will resolve to `.parametric.List`.
 PromisedTuple = Promise()  # This will resolve to `.parametric.Tuple`.
 
 
-def ptype(obj, context=None):
+def ptype(obj):
     """Convert object to a type.
 
     Args:
         obj (object): Object to convert to type.
-        context (str, optional): Context, which convert an unqualified name to a
-            qualified name.
 
     Returns:
         :class:`.type.AbstractType`: Plum type corresponding to `obj`.
@@ -333,21 +321,17 @@ def ptype(obj, context=None):
             pass
         elif obj_str in ("Union", "Optional"):
             if obj_is_parametrised:
-                return Union(*(ptype(t, context=context) for t in obj.__args__))
+                return Union(*(ptype(t) for t in obj.__args__))
             else:
                 return Union(object)
         elif obj_str == "List":
             if obj_is_parametrised:
-                return PromisedList.resolve()(
-                    *(ptype(t, context=context) for t in obj.__args__)
-                )
+                return PromisedList.resolve()(*(ptype(t) for t in obj.__args__))
             else:
                 return Type(list)
         elif obj_str == "Tuple":
             if obj_is_parametrised:
-                return PromisedTuple.resolve()(
-                    *(ptype(t, context=context) for t in obj.__args__)
-                )
+                return PromisedTuple.resolve()(*(ptype(t) for t in obj.__args__))
             else:
                 return Type(tuple)
         elif obj_str == "ForwardRef" or obj_str == "_ForwardRef":
@@ -359,21 +343,9 @@ def ptype(obj, context=None):
                 f"Please open an issue at https://github.com/wesselb/plum/issues"
             )  # pragma: no cover
 
-    # Strings are qualified names.
+    # Strings are forward references.
     if isinstance(obj, str):
-        # If there is a dot in `obj`, assume that it is a fully qualified name.
-        if "." in obj:
-            qualified_name = obj
-        else:
-            # It it not a fully qualified name. Attempt to get it from `context`.
-            if context:
-                qualified_name = f"{get_context(context)}.{obj}"
-            else:
-                raise TypeError(
-                    f'Type "{obj}" is given as a string and without context. '
-                    f"Cannot automatically infer fully qualified name."
-                )
-        return get_reference(qualified_name)
+        return get_forward_reference(obj)
 
     # If `obj` is a `type`, wrap it in a `Type`.
     if isinstance(obj, type):

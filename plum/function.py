@@ -4,7 +4,7 @@ from functools import wraps
 
 from .resolvable import Promise
 from .signature import Signature
-from .type import ptype, is_object, VarArgs, deliver_reference
+from .type import ptype, is_object, VarArgs, deliver_forward_reference
 
 __all__ = [
     "extract_signature",
@@ -12,7 +12,8 @@ __all__ = [
     "NotFoundLookupError",
     "promised_convert",
     "promised_type_of",
-    "Function"
+    "ClassFunction",
+    "Function",
 ]
 
 log = logging.getLogger(__name__)
@@ -36,28 +37,26 @@ def extract_signature(f):
     # Extract specification.
     spec = inspect.getfullargspec(f)
 
-    # Get types of arguments. We need to already convert the types with `as_type` to
-    # convert types given as strings in the context of the function to their fully
-    # qualified names.
+    # Get types of arguments.
     types = []
     # Cut off keyword arguments: arguments which are given a default value.
     num_defaults = len(spec.defaults) if spec.defaults else 0
     for arg in spec.args[: len(spec.args) - num_defaults]:
         try:
-            types.append(ptype(spec.annotations[arg], context=f))
+            types.append(ptype(spec.annotations[arg]))
         except KeyError:
             types.append(default_obj_type)
 
     # Get possible varargs.
     if spec.varargs:
         try:
-            types.append(VarArgs(ptype(spec.annotations[spec.varargs], context=f)))
+            types.append(VarArgs(ptype(spec.annotations[spec.varargs])))
         except KeyError:
             types.append(VarArgs(default_obj_type))
 
     # Get possible return type.
     try:
-        return_type = ptype(spec.annotations["return"], context=f)
+        return_type = ptype(spec.annotations["return"])
     except KeyError:
         return_type = default_obj_type
 
@@ -97,17 +96,58 @@ def _convert(obj, target_type):
         return promised_convert.resolve()(obj, target_type)
 
 
+class ClassFunction(Promise):
+    """A function that is part of a class.
+
+    This wrapper provides a mechanism that allows the function to be constructed with
+    a reference to the class that it owns. The construction is deferred until
+    `__set_name__` is called.
+
+    Args:
+        class_name (str): Name of the class that owns the function.
+        construct_function (function): Constructor for the function: takes in a
+            reference to the class  that owns the function and gives back the function.
+    """
+
+    _pending = []
+
+    def __init__(self, class_name, construct_function):
+        ClassFunction._pending.append(self)
+        self.class_name = class_name
+        self.construct_function = construct_function
+        Promise.__init__(self)
+
+    def __set_name__(self, owner, name):
+        # Deliver the owner as a forward reference.
+        self.owner = owner
+        deliver_forward_reference(owner)
+
+        # Resolve all pending class functions.
+        currently_pending = ClassFunction._pending.copy()
+        ClassFunction._pending.clear()
+        for f in currently_pending:
+            if f.class_name == self.class_name:
+                # They are in the same class. Construct the function and deliver it.
+                f.deliver(f.construct_function(owner))
+            else:
+                # They are not in the same class. The function should remain pending.
+                ClassFunction._pending.append(f)
+
+    def __get__(self, instance, owner):
+        return self.resolve().__get__(instance, owner)
+
+
 class Function:
     """A function.
 
     Args:
         f (function): Function that is wrapped.
-        in_class (type, optional): Class of which the function is part.
+        owner (type, optional): Class of which the function is part.
     """
 
     _instances = []
 
-    def __init__(self, f, in_class=None):
+    def __init__(self, f, owner=None):
         Function._instances.append(self)
 
         self._f = f
@@ -119,7 +159,7 @@ class Function:
         self._parametric = False
 
         self._cache = {}
-        self._class = ptype(in_class) if in_class else None
+        self._owner = ptype(owner) if owner else None
 
         self._pending = []
         self._resolved = []
@@ -201,11 +241,8 @@ class Function:
             return_type (type or ptype, optional): Return type of the function. Defaults
                 to `object`.
         """
-        # The return type may contain strings, which need to be converted Plum types
-        # in the context of `f`.
-        self._pending.append(
-            (signature, f, precedence, ptype(return_type, context=f))
-        )
+        # The return type may contain strings, which need to be converted Plum types.
+        self._pending.append((signature, f, precedence, ptype(return_type)))
 
     def _resolve_pending_registrations(self):
         # Keep track of whether anything registered.
@@ -280,7 +317,7 @@ class Function:
         elif len(candidates) == 1:
             return candidates[0]
         else:
-            class_message = f" of {self._class}" if self._class else ""
+            class_message = f" of {self._owner}" if self._owner else ""
             raise NotFoundLookupError(
                 f'For function "{self._f.__name__}"{class_message}, '
                 f"signature {signature} could not be resolved."
@@ -308,7 +345,7 @@ class Function:
         # Look up the signature.
         signature = Signature(*types)
 
-        if self._class:
+        if self._owner:
             try:
                 method, return_type = self.methods[self.resolve_signature(signature)]
             except NotFoundLookupError as e:
@@ -317,7 +354,7 @@ class Function:
 
                 # Walk through the classes in the class's MRO, except for this
                 # class, and try to get the method.
-                for c in self._class.mro()[1:]:
+                for c in self._owner.mro()[1:]:
                     try:
                         method = getattr(c, self._f.__name__)
 
@@ -403,8 +440,6 @@ class Function:
         return wrapped_method
 
     def __get__(self, instance, owner):
-        # Critical! This is the moment to deliver references.
-        deliver_reference(owner)
         if instance:
             return _BoundFunction(self, instance)
         else:

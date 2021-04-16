@@ -34,7 +34,10 @@ class Promise(Resolvable):
         Args:
             obj: The object to deliver.
         """
-        self._obj = obj
+        if self._obj is None:
+            self._obj = obj
+        else:
+            raise ResolutionError("Promise delivered multiple times.")
 
     def resolve(self):
         if self._obj is None:

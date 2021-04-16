@@ -51,6 +51,7 @@ def test_metadata_and_printing():
     assert f.__doc__ == "docstring of f"
     assert f.__module__ == "tests.dispatcher.test_dispatcher"
     assert repr(f) == f"<function {f._f} with 1 method(s)>"
+
     assert f.invoke().__name__ == "f"
     assert f.invoke().__doc__ == "docstring of f"
     assert f.invoke().__module__ == "tests.dispatcher.test_dispatcher"
@@ -60,16 +61,15 @@ def test_metadata_and_printing():
     a = A()
     g = a.g
 
-    g_name = "tests.dispatcher.test_dispatcher.test_metadata_and_printing.<locals>.A.g"
     assert g.__name__ == "g"
     assert g.__doc__ == "docstring of g"
     assert g.__module__ == "tests.dispatcher.test_dispatcher"
-    assert repr(g) == f"<function {A._dispatch._functions[g_name]._f} with 1 method(s)>"
+    assert repr(g) == f'<function {A._dispatch._classes[A]["g"]._f} with 1 method(s)>'
 
     assert g.invoke().__name__ == "g"
     assert g.invoke().__doc__ == "docstring of g"
     assert g.invoke().__module__ == "tests.dispatcher.test_dispatcher"
-    assert repr(g.invoke())[:-n] == repr(A._dispatch._functions[g_name]._f)[:-n]
+    assert repr(g.invoke())[:-n] == repr(A._dispatch._classes[A]["g"]._f)[:-n]
 
 
 def test_multi():
@@ -86,6 +86,33 @@ def test_multi():
     assert f(1) == "int or str"
     assert f("1") == "int or str"
     assert f(1.0) == "fallback"
+
+
+def test_multi_in_class():
+    dispatch = Dispatcher()
+
+    class A:
+        @dispatch
+        def f(self, x):
+            return "fallback"
+
+        @dispatch.multi(
+            (
+                object,
+                int,
+            ),
+            (
+                object,
+                str,
+            ),
+        )
+        def f(self, x: Union[int, str]):
+            return "int or str"
+
+    a = A()
+    assert a.f(1) == "int or str"
+    assert a.f("1") == "int or str"
+    assert a.f(1.0) == "fallback"
 
 
 def test_extension():
@@ -140,7 +167,7 @@ def test_invoke():
     assert f.invoke(Union[int, str, float])(1) == "int, str, or float"
 
 
-def test_invoke_inheritance():
+def test_invoke_in_class():
     dispatch = Dispatcher()
 
     class A:

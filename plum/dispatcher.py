@@ -1,8 +1,8 @@
 import logging
 
-from .function import Function, extract_signature
+from .function import ClassFunction, Function, extract_signature
 from .signature import Signature as Sig
-from .type import subclasscheck_cache, ptype
+from .type import subclasscheck_cache
 from .util import is_in_class, get_class
 
 __all__ = ["Dispatcher", "dispatch", "clear_all_cache"]
@@ -15,6 +15,7 @@ class Dispatcher:
 
     def __init__(self):
         self._functions = {}
+        self._classes = {}
 
     def __call__(self, f=None, precedence=0):
         """Decorator for a particular signature.
@@ -35,12 +36,22 @@ class Dispatcher:
             return decorator
 
         signature, return_type = extract_signature(f)
-        return self._add_method(
-            f,
-            [signature],
-            precedence=precedence,
-            return_type=return_type,
-        )
+
+        def construct_function(owner):
+            return self._add_method(
+                f,
+                [signature],
+                precedence=precedence,
+                return_type=return_type,
+                owner=owner,
+            )
+
+        # Defer the construction if `f` is in a class. We defer the construct to allow
+        # the function to hold a reference to the class.
+        if is_in_class(f):
+            return ClassFunction(get_class(f), construct_function)
+        else:
+            return construct_function(None)
 
     def multi(
         self,
@@ -58,37 +69,49 @@ class Dispatcher:
         Returns:
             function: Decorator.
         """
+        signatures = [Sig(*types) for types in signatures]
 
         def decorator(f):
-            return self._add_method(
-                f,
-                [Sig(*types) for types in signatures],
-                precedence=precedence,
-                return_type=return_type,
-            )
+            def construct_function(owner):
+                return self._add_method(
+                    f,
+                    signatures,
+                    precedence=precedence,
+                    return_type=return_type,
+                    owner=owner,
+                )
+
+            # Defer the construction if `f` is in a class. We defer the construct to
+            # allow the function to hold a reference to the class.
+            if is_in_class(f):
+                return ClassFunction(get_class(f), construct_function)
+            else:
+                return construct_function(None)
 
         return decorator
 
-    def _add_method(self, f, signatures, precedence, return_type):
-        if is_in_class(f):
-            # The function is part of a class.
-            name = f.__module__ + "." + f.__qualname__
-            in_class = ptype(get_class(f))
+    def _add_method(self, f, signatures, precedence, return_type, owner):
+        name = f.__name__
+
+        # If a class is the owner, use a namespace specific for that class.
+        # Otherwise, use the global namespace.
+        if owner:
+            if owner not in self._classes:
+                self._classes[owner] = {}
+            namespace = self._classes[owner]
         else:
-            # The function is not part of a class. Use global namespace.
-            name = f.__name__
-            in_class = None
+            namespace = self._functions
 
         # Create a new function only if the function does not already exist.
-        if name not in self._functions:
-            self._functions[name] = Function(f, in_class=in_class)
+        if name not in namespace:
+            namespace[name] = Function(f, owner=owner)
 
         # Register the new method.
         for signature in signatures:
-            self._functions[name].register(signature, f, precedence, return_type)
+            namespace[name].register(signature, f, precedence, return_type)
 
         # Return the function.
-        return self._functions[name]
+        return namespace[name]
 
     def clear_cache(self):
         """Clear cache."""

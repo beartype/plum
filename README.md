@@ -70,7 +70,7 @@ will be raised:
 
 ```python
 >>> f(1.0)
-NotFoundLookupError: For function "f", signature Signature(builtins.float,) could not be resolved.
+NotFoundLookupError: For function "f", signature Signature(builtins.float) could not be resolved.
 ```
 
 Instead of implementing a method for `float`s, let's implement a method for 
@@ -224,69 +224,7 @@ class Real:
 'float added'
 ```
 
-One surprising behaviour is that, within a module, methods for a class are "permanently
-recorded".
-Therefore, when you redefine a class, the functions in the new definition still 
-implement the methods for the old definition:
-
-```python
-from plum import dispatch
-
-class Real:
-   @dispatch
-   def __add__(self, other: int):
-      return "int added"
-   
-   
-class Real:
-   @dispatch
-   def __add__(self, other: float):
-      return "float added"
-```
-
-```python
->>> real = Real()
-
->>> real + 1
-'int added'
-
->>> real + 1.0
-'float added'
-```
-
-To avoid this behaviour, to keep the methods belonging to a class separate to one 
-definition, it is recommended to create a  separate dispatcher for every class:
-
-```python
-from plum import Dispatcher
-
-class Real:
-   dispatch = Dispatcher()
-
-   @dispatch
-   def __add__(self, other: int):
-      return "int added"
-
-   
-class Real:
-   dispatch = Dispatcher()
-
-   @dispatch
-   def __add__(self, other: float):
-      return "float added"
-```
-
-```python
->>> real = Real()
-
->>> real + 1
-NotFoundLookupError: For function "__add__" of <class '__main__.Real'>, signature Signature(__main__.Real, builtins.int) could not be resolved.
-
->>> real + 1.0
-'float added'
-```
-
-### Self References
+### Forward References
 
 Imagine the following design:
 
@@ -331,6 +269,13 @@ class Real:
     def __add__(self, other: "Real"):
         pass # Do something here. 
 ```
+
+#### Word of Caution
+
+A forward reference `"A"` will resolve to the next class `A` that is defined _in 
+which dispatch is used_.
+In particular, this works for self references.
+In is recommended to only use forward references for self references.
 
 ### Diagonal Dispatch
 
@@ -522,9 +467,9 @@ class B(A):
 'fallback'
 ```
 
-#### [Plum supports forward references.](#classes)
+#### [Plum supports forward references.](#forward-references)
 
-#### [Plum supports parametric types from `typing`](#parametric-types).
+#### [Plum supports parametric types from `typing`.](#parametric-types)
    
 #### Plum attempts to stay close to Julia's type system.
 For example, `multipledispatch`'s union type is not a true union type:

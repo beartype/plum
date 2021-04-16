@@ -223,3 +223,48 @@ def test_abc_abstractmethod():
     assert b.f(1) == 1
     with pytest.raises(NotFoundLookupError):
         b.f("1")
+
+
+def test_self_reference():
+    class A:
+        @dispatch
+        def f(self, x: "A"):
+            return "self"
+
+        @dispatch
+        def f(self, x: str):
+            return "str"
+
+    a = A()
+
+    assert a.f(a) == "self"
+    assert a.f("1") == "str"
+
+
+def test_nested_class():
+    class A:
+        @dispatch
+        def f(self, x: int):
+            return "int1"
+
+        class A:
+            @dispatch
+            def f(self, x: int):
+                return "int2"
+
+            @dispatch
+            def f(self, x: str):
+                return "str2"
+
+        @dispatch
+        def f(self, x: str):
+            return "str1"
+
+    a1 = A()
+    a2 = A.A()
+
+    assert a1.f(1) == "int1"
+    assert a1.f("1") == "str1"
+
+    assert a2.f(1) == "int2"
+    assert a2.f("1") == "str2"
