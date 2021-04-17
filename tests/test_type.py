@@ -156,12 +156,12 @@ def test_astype_typing_mapping():
 
     # `ForwardRef`:
     if hasattr(typing, "ForwardRef"):
-        t = ptype(typing.ForwardRef("int"))
+        t = ptype(typing.ForwardRef("A"))
     else:
         # The `typing` package is different for Python 3.6.
-        t = ptype(typing._ForwardRef("int"))
-    deliver_forward_reference(int)
-    assert t == Type(int)
+        t = ptype(typing._ForwardRef("A"))
+    deliver_forward_reference(A)
+    assert t == Type(A)
 
     # `Any`:
     assert ptype(typing.Any) == ptype(object)
