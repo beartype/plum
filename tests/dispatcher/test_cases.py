@@ -2,6 +2,8 @@ import abc
 
 import pytest
 
+from functools import wraps, WRAPPER_UPDATES
+
 from plum import Dispatcher, NotFoundLookupError, AmbiguousLookupError
 from plum.type import PromisedType
 from tests.test_signature import Num, Re, FP
@@ -268,3 +270,50 @@ def test_nested_class():
 
     assert a2.f(1) == "int2"
     assert a2.f("1") == "str2"
+
+
+def dec(f):
+    @wraps(f)
+    def f_wrapped(*args, **kw_args):
+        return f(*args, **kw_args)
+
+    return f_wrapped
+
+
+def test_decorator():
+    dispatch = Dispatcher()
+
+    @dec
+    @dispatch
+    @dec
+    def g(x: int):
+        return "int"
+
+    @dec
+    @dispatch
+    @dec
+    def g(x: str):
+        return "str"
+
+    assert g(1) == "int"
+    assert g("1") == "str"
+
+
+def test_decorator_in_class():
+    class A:
+        @dec
+        @dispatch
+        @dec
+        def f(self, x: int):
+            return "int"
+
+        # Cannot use a decorator before `dispatch` here!
+        @dispatch
+        @dec
+        def f(self, x: str):
+            return "str"
+
+    a = A()
+
+    assert a.f(1) == "int"
+    assert a.f("1") == "str"

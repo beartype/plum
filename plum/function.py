@@ -24,6 +24,23 @@ log = logging.getLogger(__name__)
 default_obj_type = ptype(object)
 
 
+def _is_not_empty(t):
+    """Check if a type is *not* equal to `inspect.Parameter.empty`, without triggering
+    unwanted `__eq__`-like methods.
+
+    Args:
+        t (type): Type to check.
+
+    Returns:
+        bool: `True` if `t` is *not* `inspect.Parameter.empty`.
+    """
+    return not (
+        hasattr(t, "__module__")
+        and t.__module__ == "inspect"
+        and t == inspect.Parameter.empty
+    )
+
+
 def extract_signature(f):
     """Extract the signature from a function.
 
@@ -35,29 +52,34 @@ def extract_signature(f):
             function.
     """
     # Extract specification.
-    spec = inspect.getfullargspec(f)
+    sig = inspect.signature(f)
 
     # Get types of arguments.
     types = []
-    # Cut off keyword arguments: arguments which are given a default value.
-    num_defaults = len(spec.defaults) if spec.defaults else 0
-    for arg in spec.args[: len(spec.args) - num_defaults]:
-        try:
-            types.append(ptype(spec.annotations[arg]))
-        except KeyError:
-            types.append(default_obj_type)
+    for arg in sig.parameters:
+        p = sig.parameters[arg]
 
-    # Get possible varargs.
-    if spec.varargs:
-        try:
-            types.append(VarArgs(ptype(spec.annotations[spec.varargs])))
-        except KeyError:
-            types.append(VarArgs(default_obj_type))
+        # Stop once we have seen all positional parameter without a default value.
+        if _is_not_empty(p.default) or p.kind in {p.KEYWORD_ONLY, p.VAR_KEYWORD}:
+            break
+
+        if p.kind == p.VAR_POSITIONAL:
+            # Parameter is varargs.
+            if _is_not_empty(p.annotation):
+                types.append(VarArgs(ptype(p.annotation)))
+            else:
+                types.append(VarArgs(default_obj_type))
+        else:
+            # Just a regular positional parameter.
+            if _is_not_empty(p.annotation):
+                types.append(ptype(p.annotation))
+            else:
+                types.append(default_obj_type)
 
     # Get possible return type.
-    try:
-        return_type = ptype(spec.annotations["return"])
-    except KeyError:
+    if _is_not_empty(sig.return_annotation):
+        return_type = ptype(sig.return_annotation)
+    else:
         return_type = default_obj_type
 
     # Assemble signature.
