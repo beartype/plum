@@ -636,6 +636,11 @@ def f(x: List[int]):
 'tuple or list'
 ```
 
+**Note:** Although parametric types are supported, parametric types do incur a 
+significant  performance hit, because the type of every element in a list or tuple 
+must be checked.
+It is recommended to use parametric types only where absolutely necessary.
+
 ### Variable Arguments
 
 A variable number of arguments can be used without any problem.
