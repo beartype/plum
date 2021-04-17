@@ -225,6 +225,16 @@ class Real:
 'float added'
 ```
 
+If you use other decorators, then `dispatch` must be the _last_ decorator:
+
+```python
+class Real:
+   @dispatch
+   @decorator
+   def __add__(self, other: int):
+      return "int added"
+```
+
 ### Forward References
 
 Imagine the following design:
