@@ -339,6 +339,8 @@ def ptype(obj):
             obj = obj.__forward_arg__
         elif obj_str == "Any":
             return Type(object)
+        elif obj_str == "Callable":
+            return Type(obj)
         else:
             raise NotImplementedError(
                 f'There is currently no support for "typing.{obj.__name__}". '

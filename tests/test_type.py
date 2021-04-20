@@ -166,6 +166,9 @@ def test_astype_typing_mapping():
     # `Any`:
     assert ptype(typing.Any) == ptype(object)
 
+    # `Callable`:
+    assert ptype(typing.Callable) == Type(typing.Callable)
+
     # Check propagation of conversion of strings.
     t = ptype(typing.Union["A"])
     deliver_forward_reference(A)
