@@ -158,6 +158,15 @@ class ClassFunction(Promise):
     def __get__(self, instance, owner):
         return self.resolve().__get__(instance, owner)
 
+    def __call__(self, *args, **kw_args):
+        # This method is called in the following situation:
+        #     class A:
+        #         @property.setter
+        #         @dispatch
+        #         def name(self, a: str):
+        #             pass
+        return self.resolve().__call__(*args, **kw_args)
+
 
 class Function:
     """A function.

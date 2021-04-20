@@ -317,3 +317,27 @@ def test_decorator_in_class():
 
     assert a.f(1) == "int"
     assert a.f("1") == "str"
+
+
+def test_property():
+    class A:
+        @property
+        def name(self):
+            return "name"
+
+        @name.setter
+        @dispatch
+        def name(self, x: str):
+            return "str"
+
+        # This setup requires that the method has another class!
+        @dispatch
+        def f(self):
+            pass
+
+    a = A()
+
+    assert a.name == "name"
+    a.name = "another name"
+    with pytest.raises(NotFoundLookupError):
+        a.name = 1
