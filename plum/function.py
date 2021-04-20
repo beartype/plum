@@ -462,7 +462,7 @@ class Function:
         return wrapped_method
 
     def __get__(self, instance, owner):
-        if instance:
+        if instance is not None:
             return _BoundFunction(self, instance)
         else:
             return self
@@ -499,9 +499,8 @@ class _BoundFunction:
 
         @wraps(self.f._f)
         def wrapped_method(*args, **kw_args):
-            return self.f.invoke(type(self.instance), *types)(
-                self.instance, *args, **kw_args
-            )
+            method = self.f.invoke(type(self.instance), *types)
+            return method(self.instance, *args, **kw_args)
 
         return wrapped_method
 
