@@ -12,7 +12,6 @@ Everybody likes multiple dispatch, just like everybody likes plums.
  * [Scope of Functions](#scope-of-functions)
  * [Classes](#classes)
     - [Forward References](#forward-references)
-    - [Diagonal Dispatch](#diagonal-dispatch)
  * [Keyword Arguments and Default Values](#keyword-arguments-and-default-values)
  * [Comparison with `multipledispatch`](#comparison-with-multipledispatch)
  * [Type System](#type-system)
@@ -139,8 +138,8 @@ In a design like this, the methods for `f` recorded by `dispatch` are _global_:
 'float'
 ```
 
-This can be convenient, but it could also be undesirable, because it means that anyone 
-can attach new behaviour to your functions.
+This could be what you want, but it can also be undesirable, because it means that 
+someone could accidentally overwrite your methods.
 To keep your functions private, you can create new dispatchers:
 
 **package/\_\_init\_\_.py**
@@ -279,52 +278,12 @@ class Real:
         pass # Do something here. 
 ```
 
-#### Word of Caution
-
-A forward reference `"A"` will resolve to the next class `A` that is defined _and in 
+**Note:**
+A forward reference `"A"` will resolve to the _next defined_ class `A` _in 
 which dispatch is used_.
-In particular, this works for self references.
+This works fine for self references.
 In is recommended to only use forward references for self references.
 For more advanced use cases of forward references, you can use `plum.type.PromisedType`.
-
-### Diagonal Dispatch
-
-Since every class in Python can be subclassed, diagonal dispatch cannot be
-implemented.
-However, inheritance can be used to achieve a form of diagonal dispatch:
-
-```python
-from plum import dispatch
-
-class Real:
-    @dispatch
-    def __add__(self, other: "Real"):
-        return "real"
-        
-
-class Rational(Real):
-    @dispatch
-    def __add__(self, other: "Rational"):
-        return "rational"
-        
-
-real = Real()
-rational = Rational()
-```
-
-```python
->>> real + real
-'real'
-
->>> real + rational
-'real'
-
->>> rational + real
-'real'
-
->>> rational + rational
-'rational'
-```
 
 ## Keyword Arguments and Default Values
 
