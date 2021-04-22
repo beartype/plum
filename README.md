@@ -7,8 +7,6 @@
 
 Everybody likes multiple dispatch, just like everybody likes plums.
 
-_The current `master` is unreleased._
-
  * [Installation](#installation)
  * [Basic Usage](#basic-usage)
  * [Scope of Functions](#scope-of-functions)
