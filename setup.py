@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup, Extension
 
-requirements = ["numpy>=1.16", "six"]
+requirements = []
 
 setup(
     packages=find_packages(exclude=["docs"]),

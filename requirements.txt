@@ -1,5 +1,6 @@
 # Requirements for development, testing, and documentation.
 -e .
+numpy
 sphinx
 sphinx-rtd-theme
 pytest
