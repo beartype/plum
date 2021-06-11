@@ -1,13 +1,22 @@
+import numpy as np
+import pytest
+
 from plum import (
     Dispatcher,
     parametric,
     type_parameter,
     kind,
     Kind,
+    ptype,
     type_of,
+    Type,
+    PromisedType,
+    List,
+    Tuple,
+    Union,
+    NotFoundLookupError,
 )
-from plum.parametric import _types_of_iterable, List, Tuple
-from plum.type import Union, Type, PromisedType, ptype
+from plum.parametric import _types_of_iterable
 
 
 def test_covariance():
@@ -234,3 +243,28 @@ def test_type_of():
     assert type_of(("1",)) == Tuple[str]
     assert type_of((1, "1")) == Tuple[int, str]
     assert type_of((1, "1", [1])) == Tuple[int, str, List[int]]
+
+
+def test_type_of_extension():
+    dispatch = Dispatcher()
+
+    @parametric
+    class NPArray(np.ndarray):
+        pass
+
+    @type_of.dispatch
+    def type_of_extension(x: np.ndarray):
+        return NPArray[x.ndim]
+
+    @dispatch
+    def f(x: NPArray[1]):
+        return "vector"
+
+    @dispatch
+    def f(x: NPArray[2]):
+        return "matrix"
+
+    assert f(np.random.randn(10)) == "vector"
+    assert f(np.random.randn(10, 10)) == "matrix"
+    with pytest.raises(NotFoundLookupError):
+        f(np.random.randn(10, 10, 10))

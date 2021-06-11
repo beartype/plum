@@ -25,6 +25,7 @@ Everybody likes multiple dispatch, just like everybody likes plums.
  * [Advanced Features](#advanced-features)
     - [Method Precedence](#method-precedence)
     - [Parametric Classes](#parametric-classes)
+    - [Hooking Into Type Inference](#hooking-into-type-inference)
     - [Add Multiple Methods](#add-multiple-methods)
     - [Extend a Function From Another Package](#extend-a-function-from-another-package)
     - [Directly Invoke a Method](#directly-invoke-a-method)
@@ -865,6 +866,55 @@ True
 
 >>> f(A[3]())
 'fallback'
+```
+
+**Note:** A current limitation is that an instance of `A` can only be instantiated if a 
+type parameter is provided.
+For example, `A[1]()` works, but `A()` gives unexpected results.
+
+### Hooking Into Type Inference
+
+With parametric classes, you can hook into Plum's type inference system to do cool
+things!
+Here's an example which introduces types for NumPy arrays of particular ranks:
+
+```python
+import numpy as np
+from plum import dispatch, parametric, type_of
+
+
+@parametric
+class NPArray(np.ndarray):
+    """A type for NumPy arrays where the type parameter specifies the number of
+    dimensions."""
+
+
+@type_of.dispatch
+def type_of(x: np.ndarray):
+    # Hook into Plum's type inference system to produce an appropriate instance of
+    # `NPArray` for NumPy arrays.
+    return NPArray[x.ndim]
+
+
+@dispatch
+def f(x: NPArray[1]):
+    return "vector"
+
+
+@dispatch
+def f(x: NPArray[2]):
+    return "matrix"
+```
+
+```
+>>> f(np.random.randn(10))
+'vector'
+
+>>> f(np.random.randn(10, 10))
+'matrix'
+
+>>> f(np.random.randn(10, 10, 10))
+NotFoundLookupError: For function "f", signature Signature(__main__.NPArray[3]) could not be resolved.
 ```
 
 ### Add Multiple Methods

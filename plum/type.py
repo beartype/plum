@@ -52,10 +52,10 @@ class AbstractType(metaclass=TypeMeta):
         pass  # pragma: no cover
 
     @property
+    @abc.abstractmethod
     def parametric(self):
         """Boolean that indicates whether this is or contains a parametric
         type."""
-        return False
 
 
 class VarArgs(AbstractType):
@@ -213,6 +213,13 @@ class Type(ComparableType):
 
     def get_types(self):
         return (self._type,)
+
+    @property
+    def parametric(self):
+        # No types are parametric, except the ones created by the `@parametric`
+        # decorator from :mod:`.parametric`, which will have an attribute
+        # `_is_parametric` with the value `True`.
+        return hasattr(self._type, "_is_parametric") and self._type._is_parametric
 
 
 class ResolvableType(ComparableType, Resolvable):

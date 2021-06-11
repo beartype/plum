@@ -228,6 +228,7 @@ def _types_of_iterable(xs):
         return Union(*types)
 
 
+@_dispatch
 def type_of(obj):
     """Get the Plum type of an object.
 
@@ -237,13 +238,17 @@ def type_of(obj):
     Returns
         ptype: Plum type of `obj`.
     """
-    if isinstance(obj, list):
-        return List(_types_of_iterable(obj))
-
-    if isinstance(obj, tuple):
-        return Tuple(*(type_of(x) for x in obj))
-
     return ptype(type(obj))
+
+
+@_dispatch
+def type_of(obj: list):
+    return List(_types_of_iterable(obj))
+
+
+@_dispatch
+def type_of(obj: tuple):
+    return Tuple(*(type_of(x) for x in obj))
 
 
 # Deliver `type_of`.
