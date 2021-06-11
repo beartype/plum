@@ -906,7 +906,7 @@ def f(x: NPArray[2]):
     return "matrix"
 ```
 
-```
+```python
 >>> f(np.random.randn(10))
 'vector'
 
