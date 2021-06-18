@@ -31,17 +31,12 @@ log = logging.getLogger(__name__)
 _dispatch = Dispatcher()
 
 class ParametricTypeMeta(TypeMeta):
-    """Types can also be instantiated with indexing."""
+    """Parametric Types must be instantiated with indexing."""
 
-    def __getitem__(self, p):
+    def __getitem__(self, *p):
         # Type[Par1, Par2] creates a new parametric type
 
-        cls = self
-        if isinstance(p, tuple):
-            return cls.__new__(cls, *p)
-        else:
-            # cls = p
-            return cls.__new__(cls, p)
+        return self.__new__(self, *p)
 
     def __call__(cls, *args, **kwargs):
         # Type(arg1, arg2, kwargs) will first construct the
