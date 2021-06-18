@@ -30,8 +30,42 @@ log = logging.getLogger(__name__)
 
 _dispatch = Dispatcher()
 
+class ParametricTypeMeta(TypeMeta):
+    """Types can also be instantiated with indexing."""
 
-class CovariantMeta(TypeMeta):
+    def __getitem__(self, p):
+        # Type[Par1, Par2] creates a new parametric type
+
+        cls = self
+        if isinstance(p, tuple):
+            return cls.__new__(cls, *p)
+        else:
+            # cls = p
+            return cls.__new__(cls, p)
+
+    def __call__(cls, *args, **kwargs):
+        # Type(arg1, arg2, kwargs) will first construct the
+        # parametric subtype T = Type[type(arg1), type(arg2)]
+        # and then call the equivalent of T(arg1, arg2, **kwargs)
+
+        if not cls.is_concrete:
+            argsT = tuple(type(arg) for arg in args)
+            T = cls[argsT]
+        else:
+            T = cls
+
+        # this is the standard type.__call__ implementation
+        obj = T.__new__(T, *args, **kwargs)
+        if obj is not None and isinstance(obj, T) and hasattr(obj, '__init__'):
+            obj.__init__(*args, **kwargs)
+        return obj
+
+    @property
+    def is_concrete(cls):
+        return hasattr(cls, "_is_parametric")
+
+
+class CovariantMeta(ParametricTypeMeta):
     """A metaclass that implements *covariance* of parametric types."""
 
     def __subclasscheck__(self, subclass):
@@ -99,7 +133,7 @@ def parametric(Class):
         return subclasses[ps]
 
     # Create parametric class.
-    ParametricClass = TypeMeta(Class.__name__, (Class,), {"__new__": __new__})
+    ParametricClass = ParametricTypeMeta(Class.__name__, (Class,), {"__new__": __new__})
     ParametricClass.__module__ = Class.__module__
 
     # Attempt to correct docstring.
