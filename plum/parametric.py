@@ -57,6 +57,7 @@ class ParametricTypeMeta(TypeMeta):
 
     @property
     def is_concrete(cls):
+        """"bool: Check whether the parametric type is instantiated or not."""
         return hasattr(cls, "_is_parametric")
 
 
