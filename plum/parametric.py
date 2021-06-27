@@ -31,29 +31,36 @@ log = logging.getLogger(__name__)
 _dispatch = Dispatcher()
 
 class ParametricTypeMeta(TypeMeta):
-    """Parametric Types must be instantiated with indexing."""
+    """Parametric Types can be instantiated with indexing.
+    
+    A concrete parametric type can be instantiated by calling
+    `Type[Par1, Par2]`. 
+    If `Type(Arg1, Arg2, **kw_args)` is called, this returns
+    `Type[type(Arg1), type(Arg2)](Arg1, Arg2, **kw_args)`.
+    """
 
-    def __getitem__(self, *p):
-        # Type[Par1, Par2] creates a new parametric type
+    def __getitem__(self, *ps):
+        if not self.is_concrete:
+            return self.__new__(self, *ps)
+        else:
+            raise TypeError("Cannot specify type parameters. "
+                            "This type is concrete.")
 
-        return self.__new__(self, *p)
-
-    def __call__(cls, *args, **kwargs):
-        # Type(arg1, arg2, kwargs) will first construct the
+    def __call__(cls, *args, **kw_args):
+        # Type(arg1, arg2, kw_args) will first construct the
         # parametric subtype T = Type[type(arg1), type(arg2)]
-        # and then call the equivalent of T(arg1, arg2, **kwargs)
+        # and then call the equivalent of T(arg1, arg2, **kw_args)
 
         if not cls.is_concrete:
             argsT = tuple(type(arg) for arg in args)
+            if len(argsT) == 1:
+                argsT = argsT[0]
             T = cls[argsT]
         else:
             T = cls
 
-        # this is the standard type.__call__ implementation
-        obj = T.__new__(T, *args, **kwargs)
-        if obj is not None and isinstance(obj, T) and hasattr(obj, '__init__'):
-            obj.__init__(*args, **kwargs)
-        return obj
+        # calls __new__ and __init__
+        return type.__call__(T, *args, **kw_args)
 
     @property
     def is_concrete(cls):
