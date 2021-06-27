@@ -827,50 +827,65 @@ from plum import dispatch, parametric
 
 @parametric
 class A:
-    pass
+    def __init__(self, x, *, y = 3):
+        self.x = x
+        self.y = y
     
     
 @dispatch
 def f(x: A):
-    return "fallback"
+    return "fallback: x={}".format(x.x)
     
     
 @dispatch
-def f(x: A[1]):
-    return "1"
+def f(x: A[int]):
+    return "int x={}".format(x.x)
     
     
 @dispatch
-def f(x: A[2]):
-    return "2"
+def f(x: A[float]):
+    return "float x={}".format(x.x)
 ```
 
 ```python
 >>> A
 __main__.A
 
->>> A[1]
-__main__.A[1]
+>>> A[int]
+__main__.A[builtins.int]
 
->>> issubclass(A[1], A)
+>>> issubclass(A[int], A)
 True
 
->>> A[1]()
-<__main__.A[1] at 0x10c2bab70>
+>>> type(A(1)) == A[int]
+True
 
->>> f(A[1]())
-'1'
+>>> A[int](1)
+<__main__.A[builtins.int] at 0x10c2bab70>
 
->>> f(A[2]())
-'2'
+>>> f(A[int](1))
+'int x=1'
 
->>> f(A[3]())
-'fallback'
+>>> f(A(1))
+'int x=1'
+
+>>> f(A(1.0))
+'float x=1.0'
+
+>>> f(A(1 + 1j))
+'fallback: x=1+1j'
 ```
 
-**Note:** A current limitation is that an instance of `A` can only be instantiated if a 
-type parameter is provided.
-For example, `A[1]()` works, but `A()` gives unexpected results.
+**Note:** Calling `A[pars]` on parametrized type `A` instantiates the concrete
+type with parameters `pars`.
+If `A(args)` is called directly, the concrete type is first instantiated by
+taking the type of all positional arguments, and then an instance of the type 
+is created.
+
+This only works for types whose `__init__` method accepts positional arguments.
+If parametric type `A` does not take positional arguments, then the only way to 
+instantiate it is to first create the concrete type `A[pars]` and then construct
+it `A[pars]()`.
 
 ### Hooking Into Type Inference
 
