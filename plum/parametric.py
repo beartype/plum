@@ -210,7 +210,7 @@ class List(ComparableType):
         return f"List[{self._el_type}]"
 
     def get_types(self):
-        return (_ParametricList(self._el_type),)
+        return (_ParametricList[self._el_type],)
 
     @property
     def parametric(self):
@@ -246,7 +246,7 @@ class Tuple(ComparableType):
         return f'Tuple[{", ".join(map(str, self._el_types))}]'
 
     def get_types(self):
-        return (_ParametricTuple(*self._el_types),)
+        return (_ParametricTuple[self._el_types],)
 
     @property
     def parametric(self):
