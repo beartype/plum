@@ -30,11 +30,11 @@ log = logging.getLogger(__name__)
 
 _dispatch = Dispatcher()
 
+
 class ParametricTypeMeta(TypeMeta):
     """Parametric Types can be instantiated with indexing.
-    
-    A concrete parametric type can be instantiated by calling
-    `Type[Par1, Par2]`. 
+
+    A concrete parametric type can be instantiated by calling `Type[Par1, Par2]`.
     If `Type(Arg1, Arg2, **kw_args)` is called, this returns
     `Type[type(Arg1), type(Arg2)](Arg1, Arg2, **kw_args)`.
     """
@@ -43,8 +43,7 @@ class ParametricTypeMeta(TypeMeta):
         if not self.is_concrete:
             return self.__new__(self, *ps)
         else:
-            raise TypeError("Cannot specify type parameters. "
-                            "This type is concrete.")
+            raise TypeError("Cannot specify type parameters. This type is concrete.")
 
     def __call__(cls, *args, **kw_args):
         # Type(arg1, arg2, kw_args) will first construct the
@@ -64,7 +63,7 @@ class ParametricTypeMeta(TypeMeta):
 
     @property
     def is_concrete(cls):
-        """"bool: Check whether the parametric type is instantiated or not."""
+        """bool: Check whether the parametric type is instantiated or not."""
         return hasattr(cls, "_is_parametric")
 
 

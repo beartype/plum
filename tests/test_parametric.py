@@ -79,7 +79,7 @@ def test_parametric():
 def test_constructor():
     @parametric
     class A:
-        def __init__(self, x, *, y = 3):
+        def __init__(self, x, *, y=3):
             self.x = x
             self.y = y
 
@@ -112,6 +112,7 @@ def test_constructor():
     assert type_parameter(b1) == (float, int)
     assert type_parameter(b2) == (float, int)
     assert type(b1) == type(b2)
+
 
 def test_kind():
     assert Kind[1] == Kind[1]
