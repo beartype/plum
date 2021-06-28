@@ -39,9 +39,12 @@ class ParametricTypeMeta(TypeMeta):
     `Type[type(Arg1), type(Arg2)](Arg1, Arg2, **kw_args)`.
     """
 
-    def __getitem__(self, *ps):
+    def __getitem__(self, p):
         if not self.is_concrete:
-            return self.__new__(self, *ps)
+            if isinstance(p, tuple):
+                return self.__new__(self, *p)
+            else:
+                return self.__new__(self, p)
         else:
             raise TypeError("Cannot specify type parameters. This type is concrete.")
 
