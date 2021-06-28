@@ -15,4 +15,3 @@ def test_promise():
     # Check that we cannot deliver twice.
     with pytest.raises(ResolutionError):
         p.deliver(1)
-
