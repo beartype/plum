@@ -125,6 +125,9 @@ def test_astype():
     assert ptype(t) is t
     assert ptype(int) == t
 
+    # Check *None* as valid type annotation
+    assert ptype(None) == Type(type(None))
+
     # Check conversion of strings.
     t = ptype("A")
     deliver_forward_reference(A)
