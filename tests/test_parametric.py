@@ -75,16 +75,50 @@ def test_parametric():
     assert tuple_elements_are_identical(type_parameter(A[a1, a2]()), (a1, a2))
     assert tuple_elements_are_identical(type_parameter(A[1, a2]()), (1, a2))
 
+    # Test that an error is raised if type parameters are specified twice.
+    T = A[1]
+    with pytest.raises(TypeError):
+        T[1]
 
-def test_argument():
+
+def test_constructor():
     @parametric
     class A:
-        def __init__(self, x):
+        def __init__(self, x, *, y=3):
             self.x = x
+            self.y = y
 
-    a = A[1](5.0)
+    a1 = A[float](5.0)
+    a2 = A(5.0)
 
-    assert a.x == 5.0
+    assert a1.x == 5.0
+    assert a2.x == 5.0
+    assert a1.y == 3
+    assert a2.y == 3
+
+    assert type_parameter(a1) == float
+    assert type_parameter(a2) == float
+    assert type(a1) == type(a2)
+    assert type(a1).__name__ == type(a2).__name__ == f"A[{float}]"
+
+    @parametric
+    class B:
+        def __init__(self, x, y):
+            self.x = x
+            self.y = y
+
+    b1 = B[float, int](5.0, 3)
+    b2 = B(5.0, 3)
+
+    assert b1.x == 5.0
+    assert b2.x == 5.0
+    assert b1.y == 3
+    assert b2.y == 3
+
+    assert type_parameter(b1) == (float, int)
+    assert type_parameter(b2) == (float, int)
+    assert type(b1) == type(b2)
+    assert type(b1).__name__ == type(b2).__name__ == f"B[{float},{int}]"
 
 
 def test_kind():

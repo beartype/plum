@@ -19,6 +19,7 @@ cover
 # Other
 .DS_Store
 *.swp
+.envrc
 
 # Cython build files
 *.html

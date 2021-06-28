@@ -31,7 +31,46 @@ log = logging.getLogger(__name__)
 _dispatch = Dispatcher()
 
 
-class CovariantMeta(TypeMeta):
+class ParametricTypeMeta(TypeMeta):
+    """Parametric types can be instantiated with indexing.
+
+    A concrete parametric type can be instantiated by calling `Type[Par1, Par2]`.
+    If `Type(Arg1, Arg2, **kw_args)` is called, this returns
+    `Type[type(Arg1), type(Arg2)](Arg1, Arg2, **kw_args)`.
+    """
+
+    def __getitem__(self, p):
+        if not self.is_concrete:
+            if isinstance(p, tuple):
+                return self.__new__(self, *p)
+            else:
+                return self.__new__(self, p)
+        else:
+            raise TypeError("Cannot specify type parameters. This type is concrete.")
+
+    def __call__(cls, *args, **kw_args):
+        # `Type(arg1, arg2, **kw_args)` will first construct the
+        # parametric subtype `T = Type[type(arg1), type(arg2)]`
+        # and then call the equivalent of `T(arg1, arg2, **kw_args)`.
+
+        if not cls.is_concrete:
+            type_parameter = tuple(type(arg) for arg in args)
+            if len(type_parameter) == 1:
+                type_parameter = type_parameter[0]
+            T = cls[type_parameter]
+        else:
+            T = cls
+
+        # Calls `__new__` and `__init__`.
+        return type.__call__(T, *args, **kw_args)
+
+    @property
+    def is_concrete(cls):
+        """bool: Check whether the parametric type is instantiated or not."""
+        return hasattr(cls, "_is_parametric")
+
+
+class CovariantMeta(ParametricTypeMeta):
     """A metaclass that implements *covariance* of parametric types."""
 
     def __subclasscheck__(self, subclass):
@@ -99,7 +138,7 @@ def parametric(Class):
         return subclasses[ps]
 
     # Create parametric class.
-    ParametricClass = TypeMeta(Class.__name__, (Class,), {"__new__": __new__})
+    ParametricClass = ParametricTypeMeta(Class.__name__, (Class,), {"__new__": __new__})
     ParametricClass.__module__ = Class.__module__
 
     # Attempt to correct docstring.
@@ -173,7 +212,7 @@ class List(ComparableType):
         return f"List[{self._el_type}]"
 
     def get_types(self):
-        return (_ParametricList(self._el_type),)
+        return (_ParametricList[self._el_type],)
 
     @property
     def parametric(self):
@@ -209,7 +248,7 @@ class Tuple(ComparableType):
         return f'Tuple[{", ".join(map(str, self._el_types))}]'
 
     def get_types(self):
-        return (_ParametricTuple(*self._el_types),)
+        return (_ParametricTuple[self._el_types],)
 
     @property
     def parametric(self):
