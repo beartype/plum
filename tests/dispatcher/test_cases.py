@@ -330,7 +330,7 @@ def test_property():
         def name(self, x: str):
             return "str"
 
-        # This setup requires that the method has another class!
+        # This setup requires that the class has another method!
         @dispatch
         def f(self):
             pass
