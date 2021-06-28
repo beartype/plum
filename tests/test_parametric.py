@@ -99,6 +99,7 @@ def test_constructor():
     assert type_parameter(a1) == float
     assert type_parameter(a2) == float
     assert type(a1) == type(a2)
+    assert type(a1).__name__ == type(a2).__name__ == f"A[{float}]"
 
     @parametric
     class B:
