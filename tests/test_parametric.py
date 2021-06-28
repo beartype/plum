@@ -75,6 +75,11 @@ def test_parametric():
     assert tuple_elements_are_identical(type_parameter(A[a1, a2]()), (a1, a2))
     assert tuple_elements_are_identical(type_parameter(A[1, a2]()), (1, a2))
 
+    # test raise error if specify parameters twice
+    T = A[1]
+    with pytest.raises(TypeError):
+        T[1]
+
 
 def test_constructor():
     @parametric
