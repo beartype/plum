@@ -160,11 +160,14 @@ class ClassFunction(Promise):
 
     def __call__(self, *args, **kw_args):
         # This method is called in the following situation:
-        #     class A:
-        #         @property.setter
-        #         @dispatch
-        #         def name(self, a: str):
-        #             pass
+        #
+        # ```python
+        # class A:
+        #     @property.setter
+        #     @dispatch
+        #     def name(self, a: str):
+        #         pass
+        # ````
         return self.resolve().__call__(*args, **kw_args)
 
 
@@ -182,8 +185,8 @@ class Function:
         Function._instances.append(self)
 
         self._f = f
-        self.methods = {}
-        self.precedences = {}
+        self._methods = {}
+        self._precedences = {}
 
         # Keep track of whether any of the signatures contains a parametric
         # type. This is a necessary performance optimisation.
@@ -200,6 +203,20 @@ class Function:
         self.__doc__ = f.__doc__
         self.__module__ = f.__module__
 
+    @property
+    def methods(self):
+        """dict[:class:`.signature.Signature`,tuple[function,ptype]]: All available
+        methods."""
+        self._resolve_pending_registrations()
+        return self._methods
+
+    @property
+    def precedences(self):
+        """dict[:class:`.signature.Signature`,int]: For every signature, the method
+        precedence."""
+        self._resolve_pending_registrations()
+        return self._precedences
+
     def dispatch(self, f=None, precedence=0):
         """A decorator to extend the function with another signature.
 
@@ -214,7 +231,9 @@ class Function:
 
         signature, return_type = extract_signature(f)
         return self.dispatch_multi(
-            signature, precedence=precedence, return_type=return_type
+            signature,
+            precedence=precedence,
+            return_type=return_type,
         )(f)
 
     def dispatch_multi(self, *signatures, precedence=0, return_type=object):
@@ -235,7 +254,10 @@ class Function:
                 if not isinstance(signature, Signature):
                     signature = Signature(*signature)
                 self.register(
-                    signature, f, precedence=precedence, return_type=return_type
+                    signature,
+                    f,
+                    precedence=precedence,
+                    return_type=return_type,
                 )
 
             # Return the function.
@@ -257,8 +279,8 @@ class Function:
 
             # Clear resolved.
             self._resolved = []
-            self.methods.clear()
-            self.precedences.clear()
+            self._methods.clear()
+            self._precedences.clear()
             self._parametric = False
 
     def register(self, signature, f, precedence=0, return_type=object):
@@ -291,8 +313,8 @@ class Function:
             if is_object(return_type):
                 return_type = default_obj_type
 
-            self.methods[signature] = (f, return_type)
-            self.precedences[signature] = precedence
+            self._methods[signature] = (f, return_type)
+            self._precedences[signature] = precedence
 
             # Add to resolved registrations.
             self._resolved.append((signature, f, precedence, return_type))
@@ -322,7 +344,7 @@ class Function:
         self._resolve_pending_registrations()
 
         # Find the most specific applicable signature.
-        candidates = [s for s in self.methods.keys() if signature <= s]
+        candidates = [s for s in self._methods.keys() if signature <= s]
         candidates = find_most_specific(candidates)
 
         # If only a single candidate is left, the resolution has been
@@ -330,7 +352,7 @@ class Function:
         if len(candidates) > 1:
             # There are multiple candidates. Check their precedences and see
             # if that breaks the ambiguity.
-            precedences = [self.precedences[c] for c in candidates]
+            precedences = [self._precedences[c] for c in candidates]
             highest_precedence = max(*precedences)
             if len([p for p in precedences if p == highest_precedence]) == 1:
                 # Ambiguity can be resolved by precedence. So do so.
@@ -339,7 +361,7 @@ class Function:
             # Could not resolve the ambiguity, so error. First, make a nice list
             # of the candidates and their precedences.
             listed_candidates = "\n  ".join(
-                [f"{c} (precedence: {self.precedences[c]})" for c in candidates]
+                [f"{c} (precedence: {self._precedences[c]})" for c in candidates]
             )
             raise AmbiguousLookupError(
                 f'For function "{self._f.__name__}", signature {signature} is '
@@ -378,7 +400,7 @@ class Function:
 
         if self._owner:
             try:
-                method, return_type = self.methods[self.resolve_signature(signature)]
+                method, return_type = self._methods[self.resolve_signature(signature)]
             except NotFoundLookupError as e:
                 method = None
                 return_type = ptype(object)
@@ -415,7 +437,7 @@ class Function:
                     raise e
         else:
             # Not in a class. Simply resolve.
-            method, return_type = self.methods[self.resolve_signature(signature)]
+            method, return_type = self._methods[self.resolve_signature(signature)]
 
         # Cache lookup.
         self._cache[types] = (method, return_type)
@@ -515,6 +537,9 @@ class _BoundFunction:
 
     def __repr__(self):
         return repr(self.f)
+
+    def __getattr__(self, item):
+        return getattr(self.f, item)
 
 
 def find_most_specific(signatures):

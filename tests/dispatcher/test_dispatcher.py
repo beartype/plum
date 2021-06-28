@@ -4,6 +4,66 @@ from typing import Union, List
 from plum import Dispatcher, NotFoundLookupError
 
 
+def _build_function():
+    dispatch = Dispatcher()
+
+    @dispatch
+    def f(x: int):
+        pass
+
+    @dispatch
+    def f(x: float):
+        pass
+
+    return f
+
+
+def _build_class(instance):
+    dispatch = Dispatcher()
+
+    class A:
+        @dispatch
+        def f(x: int):
+            pass
+
+        @dispatch
+        def f(x: float):
+            pass
+
+    if instance:
+        return A().f
+    else:
+        return A.f
+
+
+@pytest.mark.parametrize(
+    "build",
+    [
+        _build_function,
+        lambda: _build_class(True),
+        lambda: _build_class(False),
+    ],
+)
+def test_methods_precedences(build):
+    f = build()
+    assert len(f._methods) == 0
+    assert len(f._precedences) == 0
+    # Try `f.methods` first.
+    assert len(f.methods) == 2
+    assert len(f.precedences) == 2
+    assert f.methods is f._methods
+    assert f.precedences is f._precedences
+
+    f = build()
+    assert len(f._methods) == 0
+    assert len(f._precedences) == 0
+    # Try `f.methods` first.
+    assert len(f.precedences) == 2
+    assert len(f.methods) == 2
+    assert f.methods is f._methods
+    assert f.precedences is f._precedences
+
+
 def test_keywords():
     dispatch = Dispatcher()
 

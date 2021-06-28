@@ -96,6 +96,19 @@ The rule of multiple dispatch is that the *most specific* method is chosen:
 
 since an `int` is a `Number`, but a `Number` is not necessarily an `int`.
 
+For a function, all available methods can be obtained with the attribute 
+`methods`:
+
+```python
+{Signature(builtins.str): (<function __main__.f(x:str)>, builtins.object),
+ Signature(builtins.int): (<function __main__.f(x:int)>, builtins.object),
+ Signature(numbers.Number): (<function __main__.f(x:numbers.Number)>,
+  builtins.object)}
+```
+
+In the values, the first element in the tuple is the implementation and the
+second element the return type.
+
 For an excellent and way more detailed overview of multiple dispatch, see the
 [manual of the Julia Language](https://docs.julialang.org/en/).
 
@@ -816,6 +829,19 @@ AmbiguousLookupError: For function "mul_no_precedence", signature Signature(__ma
 
 >>> mul(zero, specialised_element)
 'zero'
+```
+
+The method precedences of all implementations of a function can be obtained
+with the attribute `precedences`:
+
+```python
+>>> mul_no_precedence.precedences
+{Signature(__main__.ZeroElement, __main__.Element): 0,
+ Signature(__main__.Element, __main__.SpecialisedElement): 0}
+
+>>> mul.precedences
+{Signature(__main__.ZeroElement, __main__.Element): 1,
+ Signature(__main__.Element, __main__.SpecialisedElement): 0}
 ```
 
 ### Parametric Classes

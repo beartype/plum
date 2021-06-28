@@ -12,14 +12,16 @@ from .test_signature import Num, Re, FP
 def convert():
     # Save methods.
     _convert._resolve_pending_registrations()
-    methods = dict(_convert.methods)
+    methods = dict(_convert._methods)
+    precedences = dict(_convert._precedences)
     resolved = list(_convert._resolved)
 
     yield plum.convert
 
     # Clear methods after use.
     _convert._resolve_pending_registrations()
-    _convert.methods = methods
+    _convert._methods = methods
+    _convert._precedences = precedences
     _convert._resolved = resolved
     _convert.clear_cache()
 

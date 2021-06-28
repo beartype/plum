@@ -127,22 +127,22 @@ def test_cache_clearing():
     f(1)
 
     # Check that cache is used.
-    assert len(f.methods) == 2
-    assert len(f.precedences) == 2
+    assert len(f._methods) == 2
+    assert len(f._precedences) == 2
     assert f._parametric
 
     dispatch.clear_cache()
 
     # Check that cache is cleared.
-    assert len(f.methods) == 0
-    assert len(f.precedences) == 0
+    assert len(f._methods) == 0
+    assert len(f._precedences) == 0
     assert not f._parametric
 
     f(1)
     clear_all_cache()
 
     # Again check that cache is cleared.
-    assert len(f.methods) == 0
-    assert len(f.precedences) == 0
+    assert len(f._methods) == 0
+    assert len(f._precedences) == 0
     assert len(subclasscheck_cache) == 0
     assert not f._parametric
