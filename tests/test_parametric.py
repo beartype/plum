@@ -118,6 +118,7 @@ def test_constructor():
     assert type_parameter(b1) == (float, int)
     assert type_parameter(b2) == (float, int)
     assert type(b1) == type(b2)
+    assert type(b1).__name__ == type(b2).__name__ == f"B[{float},{int}]"
 
 
 def test_kind():
