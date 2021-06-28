@@ -96,8 +96,7 @@ The rule of multiple dispatch is that the *most specific* method is chosen:
 
 since an `int` is a `Number`, but a `Number` is not necessarily an `int`.
 
-For a function, all available methods can be obtained with the attribute 
-`methods`:
+For a function `f`, all available methods can be obtained with `f.methods`:
 
 ```python
 >>> f.methods
