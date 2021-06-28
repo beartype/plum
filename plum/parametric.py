@@ -32,7 +32,7 @@ _dispatch = Dispatcher()
 
 
 class ParametricTypeMeta(TypeMeta):
-    """Parametric Types can be instantiated with indexing.
+    """Parametric types can be instantiated with indexing.
 
     A concrete parametric type can be instantiated by calling `Type[Par1, Par2]`.
     If `Type(Arg1, Arg2, **kw_args)` is called, this returns
@@ -46,19 +46,19 @@ class ParametricTypeMeta(TypeMeta):
             raise TypeError("Cannot specify type parameters. This type is concrete.")
 
     def __call__(cls, *args, **kw_args):
-        # Type(arg1, arg2, kw_args) will first construct the
-        # parametric subtype T = Type[type(arg1), type(arg2)]
-        # and then call the equivalent of T(arg1, arg2, **kw_args)
+        # `Type(arg1, arg2, **kw_args)` will first construct the
+        # parametric subtype `T = Type[type(arg1), type(arg2)]`
+        # and then call the equivalent of `T(arg1, arg2, **kw_args)`.
 
         if not cls.is_concrete:
-            argsT = tuple(type(arg) for arg in args)
-            if len(argsT) == 1:
-                argsT = argsT[0]
-            T = cls[argsT]
+            type_parameter = tuple(type(arg) for arg in args)
+            if len(type_parameter) == 1:
+                type_parameter = type_parameter[0]
+            T = cls[type_parameter]
         else:
             T = cls
 
-        # calls __new__ and __init__
+        # Calls `__new__` and `__init__`.
         return type.__call__(T, *args, **kw_args)
 
     @property
