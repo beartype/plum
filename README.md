@@ -100,6 +100,7 @@ For a function, all available methods can be obtained with the attribute
 `methods`:
 
 ```python
+>>> f.methods
 {Signature(builtins.str): (<function __main__.f(x:str)>, builtins.object),
  Signature(builtins.int): (<function __main__.f(x:int)>, builtins.object),
  Signature(numbers.Number): (<function __main__.f(x:numbers.Number)>,
