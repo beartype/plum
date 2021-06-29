@@ -366,7 +366,7 @@ def ptype(obj):
 
 
 TypeType = Union[type, AbstractType]
-"""ptype: The type of a Plum type, including shorthands."""
+"""ptype: The type of a type or Plum type."""
 
 
 def is_object(t):
