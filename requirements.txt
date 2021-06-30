@@ -6,3 +6,4 @@ sphinx-rtd-theme
 pytest
 pytest-cov
 coveralls
+black

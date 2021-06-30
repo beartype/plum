@@ -21,6 +21,9 @@ jobs:
           sudo apt-get install gfortran
           python -m pip install --upgrade pip
           pip install --no-cache-dir -U -r requirements.txt | cat
+      - name: Check style
+        run: |
+          black --check *.py plum tests
       - name: Test
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
