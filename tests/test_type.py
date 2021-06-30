@@ -117,7 +117,7 @@ def test_forwardreferencedtype():
     assert t_b == Type(B)
 
 
-def test_astype():
+def test_ptype():
     class A:
         pass
 
@@ -125,7 +125,7 @@ def test_astype():
     assert ptype(t) is t
     assert ptype(int) == t
 
-    # Check *None* as valid type annotation
+    # Check `None` as valid type annotation.
     assert ptype(None) == Type(type(None))
 
     # Check conversion of strings.
@@ -137,7 +137,7 @@ def test_astype():
         ptype(1)
 
 
-def test_astype_typing_mapping():
+def test_ptype_typing_mapping():
     class A:
         pass
 

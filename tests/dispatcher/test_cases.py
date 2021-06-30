@@ -347,7 +347,7 @@ def test_none():
     dispatch = Dispatcher()
 
     @dispatch
-    def foo(x: None) -> None:
+    def f(x: None) -> None:
         return x
 
-    assert foo(None) is None
+    assert f(None) is None
