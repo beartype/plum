@@ -362,6 +362,9 @@ def ptype(obj):
     if isinstance(obj, type):
         return Type(obj)
 
+    if obj is None:
+        return Type(type(None))
+
     raise RuntimeError(f'Could not convert "{obj}" to a type.')
 
 

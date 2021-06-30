@@ -341,3 +341,13 @@ def test_property():
     a.name = "another name"
     with pytest.raises(NotFoundLookupError):
         a.name = 1
+
+
+def test_none():
+    dispatch = Dispatcher()
+
+    @dispatch
+    def foo(x: None) -> None:
+        return x
+
+    assert foo(None) is None
