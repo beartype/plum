@@ -132,7 +132,10 @@ def test_metadata_and_printing():
     assert g.invoke().__name__ == "g"
     assert g.invoke().__doc__ == "docstring of g"
     assert g.invoke().__module__ == "tests.dispatcher.test_dispatcher"
-    assert repr(g.invoke())[:-n].replace("cyfunction", "function") == repr(A._dispatch._classes[A]["g"]._f)[:-n]
+    assert (
+        repr(g.invoke())[:-n].replace("cyfunction", "function")
+        == repr(A._dispatch._classes[A]["g"]._f)[:-n]
+    )
 
 
 def test_multi():
