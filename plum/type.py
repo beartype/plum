@@ -356,7 +356,12 @@ def ptype(obj):
 
     # Strings are forward references.
     if isinstance(obj, str):
-        return get_forward_reference(obj)
+        if obj == "list":
+            return ptype(list)
+        elif obj == "tuple":
+            return ptype(tuple)
+        else:
+            return get_forward_reference(obj)
 
     # If `obj` is a `type`, wrap it in a `Type`.
     if isinstance(obj, type):

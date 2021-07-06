@@ -6,6 +6,7 @@ setup(
     packages=find_packages(exclude=["docs"]),
     python_requires=">=3.6",
     install_requires=requirements,
-    ext_modules=[Extension("plum.function", ["plum/function.py"])],
+    ext_modules=[Extension("plum.function", ["plum/function.py"]), 
+                 Extension("plum.parametric", ["plum/parametric.py"])],
     include_package_data=True,
 )

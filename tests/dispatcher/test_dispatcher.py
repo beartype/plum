@@ -116,7 +116,10 @@ def test_metadata_and_printing():
     assert f.invoke().__doc__ == "docstring of f"
     assert f.invoke().__module__ == "tests.dispatcher.test_dispatcher"
     n = len(hex(id(f))) + 1  # Do not check memory address and extra ">".
-    assert repr(f.invoke())[:-n] == repr(f._f)[:-n]
+    # also replace cyfunction with function
+    _str1 = repr(f.invoke())[:-n].replace("cyfunction", "function")
+    _str2 = repr(f._f)[:-n]
+    assert _str1 == _str2
 
     a = A()
     g = a.g
@@ -129,7 +132,7 @@ def test_metadata_and_printing():
     assert g.invoke().__name__ == "g"
     assert g.invoke().__doc__ == "docstring of g"
     assert g.invoke().__module__ == "tests.dispatcher.test_dispatcher"
-    assert repr(g.invoke())[:-n] == repr(A._dispatch._classes[A]["g"]._f)[:-n]
+    assert repr(g.invoke())[:-n].replace("cyfunction", "function") == repr(A._dispatch._classes[A]["g"]._f)[:-n]
 
 
 def test_multi():
