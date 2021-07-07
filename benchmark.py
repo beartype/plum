@@ -127,4 +127,3 @@ print(
     "Plum call:       {:6.2f} us ({:.1f} x)"
     "".format(dur_plum, int(np.round(dur_plum / dur_native)))
 )
-
