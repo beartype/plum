@@ -65,7 +65,7 @@ def test_default_conversion_methods():
     assert plum.convert([(1,)], tuple) == ((1,),)
 
     # Conversion to `list`.
-    assert plum.convert(1, list) == (1,)
+    assert plum.convert(1, list) == [1]
     assert plum.convert((1,), list) == [1]
     assert plum.convert(((1,),), list) == [(1,)]
     assert plum.convert([1], list) == [1]
