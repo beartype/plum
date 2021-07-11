@@ -46,8 +46,8 @@ class Dispatcher:
                 owner=owner,
             )
 
-        # Defer the construction if `f` is in a class. We defer the construct to allow
-        # the function to hold a reference to the class.
+        # Defer the construction if `f` is in a class. We defer the construction to
+        # allow the function to hold a reference to the class.
         if is_in_class(f):
             return ClassFunction(get_class(f), construct_function)
         else:
@@ -81,7 +81,7 @@ class Dispatcher:
                     owner=owner,
                 )
 
-            # Defer the construction if `f` is in a class. We defer the construct to
+            # Defer the construction if `f` is in a class. We defer the construction to
             # allow the function to hold a reference to the class.
             if is_in_class(f):
                 return ClassFunction(get_class(f), construct_function)
