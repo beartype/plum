@@ -200,8 +200,9 @@ class Function:
 
         # Copy metadata.
         self.__name__ = f.__name__
-        self.__doc__ = f.__doc__
+        self.__qualname__ = f.__qualname__
         self.__module__ = f.__module__
+        self.__doc__ = f.__doc__
 
     @property
     def methods(self):
@@ -501,7 +502,7 @@ class Function:
     def __repr__(self):
         return (
             f"<function {self._f} with "
-            f"{len(self._pending) + len(self._resolved)} method(s)>"
+            f"{len(self._pending) + len(self._methods)} method(s)>"
         )
 
 

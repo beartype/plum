@@ -1,5 +1,6 @@
-import pytest
 from typing import Union, List
+
+import pytest
 
 from plum import Dispatcher, NotFoundLookupError
 
@@ -93,6 +94,52 @@ def test_redefinition():
     assert f(1) == "second"
 
 
+def test_abstract():
+    dispatch = Dispatcher()
+
+    @dispatch.abstract
+    def f(x):
+        """docstring"""
+
+    assert len(f.methods) == 0
+    assert len(f.precedences) == 0
+    assert f.__doc__ == "docstring"
+
+    @dispatch
+    def f(x: int):
+        pass
+
+    assert len(f.methods) == 1
+    assert len(f.precedences) == 1
+    assert f.__doc__ == "docstring"
+
+
+def test_abstract_in_class():
+    dispatch = Dispatcher()
+
+    class A:
+        @dispatch.abstract
+        def f(self, x):
+            """docstring"""
+
+    assert len(A.f.methods) == 0
+    assert len(A.f.precedences) == 0
+    assert A.f.__doc__ == "docstring"
+
+    class A:
+        @dispatch.abstract
+        def f(self, x):
+            """docstring"""
+
+        @dispatch
+        def f(self, x: int):
+            pass
+
+    assert len(A.f.methods) == 1
+    assert len(A.f.precedences) == 1
+    assert A.f.__doc__ == "docstring"
+
+
 def test_metadata_and_printing():
     dispatch = Dispatcher()
 
@@ -108,13 +155,15 @@ def test_metadata_and_printing():
         """docstring of f"""
 
     assert f.__name__ == "f"
-    assert f.__doc__ == "docstring of f"
+    assert f.__qualname__ == "test_metadata_and_printing.<locals>.f"
     assert f.__module__ == "tests.dispatcher.test_dispatcher"
+    assert f.__doc__ == "docstring of f"
     assert repr(f) == f"<function {f._f} with 1 method(s)>"
 
     assert f.invoke().__name__ == "f"
-    assert f.invoke().__doc__ == "docstring of f"
+    assert f.invoke().__qualname__ == "test_metadata_and_printing.<locals>.f"
     assert f.invoke().__module__ == "tests.dispatcher.test_dispatcher"
+    assert f.invoke().__doc__ == "docstring of f"
     n = len(hex(id(f))) + 1  # Do not check memory address and extra ">".
     assert repr(f.invoke())[:-n] == repr(f._f)[:-n]
 
@@ -122,14 +171,51 @@ def test_metadata_and_printing():
     g = a.g
 
     assert g.__name__ == "g"
-    assert g.__doc__ == "docstring of g"
+    assert g.__qualname__ == "test_metadata_and_printing.<locals>.A.g"
     assert g.__module__ == "tests.dispatcher.test_dispatcher"
+    assert g.__doc__ == "docstring of g"
     assert repr(g) == f'<function {A._dispatch._classes[A]["g"]._f} with 1 method(s)>'
 
     assert g.invoke().__name__ == "g"
-    assert g.invoke().__doc__ == "docstring of g"
+    assert g.invoke().__qualname__ == "test_metadata_and_printing.<locals>.A.g"
     assert g.invoke().__module__ == "tests.dispatcher.test_dispatcher"
+    assert g.invoke().__doc__ == "docstring of g"
     assert repr(g.invoke())[:-n] == repr(A._dispatch._classes[A]["g"]._f)[:-n]
+
+
+def test_counting():
+    dispatch = Dispatcher()
+
+    @dispatch.abstract
+    def f(x):
+        pass
+
+    assert repr(f) == f"<function {f._f} with 0 method(s)>"
+
+    @dispatch
+    def f(x: int):
+        pass
+
+    @dispatch
+    def f(x: int):
+        pass
+
+    # At this point, two methods are pending but not yet resolved. The second is a
+    # redefinition of the first, but this will only be clear after the methods are
+    # resolved.
+    assert repr(f) == f"<function {f._f} with 2 method(s)>"
+
+    # Resolve the methods.
+    f(1)
+
+    # Counting should now be right.
+    assert repr(f) == f"<function {f._f} with 1 method(s)>"
+
+    @dispatch
+    def f(x: str):
+        pass
+
+    assert repr(f) == f"<function {f._f} with 2 method(s)>"
 
 
 def test_multi():

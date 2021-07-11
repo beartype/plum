@@ -23,6 +23,7 @@ Everybody likes multiple dispatch, just like everybody likes plums.
     - [Conversion](#conversion)
     - [Promotion](#promotion)
  * [Advanced Features](#advanced-features)
+    - [Abstract Function Definitions](#abstract-function-definitions)
     - [Method Precedence](#method-precedence)
     - [Parametric Classes](#parametric-classes)
     - [Hooking Into Type Inference](#hooking-into-type-inference)
@@ -768,6 +769,29 @@ TypeError: Cannot convert a "builtins.int" to a "builtins.float".
 ```
 
 ## Advanced Features
+
+### Abstract Function Definitions
+
+A function can be abstractly defined using `dispatch.abstract`.
+When a function is abstractly defined, the function is created, but no methods
+are defined.
+
+```python
+from plum import dispatch
+
+@dispatch.abstract
+def f(x):
+    pass
+```
+
+```python
+>>> f
+<function <function f at 0x7f9f6820aea0> with 0 method(s)>
+
+>>> @dispatch
+... def f(x: int):
+...     pass
+```
 
 ### Method Precedence
 

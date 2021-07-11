@@ -17,7 +17,7 @@ class Dispatcher:
         self._functions = {}
         self._classes = {}
 
-    def __call__(self, f=None, precedence=0):
+    def __call__(self, method=None, precedence=0):
         """Decorator for a particular signature.
 
         Args:
@@ -27,29 +27,29 @@ class Dispatcher:
             function: Decorator.
         """
 
-        # If `f` is not given, some keywords are set: return another decorator.
-        if f is None:
+        # If `method` is not given, some keywords are set: return another decorator.
+        if method is None:
 
             def decorator(f_):
                 return self(f_, precedence=precedence)
 
             return decorator
 
-        signature, return_type = extract_signature(f)
+        signature, return_type = extract_signature(method)
 
         def construct_function(owner):
             return self._add_method(
-                f,
+                method,
                 [signature],
                 precedence=precedence,
                 return_type=return_type,
                 owner=owner,
             )
 
-        # Defer the construction if `f` is in a class. We defer the construction to
+        # Defer the construction if `method` is in a class. We defer the construction to
         # allow the function to hold a reference to the class.
-        if is_in_class(f):
-            return ClassFunction(get_class(f), construct_function)
+        if is_in_class(method):
+            return ClassFunction(get_class(method), construct_function)
         else:
             return construct_function(None)
 
@@ -71,30 +71,44 @@ class Dispatcher:
         """
         signatures = [Sig(*types) for types in signatures]
 
-        def decorator(f):
+        def decorator(method):
             def construct_function(owner):
                 return self._add_method(
-                    f,
+                    method,
                     signatures,
                     precedence=precedence,
                     return_type=return_type,
                     owner=owner,
                 )
 
-            # Defer the construction if `f` is in a class. We defer the construction to
-            # allow the function to hold a reference to the class.
-            if is_in_class(f):
-                return ClassFunction(get_class(f), construct_function)
+            # Defer the construction if `method` is in a class. We defer the
+            # construction to allow the function to hold a reference to the class.
+            if is_in_class(method):
+                return ClassFunction(get_class(method), construct_function)
             else:
                 return construct_function(None)
 
         return decorator
 
-    def _add_method(self, f, signatures, precedence, return_type, owner):
-        name = f.__name__
+    def abstract(self, method):
+        """Decorator for an abstract function definition. The abstract function
+        definition does not implement any methods."""
 
-        # If a class is the owner, use a namespace specific for that class.
-        # Otherwise, use the global namespace.
+        def construct_abstract_function(owner):
+            return self._get_function(method, owner)
+
+        # Defer the construction if `method` is in a class. We defer the construction to
+        # allow the function to hold a reference to the class.
+        if is_in_class(method):
+            return ClassFunction(get_class(method), construct_abstract_function)
+        else:
+            return construct_abstract_function(None)
+
+    def _get_function(self, method, owner):
+        name = method.__name__
+
+        # If a class is the owner, use a namespace specific for that class. Otherwise,
+        # use the global namespace.
         if owner:
             if owner not in self._classes:
                 self._classes[owner] = {}
@@ -104,14 +118,15 @@ class Dispatcher:
 
         # Create a new function only if the function does not already exist.
         if name not in namespace:
-            namespace[name] = Function(f, owner=owner)
+            namespace[name] = Function(method, owner=owner)
 
-        # Register the new method.
-        for signature in signatures:
-            namespace[name].register(signature, f, precedence, return_type)
-
-        # Return the function.
         return namespace[name]
+
+    def _add_method(self, method, signatures, precedence, return_type, owner):
+        f = self._get_function(method, owner)
+        for signature in signatures:
+            f.register(signature, method, precedence, return_type)
+        return f
 
     def clear_cache(self):
         """Clear cache."""
