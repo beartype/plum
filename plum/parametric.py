@@ -1,4 +1,5 @@
 import logging
+from functools import partial
 
 from .dispatcher import Dispatcher
 from .function import (
@@ -31,6 +32,26 @@ log = logging.getLogger(__name__)
 _dispatch = Dispatcher()
 
 
+def _default_init_args_types(cls, *args):
+    """Function called when the constructor of this parametric type is called
+    before the parameters have been specified.
+
+    The default behaviour is to take as parameters the type of every argument,
+    but this behaviour can be overridden by redefining this function on the
+    metaclass.
+
+    Args:
+        *args: the argument-values passed to the __init__ method.
+
+    Returns:
+        A type or tuple of types.
+    """
+    type_parameter = tuple(type(arg) for arg in args)
+    if len(type_parameter) == 1:
+        type_parameter = type_parameter[0]
+    return type_parameter
+
+
 class ParametricTypeMeta(TypeMeta):
     """Parametric types can be instantiated with indexing.
 
@@ -38,6 +59,8 @@ class ParametricTypeMeta(TypeMeta):
     If `Type(Arg1, Arg2, **kw_args)` is called, this returns
     `Type[type(Arg1), type(Arg2)](Arg1, Arg2, **kw_args)`.
     """
+
+    _init_args_types = _default_init_args_types
 
     def __getitem__(self, p):
         if not self.is_concrete:
@@ -54,9 +77,7 @@ class ParametricTypeMeta(TypeMeta):
         # and then call the equivalent of `T(arg1, arg2, **kw_args)`.
 
         if not cls.is_concrete:
-            type_parameter = tuple(type(arg) for arg in args)
-            if len(type_parameter) == 1:
-                type_parameter = type_parameter[0]
+            type_parameter = cls._init_args_types(cls, *args)
             T = cls[type_parameter]
         else:
             T = cls
@@ -101,8 +122,22 @@ class CovariantMeta(ParametricTypeMeta):
         return type.__subclasscheck__(self, subclass)
 
 
-def parametric(Class):
-    """A decorator for parametric classes."""
+def parametric(Class=None, *, init_args_types=None):
+    """A decorator for parametric classes.
+
+    Optional keyword arguments:
+        init_args_types: Function called when the constructor of this parametric type is
+            called before the parameters have been specified. This function must have
+            the signature `f(cls, *args) -> Union[Any,Tuple]` and it must return an
+            hashable object or tuple that will be used as type parameters of the
+            resulting types. The default implementation of this function will return
+            the types of all arguments.
+    """
+
+    # allow the kwargs to be passed in without using functools.partial explicitly
+    if Class is None:
+        return partial(parametric, init_args_types=init_args_types)
+
     subclasses = {}
 
     if not issubclass(Class, object):  # pragma: no cover
@@ -137,8 +172,12 @@ def parametric(Class):
             subclasses[ps] = SubClass
         return subclasses[ps]
 
+    cdict = {"__new__": __new__}
+    if init_args_types is not None:
+        cdict["_init_args_types"] = init_args_types
+
     # Create parametric class.
-    ParametricClass = ParametricTypeMeta(Class.__name__, (Class,), {"__new__": __new__})
+    ParametricClass = ParametricTypeMeta(Class.__name__, (Class,), cdict)
     ParametricClass.__module__ = Class.__module__
 
     # Attempt to correct docstring.
