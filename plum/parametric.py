@@ -55,10 +55,6 @@ class ParametricTypeMeta(TypeMeta):
         # parametric subtype `T = Type[type(arg1), type(arg2)]`
         # and then call the equivalent of `T(arg1, arg2, **kw_args)`.
 
-        print("call: cls:", cls)
-        print("call, arg:", args)
-        print("call, kw_args:", kw_args)
-
         if not cls.is_concrete:
             type_parameter = cls._init_args_types(*args)
             T = cls[type_parameter]
@@ -369,7 +365,10 @@ class Val:
         if type(self).is_concrete:
             return
         else:
-            raise ValueError("The value must be specified.")
+            raise ValueError("The value must be specified.")  # pragma: no cover
 
     def __repr__(self):
         return "{}()".format(repr(type(self)))
+
+    def __eq__(self, other):
+        return type(self) == type(other)

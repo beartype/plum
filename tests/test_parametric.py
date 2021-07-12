@@ -15,6 +15,7 @@ from plum import (
     Tuple,
     Union,
     NotFoundLookupError,
+    Val,
 )
 from plum.parametric import _types_of_iterable
 
@@ -119,6 +120,23 @@ def test_constructor():
     assert type_parameter(b2) == (float, int)
     assert type(b1) == type(b2)
     assert type(b1).__name__ == type(b2).__name__ == f"B[{float},{int}]"
+
+
+def test_override_type_parameters():
+    # mimicks the type parameters of an NTuple
+    def _init_type_params(cls, *args):
+        T = type(args[0])
+        N = len(args)
+        return (N, T)
+
+    @parametric(init_args_types=_init_type_params)
+    class NTuple:
+        def __init__(self, *vals):
+            T = type(self)._type_parameter[1]
+            assert all(isinstance(val, T) for val in vals)
+            self.vals = vals
+
+    assert NTuple[3, int] == type(NTuple(1, 2, 3))
 
 
 def test_kind():
@@ -302,3 +320,25 @@ def test_type_of_extension():
     assert f(np.random.randn(10, 10)) == "matrix"
     with pytest.raises(NotFoundLookupError):
         f(np.random.randn(10, 10, 10))
+
+
+def test_Val():
+    T = Val[3]
+    v = Val(3)
+
+    assert T == type(v)
+    assert T() == v
+
+    T = Val[3, 4]
+    v = Val((3, 4))
+
+    assert T == type(v)
+    assert T() == v
+
+    with pytest.raises(ValueError):
+        Val()
+
+    with pytest.raises(ValueError):
+        Val(1, 2, 3)
+
+    assert repr(T) + "()" == repr(v)
