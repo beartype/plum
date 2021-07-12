@@ -41,6 +41,16 @@ class Promise(Resolvable):
 
     def resolve(self):
         if self._obj is None:
-            raise ResolutionError("Promise was not kept.")
+            raise ResolutionError("Promise `{}` was not kept.".format(repr(self)))
         else:
             return self._obj
+
+    @property
+    def resolved(self):
+        """bool: True if the Promise has been kept. 
+        """
+        return self._obj is not None
+
+    def __repr__(self):
+        # fallback in case superclasses don't overload repr
+        return "Promise(obj=self._obj)"
