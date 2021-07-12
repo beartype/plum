@@ -791,6 +791,9 @@ def f(x):
 >>> @dispatch
 ... def f(x: int):
 ...     pass
+
+>>> f
+<function <function f at 0x7f9f6820aea0> with 1 method(s)>
 ```
 
 ### Method Precedence
