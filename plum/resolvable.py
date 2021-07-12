@@ -47,8 +47,7 @@ class Promise(Resolvable):
 
     @property
     def resolved(self):
-        """bool: True if the Promise has been kept. 
-        """
+        """bool: True if the Promise has been kept."""
         return self._obj is not None
 
     def __repr__(self):
