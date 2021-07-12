@@ -25,31 +25,12 @@ __all__ = [
     "List",
     "Tuple",
     "type_of",
+    "Val",
 ]
 
 log = logging.getLogger(__name__)
 
 _dispatch = Dispatcher()
-
-
-def _default_init_args_types(cls, *args):
-    """Function called when the constructor of this parametric type is called
-    before the parameters have been specified.
-
-    The default behaviour is to take as parameters the type of every argument,
-    but this behaviour can be overridden by redefining this function on the
-    metaclass.
-
-    Args:
-        *args: the argument-values passed to the __init__ method.
-
-    Returns:
-        A type or tuple of types.
-    """
-    type_parameter = tuple(type(arg) for arg in args)
-    if len(type_parameter) == 1:
-        type_parameter = type_parameter[0]
-    return type_parameter
 
 
 class ParametricTypeMeta(TypeMeta):
@@ -59,8 +40,6 @@ class ParametricTypeMeta(TypeMeta):
     If `Type(Arg1, Arg2, **kw_args)` is called, this returns
     `Type[type(Arg1), type(Arg2)](Arg1, Arg2, **kw_args)`.
     """
-
-    _init_args_types = _default_init_args_types
 
     def __getitem__(self, p):
         if not self.is_concrete:
@@ -76,14 +55,40 @@ class ParametricTypeMeta(TypeMeta):
         # parametric subtype `T = Type[type(arg1), type(arg2)]`
         # and then call the equivalent of `T(arg1, arg2, **kw_args)`.
 
+        print("call: cls:", cls)
+        print("call, arg:", args)
+        print("call, kw_args:", kw_args)
+
         if not cls.is_concrete:
-            type_parameter = cls._init_args_types(cls, *args)
+            type_parameter = cls._init_args_types(*args)
             T = cls[type_parameter]
         else:
             T = cls
 
         # Calls `__new__` and `__init__`.
         return type.__call__(T, *args, **kw_args)
+
+    def _init_args_types(cls, *args):
+        """Function called when the constructor of this parametric type is called
+        before the parameters have been specified.
+
+        The default behaviour is to take as parameters the type of every argument,
+        but this behaviour can be overridden by redefining this function on the
+        metaclass.
+
+        Args:
+            *args: the argument-values passed to the __init__ method.
+
+        Returns:
+            A type or tuple of types.
+        """
+        print("cls", cls)
+        print("args", args)
+
+        type_parameter = tuple(type(arg) for arg in args)
+        if len(type_parameter) == 1:
+            type_parameter = type_parameter[0]
+        return type_parameter
 
     @property
     def is_concrete(cls):
@@ -172,13 +177,15 @@ def parametric(Class=None, *, init_args_types=None):
             subclasses[ps] = SubClass
         return subclasses[ps]
 
-    cdict = {"__new__": __new__}
-    if init_args_types is not None:
-        cdict["_init_args_types"] = init_args_types
-
     # Create parametric class.
-    ParametricClass = ParametricTypeMeta(Class.__name__, (Class,), cdict)
+    ParametricClass = ParametricTypeMeta(Class.__name__, (Class,), {"__new__": __new__})
     ParametricClass.__module__ = Class.__module__
+
+    if init_args_types is not None:
+        # bind method to class
+        # https://stackoverflow.com/questions/1015307/python-bind-an-unbound-method
+        bound_method = init_args_types.__get__(ParametricClass)
+        setattr(ParametricClass, "_init_args_types", bound_method)
 
     # Attempt to correct docstring.
     try:
@@ -332,3 +339,37 @@ def type_of(obj: tuple):
 # Deliver `type_of`.
 promised_type_of1.deliver(type_of)
 promised_type_of2.deliver(type_of)
+
+
+def _Val_type_param(cls, *arg):
+    """Function called when the constructor of `Val` is called to determine the type
+    parameters.
+    """
+    if len(arg) == 0:
+        raise ValueError("The value must be specified.")
+    elif len(arg) > 1:
+        raise ValueError("Too many values. Val accepts only one argument.")
+    return arg[0]
+
+
+@parametric(init_args_types=_Val_type_param)
+class Val:
+    """
+    A parametric type used to move information from the value-domain to the type-domain.
+    """
+
+    def __init__(self, arg=None):
+        """
+        Construct a Value object with type `Val(arg)` that cna be used to dispatch
+        based on values.
+
+        Args:
+            arg: the value to be moved to the type domain
+        """
+        if type(self).is_concrete:
+            return
+        else:
+            raise ValueError("The value must be specified.")
+
+    def __repr__(self):
+        return "{}()".format(repr(type(self)))
