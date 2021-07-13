@@ -41,7 +41,7 @@ class Promise(Resolvable):
 
     def resolve(self):
         if self._obj is None:
-            raise ResolutionError("Promise `{}` was not kept.".format(repr(self)))
+            raise ResolutionError(f"Promise `{self!r}` was not kept.")
         else:
             return self._obj
 

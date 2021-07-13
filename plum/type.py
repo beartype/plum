@@ -232,7 +232,7 @@ class ResolvableType(ComparableType, Resolvable):
         if self.resolved:
             return repr(ptype(self.resolve()))
         else:
-            return "ResolvableType(unresolved)"
+            return "<ResolvableType: unresolved>"
 
     def get_types(self):
         return ptype(self.resolve()).get_types()
@@ -296,7 +296,7 @@ class ForwardReferencedType(PromisedType):
         if self.resolved:
             return super().__repr__()
         else:
-            return "ForwardReferencedType(name={})".format(self.name)
+            return f"ForwardReferencedType(name={self.name!r})"
 
 
 PromisedList = Promise()  # This will resolve to `.parametric.List`.
