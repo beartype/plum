@@ -53,6 +53,6 @@ class Promise(Resolvable):
     def __repr__(self):
         # fallback in case superclasses don't overload repr
         if self.resolved:
-            return f"Promise(obj={self._obj!r})"
+            return f"Promise(obj={self._obj!r})"  # pragma: no cover
         else:
             return "<Promise: unfulfilled>"
