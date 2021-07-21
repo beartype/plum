@@ -237,7 +237,7 @@ class Real:
 'float added'
 ```
 
-If you use other decorators, then `dispatch` must be the _last_ decorator:
+If you use other decorators, then `dispatch` must be the _outermost_ decorator:
 
 ```python
 class Real:
