@@ -51,7 +51,7 @@ class Promise(Resolvable):
         return self._obj is not None
 
     def __repr__(self):
-        # fallback in case superclasses don't overload repr
+        # Fallback in case subclasses don't overload `__repr__`.
         if self.resolved:
             return f"Promise(obj={self._obj!r})"  # pragma: no cover
         else:
