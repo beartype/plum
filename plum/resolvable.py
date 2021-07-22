@@ -25,8 +25,8 @@ class Resolvable(abc.ABC):
 class Promise(Resolvable):
     """An object that is promised to be resolvable when asked for."""
 
-    def __init__(self):
-        self._obj = None
+    def __init__(self, obj=None):
+        self._obj = obj
 
     def deliver(self, obj):
         """Deliver the promise.
@@ -53,6 +53,6 @@ class Promise(Resolvable):
     def __repr__(self):
         # Fallback in case subclasses don't overload `__repr__`.
         if self.resolved:
-            return f"Promise(obj={self._obj!r})"  # pragma: no cover
+            return f"Promise(obj={self._obj!r})"
         else:
-            return "<Promise: unfulfilled>"
+            return "Promise()"
