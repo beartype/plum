@@ -56,7 +56,7 @@ class ParametricTypeMeta(TypeMeta):
         # and then call the equivalent of `T(arg1, arg2, **kw_args)`.
 
         if not cls.is_concrete:
-            type_parameter = cls._init_args_types(*args)
+            type_parameter = cls.__infer_type_parameter__(*args, **kw_args)
             T = cls[type_parameter]
         else:
             T = cls
@@ -64,7 +64,7 @@ class ParametricTypeMeta(TypeMeta):
         # Calls `__new__` and `__init__`.
         return type.__call__(T, *args, **kw_args)
 
-    def _init_args_types(cls, *args):
+    def __infer_type_parameter__(cls, *args, **kw_args):
         """Function called when the constructor of this parametric type is called
         before the parameters have been specified.
 
@@ -78,9 +78,6 @@ class ParametricTypeMeta(TypeMeta):
         Returns:
             A type or tuple of types.
         """
-        print("cls", cls)
-        print("args", args)
-
         type_parameter = tuple(type(arg) for arg in args)
         if len(type_parameter) == 1:
             type_parameter = type_parameter[0]
@@ -123,22 +120,21 @@ class CovariantMeta(ParametricTypeMeta):
         return type.__subclasscheck__(self, subclass)
 
 
-def parametric(Class=None, *, init_args_types=None):
+def parametric(Class):
     """A decorator for parametric classes.
+    
+    When the constructor of this parametric type is called before the type parameter
+    has been specified, the type parameters are inferred from the arguments of the 
+    constructor by calling the following function.
 
-    Optional keyword arguments:
-        init_args_types: Function called when the constructor of this parametric type is
-            called before the parameters have been specified. This function must have
-            the signature `f(cls, *args) -> Union[Any,Tuple]` and it must return an
-            hashable object or tuple that will be used as type parameters of the
-            resulting types. The default implementation of this function will return
-            the types of all arguments.
+    The default implementation is shown here, but it is possible to override it.
+
+    ```python 
+    @classmethod
+    __infer_type_parameter__(cls, *vals, **kw_args) -> Tuple:
+        return tuple(type(arg) for arg in args)    
+    ```
     """
-
-    # allow the kwargs to be passed in without using functools.partial explicitly
-    if Class is None:
-        return partial(parametric, init_args_types=init_args_types)
-
     subclasses = {}
 
     if not issubclass(Class, object):  # pragma: no cover
@@ -176,12 +172,6 @@ def parametric(Class=None, *, init_args_types=None):
     # Create parametric class.
     ParametricClass = ParametricTypeMeta(Class.__name__, (Class,), {"__new__": __new__})
     ParametricClass.__module__ = Class.__module__
-
-    if init_args_types is not None:
-        # bind method to class
-        # https://stackoverflow.com/questions/1015307/python-bind-an-unbound-method
-        bound_method = init_args_types.__get__(ParametricClass)
-        setattr(ParametricClass, "_init_args_types", bound_method)
 
     # Attempt to correct docstring.
     try:
@@ -337,22 +327,22 @@ promised_type_of1.deliver(type_of)
 promised_type_of2.deliver(type_of)
 
 
-def _Val_type_param(cls, *arg):
-    """Function called when the constructor of `Val` is called to determine the type
-    parameters.
-    """
-    if len(arg) == 0:
-        raise ValueError("The value must be specified.")
-    elif len(arg) > 1:
-        raise ValueError("Too many values. Val accepts only one argument.")
-    return arg[0]
-
-
-@parametric(init_args_types=_Val_type_param)
+@parametric
 class Val:
     """
     A parametric type used to move information from the value-domain to the type-domain.
     """
+
+    @classmethod
+    def __infer_type_parameter__(cls, *arg, **kwargs):
+        """Function called when the constructor of `Val` is called to determine the type
+        parameters.
+        """
+        if len(arg) == 0:
+            raise ValueError("The value must be specified.")
+        elif len(arg) > 1:
+            raise ValueError("Too many values. Val accepts only one argument.")
+        return arg[0]
 
     def __init__(self, arg=None):
         """

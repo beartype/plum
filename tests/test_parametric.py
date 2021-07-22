@@ -123,14 +123,17 @@ def test_constructor():
 
 
 def test_override_type_parameters():
-    # mimicks the type parameters of an NTuple
-    def _init_type_params(cls, *args):
-        T = type(args[0])
-        N = len(args)
-        return (N, T)
 
-    @parametric(init_args_types=_init_type_params)
+    @parametric
     class NTuple:
+
+        @classmethod
+        def __infer_type_parameter__(self, *vals, **kwargs):
+            # mimicks the type parameters of an NTuple
+            T = type(vals[0])
+            N = len(vals)
+            return (N, T)
+
         def __init__(self, *vals):
             T = type(self)._type_parameter[1]
             assert all(isinstance(val, T) for val in vals)
