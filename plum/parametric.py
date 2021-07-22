@@ -122,17 +122,17 @@ class CovariantMeta(ParametricTypeMeta):
 
 def parametric(Class):
     """A decorator for parametric classes.
-    
+
     When the constructor of this parametric type is called before the type parameter
-    has been specified, the type parameters are inferred from the arguments of the 
+    has been specified, the type parameters are inferred from the arguments of the
     constructor by calling the following function.
 
     The default implementation is shown here, but it is possible to override it.
 
-    ```python 
+    ```python
     @classmethod
     __infer_type_parameter__(cls, *vals, **kw_args) -> Tuple:
-        return tuple(type(arg) for arg in args)    
+        return tuple(type(arg) for arg in args)
     ```
     """
     subclasses = {}

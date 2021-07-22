@@ -123,10 +123,8 @@ def test_constructor():
 
 
 def test_override_type_parameters():
-
     @parametric
     class NTuple:
-
         @classmethod
         def __infer_type_parameter__(self, *vals, **kwargs):
             # mimicks the type parameters of an NTuple
