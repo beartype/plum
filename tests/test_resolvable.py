@@ -15,3 +15,17 @@ def test_promise():
     # Check that we cannot deliver twice.
     with pytest.raises(ResolutionError):
         p.deliver(1)
+
+
+def test_promise_repr():
+    p = Promise()
+
+    assert repr(p) == "Promise()"
+
+    class MockClass:
+        pass
+
+    for T in [int, MockClass]:
+        p = Promise()
+        p.deliver(T)
+        assert repr(T) in repr(p)

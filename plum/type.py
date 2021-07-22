@@ -229,7 +229,10 @@ class ResolvableType(ComparableType, Resolvable):
         return hash(ptype(self.resolve()))
 
     def __repr__(self):
-        return repr(ptype(self.resolve()))
+        if self.resolved:
+            return repr(ptype(self.resolve()))
+        else:
+            return "<ResolvableType: unresolved>"
 
     def get_types(self):
         return ptype(self.resolve()).get_types()
@@ -288,6 +291,12 @@ class ForwardReferencedType(PromisedType):
     def __init__(self, name):
         self.name = name
         PromisedType.__init__(self)
+
+    def __repr__(self):
+        if self.resolved:
+            return super().__repr__()
+        else:
+            return f"ForwardReferencedType(name={self.name!r})"
 
 
 PromisedList = Promise()  # This will resolve to `.parametric.List`.
