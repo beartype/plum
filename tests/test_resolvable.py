@@ -18,13 +18,18 @@ def test_promise():
 
 
 def test_promise_repr():
-    p = Promise()
+    # Test contruction with object.
+    p = Promise(1)
+    assert repr(p) == "Promise(obj=1)"
 
+    # Test contruction without object.
+    p = Promise()
     assert repr(p) == "Promise()"
 
     class MockClass:
         pass
 
+    # Test `__repr__` after delivery process.
     for T in [int, MockClass]:
         p = Promise()
         p.deliver(T)
