@@ -129,14 +129,14 @@ def test_cache_clearing():
     # Check that cache is used.
     assert len(f._methods) == 2
     assert len(f._precedences) == 2
-    assert f._parametric
+    assert f._runtime_typeof
 
     dispatch.clear_cache()
 
     # Check that cache is cleared.
     assert len(f._methods) == 0
     assert len(f._precedences) == 0
-    assert not f._parametric
+    assert not f._runtime_typeof
 
     f(1)
     clear_all_cache()
@@ -145,4 +145,4 @@ def test_cache_clearing():
     assert len(f._methods) == 0
     assert len(f._precedences) == 0
     assert len(subclasscheck_cache) == 0
-    assert not f._parametric
+    assert not f._runtime_typeof

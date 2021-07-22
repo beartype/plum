@@ -282,7 +282,7 @@ def test_type_of():
 def test_type_of_extension():
     dispatch = Dispatcher()
 
-    @parametric
+    @parametric(runtime_typeof=True)
     class NPArray(np.ndarray):
         pass
 

@@ -1,4 +1,5 @@
 import logging
+from functools import partial
 
 from .dispatcher import Dispatcher
 from .function import (
@@ -69,6 +70,10 @@ class ParametricTypeMeta(TypeMeta):
         """bool: Check whether the parametric type is instantiated or not."""
         return hasattr(cls, "_is_parametric")
 
+    @property
+    def runtime_typeof(cls):
+        return cls._runtime_typeof
+
 
 class CovariantMeta(ParametricTypeMeta):
     """A metaclass that implements *covariance* of parametric types."""
@@ -101,8 +106,21 @@ class CovariantMeta(ParametricTypeMeta):
         return type.__subclasscheck__(self, subclass)
 
 
-def parametric(Class):
-    """A decorator for parametric classes."""
+def parametric(Class=None, runtime_typeof=False):
+    """A decorator for parametric classes.
+
+    Optional keyword arguments:
+        runtime_typeof: If this type cannot be inferred by python's built-in`type`,
+            but you need to specialize `plum.typeof` (for example to inspect runtime)
+            values, then this must be set to True.
+            Functions that have this class in one of its method's signature will be
+            noticeably slower on dispatch.
+    """
+
+    # allow the kwargs to be passed in without using functools.partial explicitly
+    if Class is None:
+        return partial(parametric, runtime_typeof=runtime_typeof)
+
     subclasses = {}
 
     if not issubclass(Class, object):  # pragma: no cover
@@ -138,7 +156,11 @@ def parametric(Class):
         return subclasses[ps]
 
     # Create parametric class.
-    ParametricClass = ParametricTypeMeta(Class.__name__, (Class,), {"__new__": __new__})
+    ParametricClass = ParametricTypeMeta(
+        Class.__name__,
+        (Class,),
+        {"__new__": __new__, "_runtime_typeof": runtime_typeof},
+    )
     ParametricClass.__module__ = Class.__module__
 
     # Attempt to correct docstring.
@@ -218,6 +240,10 @@ class List(ComparableType):
     def parametric(self):
         return True
 
+    @property
+    def runtime_typeof(self):
+        return True
+
 
 # Deliver `List`.
 PromisedList.deliver(List)
@@ -252,6 +278,10 @@ class Tuple(ComparableType):
 
     @property
     def parametric(self):
+        return True
+
+    @property
+    def runtime_typeof(self):
         return True
 
 

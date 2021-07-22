@@ -2,7 +2,7 @@ from typing import Union, List
 
 import pytest
 
-from plum import Dispatcher, NotFoundLookupError
+from plum import Dispatcher, NotFoundLookupError, parametric
 
 
 def _build_function():
@@ -165,7 +165,7 @@ def test_metadata_and_printing():
     assert f.invoke().__module__ == "tests.dispatcher.test_dispatcher"
     assert f.invoke().__doc__ == "docstring of f"
     n = len(hex(id(f))) + 1  # Do not check memory address and extra ">".
-    assert repr(f.invoke())[:-n] == repr(f._f)[:-n]
+    assert repr(f.invoke())[:-n].replace("cyfunction", "function") == repr(f._f)[:-n]
 
     a = A()
     g = a.g
@@ -180,7 +180,10 @@ def test_metadata_and_printing():
     assert g.invoke().__qualname__ == "test_metadata_and_printing.<locals>.A.g"
     assert g.invoke().__module__ == "tests.dispatcher.test_dispatcher"
     assert g.invoke().__doc__ == "docstring of g"
-    assert repr(g.invoke())[:-n] == repr(A._dispatch._classes[A]["g"]._f)[:-n]
+    assert (
+        repr(g.invoke())[:-n].replace("cyfunction", "function")
+        == repr(A._dispatch._classes[A]["g"]._f)[:-n]
+    )
 
 
 def test_counting():
@@ -350,14 +353,26 @@ def test_parametric_tracking():
     def f(x: int):
         pass
 
-    assert not f._parametric
+    assert not f._runtime_typeof
     f(1)
-    assert not f._parametric
+    assert not f._runtime_typeof
+
+    @parametric
+    class MockClass:
+        pass
+
+    @dispatch
+    def f(x: MockClass[1]):
+        pass
+
+    assert not f._runtime_typeof
+    f(1)
+    assert not f._runtime_typeof
 
     @dispatch
     def f(x: List[int]):
         pass
 
-    assert not f._parametric
+    assert not f._runtime_typeof
     f(1)
-    assert f._parametric
+    assert f._runtime_typeof

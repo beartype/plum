@@ -189,8 +189,9 @@ class Function:
         self._precedences = {}
 
         # Keep track of whether any of the signatures contains a parametric
-        # type. This is a necessary performance optimisation.
-        self._parametric = False
+        # type with type determined at runtime by `plum.typeof` instead of `type`.
+        # This is a necessary performance optimisation.
+        self._runtime_typeof = False
 
         self._cache = {}
         self._owner = ptype(owner) if owner else None
@@ -282,7 +283,7 @@ class Function:
             self._resolved = []
             self._methods.clear()
             self._precedences.clear()
-            self._parametric = False
+            self._runtime_typeof = False
 
     def register(self, signature, f, precedence=0, return_type=object):
         """Register a method.
@@ -321,8 +322,8 @@ class Function:
             self._resolved.append((signature, f, precedence, return_type))
 
             # Check whether the signature contains a parametric type.
-            if any(t.parametric for t in signature.types):
-                self._parametric = True
+            if any(t.runtime_typeof for t in signature.types):
+                self._runtime_typeof = True
 
         if registered:
             self._pending = []
@@ -446,13 +447,13 @@ class Function:
 
     def __call__(self, *args, **kw_args):
         # First resolve pending registrations, because the value of
-        # `self._parametric` depends on it.
+        # `self._runtime_typeof` depends on it.
         if len(self._pending) != 0:
             self._resolve_pending_registrations()
 
         # Get types of arguments for signature. Only use `type_of` if
         # necessary, because it incurs a significant performance hit.
-        if not self._parametric:
+        if not self._runtime_typeof:
             sig_types = tuple([type(x) for x in args])
         else:
             sig_types = tuple([promised_type_of.resolve()(x) for x in args])
