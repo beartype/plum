@@ -341,7 +341,7 @@ class Val:
         if len(arg) == 0:
             raise ValueError("The value must be specified.")
         elif len(arg) > 1:
-            raise ValueError("Too many values. Val accepts only one argument.")
+            raise ValueError("Too many values. `Val` accepts only one argument.")
         return arg[0]
 
     def __init__(self, arg=None):
