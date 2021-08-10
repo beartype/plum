@@ -129,7 +129,6 @@ class CovariantMeta(ParametricTypeMeta):
         return type.__subclasscheck__(self, subclass)
 
 
-
 def parametric(Class=None, runtime_type_of=False):
     """A decorator for parametric classes.
 
