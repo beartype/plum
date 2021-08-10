@@ -73,7 +73,8 @@ class ParametricTypeMeta(TypeMeta):
         metaclass.
 
         Args:
-            *args: the argument-values passed to the __init__ method.
+            *args: Positional arguments passed to the `__init__` method.
+            *kw_args: Keyword arguments passed to the `__init__` method.
 
         Returns:
             A type or tuple of types.
