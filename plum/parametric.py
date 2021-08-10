@@ -355,7 +355,7 @@ class Val:
         if type(self).is_concrete:
             return
         else:
-            raise ValueError("The value must be specified.")  # pragma: no cover
+            raise ValueError("The value must be specified.")
 
     def __repr__(self):
         return f"{repr(type(self))}()"
