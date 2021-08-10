@@ -353,9 +353,9 @@ def test_parametric_tracking():
     def f(x: int):
         pass
 
-    assert not f._runtime_typeof
+    assert not f._runtime_type_of
     f(1)
-    assert not f._runtime_typeof
+    assert not f._runtime_type_of
 
     @parametric
     class MockClass:
@@ -365,14 +365,14 @@ def test_parametric_tracking():
     def f(x: MockClass[1]):
         pass
 
-    assert not f._runtime_typeof
+    assert not f._runtime_type_of
     f(1)
-    assert not f._runtime_typeof
+    assert not f._runtime_type_of
 
     @dispatch
     def f(x: List[int]):
         pass
 
-    assert not f._runtime_typeof
+    assert not f._runtime_type_of
     f(1)
-    assert f._runtime_typeof
+    assert f._runtime_type_of

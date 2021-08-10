@@ -71,8 +71,8 @@ class ParametricTypeMeta(TypeMeta):
         return hasattr(cls, "_is_parametric")
 
     @property
-    def runtime_typeof(cls):
-        return cls._runtime_typeof
+    def runtime_type_of(cls):
+        return cls._runtime_type_of
 
 
 class CovariantMeta(ParametricTypeMeta):
@@ -106,11 +106,11 @@ class CovariantMeta(ParametricTypeMeta):
         return type.__subclasscheck__(self, subclass)
 
 
-def parametric(Class=None, runtime_typeof=False):
+def parametric(Class=None, runtime_type_of=False):
     """A decorator for parametric classes.
 
     Args:
-        runtime_typeof (bool, optional): If this type cannot be inferred by Python's
+        runtime_type_of (bool, optional): If this type cannot be inferred by Python's
             built-in `type` and you need to specialise `plum.type_of`, for example to
             inspect runtime values, then this must be set to `True`. Functions that have
             this class in one of its method's signature will be noticeably slower on
@@ -119,7 +119,7 @@ def parametric(Class=None, runtime_typeof=False):
 
     # allow the kwargs to be passed in without using functools.partial explicitly
     if Class is None:
-        return partial(parametric, runtime_typeof=runtime_typeof)
+        return partial(parametric, runtime_type_of=runtime_type_of)
 
     subclasses = {}
 
@@ -159,7 +159,7 @@ def parametric(Class=None, runtime_typeof=False):
     ParametricClass = ParametricTypeMeta(
         Class.__name__,
         (Class,),
-        {"__new__": __new__, "_runtime_typeof": runtime_typeof},
+        {"__new__": __new__, "_runtime_type_of": runtime_type_of},
     )
     ParametricClass.__module__ = Class.__module__
 
@@ -241,7 +241,7 @@ class List(ComparableType):
         return True
 
     @property
-    def runtime_typeof(self):
+    def runtime_type_of(self):
         return True
 
 
@@ -281,7 +281,7 @@ class Tuple(ComparableType):
         return True
 
     @property
-    def runtime_typeof(self):
+    def runtime_type_of(self):
         return True
 
 

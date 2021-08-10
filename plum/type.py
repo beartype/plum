@@ -58,7 +58,7 @@ class AbstractType(metaclass=TypeMeta):
         type."""
 
     @property
-    def runtime_typeof(cls):
+    def runtime_type_of(cls):
         return False
 
 
@@ -226,9 +226,9 @@ class Type(ComparableType):
         return hasattr(self._type, "_is_parametric") and self._type._is_parametric
 
     @property
-    def runtime_typeof(self):
-        # Types don't specify `runtime_typeof` except for custom Plum types.
-        return hasattr(self._type, "runtime_typeof") and self._type.runtime_typeof
+    def runtime_type_of(self):
+        # Types don't specify `runtime_type_of` except for custom Plum types.
+        return hasattr(self._type, "runtime_type_of") and self._type.runtime_type_of
 
 
 class ResolvableType(ComparableType, Resolvable):
