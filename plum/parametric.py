@@ -132,7 +132,7 @@ def parametric(Class):
 
     ```python
     @classmethod
-    __infer_type_parameter__(cls, *vals, **kw_args) -> Tuple:
+    __infer_type_parameter__(cls, *args, **kw_args) -> Tuple:
         return tuple(type(arg) for arg in args)
     ```
     """
