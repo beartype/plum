@@ -91,6 +91,10 @@ class ParametricTypeMeta(TypeMeta):
         """bool: Check whether the parametric type is instantiated or not."""
         return hasattr(cls, "_is_parametric")
 
+    @property
+    def runtime_type_of(cls):
+        return cls._runtime_type_of
+
 
 class CovariantMeta(ParametricTypeMeta):
     """A metaclass that implements *covariance* of parametric types."""
@@ -123,7 +127,8 @@ class CovariantMeta(ParametricTypeMeta):
         return type.__subclasscheck__(self, subclass)
 
 
-def parametric(Class):
+
+def parametric(Class=None, runtime_type_of=False):
     """A decorator for parametric classes.
 
     When the constructor of this parametric type is called before the type parameter
@@ -138,6 +143,12 @@ def parametric(Class):
         return tuple(type(arg) for arg in args)
     ```
     """
+
+    # Allow the keyword arguments to be passed in without using `functools.partial`
+    # explicitly.
+    if Class is None:
+        return partial(parametric, runtime_type_of=runtime_type_of)
+
     subclasses = {}
 
     if not issubclass(Class, object):  # pragma: no cover
@@ -173,7 +184,11 @@ def parametric(Class):
         return subclasses[ps]
 
     # Create parametric class.
-    ParametricClass = ParametricTypeMeta(Class.__name__, (Class,), {"__new__": __new__})
+    ParametricClass = ParametricTypeMeta(
+        Class.__name__,
+        (Class,),
+        {"__new__": __new__, "_runtime_type_of": runtime_type_of},
+    )
     ParametricClass.__module__ = Class.__module__
 
     # Attempt to correct docstring.
@@ -253,6 +268,10 @@ class List(ComparableType):
     def parametric(self):
         return True
 
+    @property
+    def runtime_type_of(self):
+        return True
+
 
 # Deliver `List`.
 PromisedList.deliver(List)
@@ -287,6 +306,10 @@ class Tuple(ComparableType):
 
     @property
     def parametric(self):
+        return True
+
+    @property
+    def runtime_type_of(self):
         return True
 
 

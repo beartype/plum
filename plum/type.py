@@ -57,6 +57,10 @@ class AbstractType(metaclass=TypeMeta):
         """Boolean that indicates whether this is or contains a parametric
         type."""
 
+    @property
+    def runtime_type_of(cls):
+        return False
+
 
 class VarArgs(AbstractType):
     """Plum type that represents a variable number of the same Plum type.
@@ -220,6 +224,11 @@ class Type(ComparableType):
         # decorator from :mod:`.parametric`, which will have an attribute
         # `_is_parametric` with the value `True`.
         return hasattr(self._type, "_is_parametric") and self._type._is_parametric
+
+    @property
+    def runtime_type_of(self):
+        # Types don't specify `runtime_type_of` except for custom Plum types.
+        return hasattr(self._type, "runtime_type_of") and self._type.runtime_type_of
 
 
 class ResolvableType(ComparableType, Resolvable):
