@@ -126,16 +126,16 @@ def test_override_type_parameters():
     @parametric
     class NTuple:
         @classmethod
-        def __infer_type_parameter__(self, *vals, **kw_args):
+        def __infer_type_parameter__(self, *args):
             # Mimicks the type parameters of an `NTuple`.
-            T = type(vals[0])
-            N = len(vals)
+            T = type(args[0])
+            N = len(args)
             return (N, T)
 
-        def __init__(self, *vals):
+        def __init__(self, *args):
             T = type(self)._type_parameter[1]
-            assert all(isinstance(val, T) for val in vals)
-            self.vals = vals
+            assert all(isinstance(arg, T) for arg in args)
+            self.args = args
 
     assert NTuple[3, int] == type(NTuple(1, 2, 3))
 
@@ -324,22 +324,28 @@ def test_type_of_extension():
 
 
 def test_val():
-    T = Val[3]
-    v = Val(3)
+    # Check some cases.
+    for T, v in [
+        (Val[3], Val(3)),
+        (Val[3, 4], Val((3, 4))),
+        (Val[(3, 4)], Val((3, 4))),
+    ]:
+        assert T == type(v)
+        assert T() == v
 
-    assert T == type(v)
-    assert T() == v
-
-    T = Val[3, 4]
-    v = Val((3, 4))
-
-    assert T == type(v)
-    assert T() == v
-
+    # Test all checks for numbers of arguments and the like.
     with pytest.raises(ValueError):
         Val()
-
     with pytest.raises(ValueError):
         Val(1, 2, 3)
+    with pytest.raises(ValueError):
+        Val[1](2)
 
-    assert repr(T) + "()" == repr(v)
+    # Check that `__init__` can only be called for a concrete instance.
+    class MockVal:
+        is_concrete = False
+
+    with pytest.raises(ValueError):
+        Val[1].__init__(MockVal())
+
+    assert repr(Val[1]()) == "plum.parametric.Val[1]()"

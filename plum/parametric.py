@@ -332,10 +332,12 @@ promised_type_of2.deliver(type_of)
 
 @parametric
 class Val:
-    """A parametric type used to move information from the value domain to the type domain."""
+    """A parametric type used to move information from the value domain to the type
+    domain.
+    """
 
     @classmethod
-    def __infer_type_parameter__(cls, *arg, **kw_args):
+    def __infer_type_parameter__(cls, *arg):
         """Function called when the constructor of `Val` is called to determine the type
         parameters.
         """
@@ -345,21 +347,22 @@ class Val:
             raise ValueError("Too many values. `Val` accepts only one argument.")
         return arg[0]
 
-    def __init__(self, arg=None):
-        """
-        Construct a Value object with type `Val(arg)` that cna be used to dispatch
+    def __init__(self, val=None):
+        """Construct a value object with type `Val(arg)` that can be used to dispatch
         based on values.
 
         Args:
-            arg: the value to be moved to the type domain
+            val (object): The value to be moved to the type domain.
         """
         if type(self).is_concrete:
-            return
+            if val is not None and type_parameter(self) != val:
+                print(type_parameter(self), val)
+                raise ValueError("The value must be equal to the type parameter.")
         else:
             raise ValueError("The value must be specified.")
 
     def __repr__(self):
-        return f"{repr(type(self))}()"
+        return f"{repr(ptype(type(self)))}()"
 
     def __eq__(self, other):
         return type(self) == type(other)
