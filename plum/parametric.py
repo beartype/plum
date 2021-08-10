@@ -330,8 +330,7 @@ promised_type_of2.deliver(type_of)
 
 @parametric
 class Val:
-    """
-    A parametric type used to move information from the value-domain to the type-domain.
+    """A parametric type used to move information from the value domain to the type domain.
     """
 
     @classmethod
