@@ -358,7 +358,7 @@ class Val:
             raise ValueError("The value must be specified.")  # pragma: no cover
 
     def __repr__(self):
-        return "{}()".format(repr(type(self)))
+        return f"{repr(type(self))}()"
 
     def __eq__(self, other):
         return type(self) == type(other)
