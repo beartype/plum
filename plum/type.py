@@ -58,7 +58,7 @@ class AbstractType(metaclass=TypeMeta):
         type."""
 
     @property
-    def runtime_type_of(cls):
+    def runtime_type_of(self):
         return False
 
 

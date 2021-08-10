@@ -79,8 +79,7 @@ class ParametricTypeMeta(TypeMeta):
         Returns:
             type or tuple[type]: A type or tuple of types.
         """
-
-        # TODO: Use `type_of` instead of `type`
+        # TODO: Use `type_of` instead of `type`.
         type_parameter = tuple(type(arg) for arg in args)
         if len(type_parameter) == 1:
             type_parameter = type_parameter[0]
@@ -93,6 +92,9 @@ class ParametricTypeMeta(TypeMeta):
 
     @property
     def runtime_type_of(cls):
+        """bool: Check whether the type requires :func:`.parametric.type_of` at
+        runtime.
+        """
         return cls._runtime_type_of
 
 

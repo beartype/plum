@@ -321,7 +321,8 @@ class Function:
             # Add to resolved registrations.
             self._resolved.append((signature, f, precedence, return_type))
 
-            # Check whether the signature contains a parametric type.
+            # Check whether the signature contains a type which requires `type_of` at
+            # runtime.
             if any(t.runtime_type_of for t in signature.types):
                 self._runtime_type_of = True
 

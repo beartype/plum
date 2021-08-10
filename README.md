@@ -974,7 +974,7 @@ import numpy as np
 from plum import dispatch, parametric, type_of
 
 
-@parametric
+@parametric(runtime_type_of=True)
 class NPArray(np.ndarray):
     """A type for NumPy arrays where the type parameter specifies the number of
     dimensions."""
