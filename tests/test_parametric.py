@@ -323,7 +323,7 @@ def test_type_of_extension():
         f(np.random.randn(10, 10, 10))
 
 
-def test_Val():
+def test_val():
     T = Val[3]
     v = Val(3)
 
