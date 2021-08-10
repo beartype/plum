@@ -334,7 +334,7 @@ class Val:
     """
 
     @classmethod
-    def __infer_type_parameter__(cls, *arg, **kwargs):
+    def __infer_type_parameter__(cls, *arg, **kw_args):
         """Function called when the constructor of `Val` is called to determine the type
         parameters.
         """
