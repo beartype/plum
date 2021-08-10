@@ -15,3 +15,22 @@ def test_promise():
     # Check that we cannot deliver twice.
     with pytest.raises(ResolutionError):
         p.deliver(1)
+
+
+def test_promise_repr():
+    # Test contruction with object.
+    p = Promise(1)
+    assert repr(p) == "Promise(obj=1)"
+
+    # Test contruction without object.
+    p = Promise()
+    assert repr(p) == "Promise()"
+
+    class MockClass:
+        pass
+
+    # Test `__repr__` after delivery process.
+    for T in [int, MockClass]:
+        p = Promise()
+        p.deliver(T)
+        assert repr(T) in repr(p)

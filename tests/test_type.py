@@ -75,9 +75,9 @@ def test_promisedtype():
     with pytest.raises(ResolutionError):
         hash(t)
     with pytest.raises(ResolutionError):
-        repr(t)
-    with pytest.raises(ResolutionError):
         t.get_types()
+
+    assert "unresolved" in repr(t)
 
     t.deliver(Type(int))
     assert hash(t) == hash(Type(int))

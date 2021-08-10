@@ -25,6 +25,7 @@ __all__ = [
     "List",
     "Tuple",
     "type_of",
+    "Val",
 ]
 
 log = logging.getLogger(__name__)
@@ -55,15 +56,35 @@ class ParametricTypeMeta(TypeMeta):
         # and then call the equivalent of `T(arg1, arg2, **kw_args)`.
 
         if not cls.is_concrete:
-            type_parameter = tuple(type(arg) for arg in args)
-            if len(type_parameter) == 1:
-                type_parameter = type_parameter[0]
+            type_parameter = cls.__infer_type_parameter__(*args, **kw_args)
             T = cls[type_parameter]
         else:
             T = cls
 
         # Calls `__new__` and `__init__`.
         return type.__call__(T, *args, **kw_args)
+
+    def __infer_type_parameter__(cls, *args, **kw_args):
+        """Function called when the constructor of this parametric type is called
+        before the parameters have been specified.
+
+        The default behaviour is to take as parameters the type of every argument,
+        but this behaviour can be overridden by redefining this function on the
+        metaclass.
+
+        Args:
+            *args: Positional arguments passed to the `__init__` method.
+            *kw_args: Keyword arguments passed to the `__init__` method.
+
+        Returns:
+            type or tuple[type]: A type or tuple of types.
+        """
+
+        # TODO: Use `type_of` instead of `type`
+        type_parameter = tuple(type(arg) for arg in args)
+        if len(type_parameter) == 1:
+            type_parameter = type_parameter[0]
+        return type_parameter
 
     @property
     def is_concrete(cls):
@@ -106,18 +127,25 @@ class CovariantMeta(ParametricTypeMeta):
         return type.__subclasscheck__(self, subclass)
 
 
+
 def parametric(Class=None, runtime_type_of=False):
     """A decorator for parametric classes.
 
-    Args:
-        runtime_type_of (bool, optional): If this type cannot be inferred by Python's
-            built-in `type` and you need to specialise `plum.type_of`, for example to
-            inspect runtime values, then this must be set to `True`. Functions that have
-            this class in one of its method's signature will be noticeably slower on
-            dispatch.
+    When the constructor of this parametric type is called before the type parameter
+    has been specified, the type parameters are inferred from the arguments of the
+    constructor by calling the following function.
+
+    The default implementation is shown here, but it is possible to override it.
+
+    ```python
+    @classmethod
+    __infer_type_parameter__(cls, *args, **kw_args) -> Tuple:
+        return tuple(type(arg) for arg in args)
+    ```
     """
 
-    # allow the kwargs to be passed in without using functools.partial explicitly
+    # Allow the keyword arguments to be passed in without using `functools.partial`
+    # explicitly.
     if Class is None:
         return partial(parametric, runtime_type_of=runtime_type_of)
 
@@ -323,3 +351,41 @@ def type_of(obj: tuple):
 # Deliver `type_of`.
 promised_type_of1.deliver(type_of)
 promised_type_of2.deliver(type_of)
+
+
+@parametric
+class Val:
+    """A parametric type used to move information from the value domain to the type
+    domain.
+    """
+
+    @classmethod
+    def __infer_type_parameter__(cls, *arg):
+        """Function called when the constructor of `Val` is called to determine the type
+        parameters.
+        """
+        if len(arg) == 0:
+            raise ValueError("The value must be specified.")
+        elif len(arg) > 1:
+            raise ValueError("Too many values. `Val` accepts only one argument.")
+        return arg[0]
+
+    def __init__(self, val=None):
+        """Construct a value object with type `Val(arg)` that can be used to dispatch
+        based on values.
+
+        Args:
+            val (object): The value to be moved to the type domain.
+        """
+        if type(self).is_concrete:
+            if val is not None and type_parameter(self) != val:
+                print(type_parameter(self), val)
+                raise ValueError("The value must be equal to the type parameter.")
+        else:
+            raise ValueError("The value must be specified.")
+
+    def __repr__(self):
+        return f"{repr(ptype(type(self)))}()"
+
+    def __eq__(self, other):
+        return type(self) == type(other)
