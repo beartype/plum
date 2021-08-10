@@ -935,10 +935,30 @@ If `A(args)` is called directly, the concrete type is first instantiated by
 taking the type of all positional arguments, and then an instance of the type 
 is created.
 
-This only works for types whose `__init__` method accepts positional arguments.
-If parametric type `A` does not take positional arguments, then the only way to 
-instantiate it is to first create the concrete type `A[pars]` and then construct
-it `A[pars]()`.
+This behaviour can be customized by overriding the classmethod `__infer_type_parameters`
+of the parametric class. This method must return the type parameter or a tuple of type
+parameters.
+
+````python
+from plum import parametric
+
+@parametric
+class NTuple:
+    @classmethod
+    def __infer_type_parameter__(self, *vals, **kw_args):
+        # Mimicks the type parameters of an `NTuple`.
+        T = type(vals[0])
+        N = len(vals)
+        return (N, T)
+
+    def __init__(self, *vals):
+        T = type(self)._type_parameter[1]
+        assert all(isinstance(val, T) for val in vals)
+        self.vals = vals
+
+>>>>>> type(NTuple(1,2,3))
+<class '__main__.NTuple[3,<class 'int'>]'>
+```
 
 ### Hooking Into Type Inference
 
