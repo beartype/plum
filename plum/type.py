@@ -227,7 +227,7 @@ class Type(ComparableType):
 
     @property
     def runtime_typeof(self):
-        # Types don-t specify runtime_typeof except for custom Plum Types
+        # Types don't specify `runtime_typeof` except for custom Plum types.
         return hasattr(self._type, "runtime_typeof") and self._type.runtime_typeof
 
 

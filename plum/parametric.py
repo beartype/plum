@@ -109,12 +109,12 @@ class CovariantMeta(ParametricTypeMeta):
 def parametric(Class=None, runtime_typeof=False):
     """A decorator for parametric classes.
 
-    Optional keyword arguments:
-        runtime_typeof: If this type cannot be inferred by python's built-in`type`,
-            but you need to specialize `plum.typeof` (for example to inspect runtime)
-            values, then this must be set to True.
-            Functions that have this class in one of its method's signature will be
-            noticeably slower on dispatch.
+    Args:
+        runtime_typeof (bool, optional): If this type cannot be inferred by Python's
+            built-in `type` and you need to specialise `plum.type_of`, for example to
+            inspect runtime values, then this must be set to `True`. Functions that have
+            this class in one of its method's signature will be noticeably slower on
+            dispatch.
     """
 
     # allow the kwargs to be passed in without using functools.partial explicitly
