@@ -12,6 +12,7 @@ from .type import (
     Union,
     PromisedList,
     PromisedTuple,
+    PromisedDict,
     ptype,
     is_type,
 )
@@ -24,6 +25,7 @@ __all__ = [
     "Kind",
     "List",
     "Tuple",
+    "Dict",
     "type_of",
     "Val",
 ]
@@ -165,7 +167,7 @@ def parametric(Class=None, runtime_type_of=False):
                 return Class.__new__(cls)
 
             # Create subclass.
-            name = Class.__name__ + "[" + ",".join(str(p) for p in ps) + "]"
+            name = Class.__name__ + "[" + ", ".join(str(p) for p in ps) + "]"
             SubClass = type.__new__(
                 CovariantMeta,
                 name,
@@ -318,6 +320,48 @@ class Tuple(ComparableType):
 PromisedTuple.deliver(Tuple)
 
 
+@parametric
+class _ParametricDict(dict):
+    """Parametric dictionary type."""
+
+
+class Dict(ComparableType):
+    """Parametric dictionary Plum type.
+
+    IMPORTANT:
+        `Dict` should not be used to generically refer to a dictionary! Use `dict` instead.
+
+    Args:
+        key_type (type or ptype): Type of the keys.
+        value_type (type or ptype): Type of the values.
+    """
+
+    def __init__(self, key_type, value_type):
+        self._key_type = ptype(key_type)
+        self._value_type = ptype(value_type)
+
+    def __hash__(self):
+        return multihash(Dict, self._key_type, self._value_type)
+
+    def __repr__(self):
+        return f"Dict[{self._key_type}, {self._value_type}]"
+
+    def get_types(self):
+        return (_ParametricDict[self._key_type, self._value_type],)
+
+    @property
+    def parametric(self):
+        return True
+
+    @property
+    def runtime_type_of(self):
+        return True
+
+
+# Deliver `Dict`.
+PromisedDict.deliver(Dict)
+
+
 def _types_of_iterable(xs):
     types = {type_of(x) for x in xs}
     if len(types) == 1:
@@ -347,6 +391,11 @@ def type_of(obj: list):
 @_dispatch
 def type_of(obj: tuple):
     return Tuple(*(type_of(x) for x in obj))
+
+
+@_dispatch
+def type_of(obj: dict):
+    return Dict(_types_of_iterable(obj.keys()), _types_of_iterable(obj.values()))
 
 
 # Deliver `type_of`.

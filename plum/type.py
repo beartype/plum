@@ -18,6 +18,7 @@ __all__ = [
     "deliver_forward_reference",
     "PromisedList",
     "PromisedTuple",
+    "PromisedDict",
     "ptype",
     "TypeType",
     "is_object",
@@ -310,6 +311,7 @@ class ForwardReferencedType(PromisedType):
 
 PromisedList = Promise()  # This will resolve to `.parametric.List`.
 PromisedTuple = Promise()  # This will resolve to `.parametric.Tuple`.
+PromisedDict = Promise()  # This will resolve to `.parametric.Dict`.
 
 
 def ptype(obj):
@@ -359,6 +361,11 @@ def ptype(obj):
                 return PromisedTuple.resolve()(*(ptype(t) for t in obj.__args__))
             else:
                 return Type(tuple)
+        elif obj_str == "Dict":
+            if obj_is_parametrised:
+                return PromisedDict.resolve()(*(ptype(t) for t in obj.__args__))
+            else:
+                return Type(dict)
         elif obj_str == "ForwardRef" or obj_str == "_ForwardRef":
             # This depends on the implementation below!
             obj = obj.__forward_arg__
@@ -368,7 +375,7 @@ def ptype(obj):
             return Type(obj)
         else:
             raise NotImplementedError(
-                f'There is currently no support for "typing.{obj.__name__}". '
+                f'There is currently no support for "{obj}". '
                 f"Please open an issue at https://github.com/wesselb/plum/issues"
             )  # pragma: no cover
 

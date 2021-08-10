@@ -13,6 +13,7 @@ from plum import (
     PromisedType,
     List,
     Tuple,
+    Dict,
     Union,
     NotFoundLookupError,
     Val,
@@ -119,7 +120,7 @@ def test_constructor():
     assert type_parameter(b1) == (float, int)
     assert type_parameter(b2) == (float, int)
     assert type(b1) == type(b2)
-    assert type(b1).__name__ == type(b2).__name__ == f"B[{float},{int}]"
+    assert type(b1).__name__ == type(b2).__name__ == f"B[{float}, {int}]"
 
 
 def test_override_type_parameters():
@@ -161,7 +162,7 @@ def test_kind():
     assert issubclass(Kind2[1], object)
 
 
-def test_listtype():
+def test_list():
     # Standard type tests.
     assert hash(List[int]) == hash(List[int])
     assert hash(List[int]) != hash(List[str])
@@ -213,7 +214,7 @@ def test_listtype():
     assert f([[1], [1, 2, "3"]]) == "list"
 
 
-def test_tupletype():
+def test_tuple():
     # Standard type tests.
     assert hash(Tuple[int]) == hash(Tuple[int])
     assert hash(Tuple[int]) != hash(Tuple[str])
@@ -275,6 +276,59 @@ def test_tupletype():
     assert f(((1,), (1,))) == "tup of double tup of int"
     assert f((1, (1, 2))) == "tup of int and tup of double int"
     assert f(((1,), (1, 2))) == "tup"
+
+
+def test_dict():
+    # Standard type tests.
+    assert hash(Dict[int, float]) == hash(Dict[int, float])
+    assert hash(Dict[int, float]) != hash(Tuple[int, str])
+    assert hash(Dict[int, float]) != hash(Tuple[str, float])
+    assert hash(Dict[Tuple[int], float]) == hash(Dict[Tuple[int], float])
+    assert hash(Dict[Tuple[int], float]) != hash(Dict[Tuple[str], float])
+    assert repr(Dict[int, float]) == f"Dict[{Type(int)!r}, {Type(float)!r}]"
+    assert issubclass(Dict[int, float].get_types()[0], dict)
+    assert not issubclass(Dict[int, float].get_types()[0], int)
+
+    # Test instance check.
+    assert isinstance({}, Dict[Union[object], Union[object]])
+    assert isinstance({1: 2.0}, Dict[int, float])
+
+    # Check tracking of parametric.
+    assert Dict[int, float].parametric
+    assert ptype(Dict[Tuple[int], float]).parametric
+    assert ptype(Union[Dict[int, float]]).parametric
+    promise = PromisedType()
+    promise.deliver(Dict[int, float])
+    assert promise.resolve().parametric
+
+    # Test correctness.
+    dispatch = Dispatcher()
+
+    @dispatch
+    def f(x):
+        return "fallback"
+
+    @dispatch
+    def f(x: dict):
+        return "dict"
+
+    @dispatch
+    def f(x: Dict[int, int]):
+        return "int to int"
+
+    @dispatch
+    def f(x: Dict[str, int]):
+        return "str to int"
+
+    @dispatch
+    def f(x: Dict[Union[int, str], int]):
+        return "int or str to int"
+
+    assert f(1) == "fallback"
+    assert f({1: 1}) == "int to int"
+    assert f({"1": 1}) == "str to int"
+    assert f({"1": 1, 1: 1}) == "int or str to int"
+    assert f({"1": "1", 1: 1}) == "dict"
 
 
 def test_types_of_iterables():
