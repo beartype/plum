@@ -77,7 +77,7 @@ class ParametricTypeMeta(TypeMeta):
             *kw_args: Keyword arguments passed to the `__init__` method.
 
         Returns:
-            A type or tuple of types.
+            type or tuple[type]: A type or tuple of types.
         """
         type_parameter = tuple(type(arg) for arg in args)
         if len(type_parameter) == 1:
