@@ -79,7 +79,7 @@ class ParametricTypeMeta(TypeMeta):
         Returns:
             type or tuple[type]: A type or tuple of types.
         """
-        type_parameter = tuple(type_of(arg) for arg in args)
+        type_parameter = tuple(type(arg) for arg in args)
         if len(type_parameter) == 1:
             type_parameter = type_parameter[0]
         return type_parameter
@@ -330,7 +330,8 @@ promised_type_of2.deliver(type_of)
 
 @parametric
 class Val:
-    """A parametric type used to move information from the value domain to the type domain."""
+    """A parametric type used to move information from the value domain to the type domain.
+    """
 
     @classmethod
     def __infer_type_parameter__(cls, *arg, **kw_args):
