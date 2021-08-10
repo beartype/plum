@@ -126,8 +126,8 @@ def test_override_type_parameters():
     @parametric
     class NTuple:
         @classmethod
-        def __infer_type_parameter__(self, *vals, **kwargs):
-            # mimicks the type parameters of an NTuple
+        def __infer_type_parameter__(self, *vals, **kw_args):
+            # Mimicks the type parameters of an `NTuple`.
             T = type(vals[0])
             N = len(vals)
             return (N, T)
