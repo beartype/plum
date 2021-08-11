@@ -968,7 +968,7 @@ class NTuple:
         
 ```python
 >>> type(NTuple(1, 2, 3))
-__main__.NTuple[3,<class 'int'>]
+__main__.NTuple[3, <class 'int'>]
 ```
 
 ### Hooking Into Type Inference
