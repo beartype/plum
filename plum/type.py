@@ -59,8 +59,10 @@ class AbstractType(metaclass=TypeMeta):
         type."""
 
     @property
+    @abc.abstractmethod
     def runtime_type_of(self):
-        return False
+        """Boolean that indicates whether this type can only be determined at
+        runtime by `plum.type_of` instead of built-in `type`."""
 
 
 class VarArgs(AbstractType):
@@ -94,6 +96,10 @@ class VarArgs(AbstractType):
     @property
     def parametric(self):
         return self.type.parametric
+
+    @property
+    def runtime_type_of(self):
+        return self.type.runtime_type_of
 
 
 promised_type_of = Promise()  # Resolves to `.parametric.type_of`.
@@ -199,6 +205,11 @@ class Union(ComparableType):
         self._to_set()
         return any(t.parametric for t in self._types)
 
+    @property
+    def runtime_type_of(self):
+        self._to_set()
+        return any(t.runtime_type_of for t in self._types)
+
 
 class Type(ComparableType):
     """A Plum type encapsulating a single type.
@@ -250,6 +261,10 @@ class ResolvableType(ComparableType, Resolvable):
     @property
     def parametric(self):
         return ptype(self.resolve()).parametric
+
+    @property
+    def runtime_type_of(self):
+        return ptype(self.resolve()).runtime_type_of
 
 
 class PromisedType(ResolvableType, Promise):
