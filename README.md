@@ -944,7 +944,7 @@ taking the type of all positional arguments, and then an instance of the type
 is created.
 
 This behaviour can be customized by overriding the `@classmethod`
-`__infer_type_parameters__` of the parametric class.
+`__infer_type_parameter__` of the parametric class.
 This method must return the type parameter or a tuple of type parameters.
 
 ```python
