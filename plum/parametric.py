@@ -90,13 +90,19 @@ class ParametricTypeMeta(TypeMeta):
     @property
     def is_concrete(cls):
         """bool: Check whether the parametric type is instantiated or not."""
+        # The attribute `_is_parametric` is created when the type parameters are
+        # specified.
         return hasattr(cls, "_is_parametric")
+
+    @property
+    def parametric(cls):
+        """bool: Check whether the type is a parametric type."""
+        return True
 
     @property
     def runtime_type_of(cls):
         """bool: Check whether the type requires :func:`.parametric.type_of` at
-        runtime.
-        """
+        runtime"""
         return cls._runtime_type_of
 
 

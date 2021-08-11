@@ -348,7 +348,7 @@ def test_invoke_in_class():
     assert C.do.invoke(C, float)(c, 1.0) == "fallback"
 
 
-def test_parametric_tracking():
+def test_runtime_type_of_tracking():
     dispatch = Dispatcher()
 
     @dispatch
@@ -360,11 +360,11 @@ def test_parametric_tracking():
     assert not f._runtime_type_of
 
     @parametric
-    class MockClass:
+    class A:
         pass
 
     @dispatch
-    def f(x: MockClass[1]):
+    def f(x: A[1]):
         pass
 
     assert not f._runtime_type_of

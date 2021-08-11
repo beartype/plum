@@ -55,13 +55,13 @@ class AbstractType(metaclass=TypeMeta):
     @property
     @abc.abstractmethod
     def parametric(self):
-        """Boolean that indicates whether this is or contains a parametric
+        """bool: Boolean that indicates whether this is or contains a parametric
         type."""
 
     @property
     @abc.abstractmethod
     def runtime_type_of(self):
-        """Boolean that indicates whether this type can only be determined at
+        """bool: Boolean that indicates whether this type can only be determined at
         runtime by `plum.type_of` instead of built-in `type`."""
 
 
@@ -232,10 +232,8 @@ class Type(ComparableType):
 
     @property
     def parametric(self):
-        # No types are parametric, except the ones created by the `@parametric`
-        # decorator from :mod:`.parametric`, which will have an attribute
-        # `_is_parametric` with the value `True`.
-        return hasattr(self._type, "_is_parametric") and self._type._is_parametric
+        # Types don't specify `parametric` except for Plum parametric types.
+        return hasattr(self._type, "parametric") and self._type.parametric
 
     @property
     def runtime_type_of(self):

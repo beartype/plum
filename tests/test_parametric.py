@@ -90,6 +90,9 @@ def test_constructor():
             self.x = x
             self.y = y
 
+    assert A.parametric
+    assert not A.runtime_type_of
+
     a1 = A[float](5.0)
     a2 = A(5.0)
 
@@ -103,11 +106,14 @@ def test_constructor():
     assert type(a1) == type(a2)
     assert type(a1).__name__ == type(a2).__name__ == f"A[{float}]"
 
-    @parametric
+    @parametric(runtime_type_of=True)
     class B:
         def __init__(self, x, y):
             self.x = x
             self.y = y
+
+    assert B.parametric
+    assert B.runtime_type_of
 
     b1 = B[float, int](5.0, 3)
     b2 = B(5.0, 3)
@@ -185,6 +191,14 @@ def test_list():
     promise.deliver(List[int])
     assert promise.resolve().parametric
 
+    # Check tracking of runtime `type_of`.
+    assert List[int].runtime_type_of
+    assert ptype(List[List[int]]).runtime_type_of
+    assert ptype(Union[List[int]]).runtime_type_of
+    promise = PromisedType()
+    promise.deliver(List[int])
+    assert promise.resolve().runtime_type_of
+
     # Test correctness.
     dispatch = Dispatcher()
 
@@ -236,6 +250,14 @@ def test_tuple():
     promise = PromisedType()
     promise.deliver(Tuple[int])
     assert promise.resolve().parametric
+
+    # Check tracking of runtime `type_of`.
+    assert Tuple[int].runtime_type_of
+    assert ptype(List[Tuple[int]]).runtime_type_of
+    assert ptype(Union[Tuple[int]]).runtime_type_of
+    promise = PromisedType()
+    promise.deliver(Tuple[int])
+    assert promise.resolve().runtime_type_of
 
     # Test correctness.
     dispatch = Dispatcher()
@@ -300,6 +322,14 @@ def test_dict():
     promise = PromisedType()
     promise.deliver(Dict[int, float])
     assert promise.resolve().parametric
+
+    # Check tracking of runtime `type_of`.
+    assert Dict[int, float].runtime_type_of
+    assert ptype(Dict[Tuple[int], float]).runtime_type_of
+    assert ptype(Union[Dict[int, float]]).runtime_type_of
+    promise = PromisedType()
+    promise.deliver(Dict[int, float])
+    assert promise.resolve().runtime_type_of
 
     # Test correctness.
     dispatch = Dispatcher()

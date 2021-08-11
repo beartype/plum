@@ -73,7 +73,9 @@ def test_type():
     assert repr(Type(int)) == f"{int.__module__}.{int.__name__}"
     assert Type(int).get_types() == (int,)
     assert not Type(int).parametric
-    assert not Type(List[int]).parametric
+    assert not Type(int).runtime_type_of
+    assert Type(List[int]).parametric
+    assert Type(List[int]).runtime_type_of
 
 
 def test_promisedtype():
