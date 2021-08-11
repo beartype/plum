@@ -23,7 +23,9 @@ def test_varargs():
     assert repr(VarArgs(int)) == f"VarArgs({Type(int)!r})"
     assert VarArgs(int).expand(2) == (Type(int), Type(int))
     assert not VarArgs(int).parametric
+    assert not VarArgs(int).runtime_type_of
     assert VarArgs(List[int]).parametric
+    assert VarArgs(List[int]).runtime_type_of
 
 
 def test_comparabletype():
@@ -43,6 +45,10 @@ def test_union():
     assert repr(Union[int, str]) == repr(Union[int, str])
     assert set(Union[int, str].get_types()) == {str, int}
     assert not Union[int].parametric
+    assert not Union[int].runtime_type_of
+
+    assert Union[Tuple[int], Tuple[int, int]].parametric
+    assert Union[Tuple[int], Tuple[int, int]].runtime_type_of
 
     # Test equivalence between `Union` and `Type`.
     assert hash(Union[int]) == hash(Type(int))
@@ -84,10 +90,12 @@ def test_promisedtype():
     assert repr(t) == repr(Type(int))
     assert t.get_types() == Type(int).get_types()
     assert not t.parametric
+    assert not t.runtime_type_of
 
     t = PromisedType()
     t.deliver(List[int])
     assert t.parametric
+    assert t.runtime_type_of
 
 
 def test_forwardreferencedtype():
