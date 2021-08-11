@@ -59,8 +59,10 @@ class AbstractType(metaclass=TypeMeta):
         type."""
 
     @property
+    @abc.abstractmethod
     def runtime_type_of(self):
-        return False
+        """Boolean that indicates whether this type can only be determined at
+        runtime by `plum.type_of` instead of built-in `type`."""
 
 
 class VarArgs(AbstractType):
