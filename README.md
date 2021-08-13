@@ -302,9 +302,34 @@ For more advanced use cases of forward references, you can use `plum.type.Promis
 
 ## Keyword Arguments and Default Values
 
-Keyword arguments can be used, but are *not* dispatched on.
-As a convention, arguments with default values should always be called as keyword 
-arguments.
+Default arguments can be used. The type annotation must match the default value otherwise 
+an error is thrown. 
+Different default values can be used in different dispatch rules.
+
+```python
+from plum import dispatch
+
+@dispatch
+def f(x:int, y:int=3):
+    return f"Value for 2nd y: {y}"
+
+@dispatch
+def f(x:float, y:float=3.0):
+    return f"Value for 2nd y: {y}"
+```
+
+```python
+>>> f(1)
+'Value for 2nd y: 3'
+
+>>> f(1.0)
+'Value for 2nd y: 3.0'
+
+>>> f(1.0, 4.0)
+'Value for 2nd y: 4.0'
+```
+
+Keyword-only arguments, separated by an asterisk from the other arguments, can also be used, but are *not* dispatched on.
 
 Example:
 
@@ -312,7 +337,7 @@ Example:
 from plum import dispatch
 
 @dispatch
-def f(x, option="a"):
+def f(x, *, option="a"):
     return f"Value for option: {option}"
 ```
 
@@ -327,33 +352,6 @@ def f(x, option="a"):
 NotFoundLookupError: For function "f", signature Signature(builtins.int, builtins.str) could not be resolved.
 ```
 
-If you want to use a default value for a positional argument, use the following pattern
-instead:
-
-
-```python
-from plum import dispatch
-
-@dispatch
-def f(x, option):
-    return f"Value for option: {option}"
-
-
-@dispatch
-def f(x):
-    return f(x, "a")  # Use default value for `option`.
-```
-
-```python
->>> f(1)              # This is fine.
-'Value for option: a'
-
->>> f(1, "b")         # And this will work!
-'Value for option: b'
-
->>> f(1, option="b")  # But this won't.
-TypeError: f() got an unexpected keyword argument 'option'
-```
 
 ## Comparison with `multipledispatch`
 
