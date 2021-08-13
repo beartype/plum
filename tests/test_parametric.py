@@ -18,7 +18,15 @@ from plum import (
     NotFoundLookupError,
     Val,
 )
-from plum.parametric import _types_of_iterable
+from plum.parametric import _types_of_iterable, CovariantMeta
+
+
+def test_covariantmeta():
+    class A(metaclass=CovariantMeta):
+        pass
+
+    with pytest.raises(RuntimeError):
+        A.concrete
 
 
 def test_covariance():
@@ -83,6 +91,72 @@ def test_parametric():
         T[1]
 
 
+def test_parametric_inheritance():
+    class A(metaclass=CovariantMeta):
+        def __init__(self, x):
+            self.x = x
+
+    @parametric
+    class B(A):
+        def __init__(self, x, y):
+            pass
+
+    class C(B):
+        def __init__(self, x, y, z):
+            pass
+
+    @parametric
+    class D(C):
+        def __init__(self, w, x, y, z):
+            pass
+
+    @parametric
+    class E(D):
+        def __init__(self, v, w, x, y, z):
+            pass
+
+    assert issubclass(B, A)
+    assert issubclass(B[1], A)
+    assert issubclass(C, A)
+    assert issubclass(D, A)
+    assert issubclass(D[1], A)
+    assert issubclass(E, A)
+    assert issubclass(E[1], A)
+
+    assert issubclass(C, B)
+    assert issubclass(D, B)
+    assert issubclass(D[1], B)
+    assert issubclass(E, B)
+    assert issubclass(E[1], B)
+
+    assert not issubclass(C, B[1])
+    assert not issubclass(D, B[1])
+    assert issubclass(D[1], B[1])  # Covariance
+    assert not issubclass(D[1], B[1, 2])
+    assert not issubclass(D[1], B[2])
+    assert issubclass(E, B)
+    assert issubclass(E[1], B)
+
+    assert issubclass(D, C)
+    assert issubclass(D[1], C)
+    assert issubclass(E, C)
+    assert issubclass(E[1], C)
+
+    assert issubclass(E, D)
+    assert issubclass(E[1], D)
+
+    assert not issubclass(E, D[1])
+    assert issubclass(E[1], D[1])  # Covariance
+    assert not issubclass(E[1], D[1, 2])
+    assert not issubclass(E[1], D[2])
+
+    assert type(A(1)) == A
+    assert type(B(1, 2)) == B[int, int]
+    assert type(C(1, 2, 3)) == C
+    assert type(D(1, 2, 3, 4)) == D[int, int, int, int]
+    assert type(E(1, 2, 3, 4, 5)) == E[int, int, int, int, int]
+
+
 def test_constructor():
     @parametric
     class A:
@@ -91,7 +165,15 @@ def test_constructor():
             self.y = y
 
     assert A.parametric
+    assert not A.concrete
     assert not A.runtime_type_of
+    with pytest.raises(RuntimeError):
+        A.type_parameter
+
+    assert A[float].parametric
+    assert A[float].concrete
+    assert not A[float].runtime_type_of
+    assert A[float].type_parameter == float
 
     a1 = A[float](5.0)
     a2 = A(5.0)
@@ -113,7 +195,15 @@ def test_constructor():
             self.y = y
 
     assert B.parametric
+    assert not B.concrete
     assert B.runtime_type_of
+    with pytest.raises(RuntimeError):
+        B.type_parameter
+
+    assert B[float].parametric
+    assert B[float].concrete
+    assert B[float].runtime_type_of
+    assert B[float].type_parameter == float
 
     b1 = B[float, int](5.0, 3)
     b2 = B(5.0, 3)
@@ -427,7 +517,7 @@ def test_val():
 
     # Check that `__init__` can only be called for a concrete instance.
     class MockVal:
-        is_concrete = False
+        concrete = False
 
     with pytest.raises(ValueError):
         Val[1].__init__(MockVal())

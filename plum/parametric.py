@@ -44,11 +44,9 @@ class ParametricTypeMeta(TypeMeta):
     """
 
     def __getitem__(self, p):
-        if not self.is_concrete:
-            if isinstance(p, tuple):
-                return self.__new__(self, *p)
-            else:
-                return self.__new__(self, p)
+        if not self.concrete:
+            # `p` can be a tuple, in which case it must be splatted.
+            return self.__new__(self, *(p if isinstance(p, tuple) else (p,)))
         else:
             raise TypeError("Cannot specify type parameters. This type is concrete.")
 
@@ -57,14 +55,13 @@ class ParametricTypeMeta(TypeMeta):
         # parametric subtype `T = Type[type(arg1), type(arg2)]`
         # and then call the equivalent of `T(arg1, arg2, **kw_args)`.
 
-        if not cls.is_concrete:
-            type_parameter = cls.__infer_type_parameter__(*args, **kw_args)
-            T = cls[type_parameter]
-        else:
-            T = cls
+        if hasattr(cls, "parametric") and cls.parametric:
+            if not cls.concrete:
+                type_parameter = cls.__infer_type_parameter__(*args, **kw_args)
+                cls = cls[type_parameter]
 
         # Calls `__new__` and `__init__`.
-        return type.__call__(T, *args, **kw_args)
+        return TypeMeta.__call__(cls, *args, **kw_args)
 
     def __infer_type_parameter__(cls, *args, **kw_args):
         """Function called when the constructor of this parametric type is called
@@ -88,48 +85,71 @@ class ParametricTypeMeta(TypeMeta):
         return type_parameter
 
     @property
-    def is_concrete(cls):
-        """bool: Check whether the parametric type is instantiated or not."""
-        # The attribute `_is_parametric` is created when the type parameters are
-        # specified.
-        return hasattr(cls, "_is_parametric")
-
-    @property
     def parametric(cls):
         """bool: Check whether the type is a parametric type."""
-        return True
+        return hasattr(cls, "_parametric") and cls._parametric
+
+    @property
+    def concrete(cls):
+        """bool: Check whether the parametric type is instantiated or not."""
+        if cls.parametric:
+            return hasattr(cls, "_concrete") and cls._concrete
+        else:
+            raise RuntimeError(
+                "Cannot check whether a non-parametric type is instantiated or not."
+            )
+
+    @property
+    def type_parameter(cls):
+        """object: Get the type parameter. Parametric type must be instantiated."""
+        if cls.concrete:
+            return cls._type_parameter
+        else:
+            raise RuntimeError(
+                "Cannot get the type parameter of non-instantiated parametric type."
+            )
 
     @property
     def runtime_type_of(cls):
         """bool: Check whether the type requires :func:`.parametric.type_of` at
         runtime"""
-        return cls._runtime_type_of
+        return hasattr(cls, "_runtime_type_of") and cls._runtime_type_of
 
 
 class CovariantMeta(ParametricTypeMeta):
     """A metaclass that implements *covariance* of parametric types."""
 
     def __subclasscheck__(self, subclass):
-        if hasattr(subclass, "_is_parametric"):
+        if (
+            self.parametric
+            and (hasattr(subclass, "parametric") and subclass.parametric)
+            and self.concrete
+            and subclass.concrete
+        ):
             # Check that they are instances of the same parametric type.
-            if subclass.__bases__ == self.__bases__:
-                par_subclass = type_parameter(subclass)
-                par_self = type_parameter(self)
+            if all(issubclass(b, self.__bases__) for b in subclass.__bases__):
+                par_subclass = subclass.type_parameter
+                par_self = self.type_parameter
 
                 # Handle the case that the parameters are types.
                 if is_type(par_subclass) and is_type(par_self):
                     return ptype(par_subclass) <= ptype(par_self)
 
+                if not isinstance(par_subclass, tuple):
+                    par_subclass = (par_subclass,)
+                if not isinstance(par_self, tuple):
+                    par_self = (par_self,)
+
                 # Handle the case that the parameters are tuples of types.
-                if (
-                    isinstance(par_subclass, tuple)
-                    and isinstance(par_self, tuple)
-                    and len(par_subclass) == len(par_self)
-                    and all(is_type(pi_subclass) for pi_subclass in par_subclass)
-                    and all(is_type(pi_self) for pi_self in par_self)
-                ):
+                if len(par_subclass) == len(par_self):
                     return all(
-                        ptype(pi_subclass) <= ptype(pi_self)
+                        (
+                            # Type parameter could be a type.
+                            ptype(pi_subclass) <= ptype(pi_self)
+                            if (is_type(pi_subclass) or is_type(pi_self))
+                            # Type parameter could also be an object.
+                            else pi_subclass == pi_self
+                        )
                         for pi_subclass, pi_self in zip(par_subclass, par_self)
                     )
 
@@ -148,7 +168,7 @@ def parametric(Class=None, runtime_type_of=False):
 
     ```python
     @classmethod
-    __infer_type_parameter__(cls, *args, **kw_args) -> Tuple:
+    def __infer_type_parameter__(cls, *args, **kw_args) -> Tuple:
         return tuple(type(arg) for arg in args)
     ```
     """
@@ -178,8 +198,11 @@ def parametric(Class=None, runtime_type_of=False):
                 CovariantMeta,
                 name,
                 (ParametricClass,),
-                {"__new__": __new__, "_is_parametric": True},
+                {"__new__": __new__},
             )
+            SubClass._parametric = True
+            SubClass._concrete = True
+            SubClass._runtime_type_of = runtime_type_of
             SubClass._type_parameter = ps[0] if len(ps) == 1 else ps
             SubClass.__module__ = Class.__module__
 
@@ -192,12 +215,26 @@ def parametric(Class=None, runtime_type_of=False):
             subclasses[ps] = SubClass
         return subclasses[ps]
 
+    def __init_subclass__(cls, **kw_args):
+        cls._parametric = False
+        cls._runtime_type_of = False
+        if cls.__new__ is __new__:
+
+            def resetted_new(cls, *args, **kw_args):
+                return Class.__new__(cls)
+
+            cls.__new__ = resetted_new
+        Class.__init_subclass__(**kw_args)
+
     # Create parametric class.
     ParametricClass = ParametricTypeMeta(
         Class.__name__,
         (Class,),
-        {"__new__": __new__, "_runtime_type_of": runtime_type_of},
+        {"__new__": __new__, "__init_subclass__": __init_subclass__},
     )
+    ParametricClass._parametric = True
+    ParametricClass._concrete = False
+    ParametricClass._runtime_type_of = runtime_type_of
     ParametricClass.__module__ = Class.__module__
 
     # Attempt to correct docstring.
@@ -219,7 +256,7 @@ def type_parameter(x):
     Returns:
         object: Type parameter.
     """
-    return x._type_parameter
+    return type(x).type_parameter
 
 
 def kind(SuperClass=object):
@@ -433,9 +470,8 @@ class Val:
         Args:
             val (object): The value to be moved to the type domain.
         """
-        if type(self).is_concrete:
+        if type(self).concrete:
             if val is not None and type_parameter(self) != val:
-                print(type_parameter(self), val)
                 raise ValueError("The value must be equal to the type parameter.")
         else:
             raise ValueError("The value must be specified.")
