@@ -12,9 +12,9 @@ def test_promise():
     p.deliver(1)
     assert p.resolve() == 1
 
-    # Check that we cannot deliver twice.
-    with pytest.raises(ResolutionError):
-        p.deliver(1)
+    # Check that we can deliver twice.
+    p.deliver(2)
+    assert p.resolve() == 2
 
 
 def test_promise_repr():
