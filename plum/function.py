@@ -60,21 +60,31 @@ def extract_signature(f):
         p = sig.parameters[arg]
 
         # Stop once we have seen all positional parameter without a default value.
-        if _is_not_empty(p.default) or p.kind in {p.KEYWORD_ONLY, p.VAR_KEYWORD}:
+        if p.kind in {p.KEYWORD_ONLY, p.VAR_KEYWORD}:
             break
 
         if p.kind == p.VAR_POSITIONAL:
             # Parameter is varargs.
             if _is_not_empty(p.annotation):
-                types.append(VarArgs(ptype(p.annotation)))
+                T = VarArgs(ptype(p.annotation))
             else:
-                types.append(VarArgs(default_obj_type))
+                T = VarArgs(default_obj_type)
         else:
             # Just a regular positional parameter.
             if _is_not_empty(p.annotation):
-                types.append(ptype(p.annotation))
+                T = ptype(p.annotation)
             else:
-                types.append(default_obj_type)
+                T = default_obj_type
+
+        if _is_not_empty(p.default):
+            default_T = ptype(type(p.default))
+            if not default_T <= T:
+                raise TypeError(
+                    f"Default value {p.default} of type {default_T} does "
+                    f"not match the annotated type {T}."
+                )
+
+        types.append(T)
 
     # Get possible return type.
     if _is_not_empty(sig.return_annotation):
@@ -86,6 +96,35 @@ def extract_signature(f):
     signature = Signature(*types)
 
     return signature, return_type
+
+
+def extract_default_args(signature, f):
+    # Extract specification.
+    sig = inspect.signature(f)
+
+    signatures = [signature]
+
+    arg_names = list(sig.parameters.keys())
+    arg_names.reverse()
+    n_args = len(arg_names)
+
+    deleted_args = 0
+    for i, arg in enumerate(arg_names):
+        p = sig.parameters[arg]
+
+        # ignore keyword arguments
+        if p.kind in {p.KEYWORD_ONLY, p.VAR_KEYWORD}:
+            continue
+
+        # stop when reacing non default args
+        if not _is_not_empty(p.default):
+            break
+
+        deleted_args += 1
+        new_sig = Signature(*signature.base[:-deleted_args])
+        signatures.append(new_sig)
+
+    return signatures
 
 
 class AmbiguousLookupError(LookupError):
@@ -297,7 +336,10 @@ class Function:
                 to `object`.
         """
         # The return type may contain strings, which need to be converted Plum types.
-        self._pending.append((signature, f, precedence, ptype(return_type)))
+        ret_type = ptype(return_type)
+
+        for sig in extract_default_args(signature, f):
+            self._pending.append((sig, f, precedence, ret_type))
 
     def _resolve_pending_registrations(self):
         # Keep track of whether anything registered.
