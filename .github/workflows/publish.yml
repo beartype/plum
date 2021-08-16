@@ -1,7 +1,8 @@
-# This workflows will upload a Python Package using Twine when a release is created
-# For more information see: https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions#publishing-to-package-registries
+# This workflow will upload a Python package using Twine when a release is
+# created. For more information see the following link:
+#     https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions#publishing-to-package-registries
 
-name: Publish to PyPi
+name: Publish to PyPI
 
 on:
   release:
@@ -14,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      # make sure tags are fetched so we can get a version
+      # Make sure tags are fetched so we can get a version.
       - run: |
           git fetch --prune --unshallow --tags
 
