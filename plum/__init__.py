@@ -1,3 +1,5 @@
+from ._version import version as __version__  # noqa: F401
+
 from .dispatcher import *
 from .function import *
 from .parametric import *
