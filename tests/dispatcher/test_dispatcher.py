@@ -106,14 +106,14 @@ def test_default():
     with pytest.raises(NotFoundLookupError):
         f(2, 4.0, option=2)
 
-    # wrong default type
+    # Wrong default type
     with pytest.raises(TypeError):
 
         @dispatch
         def f(x: int, y: float = y_default):
             return y
 
-    # ignore wrong type annotations on keyword arguments
+    # Ignore wrong type annotations on keyword arguments.
     def f(x: int, y: float = y_default, *, option: int = None):
         return y
 

@@ -105,18 +105,21 @@ def extract_default_args(signature, f):
     signatures = [signature]
 
     arg_names = list(sig.parameters.keys())
+    # We start at the end and, once we reach non-keyword-only arguments, delete the
+    # argument with defaults values one by one. This generates a sequence of signatures,
+    # which we return.
     arg_names.reverse()
     n_args = len(arg_names)
 
     deleted_args = 0
-    for i, arg in enumerate(arg_names):
+    for arg in arg_names:
         p = sig.parameters[arg]
 
-        # ignore keyword arguments
+        # Ignore keyword arguments.
         if p.kind in {p.KEYWORD_ONLY, p.VAR_KEYWORD}:
             continue
 
-        # stop when reacing non default args
+        # Stop when non-default arguments are reached.
         if not _is_not_empty(p.default):
             break
 

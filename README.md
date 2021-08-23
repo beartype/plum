@@ -304,17 +304,17 @@ For more advanced use cases of forward references, you can use `plum.type.Promis
 
 Default arguments can be used. The type annotation must match the default value otherwise 
 an error is thrown. 
-Different default values can be used in different dispatch rules.
+As the example below illustrates, different default values can be used for different methods:
 
 ```python
 from plum import dispatch
 
 @dispatch
-def f(x:int, y:int=3):
+def f(x: int, y: int = 3):
     return f"Value for 2nd y: {y}"
 
 @dispatch
-def f(x:float, y:float=3.0):
+def f(x: float, y: float = 3.0):
     return f"Value for 2nd y: {y}"
 ```
 
