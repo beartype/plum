@@ -98,7 +98,20 @@ def extract_signature(f):
     return signature, return_type
 
 
-def extract_default_args(signature, f):
+def append_default_args(signature, f):
+    """
+    Returns a list of signatures of function `f`, where those signatures are derived
+    from the input argument `signature`, excluding from 0 to all the positional
+    arguments with a default value.
+
+    Args:
+        f (function): Function to extract default arguments from.
+        signature (Signature): Signature of `f` from which to remove default arguments.
+
+    Returns:
+        list[:class:`.signature.Signature`]: list of signatures excluding from 0 to all
+        default arguments.
+    """
     # Extract specification.
     sig = inspect.signature(f)
 
@@ -341,7 +354,7 @@ class Function:
         # The return type may contain strings, which need to be converted Plum types.
         ret_type = ptype(return_type)
 
-        for sig in extract_default_args(signature, f):
+        for sig in append_default_args(signature, f):
             self._pending.append((sig, f, precedence, ret_type))
 
     def _resolve_pending_registrations(self):
