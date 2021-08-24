@@ -69,13 +69,60 @@ def test_keywords():
     dispatch = Dispatcher()
 
     @dispatch
-    def f(x: int, option=None):
+    def f(x: int, *, option=None):
         return x
 
     assert f(2) == 2
     assert f(2, option=None) == 2
     with pytest.raises(NotFoundLookupError):
         f(2, None)
+
+
+def test_default():
+    dispatch = Dispatcher()
+
+    y_default = 3
+
+    @dispatch
+    def f(x: int, y: int = y_default, *, option=None):
+        return y
+
+    @dispatch
+    def f(x: float, y: int = y_default, *, option=None):
+        return y ** 2
+
+    assert f(2) == y_default
+    assert f(2, option=None) == y_default
+    assert f(2, 4) == 4
+    assert f(2, y=4) == 4
+    assert f(2, y=4, option=None) == 4
+
+    assert f(2.0) == y_default ** 2
+    assert f(2.0, y=4) == 4 ** 2
+
+    with pytest.raises(NotFoundLookupError):
+        f(2, 4.0)
+
+    with pytest.raises(NotFoundLookupError):
+        f(2, 4.0, option=2)
+
+    # Wrong default type
+    with pytest.raises(TypeError):
+
+        @dispatch
+        def f(x: int, y: float = y_default):
+            return y
+
+    # Ignore wrong type annotations on keyword arguments.
+    def f(x: int, y: float = y_default, *, option: int = None):
+        return y
+
+    # multiple arguments
+    @dispatch
+    def g(x: int, y: int = y_default, z: float = 3.0):
+        return (y, z)
+
+    assert g(2) == (y_default, 3.0)
 
 
 def test_redefinition():
