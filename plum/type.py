@@ -19,6 +19,7 @@ __all__ = [
     "PromisedList",
     "PromisedTuple",
     "PromisedDict",
+    "PromisedIterable",
     "ptype",
     "TypeType",
     "is_object",
@@ -325,6 +326,7 @@ class ForwardReferencedType(PromisedType):
 PromisedList = Promise()  # This will resolve to `.parametric.List`.
 PromisedTuple = Promise()  # This will resolve to `.parametric.Tuple`.
 PromisedDict = Promise()  # This will resolve to `.parametric.Dict`.
+PromisedIterable = Promise()  # This will resolve to `.parametric.Iterable`.
 
 
 def ptype(obj):
@@ -379,6 +381,11 @@ def ptype(obj):
                 return PromisedDict.resolve()(*(ptype(t) for t in obj.__args__))
             else:
                 return Type(dict)
+        elif obj_str == "Iterable":
+            if obj_is_parametrised:
+                return PromisedIterable.resolve()(*(ptype(t) for t in obj.__args__))
+            else:
+                return PromisedIterable.resolve()()
         elif obj_str == "ForwardRef" or obj_str == "_ForwardRef":
             # This depends on the implementation below!
             obj = obj.__forward_arg__

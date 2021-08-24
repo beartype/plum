@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import typing
 
 from plum import (
     Dispatcher,
@@ -14,6 +15,7 @@ from plum import (
     List,
     Tuple,
     Dict,
+    Iterable,
     Union,
     NotFoundLookupError,
     Val,
@@ -449,6 +451,104 @@ def test_dict():
     assert f({"1": 1}) == "str to int"
     assert f({"1": 1, 1: 1}) == "int or str to int"
     assert f({"1": "1", 1: 1}) == "dict"
+
+
+def test_iterable():
+    # Standard type tests.
+    assert hash(Iterable[int]) == hash(Iterable[int])
+    assert hash(Iterable[int]) != hash(Iterable[str])
+    assert hash(Iterable[int]) != hash(Iterable())
+    assert hash(Iterable[Iterable[int]]) == hash(Iterable[Iterable[int]])
+    assert hash(Iterable[Iterable[int]]) != hash(Iterable[Iterable[str]])
+    assert repr(Iterable()) == "Iterable"
+    assert repr(Iterable[int]) == f"Iterable[{Type(int)!r}]"
+
+    # Test instance check.
+    assert isinstance([], Iterable())
+    assert isinstance([], Iterable[object])
+    assert isinstance((1, 2.0), Iterable())
+    assert isinstance((1, 2.0), Iterable[Union[int, float]])
+    assert isinstance([1, 2], Iterable())
+    assert isinstance([1, 2], Iterable[int])
+
+    # Test subclass check.
+    assert issubclass(ptype(list), Iterable())
+    assert issubclass(List[int], Iterable())
+    assert issubclass(List[int], Iterable[int])
+    assert not issubclass(ptype(list), Iterable[int])
+    assert issubclass(Iterable[int], Iterable[object])
+
+    # Check tracking of parametric.
+    assert Iterable[int].parametric
+    assert ptype(Iterable[Iterable[int]]).parametric
+    assert ptype(Union[Iterable[int]]).parametric
+    promise = PromisedType()
+    promise.deliver(Iterable[int])
+    assert promise.resolve().parametric
+
+    # Check tracking of runtime `type_of`.
+    assert Iterable[int].runtime_type_of
+    assert ptype(Iterable[Iterable[int]]).runtime_type_of
+    assert ptype(Union[Iterable[int]]).runtime_type_of
+    promise = PromisedType()
+    promise.deliver(Iterable[int])
+    assert promise.resolve().runtime_type_of
+
+    assert not Iterable().runtime_type_of
+    assert ptype(Iterable[Iterable()]).runtime_type_of
+    assert not ptype(Union[Iterable()]).runtime_type_of
+    promise = PromisedType()
+    promise.deliver(Iterable())
+    assert not promise.resolve().runtime_type_of
+
+    # Test correctness.
+    dispatch = Dispatcher()
+
+    @parametric
+    class A:
+        def __init__(self, el_type):
+            pass
+
+        def __iter__(self):
+            pass
+
+    @parametric
+    class B(A):
+        @classmethod
+        def __el_type__(cls):
+            return cls.type_parameter
+
+    @dispatch
+    def f(x):
+        return "fallback"
+
+    @dispatch
+    def f(x: Iterable()):
+        return "it"
+
+    @dispatch
+    def f(x: Iterable[int]):
+        return "it of int"
+
+    @dispatch
+    def f(x: Iterable[Iterable[object]]):
+        return "it of it"
+
+    assert f(1) == "fallback"
+    # Test various iterators:
+    assert f(A(1)) == "it"
+    assert f(A(1.0)) == "it"
+    assert f(B(1)) == "it of int"
+    assert f(B(1.0)) == "it"
+    assert f([1]) == "it of int"
+    assert f([1.0]) == "it"
+    assert f({1: 1}) == "it of int"
+    assert f({1.0: 1}) == "it"
+    assert f((1, 1)) == "it of int"
+    assert f((1.0, 1)) == "it"
+    # Test nested iterators:
+    assert f([[1]]) == "it of it"
+    assert f(([1], [1, 2, "3"])) == "it of it"
 
 
 def test_types_of_iterables():

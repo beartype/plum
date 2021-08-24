@@ -566,10 +566,13 @@ def f(x: Union[int, str]):
 
 ### Parametric Types
 
-The parametric types `typing.Tuple`, `typing.List`, and `typing.Dict` can be
-used to dispatch on tuples, lists, and dictionaries with particular types of elements.
+The parametric types `typing.Tuple`, `typing.List`, `typing.Dict`, and
+`typing.Iterable` can be used to dispatch on respectively tuples, lists,
+dictionaries, and iterables with particular types of elements.
 Importantly, the type system is *covariant*, as opposed to Julia's type 
 system, which is *invariant*.
+
+Example involving some parametric types:
 
 ```python
 from typing import Union, Tuple, List, Dict

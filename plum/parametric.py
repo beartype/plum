@@ -13,6 +13,7 @@ from .type import (
     PromisedList,
     PromisedTuple,
     PromisedDict,
+    PromisedIterable,
     ptype,
     is_type,
 )
@@ -26,6 +27,7 @@ __all__ = [
     "List",
     "Tuple",
     "Dict",
+    "Iterable",
     "type_of",
     "Val",
 ]
@@ -43,10 +45,10 @@ class ParametricTypeMeta(TypeMeta):
     `Type[type(Arg1), type(Arg2)](Arg1, Arg2, **kw_args)`.
     """
 
-    def __getitem__(self, p):
-        if not self.concrete:
+    def __getitem__(cls, p):
+        if not cls.concrete:
             # `p` can be a tuple, in which case it must be splatted.
-            return self.__new__(self, *(p if isinstance(p, tuple) else (p,)))
+            return cls.__new__(cls, *(p if isinstance(p, tuple) else (p,)))
         else:
             raise TypeError("Cannot specify type parameters. This type is concrete.")
 
@@ -116,48 +118,54 @@ class ParametricTypeMeta(TypeMeta):
         return hasattr(cls, "_runtime_type_of") and cls._runtime_type_of
 
 
+def is_concrete(t):
+    """Check if a type `t` is a concrete instance of a parametric type.
+
+    Args:
+        t (type): Type to check.
+
+    Returns:
+        bool: `True` if `t` is a concrete instance of a parametric type and `False`
+            otherwise.
+    """
+    return hasattr(t, "parametric") and t.parametric and t.concrete
+
+
 class CovariantMeta(ParametricTypeMeta):
     """A metaclass that implements *covariance* of parametric types."""
 
-    def __subclasscheck__(self, subclass):
-        if (
-            self.parametric
-            and (hasattr(subclass, "parametric") and subclass.parametric)
-            and self.concrete
-            and subclass.concrete
-        ):
+    def __subclasscheck__(cls, subclass):
+        if is_concrete(cls) and is_concrete(subclass):
             # Check that they are instances of the same parametric type.
-            if all(issubclass(b, self.__bases__) for b in subclass.__bases__):
+            if all(issubclass(b, cls.__bases__) for b in subclass.__bases__):
                 par_subclass = subclass.type_parameter
-                par_self = self.type_parameter
-
-                # Handle the case that the parameters are types.
-                if is_type(par_subclass) and is_type(par_self):
-                    return ptype(par_subclass) <= ptype(par_self)
+                par_cls = cls.type_parameter
 
                 if not isinstance(par_subclass, tuple):
                     par_subclass = (par_subclass,)
-                if not isinstance(par_self, tuple):
-                    par_self = (par_self,)
+                if not isinstance(par_cls, tuple):
+                    par_cls = (par_cls,)
 
-                # Handle the case that the parameters are tuples of types.
-                if len(par_subclass) == len(par_self):
-                    return all(
-                        (
-                            # Type parameter could be a type.
-                            ptype(pi_subclass) <= ptype(pi_self)
-                            if (is_type(pi_subclass) or is_type(pi_self))
-                            # Type parameter could also be an object.
-                            else pi_subclass == pi_self
-                        )
-                        for pi_subclass, pi_self in zip(par_subclass, par_self)
-                    )
+                return cls._is_sub_type_parameter(par_cls, subclass, par_subclass)
 
         # Default behaviour to `type`s subclass check.
-        return type.__subclasscheck__(self, subclass)
+        return type.__subclasscheck__(cls, subclass)
+
+    def _is_sub_type_parameter(cls, par_cls, subclass, par_subclass):
+        # Handle the case that the parameters are tuples of types.
+        return len(par_subclass) == len(par_cls) and all(
+            (
+                # Type parameter could be a type.
+                ptype(pi_subclass) <= ptype(pi_self)
+                if (is_type(pi_subclass) and is_type(pi_self))
+                # Type parameter could also be an object.
+                else pi_subclass == pi_self
+            )
+            for pi_subclass, pi_self in zip(par_subclass, par_cls)
+        )
 
 
-def parametric(Class=None, runtime_type_of=False):
+def parametric(Class=None, runtime_type_of=False, metaclass=CovariantMeta):
     """A decorator for parametric classes.
 
     When the constructor of this parametric type is called before the type parameter
@@ -171,12 +179,19 @@ def parametric(Class=None, runtime_type_of=False):
     def __infer_type_parameter__(cls, *args, **kw_args) -> Tuple:
         return tuple(type(arg) for arg in args)
     ```
+
+    Args:
+        runtime_type_of (bool, optional): Require the use of :func:`.parametric.type_of`
+            at runtime to determine the types of arguments at runtime. Defaults to
+            `False`
+        metaclass (type, optional): Metaclass of the parametric class. Defaults to
+            :class:`.parametric.CovariantMeta`.
     """
 
     # Allow the keyword arguments to be passed in without using `functools.partial`
     # explicitly.
     if Class is None:
-        return partial(parametric, runtime_type_of=runtime_type_of)
+        return partial(parametric, runtime_type_of=runtime_type_of, metaclass=metaclass)
 
     subclasses = {}
 
@@ -195,7 +210,7 @@ def parametric(Class=None, runtime_type_of=False):
             # Create subclass.
             name = Class.__name__ + "[" + ", ".join(str(p) for p in ps) + "]"
             SubClass = type.__new__(
-                CovariantMeta,
+                metaclass,
                 name,
                 (ParametricClass,),
                 {"__new__": __new__},
@@ -227,7 +242,7 @@ def parametric(Class=None, runtime_type_of=False):
         Class.__init_subclass__(**kw_args)
 
     # Create parametric class.
-    ParametricClass = ParametricTypeMeta(
+    ParametricClass = metaclass(
         Class.__name__,
         (Class,),
         {"__new__": __new__, "__init_subclass__": __init_subclass__},
@@ -287,6 +302,10 @@ Kind = kind()  #: A default kind provided for convenience.
 class _ParametricList(list):
     """Parametric list type."""
 
+    @classmethod
+    def __el_type__(cls):
+        return cls.type_parameter
+
 
 class List(ComparableType):
     """Parametric list Plum type.
@@ -326,6 +345,11 @@ PromisedList.deliver(List)
 @parametric
 class _ParametricTuple(tuple):
     """Parametric tuple type."""
+
+    @classmethod
+    def __el_type__(cls):
+        p = cls.type_parameter
+        return Union(*(p if isinstance(p, tuple) else (p,)))
 
 
 class Tuple(ComparableType):
@@ -367,6 +391,11 @@ PromisedTuple.deliver(Tuple)
 class _ParametricDict(dict):
     """Parametric dictionary type."""
 
+    @classmethod
+    def __el_type__(cls):
+        key_type, value_type = cls.type_parameter
+        return key_type
+
 
 class Dict(ComparableType):
     """Parametric dictionary Plum type.
@@ -403,6 +432,82 @@ class Dict(ComparableType):
 
 # Deliver `Dict`.
 PromisedDict.deliver(Dict)
+
+
+class IterableMeta(CovariantMeta):
+    """Metaclass of :class:`.parametric.Iterable`."""
+
+    def __subclasscheck__(cls, subclass):
+        if hasattr(subclass, "__iter__"):
+            if is_concrete(cls) and is_concrete(subclass):
+                if hasattr(subclass, "__el_type__"):
+                    subclass_el_type = subclass.__el_type__()
+                else:
+                    return False
+                return ptype(subclass_el_type) <= ptype(cls.type_parameter)
+            elif is_concrete(subclass):
+                # Case of `subclass[par] <= cls`. This is always true.
+                return True
+            elif is_concrete(cls):
+                # Case of `subclass <= cls[par]`. This is never true.
+                return False
+            else:
+                # Case of `subclass <= cls`. This is also always true.
+                return True
+        return CovariantMeta.__subclasscheck__(cls, subclass)
+
+
+@parametric(metaclass=IterableMeta)
+class _ParametricIterable:
+    """Parametric iterable type."""
+
+
+class _NotSpecified:
+    pass
+
+
+class Iterable(ComparableType):
+    """Parametric iterable Plum type.
+
+    Args:
+        el_type (type or ptype, optional): Type of the elements.
+    """
+
+    def __init__(self, el_type=_NotSpecified):
+        if el_type is _NotSpecified:
+            self._el_type = None
+        else:
+            self._el_type = ptype(el_type)
+
+    def __hash__(self):
+        if self._el_type is None:
+            return hash(Iterable)
+        else:
+            return multihash(Iterable, self._el_type)
+
+    def __repr__(self):
+        if self._el_type is None:
+            return "Iterable"
+        else:
+            return f"Iterable[{self._el_type}]"
+
+    def get_types(self):
+        if self._el_type is None:
+            return (_ParametricIterable,)
+        else:
+            return (_ParametricIterable[self._el_type],)
+
+    @property
+    def parametric(self):
+        return True
+
+    @property
+    def runtime_type_of(self):
+        return self._el_type is not None
+
+
+# Deliver `Iterable`.
+PromisedIterable.deliver(Iterable)
 
 
 def _types_of_iterable(xs):
@@ -449,14 +554,12 @@ promised_type_of2.deliver(type_of)
 @parametric
 class Val:
     """A parametric type used to move information from the value domain to the type
-    domain.
-    """
+    domain."""
 
     @classmethod
     def __infer_type_parameter__(cls, *arg):
         """Function called when the constructor of `Val` is called to determine the type
-        parameters.
-        """
+        parameters."""
         if len(arg) == 0:
             raise ValueError("The value must be specified.")
         elif len(arg) > 1:
