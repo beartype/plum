@@ -1,4 +1,5 @@
 import logging
+import abc
 from functools import partial
 
 from .dispatcher import Dispatcher
@@ -14,6 +15,7 @@ from .type import (
     PromisedTuple,
     PromisedDict,
     PromisedIterable,
+    PromisedSequence,
     ptype,
     is_type,
 )
@@ -28,6 +30,7 @@ __all__ = [
     "Tuple",
     "Dict",
     "Iterable",
+    "Sequence",
     "type_of",
     "Val",
 ]
@@ -303,8 +306,12 @@ class _ParametricList(list):
     """Parametric list type."""
 
     @classmethod
-    def __el_type__(cls):
+    def __iter_el_type__(cls):
         return cls.type_parameter
+
+    @classmethod
+    def __getitem_el_type__(cls):
+        return cls.__iter_el_type__()
 
 
 class List(ComparableType):
@@ -347,9 +354,13 @@ class _ParametricTuple(tuple):
     """Parametric tuple type."""
 
     @classmethod
-    def __el_type__(cls):
+    def __iter_el_type__(cls):
         p = cls.type_parameter
         return Union(*(p if isinstance(p, tuple) else (p,)))
+
+    @classmethod
+    def __getitem_el_type__(cls):
+        return cls.__iter_el_type__()
 
 
 class Tuple(ComparableType):
@@ -392,9 +403,14 @@ class _ParametricDict(dict):
     """Parametric dictionary type."""
 
     @classmethod
-    def __el_type__(cls):
+    def __iter_el_type__(cls):
         key_type, value_type = cls.type_parameter
         return key_type
+
+    @classmethod
+    def __getitem_el_type__(cls):
+        key_type, value_type = cls.type_parameter
+        return value_type
 
 
 class Dict(ComparableType):
@@ -434,14 +450,24 @@ class Dict(ComparableType):
 PromisedDict.deliver(Dict)
 
 
-class IterableMeta(CovariantMeta):
-    """Metaclass of :class:`.parametric.Iterable`."""
+class ElementTypeMeta(CovariantMeta):
+    """Metaclass of containers of elements with certain magic methods."""
+
+    @property
+    @abc.abstractmethod
+    def required_methods(cls):
+        """list[str]: Required methods."""
+
+    @property
+    @abc.abstractmethod
+    def el_type_method(cls):
+        """str: Method to get the element type."""
 
     def __subclasscheck__(cls, subclass):
-        if hasattr(subclass, "__iter__"):
+        if all(hasattr(subclass, name) for name in cls.required_methods):
             if is_concrete(cls) and is_concrete(subclass):
-                if hasattr(subclass, "__el_type__"):
-                    subclass_el_type = subclass.__el_type__()
+                if hasattr(subclass, cls.el_type_method):
+                    subclass_el_type = getattr(subclass, cls.el_type_method)()
                 else:
                     return False
                 return ptype(subclass_el_type) <= ptype(cls.type_parameter)
@@ -455,6 +481,18 @@ class IterableMeta(CovariantMeta):
                 # Case of `subclass <= cls`. This is also always true.
                 return True
         return CovariantMeta.__subclasscheck__(cls, subclass)
+
+
+class IterableMeta(ElementTypeMeta):
+    """Metaclass of iterables."""
+
+    @property
+    def required_methods(cls):
+        return ["__iter__"]
+
+    @property
+    def el_type_method(cls):
+        return "__iter_el_type__"
 
 
 @parametric(metaclass=IterableMeta)
@@ -508,6 +546,67 @@ class Iterable(ComparableType):
 
 # Deliver `Iterable`.
 PromisedIterable.deliver(Iterable)
+
+
+class SequenceMeta(ElementTypeMeta):
+    """Metaclass of sequences."""
+
+    @property
+    def required_methods(cls):
+        return ["__getitem__", "__len__"]
+
+    @property
+    def el_type_method(cls):
+        return "__getitem_el_type__"
+
+
+@parametric(metaclass=SequenceMeta)
+class _ParametricSequence:
+    """Parametric sequence type."""
+
+
+class Sequence(ComparableType):
+    """Parametric iterable Plum type.
+
+    Args:
+        el_type (type or ptype, optional): Type of the elements.
+    """
+
+    def __init__(self, el_type=_NotSpecified):
+        if el_type is _NotSpecified:
+            self._el_type = None
+        else:
+            self._el_type = ptype(el_type)
+
+    def __hash__(self):
+        if self._el_type is None:
+            return hash(Sequence)
+        else:
+            return multihash(Sequence, self._el_type)
+
+    def __repr__(self):
+        if self._el_type is None:
+            return "Sequence"
+        else:
+            return f"Sequence[{self._el_type}]"
+
+    def get_types(self):
+        if self._el_type is None:
+            return (_ParametricSequence,)
+        else:
+            return (_ParametricSequence[self._el_type],)
+
+    @property
+    def parametric(self):
+        return True
+
+    @property
+    def runtime_type_of(self):
+        return self._el_type is not None
+
+
+# Deliver `Sequence`.
+PromisedSequence.deliver(Sequence)
 
 
 def _types_of_iterable(xs):

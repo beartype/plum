@@ -2,7 +2,7 @@ import typing
 
 import pytest
 
-from plum.parametric import List, Tuple, Dict, Iterable
+from plum.parametric import List, Tuple, Dict, Iterable, Sequence
 from plum.resolvable import ResolutionError
 from plum.type import (
     VarArgs,
@@ -174,6 +174,10 @@ def test_ptype_typing_mapping():
     # `Iterable`:
     assert ptype(typing.Iterable[typing.List[int]]) == Iterable[List[int]]
     assert ptype(typing.Iterable) == Iterable()
+
+    # `Sequence`:
+    assert ptype(typing.Sequence[typing.List[int]]) == Sequence[List[int]]
+    assert ptype(typing.Sequence) == Sequence()
 
     # `ForwardRef`:
     if hasattr(typing, "ForwardRef"):

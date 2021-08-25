@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-import typing
 
 from plum import (
     Dispatcher,
@@ -16,6 +15,7 @@ from plum import (
     Tuple,
     Dict,
     Iterable,
+    Sequence,
     Union,
     NotFoundLookupError,
     Val,
@@ -470,6 +470,7 @@ def test_iterable():
     assert isinstance((1, 2.0), Iterable[Union[int, float]])
     assert isinstance([1, 2], Iterable())
     assert isinstance([1, 2], Iterable[int])
+    assert isinstance((x for x in [1, 2]), Iterable())
 
     # Test subclass check.
     assert issubclass(ptype(list), Iterable())
@@ -515,7 +516,7 @@ def test_iterable():
     @parametric
     class B(A):
         @classmethod
-        def __el_type__(cls):
+        def __iter_el_type__(cls):
             return cls.type_parameter
 
     @dispatch
@@ -536,6 +537,7 @@ def test_iterable():
 
     assert f(1) == "fallback"
     # Test various iterators:
+    assert f((x for x in [1, 2])) == "it"
     assert f(A(1)) == "it"
     assert f(A(1.0)) == "it"
     assert f(B(1)) == "it of int"
@@ -549,6 +551,109 @@ def test_iterable():
     # Test nested iterators:
     assert f([[1]]) == "it of it"
     assert f(([1], [1, 2, "3"])) == "it of it"
+
+
+def test_sequence():
+    # Standard type tests.
+    assert hash(Sequence[int]) == hash(Sequence[int])
+    assert hash(Sequence[int]) != hash(Sequence[str])
+    assert hash(Sequence[int]) != hash(Sequence())
+    assert hash(Sequence[Sequence[int]]) == hash(Sequence[Sequence[int]])
+    assert hash(Sequence[Sequence[int]]) != hash(Sequence[Sequence[str]])
+    assert repr(Sequence()) == "Sequence"
+    assert repr(Sequence[int]) == f"Sequence[{Type(int)!r}]"
+
+    # Test instance check.
+    assert isinstance([], Sequence())
+    assert isinstance([], Sequence[object])
+    assert isinstance((1, 2.0), Sequence())
+    assert isinstance((1, 2.0), Sequence[Union[int, float]])
+    assert isinstance([1, 2], Sequence())
+    assert isinstance([1, 2], Sequence[int])
+    assert not isinstance((x for x in [1, 2]), Sequence())
+
+    # Test subclass check.
+    assert issubclass(ptype(list), Sequence())
+    assert issubclass(List[int], Sequence())
+    assert issubclass(List[int], Sequence[int])
+    assert not issubclass(ptype(list), Sequence[int])
+    assert issubclass(Sequence[int], Sequence[object])
+
+    # Check tracking of parametric.
+    assert Sequence[int].parametric
+    assert ptype(Sequence[Sequence[int]]).parametric
+    assert ptype(Union[Sequence[int]]).parametric
+    promise = PromisedType()
+    promise.deliver(Sequence[int])
+    assert promise.resolve().parametric
+
+    # Check tracking of runtime `type_of`.
+    assert Sequence[int].runtime_type_of
+    assert ptype(Sequence[Sequence[int]]).runtime_type_of
+    assert ptype(Union[Sequence[int]]).runtime_type_of
+    promise = PromisedType()
+    promise.deliver(Sequence[int])
+    assert promise.resolve().runtime_type_of
+
+    assert not Sequence().runtime_type_of
+    assert ptype(Sequence[Sequence()]).runtime_type_of
+    assert not ptype(Union[Sequence()]).runtime_type_of
+    promise = PromisedType()
+    promise.deliver(Sequence())
+    assert not promise.resolve().runtime_type_of
+
+    # Test correctness.
+    dispatch = Dispatcher()
+
+    @parametric
+    class A:
+        def __init__(self, el_type):
+            pass
+
+        def __len__(self):
+            pass
+
+        def __getitem__(self, item):
+            pass
+
+    @parametric
+    class B(A):
+        @classmethod
+        def __getitem_el_type__(cls):
+            return cls.type_parameter
+
+    @dispatch
+    def f(x):
+        return "fallback"
+
+    @dispatch
+    def f(x: Sequence()):
+        return "seq"
+
+    @dispatch
+    def f(x: Sequence[int]):
+        return "seq of int"
+
+    @dispatch
+    def f(x: Sequence[Sequence[object]]):
+        return "seq of seq"
+
+    assert f(1) == "fallback"
+    assert f((x for x in [1, 2])) == "fallback"
+    # Test various sequences:
+    assert f(A(1)) == "seq"
+    assert f(A(1.0)) == "seq"
+    assert f(B(1)) == "seq of int"
+    assert f(B(1.0)) == "seq"
+    assert f([1]) == "seq of int"
+    assert f([1.0]) == "seq"
+    assert f({1: 1}) == "seq of int"
+    assert f({1: 1.0}) == "seq"
+    assert f((1, 1)) == "seq of int"
+    assert f((1.0, 1)) == "seq"
+    # Test nested sequences:
+    assert f([[1]]) == "seq of seq"
+    assert f(([1], [1, 2, "3"])) == "seq of seq"
 
 
 def test_types_of_iterables():

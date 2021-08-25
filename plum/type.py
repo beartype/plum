@@ -20,6 +20,7 @@ __all__ = [
     "PromisedTuple",
     "PromisedDict",
     "PromisedIterable",
+    "PromisedSequence",
     "ptype",
     "TypeType",
     "is_object",
@@ -327,6 +328,7 @@ PromisedList = Promise()  # This will resolve to `.parametric.List`.
 PromisedTuple = Promise()  # This will resolve to `.parametric.Tuple`.
 PromisedDict = Promise()  # This will resolve to `.parametric.Dict`.
 PromisedIterable = Promise()  # This will resolve to `.parametric.Iterable`.
+PromisedSequence = Promise()  # This will resolve to `.parametric.Sequence`.
 
 
 def ptype(obj):
@@ -386,6 +388,11 @@ def ptype(obj):
                 return PromisedIterable.resolve()(*(ptype(t) for t in obj.__args__))
             else:
                 return PromisedIterable.resolve()()
+        elif obj_str == "Sequence":
+            if obj_is_parametrised:
+                return PromisedSequence.resolve()(*(ptype(t) for t in obj.__args__))
+            else:
+                return PromisedSequence.resolve()()
         elif obj_str == "ForwardRef" or obj_str == "_ForwardRef":
             # This depends on the implementation below!
             obj = obj.__forward_arg__
