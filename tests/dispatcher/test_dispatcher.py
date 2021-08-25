@@ -78,7 +78,7 @@ def test_keywords():
         f(2, None)
 
 
-def test_default():
+def test_defaults():
     dispatch = Dispatcher()
 
     y_default = 3
@@ -117,7 +117,7 @@ def test_default():
     def f(x: int, y: float = y_default, *, option: int = None):
         return y
 
-    # multiple arguments
+    # Multiple arguments
     @dispatch
     def g(x: int, y: int = y_default, z: float = 3.0):
         return (y, z)

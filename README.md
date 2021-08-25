@@ -302,8 +302,8 @@ For more advanced use cases of forward references, you can use `plum.type.Promis
 
 ## Keyword Arguments and Default Values
 
-Default arguments can be used. The type annotation must match the default value otherwise 
-an error is thrown. 
+Default arguments can be used.
+The type annotation must match the default value otherwise an error is thrown. 
 As the example below illustrates, different default values can be used for different methods:
 
 ```python
@@ -311,25 +311,30 @@ from plum import dispatch
 
 @dispatch
 def f(x: int, y: int = 3):
-    return f"Value for 2nd y: {y}"
+    return y
+
 
 @dispatch
 def f(x: float, y: float = 3.0):
-    return f"Value for 2nd y: {y}"
+    return y
 ```
 
 ```python
 >>> f(1)
-'Value for 2nd y: 3'
+3
 
 >>> f(1.0)
-'Value for 2nd y: 3.0'
+3.0
+
+>>> f(1.0, y=4.0)
+4.0
 
 >>> f(1.0, 4.0)
-'Value for 2nd y: 4.0'
+4.0
 ```
 
-Keyword-only arguments, separated by an asterisk from the other arguments, can also be used, but are *not* dispatched on.
+Keyword-only arguments, separated by an asterisk from the other arguments, can
+also be used, but are *not* dispatched on.
 
 Example:
 
@@ -338,17 +343,17 @@ from plum import dispatch
 
 @dispatch
 def f(x, *, option="a"):
-    return f"Value for option: {option}"
+    return option
 ```
 
 ```python
->>> f(1)              # This is fine.
-'Value for option: a'
+>>> f(1)
+'a'
 
->>> f(1, option="b")  # This is also fine.
-'Value for option: b'
+>>> f(1, option="b")
+'b'
 
->>> f(1, "b")         # This will *not* work!
+>>> f(1, "b")  # This will not work, because `option` must be given as a keyword.
 NotFoundLookupError: For function "f", signature Signature(builtins.int, builtins.str) could not be resolved.
 ```
 

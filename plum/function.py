@@ -64,13 +64,13 @@ def extract_signature(f):
             break
 
         if p.kind == p.VAR_POSITIONAL:
-            # Parameter is varargs.
+            # Parameter is a varargs.
             if _is_not_empty(p.annotation):
                 T = VarArgs(ptype(p.annotation))
             else:
                 T = VarArgs(default_obj_type)
         else:
-            # Just a regular positional parameter.
+            # Parameter is a regular positional parameter.
             if _is_not_empty(p.annotation):
                 T = ptype(p.annotation)
             else:
@@ -99,14 +99,14 @@ def extract_signature(f):
 
 
 def append_default_args(signature, f):
-    """
-    Returns a list of signatures of function `f`, where those signatures are derived
-    from the input argument `signature`, excluding from 0 to all the positional
-    arguments with a default value.
+    """Returns a list of signatures of function `f`, where those signatures are derived
+    from the input arguments of `f` by treating every non-keyword-only argument with a
+    default value as a keyword-only argument turn by turn.
 
     Args:
         f (function): Function to extract default arguments from.
-        signature (Signature): Signature of `f` from which to remove default arguments.
+        signature (:class:`.signature.Signature`): Signature of `f` from which to
+            remove default arguments.
 
     Returns:
         list[:class:`.signature.Signature`]: list of signatures excluding from 0 to all
