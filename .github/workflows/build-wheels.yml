@@ -33,7 +33,7 @@ jobs:
 
   # Upload wheels to PyPi
   upload_wheels:
-    needs: build_wheel
+    needs: build_wheels
     runs-on: ubuntu-latest
     steps:
       - name: Download built wheels
