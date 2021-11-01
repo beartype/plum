@@ -15,9 +15,6 @@ jobs:
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.2.2
-        # to supply options, put them in 'env', like:
-        # env:
-        #   CIBW_SOME_OPTION: value
 
       - uses: actions/upload-artifact@v2
         with:
