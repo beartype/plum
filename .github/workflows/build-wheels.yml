@@ -3,7 +3,7 @@ name: Build
 # Only trigger, when the build workflow succeeded
 on:
   workflow_run:
-    workflows: ["CI build"]
+    workflows: ["Publish to PyPI"]
     types:
       - completed
 
