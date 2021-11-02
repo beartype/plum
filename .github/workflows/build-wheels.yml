@@ -1,12 +1,11 @@
 name: Build
 
 # Only trigger, when the build workflow succeeded
-#on:
-#  workflow_run:
-#    workflows: ["CI build"]
-#    types:
-#      - completed
-on: [push, pull_request]
+on:
+  workflow_run:
+    workflows: ["CI build"]
+    types:
+      - completed
 
 jobs:
   build_wheels:
@@ -50,8 +49,8 @@ jobs:
       - name: Build and publish
         env:
           # Remove AA for production...
-          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}AA
-          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}AA
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
 
         run: |
           twine upload wheelhouse/*
