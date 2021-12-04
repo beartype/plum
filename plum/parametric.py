@@ -60,13 +60,31 @@ class ParametricTypeMeta(TypeMeta):
         # parametric subtype `T = Type[type(arg1), type(arg2)]`
         # and then call the equivalent of `T(arg1, arg2, **kw_args)`.
 
+        cls = cls.__concrete_class__(*args, **kw_args)
+        # Calls `__new__` and `__init__`.
+        return TypeMeta.__call__(cls, *args, **kw_args)
+
+    def __concrete_class__(cls, *args, **kw_args):
+        """
+        If cls is not a concrete class, infers the type parameters and returns
+        a concrete class. If cls is a concrete class, simply return it.
+
+        This method is called in `__call__`, and is factored out in order to
+        work with different metaclasses.
+
+        Args:
+            cls: a class
+            *args: Positional arguments passed to the `__init__` method.
+            *kw_args: Keyword arguments passed to the `__init__` method.
+
+        Returns:
+            type: A concrete class.
+        """
         if hasattr(cls, "parametric") and cls.parametric:
             if not cls.concrete:
                 type_parameter = cls.__infer_type_parameter__(*args, **kw_args)
                 cls = cls[type_parameter]
-
-        # Calls `__new__` and `__init__`.
-        return TypeMeta.__call__(cls, *args, **kw_args)
+        return cls
 
     def __infer_type_parameter__(cls, *args, **kw_args):
         """Function called when the constructor of this parametric type is called
@@ -201,6 +219,22 @@ def parametric(Class=None, runtime_type_of=False, metaclass=CovariantMeta):
     if not issubclass(Class, object):  # pragma: no cover
         raise RuntimeError(
             f"To let {Class} be a parametric class, it must be a new-style class."
+        )
+
+    # Support @parametric on classes with a different metaclass than Plum's
+    # by creating inserting Plum's metaclass (usually CovariantMeta) as a superclass
+    # of the object metaclass, and giving it a `__call__` method that constructs the
+    if type(Class) is not metaclass and type(Class) is not type:
+        original_metaclass = type(Class)
+
+        def __call__(cls, *args, **kw_args):
+            cls = cls.__concrete_class__(*args, **kw_args)
+            return original_metaclass.__call__(cls, *args, **kw_args)
+
+        metaclass = type(
+            f"{metaclass.__name__}[{original_metaclass.__name__}]",
+            (original_metaclass, metaclass),
+            {"__call__": __call__},
         )
 
     def __new__(cls, *ps):

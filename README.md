@@ -978,6 +978,14 @@ class NTuple:
 __main__.NTuple[3, <class 'int'>]
 ```
 
+**Note:** The `@parametric` decorator injects a metaclass (`plum.parametric.CovariantMeta`) into the 
+decorated class. If the decorated class already has a metaclass, it creates a new metaclass which
+inherits from both the existing metaclass and `plum.parametric.CovariantMeta`.
+The only limitation to metaclasses is that it should not take over the `__getitem__` class method
+because that is used by plum to make sure that `class[parameter]` works. Note that `__getitem__`
+cannot be defined on the metaclass, but can freely be defined on the class itself.
+
+
 ### Hooking Into Type Inference
 
 With parametric classes, you can hook into Plum's type inference system to do cool

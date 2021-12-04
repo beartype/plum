@@ -159,6 +159,40 @@ def test_parametric_inheritance():
     assert type(E(1, 2, 3, 4, 5)) == E[int, int, int, int, int]
 
 
+def test_parametric_metaclass_inheritance():
+    import abc
+
+    # a Metaclass not inheriting from CovariantMeta
+    class MetaC(abc.ABCMeta):
+        def __call__(cls, *args, **kwargs):
+            obj = super().__call__(*args, **kwargs)
+            obj.value = 10
+            return obj
+
+    @parametric
+    class Test(metaclass=MetaC):
+        def __init__(self, arg):
+            self.arg = arg
+
+    a = Test(1)
+    assert type(a) == Test[int]
+    assert type(Test).__name__.endswith("CovariantMeta[MetaC]")
+    assert a.value == 10
+    assert a.arg == 1
+
+    @parametric
+    class Test2(metaclass=MetaC):
+        def __init__(self, arg):
+            self.arg = arg
+
+        @classmethod
+        def __infer_type_parameter__(cls, *args, **kw_args):
+            return (float,)
+
+    a = Test2(1)
+    assert type(a) == Test2[float]
+
+
 def test_constructor():
     @parametric
     class A:
