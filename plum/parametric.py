@@ -224,7 +224,8 @@ def parametric(Class=None, runtime_type_of=False, metaclass=CovariantMeta):
     # Support @parametric on classes with a different metaclass than Plum's
     # by creating inserting Plum's metaclass (usually CovariantMeta) as a superclass
     # of the object metaclass, and giving it a `__call__` method that constructs the
-    if type(Class) is not metaclass and type(Class) is not type:
+    original_metaclass = type(Class)
+    if original_metaclass not in (metaclass, abc.ABCMeta, type):
         original_metaclass = type(Class)
 
         def __call__(cls, *args, **kw_args):
