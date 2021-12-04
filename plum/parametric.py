@@ -276,7 +276,7 @@ def parametric(Class=None, runtime_type_of=False, metaclass=CovariantMeta):
                 return Class.__new__(cls)
 
             cls.__new__ = resetted_new
-        Class.__init_subclass__(**kw_args)
+        super(Class, cls).__init_subclass__(**kw_args)
 
     # Create parametric class.
     ParametricClass = metaclass(
