@@ -253,7 +253,7 @@ class Real:
 In the case of `@staticmethod`, `@classmethod`, or `@property.setter`, the rules
 are different:
 
-1. The `@dispatch` operator must be applied _before_ `@staticmethod`,
+1. The `@dispatch` decorator must be applied _before_ `@staticmethod`,
     `@classmethod`, and `@property.setter`. 
     This means that `@dispatch` is then _not_ the outermost decorator.   
 2. The class must have _at least one_ other method where `@dispatch` is the
