@@ -11,6 +11,7 @@ Everybody likes multiple dispatch, just like everybody likes plums.
  * [Basic Usage](#basic-usage)
  * [Scope of Functions](#scope-of-functions)
  * [Classes](#classes)
+    - [`@staticmethod`, `@classmethod`, and `@property.setter`](#staticmethod-classmethod-and-propertysetter)
     - [Forward References](#forward-references)
  * [Keyword Arguments and Default Values](#keyword-arguments-and-default-values)
  * [Comparison with `multipledispatch`](#comparison-with-multipledispatch)
@@ -245,6 +246,70 @@ class Real:
    @decorator
    def __add__(self, other: int):
       return "int added"
+```
+
+### `@staticmethod`, `@classmethod`, and `@property.setter`
+
+In the case of `@staticmethod`, `@classmethod`, or `@property.setter`, the rules
+are different:
+
+1. The `@dispatch` operator must be applied _before_ `@staticmethod`,
+    `@classmethod`, and `@property.setter`. 
+    This means that `@dispatch` is then _not_ the outermost decorator.   
+2. The class must have _at least one_ other method where `@dispatch` is the
+    outermost decorator.
+    If this is not the case, you will need to add a dummy method, as the
+    following example illustrates.
+
+```python
+from plum import dispatch
+
+class MyClass:
+    def __init__(self):
+        self._name = None
+       
+    @property
+    def property(self):
+        return self._name
+
+    @property.setter
+    @dispatch
+    def property(self, value: str):
+        self._name = value
+      
+    @staticmethod
+    @dispatch
+    def f(x: int):
+        return x
+
+    @classmethod
+    @dispatch
+    def g(cls: type, x: float):
+        return x
+
+    @dispatch
+    def _(self):
+        # Dummy method that needs to be added whenever no method has
+        # `@dispatch` as the outermost decorator.
+        pass
+```
+
+If you don't add the dummy method whenever it is required, you will run into
+a `ResolutionError`:
+
+```python
+from plum import dispatch
+
+class MyClass:
+    @staticmethod
+    @dispatch
+    def f(x: int):
+        return x
+```
+
+```
+>>> MyClass.f(1)
+ResolutionError: Promise `Promise()` was not kept.
 ```
 
 ### Forward References
