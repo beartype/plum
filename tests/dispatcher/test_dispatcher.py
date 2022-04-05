@@ -395,6 +395,28 @@ def test_invoke_in_class():
     assert C.do.invoke(C, float)(c, 1.0) == "fallback"
 
 
+def test_errors():
+    dispatch = Dispatcher()
+
+    class A:
+        @dispatch
+        def __init__(self):
+            pass
+
+        @dispatch
+        def __call__(self):
+            pass
+
+    for method in [A, A()]:
+        try:
+            # No argument are supported, so passing `1` should result in a look-up error.
+            method(1)
+        except NotFoundLookupError as e:
+            # The message should not contain "object". If it does, that would indicate
+            # that a non-descriptive error message was thrown.
+            assert "object" not in str(e).lower()
+
+
 def test_runtime_type_of_tracking():
     dispatch = Dispatcher()
 

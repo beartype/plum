@@ -485,11 +485,9 @@ class Function:
                     except AttributeError:
                         pass
 
-                if method == object.__init__:
-                    # The constructor of `object` has been found. This
-                    # happens when there a constructor is called and no
-                    # appropriate method can be found. Raise the original
-                    # exception.
+                if method in {object.__init__, object.__call__}:
+                    # A magic method of `object` has been found that will surely
+                    # not support the passed arguments. Raise the original exception.
                     raise e
 
                 if not method:
