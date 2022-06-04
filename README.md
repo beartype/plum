@@ -35,7 +35,7 @@ Everybody likes multiple dispatch, just like everybody likes plums.
 
 ## Installation
 
-Plum requires Python 3.6 or higher.
+Plum requires Python 3.7 or higher.
 
 ```bash
 pip install plum-dispatch
