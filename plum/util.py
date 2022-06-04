@@ -9,6 +9,7 @@ __all__ = [
     "get_class",
     "get_context",
     "check_future_annotations",
+    "unquote",
 ]
 
 log = logging.getLogger(__name__)
@@ -129,3 +130,17 @@ def check_future_annotations():
     """
     frame = inspect.currentframe()
     return "annotations" in frame.f_back.f_back.f_globals
+
+
+def unquote(x):
+    """Remove quotes from a string at the outermost level.
+
+    Args:
+        x (str): String to remove quotes from.
+
+    Return:
+        str: `x` but without quotes.
+    """
+    while len(x) >= 2 and x[0] == x[-1] and x[0] in {'"', "'"}:
+        x = x[1:-1]
+    return x

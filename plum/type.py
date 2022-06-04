@@ -3,7 +3,7 @@ import inspect
 import logging
 
 from .resolvable import Resolvable, Promise
-from .util import multihash, Comparable
+from .util import multihash, Comparable, unquote
 
 __all__ = [
     "TypeMeta",
@@ -286,9 +286,7 @@ def get_forward_reference(name):
     # The name can possibly be wrapped in an extra set of quotes if the future
     # `annotations` is used and the type is given as a string. E.g., see
     #   https://github.com/wesselb/plum/issues/41
-    # We simply remove any extra quotes.
-    while len(name) >= 2 and name[0] == name[-1] and name[0] in {'"', "'"}:
-        name = name[1:-1]
+    name = unquote(name)
     reference = ForwardReferencedType(name)
     _unresolved_forward_references.append(reference)
     return reference

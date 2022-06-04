@@ -1,12 +1,12 @@
 import inspect
 import logging
-from functools import wraps
 import typing
+from functools import wraps
 
 from .resolvable import Promise
 from .signature import Signature
 from .type import ptype, is_object, VarArgs, deliver_forward_reference
-from .util import check_future_annotations
+from .util import unquote
 
 __all__ = [
     "extract_signature",
@@ -56,6 +56,8 @@ def extract_signature(f, get_type_hints=False):
             function.
     """
     if get_type_hints:
+        # Unquote type hints so that they are resolved to the right types.
+        f.__annotations__ = {k: unquote(v) for k, v in f.__annotations__.items()}
         f.__annotations__ = typing.get_type_hints(f)
 
     # Extract specification.

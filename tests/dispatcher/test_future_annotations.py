@@ -14,7 +14,7 @@ class Number:
         self.value = value
 
     @dispatch
-    def __add__(self, other: Union[Number, int]) -> Number:
+    def __add__(self, other: Union[Number, int]) -> "Number":
         if isinstance(other, int):
             other_value = other
         else:
