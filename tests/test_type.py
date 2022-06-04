@@ -127,6 +127,17 @@ def test_forwardreferencedtype():
     assert t_b == Type(B)
 
 
+@pytest.mark.parametrize("name", ['"A"', "'A'", "\"'A'\""])
+def test_forwardreferencedtype_unquoting(name):
+    class A:
+        pass
+
+    t = get_forward_reference(name)
+    deliver_forward_reference(A)
+    t.resolve()
+    assert t == Type(A)
+
+
 def test_ptype():
     class A:
         pass
