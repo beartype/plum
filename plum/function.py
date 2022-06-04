@@ -1,10 +1,12 @@
 import inspect
 import logging
 from functools import wraps
+import typing
 
 from .resolvable import Promise
 from .signature import Signature
 from .type import ptype, is_object, VarArgs, deliver_forward_reference
+from .util import check_future_annotations
 
 __all__ = [
     "extract_signature",
@@ -41,16 +43,21 @@ def _is_not_empty(t):
     )
 
 
-def extract_signature(f):
+def extract_signature(f, get_type_hints=False):
     """Extract the signature from a function.
 
     Args:
         f (function): Function to extract signature from.
+        get_type_hints (bool, optional): Use :func:`typing.get_type_hints` to resolve
+            the type hints. Defaults to `False`.
 
     Returns:
         tuple[:class:`.signature.Signature`, ptype]: Signature and return type of the
             function.
     """
+    if get_type_hints:
+        f.__annotations__ = typing.get_type_hints(f)
+
     # Extract specification.
     sig = inspect.signature(f)
 
@@ -340,55 +347,74 @@ class Function:
             self._precedences.clear()
             self._runtime_type_of = False
 
-    def register(self, signature, f, precedence=0, return_type=object):
+    def register(
+        self,
+        signature,
+        f,
+        precedence=0,
+        return_type=object,
+        delayed=None,
+    ):
         """Register a method.
 
         Args:
-            signature (:class:`.signature.Signature`): Signature of the method.
+            signature (:class:`.signature.Signature` or None): Signature of the method.
             f (function): Function that implements the method.
             precedence (int, optional): Precedence of the function. Defaults
                 to `0`.
-            return_type (type or ptype, optional): Return type of the function. Defaults
-                to `object`.
+            return_type (type or ptype or None, optional): Return type of the function.
+                Defaults to `object`.
+            delayed (function, optional): If the signature and return type could not
+                yet be extracted, e.g. in the case of
+                `from __future__ import annotations`, then delay the extraction until
+                registration and use `get_type_hints` to resolve all type hints.
         """
-        # The return type may contain strings, which need to be converted Plum types.
-        ret_type = ptype(return_type)
+        # The return type may contain strings, which now need to be converted to a Plum
+        # type. This is to deal with forward references.
+        if not delayed:
+            return_type = ptype(return_type)
 
-        for sig in append_default_args(signature, f):
-            self._pending.append((sig, f, precedence, ret_type))
+        self._pending.append((signature, f, precedence, return_type, delayed))
 
     def _resolve_pending_registrations(self):
         # Keep track of whether anything registered.
         registered = False
 
         # Perform any pending registrations.
-        for signature, f, precedence, return_type in self._pending:
-            registered = True
-
-            # If a method with the same signature has already been defined, then that
-            # is fine: we simply overwrite that method.
-
-            # If the return type is `object`, then set it to `default_obj_type`. This
-            # allows for a fast check to speed up cached calls.
-            if is_object(return_type):
-                return_type = default_obj_type
-
-            self._methods[signature] = (f, return_type)
-            self._precedences[signature] = precedence
-
+        for (signature, f, precedence, return_type, delayed) in self._pending:
             # Add to resolved registrations.
-            self._resolved.append((signature, f, precedence, return_type))
+            self._resolved.append((signature, f, precedence, return_type, delayed))
 
-            # Check whether the signature contains a type which requires `type_of` at
-            # runtime.
-            if any(t.runtime_type_of for t in signature.types):
-                self._runtime_type_of = True
+            # The method can be passed as the signature, in which we should extract
+            # the signature from the type hints.
+            if delayed:
+                signature, return_type = extract_signature(delayed, get_type_hints=True)
+
+            for subsignature in append_default_args(signature, f):
+                registered = True
+
+                # If a method with the same signature has already been defined, then
+                # that is fine: we simply overwrite that method.
+
+                # If the return type is `object`, then set it to `default_obj_type`.
+                # This allows for a fast check to speed up cached calls.
+                if is_object(return_type):
+                    return_type = default_obj_type
+
+                self._methods[subsignature] = (f, return_type)
+                self._precedences[subsignature] = precedence
+
+                # Check whether the signature contains a type which requires `type_of`
+                # at runtime.
+                if any(t.runtime_type_of for t in subsignature.types):
+                    self._runtime_type_of = True
 
         if registered:
             self._pending = []
 
             # Clear cache.
-            # TODO: Be more clever, but careful about the tracking of parametric types.
+            # TODO: Be more clever, but careful about the tracking of parametric
+            #  types.
             self.clear_cache(reregister=False)
 
     def resolve_signature(self, signature):

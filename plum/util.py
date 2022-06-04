@@ -1,7 +1,15 @@
 import abc
+import inspect
 import logging
 
-__all__ = ["multihash", "Comparable", "is_in_class", "get_class", "get_context"]
+__all__ = [
+    "multihash",
+    "Comparable",
+    "is_in_class",
+    "get_class",
+    "get_context",
+    "check_future_annotations",
+]
 
 log = logging.getLogger(__name__)
 
@@ -111,3 +119,13 @@ def get_context(f):
     else:
         # Split off function name only.
         return ".".join(parts[:-1])
+
+
+def check_future_annotations():
+    """Check if `from __future__ import annotations` is active in the caller's scope.
+
+    Returns:
+        bool: `True` if it is activated, otherwise `False`.
+    """
+    frame = inspect.currentframe()
+    return "annotations" in frame.f_back.f_back.f_globals

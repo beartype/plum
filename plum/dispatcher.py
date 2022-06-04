@@ -3,7 +3,7 @@ import logging
 from .function import ClassFunction, Function, extract_signature
 from .signature import Signature as Sig
 from .type import subclasscheck_cache
-from .util import is_in_class, get_class
+from .util import is_in_class, get_class, check_future_annotations
 
 __all__ = ["Dispatcher", "dispatch", "clear_all_cache"]
 
@@ -35,7 +35,12 @@ class Dispatcher:
 
             return decorator
 
-        signature, return_type = extract_signature(method)
+        if check_future_annotations():
+            signature, return_type = None, None
+            delayed = method
+        else:
+            signature, return_type = extract_signature(method)
+            delayed = None
 
         def construct_function(owner):
             return self._add_method(
@@ -44,6 +49,7 @@ class Dispatcher:
                 precedence=precedence,
                 return_type=return_type,
                 owner=owner,
+                delayed=delayed,
             )
 
         # Defer the construction if `method` is in a class. We defer the construction to
@@ -122,10 +128,18 @@ class Dispatcher:
 
         return namespace[name]
 
-    def _add_method(self, method, signatures, precedence, return_type, owner):
+    def _add_method(
+        self,
+        method,
+        signatures,
+        precedence,
+        return_type,
+        owner,
+        delayed=None,
+    ):
         f = self._get_function(method, owner)
         for signature in signatures:
-            f.register(signature, method, precedence, return_type)
+            f.register(signature, method, precedence, return_type, delayed)
         return f
 
     def clear_cache(self):
