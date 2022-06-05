@@ -49,9 +49,17 @@ def test_extension():
     with pytest.raises(NotFoundLookupError):
         f("1")
 
-    @f.dispatch
-    def f(x: str):
+    def g(x: str):
         return "str"
+
+    f.dispatch(g)
+
+    assert f(1) == "int"
+    assert f("1") == "str"
+
+    # Extending `f` again will cause `g`s type hints to be processed again, which should
+    # now be types rather than strings. We check that this also works.
+    f.dispatch(g)
 
     assert f(1) == "int"
     assert f("1") == "str"

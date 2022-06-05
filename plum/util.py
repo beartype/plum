@@ -136,12 +136,16 @@ def check_future_annotations(frame=None):
 def unquote(x):
     """Remove quotes from a string at the outermost level.
 
+    If `x` is not a string, `x` is returned immediately.
+
     Args:
-        x (str): String to remove quotes from.
+        x (str or object): String to remove quotes from.
 
     Return:
-        str: `x` but without quotes.
+        str or object: `x` but without quotes.
     """
+    if not isinstance(x, str):
+        return x
     while len(x) >= 2 and x[0] == x[-1] and x[0] in {'"', "'"}:
         x = x[1:-1]
     return x
