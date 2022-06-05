@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Union
+import math
 
 import pytest
 
@@ -54,3 +55,20 @@ def test_extension():
 
     assert f(1) == "int"
     assert f("1") == "str"
+
+
+def test_extension_c():
+    dispatch = Dispatcher()
+
+    @dispatch
+    def f(x: int):
+        return x
+
+    assert f(1) == 1
+    with pytest.raises(NotFoundLookupError):
+        f(4.0)
+
+    f.dispatch(math.sqrt)
+
+    assert f(1) == 1
+    assert f(4.0) == 2
