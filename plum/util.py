@@ -1,5 +1,4 @@
 import abc
-import inspect
 import logging
 
 __all__ = [
@@ -122,14 +121,16 @@ def get_context(f):
         return ".".join(parts[:-1])
 
 
-def check_future_annotations():
-    """Check if `from __future__ import annotations` is active in the caller's scope.
+def check_future_annotations(frame=None):
+    """Check if `from __future__ import annotations` is active in a frame.
+
+    Args:
+        frame (object): Frame.
 
     Returns:
         bool: `True` if it is activated, otherwise `False`.
     """
-    frame = inspect.currentframe()
-    return "annotations" in frame.f_back.f_back.f_globals
+    return "annotations" in frame.f_globals
 
 
 def unquote(x):

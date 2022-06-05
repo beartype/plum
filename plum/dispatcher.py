@@ -1,4 +1,5 @@
 import logging
+import inspect
 
 from .function import ClassFunction, Function, extract_signature
 from .signature import Signature as Sig
@@ -35,7 +36,7 @@ class Dispatcher:
 
             return decorator
 
-        if check_future_annotations():
+        if check_future_annotations(inspect.currentframe().f_back):
             signature, return_type = None, None
             delayed = method
         else:
