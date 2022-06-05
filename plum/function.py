@@ -6,7 +6,7 @@ from functools import wraps
 from .resolvable import Promise
 from .signature import Signature
 from .type import ptype, is_object, VarArgs, deliver_forward_reference
-from .util import unquote
+from .util import unquote, check_future_annotations
 
 __all__ = [
     "extract_signature",
@@ -295,12 +295,21 @@ class Function:
         if f is None:
             return lambda f_: self.dispatch(f_, precedence=precedence)
 
-        signature, return_type = extract_signature(f)
-        return self.dispatch_multi(
+        if check_future_annotations():
+            signature, return_type = None, None
+            delayed = f
+        else:
+            signature, return_type = extract_signature(f)
+            delayed = None
+
+        self.register(
             signature,
+            f,
             precedence=precedence,
             return_type=return_type,
-        )(f)
+            delayed=delayed,
+        )
+        return self
 
     def dispatch_multi(self, *signatures, precedence=0, return_type=object):
         """A decorator to extend the function with multiple signatures.

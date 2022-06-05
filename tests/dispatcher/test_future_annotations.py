@@ -35,3 +35,22 @@ def test_forward_reference():
 
     with pytest.raises(NotFoundLookupError):
         three = one + 2.0
+
+
+def test_extension():
+    dispatch = Dispatcher()
+
+    @dispatch
+    def f(x: int):
+        return "int"
+
+    assert f(1) == "int"
+    with pytest.raises(NotFoundLookupError):
+        f("1")
+
+    @f.dispatch
+    def f(x: str):
+        return "str"
+
+    assert f(1) == "int"
+    assert f("1") == "str"
