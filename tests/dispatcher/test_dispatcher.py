@@ -2,7 +2,7 @@ from typing import Union, List
 
 import pytest
 
-from plum import Dispatcher, NotFoundLookupError, parametric
+from plum import Dispatcher, Function, NotFoundLookupError, parametric
 
 
 def _build_function():
@@ -447,3 +447,16 @@ def test_runtime_type_of_tracking():
     assert not f._runtime_type_of
     f(1)
     assert f._runtime_type_of
+
+
+def test_unassignable_annotations():
+    class A:
+        @classmethod
+        def create(cls):
+            pass
+
+    # `A.create` will have an attribute `__annotations__`, but it cannot be assigned.
+
+    f = Function(lambda: None)
+    f.dispatch(A.create)
+    f()

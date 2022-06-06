@@ -57,8 +57,10 @@ def extract_signature(f, get_type_hints=False):
     """
     if get_type_hints and hasattr(f, "__annotations__"):
         # Unquote type hints so that they are resolved to the right types.
-        f.__annotations__ = {k: unquote(v) for k, v in f.__annotations__.items()}
-        f.__annotations__ = typing.get_type_hints(f)
+        for k, v in f.__annotations__.items():
+            f.__annotations__[k] = unquote(v)
+        for k, v in typing.get_type_hints(f).items():
+            f.__annotations__[k] = v
 
     # Extract specification.
     sig = inspect.signature(f)
