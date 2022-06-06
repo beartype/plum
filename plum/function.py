@@ -2,6 +2,7 @@ import inspect
 import logging
 import typing
 from functools import wraps
+import operator
 
 from .resolvable import Promise
 from .signature import Signature
@@ -43,6 +44,23 @@ def _is_not_empty(t):
     )
 
 
+def _inspect_signature(f):
+    """Wrapper of :func:`inspect.signature` which adds support for certain non-function
+    objects.
+
+    Args:
+        f (object): Function-like object.
+
+    Returns:
+        object: Signature.
+    """
+    if isinstance(f, operator.itemgetter):
+        f = lambda x: f(x)
+    elif isinstance(f, operator.attrgetter):
+        f = lambda x: f(x)
+    return inspect.signature(f)
+
+
 def extract_signature(f, get_type_hints=False):
     """Extract the signature from a function.
 
@@ -63,7 +81,7 @@ def extract_signature(f, get_type_hints=False):
             f.__annotations__[k] = v
 
     # Extract specification.
-    sig = inspect.signature(f)
+    sig = _inspect_signature(f)
 
     # Get types of arguments.
     types = []
@@ -124,7 +142,7 @@ def append_default_args(signature, f):
         default arguments.
     """
     # Extract specification.
-    sig = inspect.signature(f)
+    sig = _inspect_signature(f)
 
     signatures = [signature]
 

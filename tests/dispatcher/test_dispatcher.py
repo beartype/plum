@@ -1,4 +1,7 @@
+import operator
+import collections
 from typing import Union, List
+
 
 import pytest
 
@@ -460,3 +463,16 @@ def test_unassignable_annotations():
     f = Function(lambda: None)
     f.dispatch(A.create)
     f()
+
+
+@pytest.mark.parametrize(
+    "f, x, res",
+    [
+        (operator.attrgetter("x"), collections.namedtuple("NamedTuple", "x")(x=1), 1),
+        (operator.itemgetter("x"), {"x": 1}, 1),
+    ],
+)
+def test_nonfunctions(f, x, res):
+    plum_f = Function(lambda: None)
+    plum_f.dispatch(f)
+    assert plum_f(x) == res
