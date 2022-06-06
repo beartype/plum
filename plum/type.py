@@ -75,6 +75,8 @@ class VarArgs(AbstractType):
             number of types. Defaults to `object`.
     """
 
+    __slots__ = ["type"]
+
     def __init__(self, type=object):
         self.type = ptype(type)
 
@@ -159,6 +161,8 @@ class Union(ComparableType):
         alias (str, optional): Give the union a name.
     """
 
+    __slots__ = ["_types"]
+
     def __init__(self, *types, alias=None):
         # Lazily convert to a set to avoid resolution errors.
         self._types = tuple(ptype(t) for t in types)
@@ -219,6 +223,8 @@ class Type(ComparableType):
     Args:
         type (type): Type to encapsulate.
     """
+
+    __slots__ = ["_type"]
 
     def __init__(self, type):
         self._type = type
