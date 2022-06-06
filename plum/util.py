@@ -2,6 +2,7 @@ import abc
 import logging
 
 __all__ = [
+    "wrap_lambda",
     "multihash",
     "Comparable",
     "is_in_class",
@@ -12,6 +13,18 @@ __all__ = [
 ]
 
 log = logging.getLogger(__name__)
+
+
+def wrap_lambda(f):
+    """Wrap a function in a lambda function.
+
+    Args:
+        f (function): Function to wrap.
+
+    Returns:
+        function: Wrapped version of `f`.
+    """
+    return lambda x: f(x)
 
 
 def multihash(*args):

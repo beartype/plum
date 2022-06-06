@@ -7,7 +7,7 @@ import operator
 from .resolvable import Promise
 from .signature import Signature
 from .type import ptype, is_object, VarArgs, deliver_forward_reference
-from .util import unquote, check_future_annotations
+from .util import unquote, check_future_annotations, wrap_lambda
 
 __all__ = [
     "extract_signature",
@@ -55,9 +55,9 @@ def _inspect_signature(f):
         object: Signature.
     """
     if isinstance(f, operator.itemgetter):
-        f = lambda x: f(x)
+        f = wrap_lambda(f)
     elif isinstance(f, operator.attrgetter):
-        f = lambda x: f(x)
+        f = wrap_lambda(f)
     return inspect.signature(f)
 
 
