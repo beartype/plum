@@ -32,6 +32,7 @@ Everybody likes multiple dispatch, just like everybody likes plums.
     - [Add Multiple Methods](#add-multiple-methods)
     - [Extend a Function From Another Package](#extend-a-function-from-another-package)
     - [Directly Invoke a Method](#directly-invoke-a-method)
+ * [IPython's autoreload support](#support-for-ipython-autoreload)
 
 ## Installation
 
@@ -1165,3 +1166,28 @@ def f(x: str):
 >>> f.invoke(str)(1)
 'str'
 ```
+
+### Support for IPython autoreload
+
+Plum does not work out of the box with IPython's autoreload, and if you reload a file where a class is defined, you will most likely break your dispatch table.
+
+However, experimental support for IPython's autoreload is included into plum but it is not enabled by default, as it overrides some internal methods of IPython. 
+To activate it, either set the environment variable `PLUM_AUTORELOAD=1` **before** loading plum
+
+```bash
+export PLUM_AUTORELOAD=1
+```
+
+or manually call the `autoreload.activate` method in an interactive session.
+
+```python
+import plum
+plum.autoreload.activate()
+```
+
+If there are issues with autoreload, please open a bug report.
+
+
+
+
+
