@@ -92,7 +92,7 @@ def test_defaults():
 
     @dispatch
     def f(x: float, y: int = y_default, *, option=None):
-        return y ** 2
+        return y**2
 
     assert f(2) == y_default
     assert f(2, option=None) == y_default
@@ -100,8 +100,8 @@ def test_defaults():
     assert f(2, y=4) == 4
     assert f(2, y=4, option=None) == 4
 
-    assert f(2.0) == y_default ** 2
-    assert f(2.0, y=4) == 4 ** 2
+    assert f(2.0) == y_default**2
+    assert f(2.0, y=4) == 4**2
 
     with pytest.raises(NotFoundLookupError):
         f(2, 4.0)
