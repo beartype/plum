@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      # Make sure tags are fetched so we can get a version.
+      # Make sure tags are fetched, so we can get a version.
       - run: |
           git fetch --prune --unshallow --tags
 
@@ -35,5 +35,5 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
 
         run: |
-          python setup.py sdist
+          python setup.py sdist bdist_wheel
           twine upload dist/*
