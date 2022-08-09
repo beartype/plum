@@ -303,7 +303,7 @@ class Function:
         self._resolve_pending_registrations()
         return self._precedences
 
-    def dispatch(self, f=None, precedence=0, *, _f_parent):
+    def dispatch(self, f=None, precedence=0):
         """A decorator to extend the function with another signature.
 
         Args:
@@ -315,7 +315,7 @@ class Function:
         if f is None:
             return lambda f_: self.dispatch(f_, precedence=precedence)
 
-        if check_future_annotations(_f_parent):
+        if check_future_annotations(inspect.currentframe().f_back):
             signature, return_type = None, None
             delayed = f
         else:
