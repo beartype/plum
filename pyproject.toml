@@ -1,2 +1,7 @@
+[build-system]
+requires = [
+    "setuptools_scm[toml]>=6.0",
+]
+
 [tool.setuptools_scm]
 write_to = "plum/_version.py"
