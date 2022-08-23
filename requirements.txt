@@ -2,6 +2,7 @@
 -e .
 numpy
 sphinx
+sphinx-autobuild
 pydata-sphinx-theme
 myst-parser
 pytest
