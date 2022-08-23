@@ -2,7 +2,8 @@
 -e .
 numpy
 sphinx
-sphinx-rtd-theme
+pydata-sphinx-theme
+myst-parser
 pytest
 pytest-cov
 coveralls
