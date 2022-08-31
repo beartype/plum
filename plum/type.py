@@ -1,9 +1,19 @@
 import abc
 import inspect
 import logging
+import sys
 
 from .resolvable import Resolvable, Promise
 from .util import multihash, Comparable, unquote
+
+# Define the type for A | B expressions
+if sys.version_info >= (3, 10):
+    from types import UnionType
+else:
+
+    class UnionType:
+        pass
+
 
 __all__ = [
     "TypeMeta",
@@ -415,6 +425,10 @@ def ptype(obj):
                 f'There is currently no support for "{obj}". '
                 f"Please open an issue at https://github.com/wesselb/plum/issues"
             )  # pragma: no cover
+
+    # support python 3.10 "int | float" syntax
+    elif isinstance(obj, UnionType):
+        return Union(*(ptype(t) for t in obj.__args__))
 
     # Strings are forward references.
     if isinstance(obj, str):

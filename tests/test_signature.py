@@ -1,4 +1,5 @@
 import pytest
+import sys
 
 from plum.signature import Signature as Sig
 from plum.type import Type, VarArgs, Union
@@ -86,3 +87,9 @@ def test_union():
     assert Sig(Union(FP, Num)) == Sig(Union(Num))
     assert Sig(Union(FP, Num)) >= Sig(Union(Re))
     assert Sig(Union(FP)) < Sig(Union(Num, Re))
+
+
+@pytest.mark.skipif(sys.version_info < (3, 10), reason="requires python3.10 or higher")
+def test_union_new_syntax():
+    assert Sig(eval("float | int")) == Sig(Union(float, int))
+    assert Sig(eval("Num | FP")) == Sig(Union(Num, FP))
