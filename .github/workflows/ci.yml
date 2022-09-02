@@ -28,7 +28,8 @@ jobs:
           COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
           COVERALLS_PARALLEL: true
         run: |
-          pytest -v --cov=plum --cov-report term-missing
+          PRAGMA_VERSION=`python -c "import sys; print('.'.join(map(str, sys.version_info[:2])))"` \
+            pytest -v --cov=plum --cov-report term-missing
           coveralls --service=github
   coveralls:
     name: Finish coverage

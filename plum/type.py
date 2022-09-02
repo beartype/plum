@@ -6,10 +6,10 @@ import sys
 from .resolvable import Resolvable, Promise
 from .util import multihash, Comparable, unquote
 
-# Define the type for A | B expressions
-if sys.version_info >= (3, 10):
+# Define the type for `A | B` expressions.
+if sys.version_info >= (3, 10):  # pragma: specific no cover 3.7 3.8 3.9
     from types import UnionType
-else:
+else:  # pragma: specific no cover 3.10
 
     class UnionType:
         pass
@@ -427,7 +427,7 @@ def ptype(obj):
             )  # pragma: no cover
 
     # Support Python 3.10 `int | float` syntax.
-    elif isinstance(obj, UnionType):
+    elif isinstance(obj, UnionType):  # pragma: specific no cover 3.7 3.8 3.9
         return Union(*(ptype(t) for t in obj.__args__))
 
     # Strings are forward references.
