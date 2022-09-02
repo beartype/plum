@@ -426,7 +426,7 @@ def ptype(obj):
                 f"Please open an issue at https://github.com/wesselb/plum/issues"
             )  # pragma: no cover
 
-    # support python 3.10 "int | float" syntax
+    # Support Python 3.10 `int | float` syntax.
     elif isinstance(obj, UnionType):
         return Union(*(ptype(t) for t in obj.__args__))
 
