@@ -46,7 +46,8 @@ install:
 
 test:
 	python setup.py --version
-	pytest -v --cov=$(PACKAGE) --cov-report html:cover --cov-report term-missing
+	PRAGMA_VERSION=`python -c "import sys; print('.'.join(map(str, sys.version_info[:2])))"` \
+		pytest -v --cov=$(PACKAGE) --cov-report html:cover --cov-report term-missing
 
 clean:
 	rm -rf docs/_build docs/source docs/readme.rst
