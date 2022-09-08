@@ -1,0 +1,37 @@
+# Book settings
+title: NeuralProcesses
+author: Wessel Bruinsma, Filippo Vicentini, and Ruan Comelli
+copyright: "2022"
+logo: logo.png
+
+# Force re-execution of notebooks on each build.
+# See https://jupyterbook.org/content/execute.html
+execute:
+  execute_notebooks: force
+
+# Define the name of the latex output file for PDF builds.
+latex:
+  latex_documents:
+    targetname: book.tex
+
+# Load AutoDoc extension.
+sphinx:
+  extra_extensions:
+  - 'sphinx.ext.autodoc'
+  - 'sphinx.ext.napoleon'
+  - 'sphinx.ext.viewcode'
+
+# Add a BiBTeX file so that we can create citations.
+bibtex_bibfiles:
+  - references.bib
+
+# Information about where the book exists on the web.
+repository:
+  url: https://github.com/wesselb/plum
+  path_to_book: docs
+  branch: master
+
+# Add GitHub buttons to your book.
+html:
+  use_issues_button: true
+  use_repository_button: true

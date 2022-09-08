@@ -175,13 +175,11 @@ def parametric(Class=None, runtime_type_of=False, metaclass=CovariantMeta):
     has been specified, the type parameters are inferred from the arguments of the
     constructor by calling the following function.
 
-    The default implementation is shown here, but it is possible to override it.
+    The default implementation is shown here, but it is possible to override it.::
 
-    ```python
-    @classmethod
-    def __infer_type_parameter__(cls, *args, **kw_args) -> Tuple:
-        return tuple(type(arg) for arg in args)
-    ```
+        @classmethod
+        def __infer_type_parameter__(cls, *args, **kw_args) -> Tuple:
+            return tuple(type(arg) for arg in args)
 
     Args:
         runtime_type_of (bool, optional): Require the use of :func:`.parametric.type_of`

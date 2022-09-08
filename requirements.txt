@@ -1,8 +1,8 @@
 # Requirements for development, testing, and documentation.
 -e .
+jupyter-book
+ghp-import
 numpy
-sphinx
-sphinx-rtd-theme
 pytest
 pytest-cov
 coveralls
