@@ -1,0 +1,801 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Index &#8212; NeuralProcesses</title>
+    
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+<link href="_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-thebe.css" />
+    <link rel="stylesheet" type="text/css" href="_static/design-style.b7bb847fb20b106c3d81b95245e65545.min.css" />
+    
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/clipboard.min.js"></script>
+    <script src="_static/copybutton.js"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="_static/togglebutton.js"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script src="_static/design-tabs.js"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"
+const thebe_selector = ".thebe,.cell"
+const thebe_selector_input = "pre"
+const thebe_selector_output = ".output, .cell_output"
+</script>
+    <script async="async" src="_static/sphinx-thebe.js"></script>
+    <link rel="index" title="Index" href="#" />
+    <link rel="search" title="Search" href="search.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay overlay-navbar" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<!-- Checkboxes to toggle the in-page toc -->
+<input type="checkbox" class="sidebar-toggle" name="__page-toc" id="__page-toc" aria-label="Toggle in-page Table of Contents">
+<label class="overlay overlay-pagetoc" for="__page-toc">
+    <div class="visually-hidden">Toggle in-page Table of Contents</div>
+</label>
+<!-- Headers at the top -->
+<div class="announcement header-item noprint"></div>
+<div class="header header-item noprint"></div>
+
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Sidebar -->
+<div class="bd-sidebar noprint" id="site-navigation">
+    <div class="bd-sidebar__content">
+        <div class="bd-sidebar__top"><div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="index.html">
+      
+        <!-- `logo` is deprecated in Sphinx 4.0, so remove this when we stop supporting 3 -->
+        
+      
+      
+      <img src="_static/logo.png" class="logo" alt="logo">
+      
+      
+      <h1 class="site-logo" id="site-title">NeuralProcesses</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search this book..." aria-label="Search this book..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="intro.html">
+                    Plum
+                </a>
+            </li>
+        </ul>
+        <ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="basic_usage.html">
+   Basic Usage
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="scope.html">
+   Scope of Functions
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="classes.html">
+   Classes
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="keyword_arguments.html">
+   Keyword Arguments and Default Values
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="comparison.html">
+   Comparison with
+   <code class="docutils literal notranslate">
+    <span class="pre">
+     multipledispatch
+    </span>
+   </code>
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="type_system.html">
+   Type System
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="conversion_promotion.html">
+   Conversion and Promotion
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="advanced_usage.html">
+   Advanced Usage
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="api.html">
+   Application Programming Interface
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav></div>
+        <div class="bd-sidebar__bottom">
+             <!-- To handle the deprecated key -->
+            
+            <div class="navbar_extra_footer">
+            Powered by <a href="https://jupyterbook.org">Jupyter Book</a>
+            </div>
+            
+        </div>
+    </div>
+    <div id="rtd-footer-container"></div>
+</div>
+
+
+          
+
+
+          
+<!-- A tiny helper pixel to detect if we've scrolled -->
+<div class="sbt-scroll-pixel-helper"></div>
+<!-- Main content -->
+<div class="col py-0 content-container">
+    
+    <div class="header-article row sticky-top noprint">
+        
+
+
+
+<div class="col py-1 d-flex header-article-main">
+    <div class="header-article__left">
+        
+        <label for="__navigation"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="right"
+title="Toggle navigation"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-bars"></i>
+  </span>
+
+</label>
+
+        
+    </div>
+    <div class="header-article__right">
+<button onclick="toggleFullScreen()"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="bottom"
+title="Fullscreen mode"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+<div class="menu-dropdown menu-dropdown-repository-buttons">
+  <button class="headerbtn menu-dropdown__trigger"
+      aria-label="Source repositories">
+      <i class="fab fa-github"></i>
+  </button>
+  <div class="menu-dropdown__content">
+    <ul>
+      <li>
+        <a href="https://github.com/wesselb/plum"
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="left"
+title="Source repository"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="headerbtn__text-container">repository</span>
+</a>
+
+      </li>
+      
+      <li>
+        <a href="https://github.com/wesselb/plum/issues/new?title=Issue%20on%20page%20%2Fgenindex.html&body=Your%20issue%20content%20here."
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="left"
+title="Open an issue"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="headerbtn__text-container">open issue</span>
+</a>
+
+      </li>
+      
+    </ul>
+  </div>
+</div>
+
+    </div>
+</div>
+
+<!-- Table of contents -->
+<div class="col-md-3 bd-toc show noprint">
+</div>
+    </div>
+    <div class="article row">
+        <div class="col pl-md-3 pl-lg-5 content-container">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1></h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                    </div>
+                </div>
+            </div>
+            <main id="main-content" role="main">
+                
+              <div>
+                
+
+<h1 id="index">Index</h1>
+
+<div class="genindex-jumpbox">
+ <a href="#A"><strong>A</strong></a>
+ | <a href="#B"><strong>B</strong></a>
+ | <a href="#C"><strong>C</strong></a>
+ | <a href="#D"><strong>D</strong></a>
+ | <a href="#E"><strong>E</strong></a>
+ | <a href="#F"><strong>F</strong></a>
+ | <a href="#G"><strong>G</strong></a>
+ | <a href="#H"><strong>H</strong></a>
+ | <a href="#I"><strong>I</strong></a>
+ | <a href="#K"><strong>K</strong></a>
+ | <a href="#L"><strong>L</strong></a>
+ | <a href="#M"><strong>M</strong></a>
+ | <a href="#N"><strong>N</strong></a>
+ | <a href="#P"><strong>P</strong></a>
+ | <a href="#R"><strong>R</strong></a>
+ | <a href="#S"><strong>S</strong></a>
+ | <a href="#T"><strong>T</strong></a>
+ | <a href="#U"><strong>U</strong></a>
+ | <a href="#V"><strong>V</strong></a>
+ | <a href="#W"><strong>W</strong></a>
+ 
+</div>
+<h2 id="A">A</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.dispatcher.Dispatcher.abstract">abstract() (plum.dispatcher.Dispatcher method)</a>
+</li>
+      <li><a href="api.html#plum.autoreload.activate">activate() (in module plum.autoreload)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.promotion.add_conversion_method">add_conversion_method() (in module plum.promotion)</a>
+</li>
+      <li><a href="api.html#plum.promotion.add_promotion_rule">add_promotion_rule() (in module plum.promotion)</a>
+</li>
+      <li><a href="api.html#plum.function.AmbiguousLookupError">AmbiguousLookupError</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="B">B</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.signature.Signature.base">base (plum.signature.Signature property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="C">C</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.util.check_future_annotations">check_future_annotations() (in module plum.util)</a>
+</li>
+      <li><a href="api.html#plum.function.ClassFunction">ClassFunction (class in plum.function)</a>
+</li>
+      <li><a href="api.html#plum.dispatcher.clear_all_cache">clear_all_cache() (in module plum.dispatcher)</a>
+</li>
+      <li><a href="api.html#plum.dispatcher.Dispatcher.clear_cache">clear_cache() (plum.dispatcher.Dispatcher method)</a>
+
+      <ul>
+        <li><a href="api.html#plum.function.Function.clear_cache">(plum.function.Function method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.util.Comparable">Comparable (class in plum.util)</a>
+</li>
+      <li><a href="api.html#plum.type.ComparableType">ComparableType (class in plum.type)</a>
+</li>
+      <li><a href="api.html#plum.promotion.conversion_method">conversion_method() (in module plum.promotion)</a>
+</li>
+      <li><a href="api.html#plum.promotion.convert">convert() (in module plum.promotion)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="D">D</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.autoreload.deactivate">deactivate() (in module plum.autoreload)</a>
+</li>
+      <li><a href="api.html#plum.resolvable.Promise.deliver">deliver() (plum.resolvable.Promise method)</a>
+</li>
+      <li><a href="api.html#plum.type.deliver_forward_reference">deliver_forward_reference() (in module plum.type)</a>
+</li>
+      <li><a href="api.html#plum.parametric.Dict">Dict (class in plum.parametric)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.dispatcher.dispatch">dispatch (in module plum.dispatcher)</a>
+</li>
+      <li><a href="api.html#plum.function.Function.dispatch">dispatch() (plum.function.Function method)</a>
+</li>
+      <li><a href="api.html#plum.function.Function.dispatch_multi">dispatch_multi() (plum.function.Function method)</a>
+</li>
+      <li><a href="api.html#plum.dispatcher.Dispatcher">Dispatcher (class in plum.dispatcher)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="E">E</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.type.VarArgs.expand">expand() (plum.type.VarArgs method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.signature.Signature.expand_varargs_to">expand_varargs_to() (plum.signature.Signature method)</a>
+</li>
+      <li><a href="api.html#plum.function.extract_signature">extract_signature() (in module plum.function)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="F">F</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.function.Function">Function (class in plum.function)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="G">G</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.util.get_class">get_class() (in module plum.util)</a>
+</li>
+      <li><a href="api.html#plum.util.get_context">get_context() (in module plum.util)</a>
+</li>
+      <li><a href="api.html#plum.parametric.Dict.get_types">get_types() (plum.parametric.Dict method)</a>
+
+      <ul>
+        <li><a href="api.html#plum.parametric.Iterable.get_types">(plum.parametric.Iterable method)</a>
+</li>
+        <li><a href="api.html#plum.parametric.List.get_types">(plum.parametric.List method)</a>
+</li>
+        <li><a href="api.html#plum.parametric.Sequence.get_types">(plum.parametric.Sequence method)</a>
+</li>
+        <li><a href="api.html#plum.parametric.Tuple.get_types">(plum.parametric.Tuple method)</a>
+</li>
+        <li><a href="api.html#plum.type.ComparableType.get_types">(plum.type.ComparableType method)</a>
+</li>
+        <li><a href="api.html#plum.type.ResolvableType.get_types">(plum.type.ResolvableType method)</a>
+</li>
+        <li><a href="api.html#plum.type.Type.get_types">(plum.type.Type method)</a>
+</li>
+        <li><a href="api.html#plum.type.Union.get_types">(plum.type.Union method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="H">H</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.signature.Signature.has_varargs">has_varargs() (plum.signature.Signature method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="I">I</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.function.Function.invoke">invoke() (plum.function.Function method)</a>
+</li>
+      <li><a href="api.html#plum.util.Comparable.is_comparable">is_comparable() (plum.util.Comparable method)</a>
+</li>
+      <li><a href="api.html#plum.signature.Signature.is_compatible">is_compatible() (plum.signature.Signature method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.util.is_in_class">is_in_class() (in module plum.util)</a>
+</li>
+      <li><a href="api.html#plum.type.is_object">is_object() (in module plum.type)</a>
+</li>
+      <li><a href="api.html#plum.type.is_type">is_type() (in module plum.type)</a>
+</li>
+      <li><a href="api.html#plum.parametric.Iterable">Iterable (class in plum.parametric)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="K">K</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.parametric.Kind">Kind (class in plum.parametric)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.parametric.kind">kind() (in module plum.parametric)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="L">L</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.parametric.List">List (class in plum.parametric)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="M">M</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.function.Function.methods">methods (plum.function.Function property)</a>
+</li>
+      <li>
+    module
+
+      <ul>
+        <li><a href="api.html#module-plum.autoreload">plum.autoreload</a>
+</li>
+        <li><a href="api.html#module-plum.dispatcher">plum.dispatcher</a>
+</li>
+        <li><a href="api.html#module-plum.function">plum.function</a>
+</li>
+        <li><a href="api.html#module-plum.parametric">plum.parametric</a>
+</li>
+        <li><a href="api.html#module-plum.promotion">plum.promotion</a>
+</li>
+        <li><a href="api.html#module-plum.resolvable">plum.resolvable</a>
+</li>
+        <li><a href="api.html#module-plum.signature">plum.signature</a>
+</li>
+        <li><a href="api.html#module-plum.type">plum.type</a>
+</li>
+        <li><a href="api.html#module-plum.util">plum.util</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.type.ComparableType.mro">mro() (plum.type.ComparableType method)</a>
+</li>
+      <li><a href="api.html#plum.dispatcher.Dispatcher.multi">multi() (plum.dispatcher.Dispatcher method)</a>
+</li>
+      <li><a href="api.html#plum.util.multihash">multihash() (in module plum.util)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="N">N</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.function.NotFoundLookupError">NotFoundLookupError</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="P">P</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.parametric.Dict.parametric">parametric (plum.parametric.Dict property)</a>
+
+      <ul>
+        <li><a href="api.html#plum.parametric.Iterable.parametric">(plum.parametric.Iterable property)</a>
+</li>
+        <li><a href="api.html#plum.parametric.List.parametric">(plum.parametric.List property)</a>
+</li>
+        <li><a href="api.html#plum.parametric.Sequence.parametric">(plum.parametric.Sequence property)</a>
+</li>
+        <li><a href="api.html#plum.parametric.Tuple.parametric">(plum.parametric.Tuple property)</a>
+</li>
+        <li><a href="api.html#plum.type.ResolvableType.parametric">(plum.type.ResolvableType property)</a>
+</li>
+        <li><a href="api.html#plum.type.Type.parametric">(plum.type.Type property)</a>
+</li>
+        <li><a href="api.html#plum.type.Union.parametric">(plum.type.Union property)</a>
+</li>
+        <li><a href="api.html#plum.type.VarArgs.parametric">(plum.type.VarArgs property)</a>
+</li>
+      </ul></li>
+      <li><a href="api.html#plum.parametric.parametric">parametric() (in module plum.parametric)</a>
+</li>
+      <li>
+    plum.autoreload
+
+      <ul>
+        <li><a href="api.html#module-plum.autoreload">module</a>
+</li>
+      </ul></li>
+      <li>
+    plum.dispatcher
+
+      <ul>
+        <li><a href="api.html#module-plum.dispatcher">module</a>
+</li>
+      </ul></li>
+      <li>
+    plum.function
+
+      <ul>
+        <li><a href="api.html#module-plum.function">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    plum.parametric
+
+      <ul>
+        <li><a href="api.html#module-plum.parametric">module</a>
+</li>
+      </ul></li>
+      <li>
+    plum.promotion
+
+      <ul>
+        <li><a href="api.html#module-plum.promotion">module</a>
+</li>
+      </ul></li>
+      <li>
+    plum.resolvable
+
+      <ul>
+        <li><a href="api.html#module-plum.resolvable">module</a>
+</li>
+      </ul></li>
+      <li>
+    plum.signature
+
+      <ul>
+        <li><a href="api.html#module-plum.signature">module</a>
+</li>
+      </ul></li>
+      <li>
+    plum.type
+
+      <ul>
+        <li><a href="api.html#module-plum.type">module</a>
+</li>
+      </ul></li>
+      <li>
+    plum.util
+
+      <ul>
+        <li><a href="api.html#module-plum.util">module</a>
+</li>
+      </ul></li>
+      <li><a href="api.html#plum.function.Function.precedences">precedences (plum.function.Function property)</a>
+</li>
+      <li><a href="api.html#plum.resolvable.Promise">Promise (class in plum.resolvable)</a>
+</li>
+      <li><a href="api.html#plum.type.PromisedType">PromisedType (class in plum.type)</a>
+</li>
+      <li><a href="api.html#plum.promotion.promote">promote() (in module plum.promotion)</a>
+</li>
+      <li><a href="api.html#plum.type.ptype">ptype() (in module plum.type)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="R">R</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.function.Function.register">register() (plum.function.Function method)</a>
+</li>
+      <li><a href="api.html#plum.resolvable.ResolutionError">ResolutionError</a>
+</li>
+      <li><a href="api.html#plum.resolvable.Resolvable">Resolvable (class in plum.resolvable)</a>
+</li>
+      <li><a href="api.html#plum.type.ResolvableType">ResolvableType (class in plum.type)</a>
+</li>
+      <li><a href="api.html#plum.resolvable.Promise.resolve">resolve() (plum.resolvable.Promise method)</a>
+
+      <ul>
+        <li><a href="api.html#plum.resolvable.Resolvable.resolve">(plum.resolvable.Resolvable method)</a>
+</li>
+      </ul></li>
+      <li><a href="api.html#plum.function.Function.resolve_method">resolve_method() (plum.function.Function method)</a>
+</li>
+      <li><a href="api.html#plum.function.Function.resolve_signature">resolve_signature() (plum.function.Function method)</a>
+</li>
+      <li><a href="api.html#plum.resolvable.Promise.resolved">resolved (plum.resolvable.Promise property)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.parametric.Dict.runtime_type_of">runtime_type_of (plum.parametric.Dict property)</a>
+
+      <ul>
+        <li><a href="api.html#plum.parametric.Iterable.runtime_type_of">(plum.parametric.Iterable property)</a>
+</li>
+        <li><a href="api.html#plum.parametric.List.runtime_type_of">(plum.parametric.List property)</a>
+</li>
+        <li><a href="api.html#plum.parametric.Sequence.runtime_type_of">(plum.parametric.Sequence property)</a>
+</li>
+        <li><a href="api.html#plum.parametric.Tuple.runtime_type_of">(plum.parametric.Tuple property)</a>
+</li>
+        <li><a href="api.html#plum.type.ResolvableType.runtime_type_of">(plum.type.ResolvableType property)</a>
+</li>
+        <li><a href="api.html#plum.type.Type.runtime_type_of">(plum.type.Type property)</a>
+</li>
+        <li><a href="api.html#plum.type.Union.runtime_type_of">(plum.type.Union property)</a>
+</li>
+        <li><a href="api.html#plum.type.VarArgs.runtime_type_of">(plum.type.VarArgs property)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="S">S</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.parametric.Sequence">Sequence (class in plum.parametric)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.signature.Signature">Signature (class in plum.signature)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="T">T</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.parametric.Tuple">Tuple (class in plum.parametric)</a>
+</li>
+      <li><a href="api.html#plum.type.Type">Type (class in plum.type)</a>
+</li>
+      <li><a href="api.html#plum.parametric.type_of">type_of() (in module plum.parametric)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.parametric.type_parameter">type_parameter() (in module plum.parametric)</a>
+</li>
+      <li><a href="api.html#plum.type.TypeMeta">TypeMeta (class in plum.type)</a>
+</li>
+      <li><a href="api.html#plum.type.TypeType">TypeType (in module plum.type)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.type.Union">Union (class in plum.type)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.util.unquote">unquote() (in module plum.util)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="V">V</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.parametric.Val">Val (class in plum.parametric)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.type.VarArgs">VarArgs (class in plum.type)</a>
+</li>
+      <li><a href="api.html#plum.signature.Signature.varargs_type">varargs_type (plum.signature.Signature property)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="W">W</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#plum.util.wrap_lambda">wrap_lambda() (in module plum.util)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+
+
+              </div>
+              
+            </main>
+            <footer class="footer-article noprint">
+                
+    <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+</div>
+            </footer>
+        </div>
+    </div>
+    <div class="footer-content row">
+        <footer class="col footer"><p>
+  
+    By Wessel Bruinsma, Filippo Vicentini, and Ruan Comelli<br/>
+  
+      &copy; Copyright 2022.<br/>
+</p>
+        </footer>
+    </div>
+    
+</div>
+
+
+      </div>
+    </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+
+
+  </body>
+</html>

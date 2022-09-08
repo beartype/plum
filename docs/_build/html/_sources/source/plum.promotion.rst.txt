@@ -1,7 +1,0 @@
-plum.promotion module
-=====================
-
-.. automodule:: plum.promotion
-    :members:
-    :undoc-members:
-    :show-inheritance:

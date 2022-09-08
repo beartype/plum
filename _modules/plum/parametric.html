@@ -1,0 +1,1015 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>plum.parametric &#8212; NeuralProcesses</title>
+    
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-thebe.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/design-style.b7bb847fb20b106c3d81b95245e65545.min.css" />
+    
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/clipboard.min.js"></script>
+    <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../../_static/togglebutton.js"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script src="../../_static/design-tabs.js"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"
+const thebe_selector = ".thebe,.cell"
+const thebe_selector_input = "pre"
+const thebe_selector_output = ".output, .cell_output"
+</script>
+    <script async="async" src="../../_static/sphinx-thebe.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay overlay-navbar" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<!-- Checkboxes to toggle the in-page toc -->
+<input type="checkbox" class="sidebar-toggle" name="__page-toc" id="__page-toc" aria-label="Toggle in-page Table of Contents">
+<label class="overlay overlay-pagetoc" for="__page-toc">
+    <div class="visually-hidden">Toggle in-page Table of Contents</div>
+</label>
+<!-- Headers at the top -->
+<div class="announcement header-item noprint"></div>
+<div class="header header-item noprint"></div>
+
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Sidebar -->
+<div class="bd-sidebar noprint" id="site-navigation">
+    <div class="bd-sidebar__content">
+        <div class="bd-sidebar__top"><div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="../../index.html">
+      
+        <!-- `logo` is deprecated in Sphinx 4.0, so remove this when we stop supporting 3 -->
+        
+      
+      
+      <img src="../../_static/logo.png" class="logo" alt="logo">
+      
+      
+      <h1 class="site-logo" id="site-title">NeuralProcesses</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search this book..." aria-label="Search this book..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../../intro.html">
+                    Plum
+                </a>
+            </li>
+        </ul>
+        <ul class="nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../basic_usage.html">
+   Basic Usage
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../scope.html">
+   Scope of Functions
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../classes.html">
+   Classes
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../keyword_arguments.html">
+   Keyword Arguments and Default Values
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../comparison.html">
+   Comparison with
+   <code class="docutils literal notranslate">
+    <span class="pre">
+     multipledispatch
+    </span>
+   </code>
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../type_system.html">
+   Type System
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../conversion_promotion.html">
+   Conversion and Promotion
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../advanced_usage.html">
+   Advanced Usage
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="../../api.html">
+   Application Programming Interface
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav></div>
+        <div class="bd-sidebar__bottom">
+             <!-- To handle the deprecated key -->
+            
+            <div class="navbar_extra_footer">
+            Powered by <a href="https://jupyterbook.org">Jupyter Book</a>
+            </div>
+            
+        </div>
+    </div>
+    <div id="rtd-footer-container"></div>
+</div>
+
+
+          
+
+
+          
+<!-- A tiny helper pixel to detect if we've scrolled -->
+<div class="sbt-scroll-pixel-helper"></div>
+<!-- Main content -->
+<div class="col py-0 content-container">
+    
+    <div class="header-article row sticky-top noprint">
+        
+
+
+
+<div class="col py-1 d-flex header-article-main">
+    <div class="header-article__left">
+        
+        <label for="__navigation"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="right"
+title="Toggle navigation"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-bars"></i>
+  </span>
+
+</label>
+
+        
+    </div>
+    <div class="header-article__right">
+<button onclick="toggleFullScreen()"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="bottom"
+title="Fullscreen mode"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+<div class="menu-dropdown menu-dropdown-repository-buttons">
+  <button class="headerbtn menu-dropdown__trigger"
+      aria-label="Source repositories">
+      <i class="fab fa-github"></i>
+  </button>
+  <div class="menu-dropdown__content">
+    <ul>
+      <li>
+        <a href="https://github.com/wesselb/plum"
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="left"
+title="Source repository"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="headerbtn__text-container">repository</span>
+</a>
+
+      </li>
+      
+      <li>
+        <a href="https://github.com/wesselb/plum/issues/new?title=Issue%20on%20page%20%2F_modules/plum/parametric.html&body=Your%20issue%20content%20here."
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="left"
+title="Open an issue"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="headerbtn__text-container">open issue</span>
+</a>
+
+      </li>
+      
+    </ul>
+  </div>
+</div>
+
+    </div>
+</div>
+
+<!-- Table of contents -->
+<div class="col-md-3 bd-toc show noprint">
+</div>
+    </div>
+    <div class="article row">
+        <div class="col pl-md-3 pl-lg-5 content-container">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1></h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                    </div>
+                </div>
+            </div>
+            <main id="main-content" role="main">
+                
+              <div>
+                
+  <h1>Source code for plum.parametric</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">abc</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+
+<span class="kn">from</span> <span class="nn">.dispatcher</span> <span class="kn">import</span> <span class="n">Dispatcher</span>
+<span class="kn">from</span> <span class="nn">.function</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">promised_type_of</span> <span class="k">as</span> <span class="n">promised_type_of1</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.type</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">TypeMeta</span><span class="p">,</span>
+    <span class="n">promised_type_of</span> <span class="k">as</span> <span class="n">promised_type_of2</span><span class="p">,</span>
+    <span class="n">ComparableType</span><span class="p">,</span>
+    <span class="n">Union</span><span class="p">,</span>
+    <span class="n">PromisedList</span><span class="p">,</span>
+    <span class="n">PromisedTuple</span><span class="p">,</span>
+    <span class="n">PromisedDict</span><span class="p">,</span>
+    <span class="n">PromisedIterable</span><span class="p">,</span>
+    <span class="n">PromisedSequence</span><span class="p">,</span>
+    <span class="n">ptype</span><span class="p">,</span>
+    <span class="n">is_type</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="n">multihash</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;parametric&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;type_parameter&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;kind&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Kind&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;List&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Tuple&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Dict&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Iterable&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Sequence&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;type_of&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Val&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">_dispatch</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">ParametricTypeMeta</span><span class="p">(</span><span class="n">TypeMeta</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Parametric types can be instantiated with indexing.</span>
+
+<span class="sd">    A concrete parametric type can be instantiated by calling `Type[Par1, Par2]`.</span>
+<span class="sd">    If `Type(Arg1, Arg2, **kw_args)` is called, this returns</span>
+<span class="sd">    `Type[type(Arg1), type(Arg2)](Arg1, Arg2, **kw_args)`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">concrete</span><span class="p">:</span>
+            <span class="c1"># `p` can be a tuple, in which case it must be splatted.</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="p">(</span><span class="n">p</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="n">p</span><span class="p">,)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Cannot specify type parameters. This type is concrete.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
+        <span class="c1"># `Type(arg1, arg2, **kw_args)` will first construct the</span>
+        <span class="c1"># parametric subtype `T = Type[type(arg1), type(arg2)]`</span>
+        <span class="c1"># and then call the equivalent of `T(arg1, arg2, **kw_args)`.</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;parametric&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">cls</span><span class="o">.</span><span class="n">parametric</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">concrete</span><span class="p">:</span>
+                <span class="n">type_parameter</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__infer_type_parameter__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">)</span>
+                <span class="bp">cls</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">[</span><span class="n">type_parameter</span><span class="p">]</span>
+
+        <span class="c1"># Calls `__new__` and `__init__`.</span>
+        <span class="k">return</span> <span class="n">TypeMeta</span><span class="o">.</span><span class="fm">__call__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__infer_type_parameter__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Function called when the constructor of this parametric type is called</span>
+<span class="sd">        before the parameters have been specified.</span>
+
+<span class="sd">        The default behaviour is to take as parameters the type of every argument,</span>
+<span class="sd">        but this behaviour can be overridden by redefining this function on the</span>
+<span class="sd">        metaclass.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            *args: Positional arguments passed to the `__init__` method.</span>
+<span class="sd">            *kw_args: Keyword arguments passed to the `__init__` method.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            type or tuple[type]: A type or tuple of types.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># TODO: Use `type_of` instead of `type`.</span>
+        <span class="n">type_parameter</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">type_parameter</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">type_parameter</span> <span class="o">=</span> <span class="n">type_parameter</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">type_parameter</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">parametric</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;bool: Check whether the type is a parametric type.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;_parametric&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_parametric</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">concrete</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;bool: Check whether the parametric type is instantiated or not.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">parametric</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;_concrete&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_concrete</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;Cannot check whether a non-parametric type is instantiated or not.&quot;</span>
+            <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">type_parameter</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;object: Get the type parameter. Parametric type must be instantiated.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">concrete</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_type_parameter</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;Cannot get the type parameter of non-instantiated parametric type.&quot;</span>
+            <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">runtime_type_of</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;bool: Check whether the type requires :func:`.parametric.type_of` at</span>
+<span class="sd">        runtime&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;_runtime_type_of&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_runtime_type_of</span>
+
+
+<span class="k">def</span> <span class="nf">is_concrete</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check if a type `t` is a concrete instance of a parametric type.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        t (type): Type to check.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bool: `True` if `t` is a concrete instance of a parametric type and `False`</span>
+<span class="sd">            otherwise.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="s2">&quot;parametric&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">t</span><span class="o">.</span><span class="n">parametric</span> <span class="ow">and</span> <span class="n">t</span><span class="o">.</span><span class="n">concrete</span>
+
+
+<span class="k">class</span> <span class="nc">CovariantMeta</span><span class="p">(</span><span class="n">ParametricTypeMeta</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A metaclass that implements *covariance* of parametric types.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__subclasscheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">is_concrete</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="ow">and</span> <span class="n">is_concrete</span><span class="p">(</span><span class="n">subclass</span><span class="p">):</span>
+            <span class="c1"># Check that they are instances of the same parametric type.</span>
+            <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="nb">issubclass</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__bases__</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">subclass</span><span class="o">.</span><span class="vm">__bases__</span><span class="p">):</span>
+                <span class="n">par_subclass</span> <span class="o">=</span> <span class="n">subclass</span><span class="o">.</span><span class="n">type_parameter</span>
+                <span class="n">par_cls</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">type_parameter</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">par_subclass</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+                    <span class="n">par_subclass</span> <span class="o">=</span> <span class="p">(</span><span class="n">par_subclass</span><span class="p">,)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">par_cls</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+                    <span class="n">par_cls</span> <span class="o">=</span> <span class="p">(</span><span class="n">par_cls</span><span class="p">,)</span>
+
+                <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_is_sub_type_parameter</span><span class="p">(</span><span class="n">par_cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">,</span> <span class="n">par_subclass</span><span class="p">)</span>
+
+        <span class="c1"># Default behaviour to `type`s subclass check.</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="o">.</span><span class="fm">__subclasscheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_is_sub_type_parameter</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">par_cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">,</span> <span class="n">par_subclass</span><span class="p">):</span>
+        <span class="c1"># Handle the case that the parameters are tuples of types.</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">par_subclass</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">par_cls</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="c1"># Type parameter could be a type.</span>
+                <span class="n">ptype</span><span class="p">(</span><span class="n">pi_subclass</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">ptype</span><span class="p">(</span><span class="n">pi_self</span><span class="p">)</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">is_type</span><span class="p">(</span><span class="n">pi_subclass</span><span class="p">)</span> <span class="ow">and</span> <span class="n">is_type</span><span class="p">(</span><span class="n">pi_self</span><span class="p">))</span>
+                <span class="c1"># Type parameter could also be an object.</span>
+                <span class="k">else</span> <span class="n">pi_subclass</span> <span class="o">==</span> <span class="n">pi_self</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">pi_subclass</span><span class="p">,</span> <span class="n">pi_self</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">par_subclass</span><span class="p">,</span> <span class="n">par_cls</span><span class="p">)</span>
+        <span class="p">)</span>
+
+
+<div class="viewcode-block" id="parametric"><a class="viewcode-back" href="../../api.html#plum.parametric.parametric">[docs]</a><span class="k">def</span> <span class="nf">parametric</span><span class="p">(</span><span class="n">Class</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">runtime_type_of</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">CovariantMeta</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A decorator for parametric classes.</span>
+
+<span class="sd">    When the constructor of this parametric type is called before the type parameter</span>
+<span class="sd">    has been specified, the type parameters are inferred from the arguments of the</span>
+<span class="sd">    constructor by calling the following function.</span>
+
+<span class="sd">    The default implementation is shown here, but it is possible to override it.::</span>
+
+<span class="sd">        @classmethod</span>
+<span class="sd">        def __infer_type_parameter__(cls, *args, **kw_args) -&gt; Tuple:</span>
+<span class="sd">            return tuple(type(arg) for arg in args)</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        runtime_type_of (bool, optional): Require the use of :func:`.parametric.type_of`</span>
+<span class="sd">            at runtime to determine the types of arguments at runtime. Defaults to</span>
+<span class="sd">            `False`</span>
+<span class="sd">        metaclass (type, optional): Metaclass of the parametric class. Defaults to</span>
+<span class="sd">            :class:`.parametric.CovariantMeta`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Allow the keyword arguments to be passed in without using `functools.partial`</span>
+    <span class="c1"># explicitly.</span>
+    <span class="k">if</span> <span class="n">Class</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">partial</span><span class="p">(</span><span class="n">parametric</span><span class="p">,</span> <span class="n">runtime_type_of</span><span class="o">=</span><span class="n">runtime_type_of</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">metaclass</span><span class="p">)</span>
+
+    <span class="n">subclasses</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">Class</span><span class="p">,</span> <span class="nb">object</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;To let </span><span class="si">{</span><span class="n">Class</span><span class="si">}</span><span class="s2"> be a parametric class, it must be a new-style class.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">ps</span><span class="p">):</span>
+        <span class="c1"># Only create new subclass if it doesn&#39;t exist already.</span>
+        <span class="k">if</span> <span class="n">ps</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">subclasses</span><span class="p">:</span>
+
+            <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">Class</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+
+            <span class="c1"># Create subclass.</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">Class</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">+</span> <span class="s2">&quot;[&quot;</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">ps</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;]&quot;</span>
+            <span class="n">SubClass</span> <span class="o">=</span> <span class="nb">type</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span>
+                <span class="n">metaclass</span><span class="p">,</span>
+                <span class="n">name</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">ParametricClass</span><span class="p">,),</span>
+                <span class="p">{</span><span class="s2">&quot;__new__&quot;</span><span class="p">:</span> <span class="fm">__new__</span><span class="p">},</span>
+            <span class="p">)</span>
+            <span class="n">SubClass</span><span class="o">.</span><span class="n">_parametric</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">SubClass</span><span class="o">.</span><span class="n">_concrete</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">SubClass</span><span class="o">.</span><span class="n">_runtime_type_of</span> <span class="o">=</span> <span class="n">runtime_type_of</span>
+            <span class="n">SubClass</span><span class="o">.</span><span class="n">_type_parameter</span> <span class="o">=</span> <span class="n">ps</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ps</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">ps</span>
+            <span class="n">SubClass</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">=</span> <span class="n">Class</span><span class="o">.</span><span class="vm">__module__</span>
+
+            <span class="c1"># Attempt to correct docstring.</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">SubClass</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="n">Class</span><span class="o">.</span><span class="vm">__doc__</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+                <span class="k">pass</span>
+
+            <span class="n">subclasses</span><span class="p">[</span><span class="n">ps</span><span class="p">]</span> <span class="o">=</span> <span class="n">SubClass</span>
+        <span class="k">return</span> <span class="n">subclasses</span><span class="p">[</span><span class="n">ps</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__init_subclass__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">_parametric</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">_runtime_type_of</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="fm">__new__</span> <span class="ow">is</span> <span class="fm">__new__</span><span class="p">:</span>
+
+            <span class="k">def</span> <span class="nf">resetted_new</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">Class</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+
+            <span class="bp">cls</span><span class="o">.</span><span class="fm">__new__</span> <span class="o">=</span> <span class="n">resetted_new</span>
+        <span class="n">Class</span><span class="o">.</span><span class="n">__init_subclass__</span><span class="p">(</span><span class="o">**</span><span class="n">kw_args</span><span class="p">)</span>
+
+    <span class="c1"># Create parametric class.</span>
+    <span class="n">ParametricClass</span> <span class="o">=</span> <span class="n">metaclass</span><span class="p">(</span>
+        <span class="n">Class</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+        <span class="p">(</span><span class="n">Class</span><span class="p">,),</span>
+        <span class="p">{</span><span class="s2">&quot;__new__&quot;</span><span class="p">:</span> <span class="fm">__new__</span><span class="p">,</span> <span class="s2">&quot;__init_subclass__&quot;</span><span class="p">:</span> <span class="n">__init_subclass__</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">ParametricClass</span><span class="o">.</span><span class="n">_parametric</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">ParametricClass</span><span class="o">.</span><span class="n">_concrete</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">ParametricClass</span><span class="o">.</span><span class="n">_runtime_type_of</span> <span class="o">=</span> <span class="n">runtime_type_of</span>
+    <span class="n">ParametricClass</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">=</span> <span class="n">Class</span><span class="o">.</span><span class="vm">__module__</span>
+
+    <span class="c1"># Attempt to correct docstring.</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">ParametricClass</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="n">Class</span><span class="o">.</span><span class="vm">__doc__</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+        <span class="k">pass</span>
+
+    <span class="k">return</span> <span class="n">ParametricClass</span></div>
+
+
+<div class="viewcode-block" id="type_parameter"><a class="viewcode-back" href="../../api.html#plum.parametric.type_parameter">[docs]</a><span class="nd">@_dispatch</span>
+<span class="k">def</span> <span class="nf">type_parameter</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get the type parameter of an instance of a parametric type.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x (object): Instance of a parametric type.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        object: Type parameter.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">type_parameter</span></div>
+
+
+<div class="viewcode-block" id="kind"><a class="viewcode-back" href="../../api.html#plum.parametric.kind">[docs]</a><span class="k">def</span> <span class="nf">kind</span><span class="p">(</span><span class="n">SuperClass</span><span class="o">=</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a parametric wrapper type for dispatch purposes.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        SuperClass (type): Super class.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        object: New parametric type wrapper.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@parametric</span>
+    <span class="k">class</span> <span class="nc">Kind</span><span class="p">(</span><span class="n">SuperClass</span><span class="p">):</span>
+        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">xs</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">xs</span> <span class="o">=</span> <span class="n">xs</span>
+
+        <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">xs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">xs</span>
+
+    <span class="k">return</span> <span class="n">Kind</span></div>
+
+
+<span class="n">Kind</span> <span class="o">=</span> <span class="n">kind</span><span class="p">()</span>  <span class="c1">#: A default kind provided for convenience.</span>
+
+
+<span class="nd">@parametric</span>
+<span class="k">class</span> <span class="nc">_ParametricList</span><span class="p">(</span><span class="nb">list</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Parametric list type.&quot;&quot;&quot;</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">__iter_el_type__</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">type_parameter</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">__getitem_el_type__</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__iter_el_type__</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="List"><a class="viewcode-back" href="../../api.html#plum.parametric.List">[docs]</a><span class="k">class</span> <span class="nc">List</span><span class="p">(</span><span class="n">ComparableType</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Parametric list Plum type.</span>
+
+<span class="sd">    IMPORTANT:</span>
+<span class="sd">        `List` should not be used to generically refer to a list! Use `list` instead.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        el_type (type or ptype): Element type.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">el_type</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span> <span class="o">=</span> <span class="n">ptype</span><span class="p">(</span><span class="n">el_type</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">multihash</span><span class="p">(</span><span class="n">List</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;List[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span><span class="si">}</span><span class="s2">]&quot;</span>
+
+<div class="viewcode-block" id="List.get_types"><a class="viewcode-back" href="../../api.html#plum.parametric.List.get_types">[docs]</a>    <span class="k">def</span> <span class="nf">get_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">_ParametricList</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span><span class="p">],)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">parametric</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">runtime_type_of</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<span class="c1"># Deliver `List`.</span>
+<span class="n">PromisedList</span><span class="o">.</span><span class="n">deliver</span><span class="p">(</span><span class="n">List</span><span class="p">)</span>
+
+
+<span class="nd">@parametric</span>
+<span class="k">class</span> <span class="nc">_ParametricTuple</span><span class="p">(</span><span class="nb">tuple</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Parametric tuple type.&quot;&quot;&quot;</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">__iter_el_type__</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">type_parameter</span>
+        <span class="k">return</span> <span class="n">Union</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">p</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="n">p</span><span class="p">,)))</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">__getitem_el_type__</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__iter_el_type__</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="Tuple"><a class="viewcode-back" href="../../api.html#plum.parametric.Tuple">[docs]</a><span class="k">class</span> <span class="nc">Tuple</span><span class="p">(</span><span class="n">ComparableType</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Parametric tuple Plum type.</span>
+
+<span class="sd">    IMPORTANT:</span>
+<span class="sd">        `Tuple` should not be used to generically refer to a tuple! Use `tuple` instead.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        *el_types (type or ptype): Element types.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">el_types</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_el_types</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">ptype</span><span class="p">(</span><span class="n">el_type</span><span class="p">)</span> <span class="k">for</span> <span class="n">el_type</span> <span class="ow">in</span> <span class="n">el_types</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">multihash</span><span class="p">(</span><span class="n">Tuple</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_el_types</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;Tuple[</span><span class="si">{</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_el_types</span><span class="p">))</span><span class="si">}</span><span class="s1">]&#39;</span>
+
+<div class="viewcode-block" id="Tuple.get_types"><a class="viewcode-back" href="../../api.html#plum.parametric.Tuple.get_types">[docs]</a>    <span class="k">def</span> <span class="nf">get_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">_ParametricTuple</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_el_types</span><span class="p">],)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">parametric</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">runtime_type_of</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<span class="c1"># Deliver `Tuple`.</span>
+<span class="n">PromisedTuple</span><span class="o">.</span><span class="n">deliver</span><span class="p">(</span><span class="n">Tuple</span><span class="p">)</span>
+
+
+<span class="nd">@parametric</span>
+<span class="k">class</span> <span class="nc">_ParametricDict</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Parametric dictionary type.&quot;&quot;&quot;</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">__iter_el_type__</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="n">key_type</span><span class="p">,</span> <span class="n">value_type</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">type_parameter</span>
+        <span class="k">return</span> <span class="n">key_type</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">__getitem_el_type__</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="n">key_type</span><span class="p">,</span> <span class="n">value_type</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">type_parameter</span>
+        <span class="k">return</span> <span class="n">value_type</span>
+
+
+<div class="viewcode-block" id="Dict"><a class="viewcode-back" href="../../api.html#plum.parametric.Dict">[docs]</a><span class="k">class</span> <span class="nc">Dict</span><span class="p">(</span><span class="n">ComparableType</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Parametric dictionary Plum type.</span>
+
+<span class="sd">    IMPORTANT:</span>
+<span class="sd">        `Dict` should not be used to generically refer to a dictionary! Use `dict` instead.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        key_type (type or ptype): Type of the keys.</span>
+<span class="sd">        value_type (type or ptype): Type of the values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key_type</span><span class="p">,</span> <span class="n">value_type</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_key_type</span> <span class="o">=</span> <span class="n">ptype</span><span class="p">(</span><span class="n">key_type</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_value_type</span> <span class="o">=</span> <span class="n">ptype</span><span class="p">(</span><span class="n">value_type</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">multihash</span><span class="p">(</span><span class="n">Dict</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_key_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value_type</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Dict[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_key_type</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_value_type</span><span class="si">}</span><span class="s2">]&quot;</span>
+
+<div class="viewcode-block" id="Dict.get_types"><a class="viewcode-back" href="../../api.html#plum.parametric.Dict.get_types">[docs]</a>    <span class="k">def</span> <span class="nf">get_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">_ParametricDict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_key_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value_type</span><span class="p">],)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">parametric</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">runtime_type_of</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<span class="c1"># Deliver `Dict`.</span>
+<span class="n">PromisedDict</span><span class="o">.</span><span class="n">deliver</span><span class="p">(</span><span class="n">Dict</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">ElementTypeMeta</span><span class="p">(</span><span class="n">CovariantMeta</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Metaclass of containers of elements with certain magic methods.&quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">required_methods</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;list[str]: Required methods.&quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">el_type_method</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;str: Method to get the element type.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__subclasscheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">subclass</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">required_methods</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">is_concrete</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="ow">and</span> <span class="n">is_concrete</span><span class="p">(</span><span class="n">subclass</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">subclass</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">el_type_method</span><span class="p">):</span>
+                    <span class="n">subclass_el_type</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">subclass</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">el_type_method</span><span class="p">)()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+                <span class="k">return</span> <span class="n">ptype</span><span class="p">(</span><span class="n">subclass_el_type</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">ptype</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">type_parameter</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">is_concrete</span><span class="p">(</span><span class="n">subclass</span><span class="p">):</span>
+                <span class="c1"># Case of `subclass[par] &lt;= cls`. This is always true.</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">elif</span> <span class="n">is_concrete</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+                <span class="c1"># Case of `subclass &lt;= cls[par]`. This is never true.</span>
+                <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Case of `subclass &lt;= cls`. This is also always true.</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="n">CovariantMeta</span><span class="o">.</span><span class="fm">__subclasscheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">IterableMeta</span><span class="p">(</span><span class="n">ElementTypeMeta</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Metaclass of iterables.&quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">required_methods</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;__iter__&quot;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">el_type_method</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;__iter_el_type__&quot;</span>
+
+
+<span class="nd">@parametric</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">IterableMeta</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">_ParametricIterable</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Parametric iterable type.&quot;&quot;&quot;</span>
+
+
+<span class="k">class</span> <span class="nc">_NotSpecified</span><span class="p">:</span>
+    <span class="k">pass</span>
+
+
+<div class="viewcode-block" id="Iterable"><a class="viewcode-back" href="../../api.html#plum.parametric.Iterable">[docs]</a><span class="k">class</span> <span class="nc">Iterable</span><span class="p">(</span><span class="n">ComparableType</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Parametric iterable Plum type.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        el_type (type or ptype, optional): Type of the elements.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">el_type</span><span class="o">=</span><span class="n">_NotSpecified</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">el_type</span> <span class="ow">is</span> <span class="n">_NotSpecified</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span> <span class="o">=</span> <span class="n">ptype</span><span class="p">(</span><span class="n">el_type</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="n">Iterable</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">multihash</span><span class="p">(</span><span class="n">Iterable</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;Iterable&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Iterable[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span><span class="si">}</span><span class="s2">]&quot;</span>
+
+<div class="viewcode-block" id="Iterable.get_types"><a class="viewcode-back" href="../../api.html#plum.parametric.Iterable.get_types">[docs]</a>    <span class="k">def</span> <span class="nf">get_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">_ParametricIterable</span><span class="p">,)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">_ParametricIterable</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span><span class="p">],)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">parametric</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">runtime_type_of</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
+
+
+<span class="c1"># Deliver `Iterable`.</span>
+<span class="n">PromisedIterable</span><span class="o">.</span><span class="n">deliver</span><span class="p">(</span><span class="n">Iterable</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">SequenceMeta</span><span class="p">(</span><span class="n">ElementTypeMeta</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Metaclass of sequences.&quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">required_methods</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;__getitem__&quot;</span><span class="p">,</span> <span class="s2">&quot;__len__&quot;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">el_type_method</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;__getitem_el_type__&quot;</span>
+
+
+<span class="nd">@parametric</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">SequenceMeta</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">_ParametricSequence</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Parametric sequence type.&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="Sequence"><a class="viewcode-back" href="../../api.html#plum.parametric.Sequence">[docs]</a><span class="k">class</span> <span class="nc">Sequence</span><span class="p">(</span><span class="n">ComparableType</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Parametric iterable Plum type.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        el_type (type or ptype, optional): Type of the elements.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">el_type</span><span class="o">=</span><span class="n">_NotSpecified</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">el_type</span> <span class="ow">is</span> <span class="n">_NotSpecified</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span> <span class="o">=</span> <span class="n">ptype</span><span class="p">(</span><span class="n">el_type</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="n">Sequence</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">multihash</span><span class="p">(</span><span class="n">Sequence</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;Sequence&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Sequence[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span><span class="si">}</span><span class="s2">]&quot;</span>
+
+<div class="viewcode-block" id="Sequence.get_types"><a class="viewcode-back" href="../../api.html#plum.parametric.Sequence.get_types">[docs]</a>    <span class="k">def</span> <span class="nf">get_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">_ParametricSequence</span><span class="p">,)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">_ParametricSequence</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span><span class="p">],)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">parametric</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">runtime_type_of</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_el_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
+
+
+<span class="c1"># Deliver `Sequence`.</span>
+<span class="n">PromisedSequence</span><span class="o">.</span><span class="n">deliver</span><span class="p">(</span><span class="n">Sequence</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_types_of_iterable</span><span class="p">(</span><span class="n">xs</span><span class="p">):</span>
+    <span class="n">types</span> <span class="o">=</span> <span class="p">{</span><span class="n">type_of</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xs</span><span class="p">}</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">types</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">types</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Union</span><span class="p">(</span><span class="o">*</span><span class="n">types</span><span class="p">)</span>
+
+
+<span class="nd">@_dispatch</span>
+<span class="k">def</span> <span class="nf">type_of</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get the Plum type of an object.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        obj (object): Object to get type of.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">        ptype: Plum type of `obj`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">ptype</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
+
+
+<span class="nd">@_dispatch</span>
+<span class="k">def</span> <span class="nf">type_of</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">List</span><span class="p">(</span><span class="n">_types_of_iterable</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
+
+
+<span class="nd">@_dispatch</span>
+<span class="k">def</span> <span class="nf">type_of</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Tuple</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">type_of</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="type_of"><a class="viewcode-back" href="../../api.html#plum.parametric.type_of">[docs]</a><span class="nd">@_dispatch</span>
+<span class="k">def</span> <span class="nf">type_of</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Dict</span><span class="p">(</span><span class="n">_types_of_iterable</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span> <span class="n">_types_of_iterable</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span></div>
+
+
+<span class="c1"># Deliver `type_of`.</span>
+<span class="n">promised_type_of1</span><span class="o">.</span><span class="n">deliver</span><span class="p">(</span><span class="n">type_of</span><span class="p">)</span>
+<span class="n">promised_type_of2</span><span class="o">.</span><span class="n">deliver</span><span class="p">(</span><span class="n">type_of</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Val"><a class="viewcode-back" href="../../api.html#plum.parametric.Val">[docs]</a><span class="nd">@parametric</span>
+<span class="k">class</span> <span class="nc">Val</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;A parametric type used to move information from the value domain to the type</span>
+<span class="sd">    domain.&quot;&quot;&quot;</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">__infer_type_parameter__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Function called when the constructor of `Val` is called to determine the type</span>
+<span class="sd">        parameters.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The value must be specified.&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Too many values. `Val` accepts only one argument.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Construct a value object with type `Val(arg)` that can be used to dispatch</span>
+<span class="sd">        based on values.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            val (object): The value to be moved to the type domain.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">concrete</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">type_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">!=</span> <span class="n">val</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The value must be equal to the type parameter.&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The value must be specified.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">repr</span><span class="p">(</span><span class="n">ptype</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)))</span><span class="si">}</span><span class="s2">()&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span></div>
+</pre></div>
+
+              </div>
+              
+            </main>
+            <footer class="footer-article noprint">
+                
+    <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+</div>
+            </footer>
+        </div>
+    </div>
+    <div class="footer-content row">
+        <footer class="col footer"><p>
+  
+    By Wessel Bruinsma, Filippo Vicentini, and Ruan Comelli<br/>
+  
+      &copy; Copyright 2022.<br/>
+</p>
+        </footer>
+    </div>
+    
+</div>
+
+
+      </div>
+    </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+
+
+  </body>
+</html>
