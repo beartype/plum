@@ -5,11 +5,12 @@ format: jb-book
 root: intro
 chapters:
 - file: basic_usage
-- file: scope
-- file: classes
-- file: keyword_arguments
-- file: comparison
-- file: type_system
-- file: conversion_promotion
+- sections: 
+  - file: scope
+  - file: classes
+  - file: keyword_arguments
+  - file: comparison
+  - file: type_system
+  - file: conversion_promotion
 - file: advanced_usage
 - file: api
