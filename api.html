@@ -113,45 +113,52 @@ const thebe_selector_output = ".output, .cell_output"
             </li>
         </ul>
         <ul class="current nav bd-sidenav">
- <li class="toctree-l1">
+ <li class="toctree-l1 has-children">
   <a class="reference internal" href="basic_usage.html">
    Basic Usage
   </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="scope.html">
-   Scope of Functions
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="classes.html">
-   Classes
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="keyword_arguments.html">
-   Keyword Arguments and Default Values
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="comparison.html">
-   Comparison with
-   <code class="docutils literal notranslate">
-    <span class="pre">
-     multipledispatch
-    </span>
-   </code>
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="type_system.html">
-   Type System
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="conversion_promotion.html">
-   Conversion and Promotion
-  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="scope.html">
+     Scope of Functions
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="classes.html">
+     Classes
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="keyword_arguments.html">
+     Keyword Arguments and Default Values
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="comparison.html">
+     Comparison with
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       multipledispatch
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="type_system.html">
+     Type System
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="conversion_promotion.html">
+     Conversion and Promotion
+    </a>
+   </li>
+  </ul>
  </li>
  <li class="toctree-l1">
   <a class="reference internal" href="advanced_usage.html">
@@ -485,7 +492,7 @@ runtime by <cite>plum.type_of</cite> instead of built-in <cite>type</cite>.</p>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="plum.type.TypeType">
-<span class="sig-prename descclassname"><span class="pre">plum.type.</span></span><span class="sig-name descname"><span class="pre">TypeType</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Union[builtins.type,</span> <span class="pre">plum.type.AbstractType]</span></em><a class="headerlink" href="#plum.type.TypeType" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">plum.type.</span></span><span class="sig-name descname"><span class="pre">TypeType</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Union[plum.type.AbstractType,</span> <span class="pre">builtins.type]</span></em><a class="headerlink" href="#plum.type.TypeType" title="Permalink to this definition">#</a></dt>
 <dd><p>The type of a type or Plum type.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
