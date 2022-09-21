@@ -5,7 +5,7 @@ format: jb-book
 root: intro
 chapters:
 - file: basic_usage
-- sections: 
+  sections:
   - file: scope
   - file: classes
   - file: keyword_arguments
