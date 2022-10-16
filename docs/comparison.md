@@ -50,7 +50,7 @@ class A:
         return "fallback"
         
 
-class B:
+class B(A):
     @dispatch(int)
     def f(self, x):
         return x
