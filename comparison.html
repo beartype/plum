@@ -396,7 +396,7 @@ Consider the following snippet:</p>
         <span class="k">return</span> <span class="s2">&quot;fallback&quot;</span>
         
 
-<span class="k">class</span> <span class="nc">B</span><span class="p">:</span>
+<span class="k">class</span> <span class="nc">B</span><span class="p">(</span><span class="n">A</span><span class="p">):</span>
     <span class="nd">@dispatch</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">x</span>
