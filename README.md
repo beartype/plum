@@ -12,16 +12,48 @@ Everybody likes multiple dispatch, just like everybody likes plums.
 
 Plum requires Python 3.7 or higher.
 
-## PyPi via `pip`
-
 ```bash
 pip install plum-dispatch
 ```
 
-## Development Environment
-
-Description coming soon.
-
-# Documentation
+# [Documentation](https://wesselb.github.io/plum)
 
 See [here](https://wesselb.github.io/plum).
+
+# What's This?
+
+Plum brings your type annotations to life:
+
+```python
+from numbers import Number
+
+from plum import dispatch
+
+@dispatch
+def f(x: str):
+    return "This is a string!"
+
+
+@dispatch
+def f(x: int):
+    return "This is an integer!"
+
+
+@dispatch
+def f(x: Number):
+    return "This is a general number, but I don't know which type."
+```
+
+```python
+>>> f("1")
+'This is a string!'
+
+>>> f(1)
+'This is an integer!'
+
+>>> f(1.0)
+'This is a number, but I don't know which type.'
+
+>>> f(object())
+NotFoundLookupError: For function "f", signature Signature(builtins.object) could not be resolved.
+```
