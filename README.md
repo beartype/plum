@@ -52,7 +52,7 @@ def f(x: Number):
 'This is an integer!'
 
 >>> f(1.0)
-'This is a number, but I don't know which type.'
+"This is a number, but I don't know which type."
 
 >>> f(object())
 NotFoundLookupError: For function "f", signature Signature(builtins.object) could not be resolved.
