@@ -57,3 +57,39 @@ def f(x: Number):
 >>> f(object())
 NotFoundLookupError: For function "f", signature Signature(builtins.object) could not be resolved.
 ```
+
+This also works for multiple arguments, enabling some neat design patterns:
+
+```python
+from numbers import Number, Real, Rational
+
+from plum import dispatch
+
+@dispatch
+def multiply(x: Number, y: Number):
+    return "fallback implementation of multiplication"
+
+
+@dispatch
+def multiply(x: Real, y: Real):
+    return "specialised implementation for reals"
+
+
+@dispatch
+def multiply(x: Rational, y: Rational):
+    return "specialised implementation for rationals"
+```
+
+```python
+>>> multiply(1, 1)
+'specialised implementation for rationals'
+
+>>> multiply(1.0, 1.0)
+'specialised implementation for reals'
+
+>>> multiply(1j, 1j)
+'fallback implementation of multiplication'
+
+>>> multiply(1, 1.0)  # For mixed types, it automatically chooses the right optimisation!
+'specialised implementation for reals'
+```
