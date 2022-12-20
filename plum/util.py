@@ -1,30 +1,27 @@
 import abc
-import logging
 
 __all__ = [
-    "wrap_lambda",
+    "Missing",
     "multihash",
     "Comparable",
+    "wrap_lambda",
     "is_in_class",
     "get_class",
     "get_context",
-    "check_future_annotations",
-    "unquote",
 ]
 
-log = logging.getLogger(__name__)
+
+class _MissingType(type):
+    def __bool__(self):
+        raise TypeError("`Missing` has no boolean value.")
 
 
-def wrap_lambda(f):
-    """Wrap a function in a lambda function.
+class Missing(metaclass=_MissingType):
+    """A class that can be used to indicate that a value is missing. This class cannot
+    be instantiated and has no boolean value."""
 
-    Args:
-        f (function): Function to wrap.
-
-    Returns:
-        function: Wrapped version of `f`.
-    """
-    return lambda x: f(x)
+    def __init__(self):
+        raise TypeError("`Missing` cannot be instantiated.")
 
 
 def multihash(*args):
@@ -70,14 +67,24 @@ class Comparable:
         """Check whether this object is comparable with another one.
 
         Args:
-            other (:class:`.util.Comparable`): Object to check comparability
-                with.
+            other (:class:`Comparable`): Object to check comparability with.
 
         Returns:
-            bool: `True` if the object is comparable with `other` and `False`
-                otherwise.
+            bool: `True` if the object is comparable with `other` and `False` otherwise.
         """
         return self < other or self == other or self > other
+
+
+def wrap_lambda(f):
+    """Wrap a function in a lambda function.
+
+    Args:
+        f (function): Function to wrap.
+
+    Returns:
+        function: Wrapped version of `f`.
+    """
+    return lambda x: f(x)
 
 
 def is_in_class(f):
@@ -132,33 +139,3 @@ def get_context(f):
     else:
         # Split off function name only.
         return ".".join(parts[:-1])
-
-
-def check_future_annotations(frame=None):
-    """Check if `from __future__ import annotations` is active in a frame.
-
-    Args:
-        frame (object): Frame.
-
-    Returns:
-        bool: `True` if it is activated, otherwise `False`.
-    """
-    return "annotations" in frame.f_globals
-
-
-def unquote(x):
-    """Remove quotes from a string at the outermost level.
-
-    If `x` is not a string, `x` is returned immediately.
-
-    Args:
-        x (str or object): String to remove quotes from.
-
-    Return:
-        str or object: `x` but without quotes.
-    """
-    if not isinstance(x, str):
-        return x
-    while len(x) >= 2 and x[0] == x[-1] and x[0] in {'"', "'"}:
-        x = x[1:-1]
-    return x

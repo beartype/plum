@@ -1,6 +1,24 @@
+import pytest
 import numpy as np
 
-from plum.util import multihash, Comparable, is_in_class, get_class, get_context
+from plum.util import (
+    Missing,
+    multihash,
+    Comparable,
+    is_in_class,
+    get_class,
+    get_context,
+)
+
+
+def test_missing():
+    # `Missing` cannot be instantiated.
+    with pytest.raises(TypeError):
+        Missing()
+
+    # `Missing` also has no boolean value.
+    with pytest.raises(TypeError):
+        bool(Missing)
 
 
 def test_multihash():
