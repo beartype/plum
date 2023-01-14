@@ -12,6 +12,8 @@ __all__ = [
 
 
 class _MissingType(type):
+    """The type of :class:`Missing`."""
+
     def __bool__(self):
         raise TypeError("`Missing` has no boolean value.")
 

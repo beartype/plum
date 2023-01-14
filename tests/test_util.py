@@ -1,13 +1,14 @@
-import pytest
 import numpy as np
+import pytest
 
 from plum.util import (
-    Missing,
-    multihash,
     Comparable,
-    is_in_class,
+    Missing,
     get_class,
     get_context,
+    is_in_class,
+    multihash,
+    wrap_lambda,
 )
 
 
@@ -55,6 +56,10 @@ class A:
 
 def f(self):
     pass
+
+
+def test_wrap_lambda():
+    assert wrap_lambda(int)("1") == 1
 
 
 def test_is_in_class():
