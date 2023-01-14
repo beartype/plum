@@ -1,36 +1,36 @@
-import numpy as np
 import pytest
 
-from pathlib import Path
-
-from plum import Dispatcher, autoreload as p_autoreload
+from plum import Dispatcher
+from plum import autoreload as ar
 from plum.function import NotFoundLookupError
 
 
 def test_autoreload_activate_deactivate():
-    p_autoreload.activate()
+    # We shouldn't be able to deactivate before activation.
+    with pytest.raises(
+        RuntimeError,
+        match=r"(?i)plum autoreload module was never activated",
+    ):
+        ar.deactivate()
 
-    assert p_autoreload._update_instances_original is not None
-    assert (
-        p_autoreload._update_instances_original.__module__
-        == "IPython.extensions.autoreload"
-    )
+    ar.activate()
 
-    from IPython.extensions import autoreload
+    from IPython.extensions import autoreload as iar
 
-    assert autoreload.update_instances.__module__ == "plum.autoreload"
+    # Check that it is activated.
+    assert ar._update_instances_original is not None
+    assert ar._update_instances_original.__module__ == "IPython.extensions.autoreload"
+    assert iar.update_instances.__module__ == "plum.autoreload"
 
-    p_autoreload.deactivate()
+    ar.deactivate()
 
-    assert (
-        p_autoreload._update_instances_original.__module__
-        == "IPython.extensions.autoreload"
-    )
-    assert autoreload.update_instances.__module__ == "IPython.extensions.autoreload"
-    assert autoreload.update_instances == p_autoreload._update_instances_original
+    # Check that it is deactivated.
+    assert ar._update_instances_original.__module__ == "IPython.extensions.autoreload"
+    assert iar.update_instances.__module__ == "IPython.extensions.autoreload"
+    assert iar.update_instances == ar._update_instances_original
 
 
-def test_autoreload_works():
+def test_autoreload_correctness():
     dispatch = Dispatcher()
 
     class A1:
@@ -50,7 +50,7 @@ def test_autoreload_works():
 
     a1 = A1()
 
-    p_autoreload._update_instances(A1, A2)
+    ar._update_instances(A1, A2)
 
     assert test(A2()) == 1
 
