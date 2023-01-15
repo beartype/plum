@@ -38,13 +38,11 @@ def multihash(*args):
     return hash(args)
 
 
-class Comparable:
+class Comparable(metaclass=abc.ABCMeta):
     """A mixin that makes instances of the class comparable.
 
     Requires the subclass to just implement `__le__`.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     def __eq__(self, other):
         return self <= other <= self
@@ -69,19 +67,19 @@ class Comparable:
         """Check whether this object is comparable with another one.
 
         Args:
-            other (:class:`Comparable`): Object to check comparability with.
+            other (object): Object to check comparability with.
 
         Returns:
-            bool: `True` if the object is comparable with `other` and `False` otherwise.
+            Whether the object is comparable with `other`.
         """
         return self < other or self == other or self > other
 
 
 def wrap_lambda(f):
-    """Wrap a function in a lambda function.
+    """Wrap a callable in a lambda function.
 
     Args:
-        f (function): Function to wrap.
+        f (Callable): Function to wrap.
 
     Returns:
         function: Wrapped version of `f`.
@@ -96,7 +94,7 @@ def is_in_class(f):
         f (function): Function to check.
 
     Returns:
-        bool: `True` if `f` is part of a class, else `False`.
+        bool: Whether `f` is part of a class.
     """
     parts = f.__qualname__.split(".")
     return len(parts) >= 2 and parts[-2] != "<locals>"
@@ -132,7 +130,7 @@ def get_context(f):
         f (function): Method to get context for.
 
     Returns:
-        str: Context.
+        str: The context of `f`.
     """
     parts = _split_parts(f)
     if is_in_class(f):
