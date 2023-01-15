@@ -2,12 +2,6 @@ import sys
 import typing
 import warnings
 
-try:  # pragma: no cover
-    from collections.abc import Callable
-except ImportError:  # pragma: no cover
-    from typing import Callable  # Python 3.8 and earlier
-
-
 __all__ = [
     "PromisedType",
     "ModuleType",
@@ -135,8 +129,8 @@ def _hashable(x):
 
 
 type_mapping = {}
-"""dict[type, type]: When running :func:`resolve_type_hint`, map keys in this dictionary
-to the values."""
+"""dict: When running :func:`resolve_type_hint`, map keys in this dictionary to the
+values."""
 
 
 def resolve_type_hint(x):
