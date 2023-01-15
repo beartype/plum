@@ -2,15 +2,16 @@ import sys
 import typing
 import warnings
 
-try:
+try:  # pragma: no cover
     from collections.abc import Callable
-except ImportError:
+except ImportError:  # pragma: no cover
     from typing import Callable  # Python 3.8 and earlier
 
 
 __all__ = [
     "PromisedType",
     "ModuleType",
+    "type_mapping",
     "resolve_type_hint",
     "is_faithful",
 ]
@@ -133,7 +134,9 @@ def _hashable(x):
         return False
 
 
-_type_mapping = {}
+type_mapping = {}
+"""dict[type, type]: When running :func:`resolve_type_hint`, map keys in this dictionary
+to the values."""
 
 
 def resolve_type_hint(x):
@@ -149,13 +152,16 @@ def resolve_type_hint(x):
     Returns:
         object: `x`, but with all :class:`ResolvableType` resolved.
     """
-    if _hashable(x) and x in _type_mapping:
-        return resolve_type_hint(_type_mapping[x])
+    if _hashable(x) and x in type_mapping:
+        return resolve_type_hint(type_mapping[x])
     elif _is_hint(x):
         origin = typing.get_origin(x)
         args = typing.get_args(x)
         if args == ():
-            return origin
+            # `origin` might not make sense here. For example, `get_origin(Any)` is
+            # `None`. Since the hint wasn't subscripted, the right thing is to right the
+            # hint itself.
+            return x
         else:
             return origin[resolve_type_hint(args)]
 
@@ -204,18 +210,18 @@ def is_faithful(x):
 
 def _is_faithful(x):
     if _is_hint(x):
-        if x == typing.Any:
-            return True
-
         origin = typing.get_origin(x)
         args = typing.get_args(x)
-
-        if origin in {typing.Union, typing.Optional}:
-            return all(is_faithful(arg) for arg in args)
-        elif origin == Callable and args == ():
+        if args == ():
+            # Unsubscripted type hints tend to be faithful. For example, `Any`, `List`,
+            # `Tuple`, `Dict`, `Callable`, and `Generator` are. When we come across a
+            # counter-example, we will refine this logic.
             return True
         else:
-            return False
+            if origin in {typing.Union, typing.Optional}:
+                return all(is_faithful(arg) for arg in args)
+            else:
+                return False
 
     elif x is None:
         return True

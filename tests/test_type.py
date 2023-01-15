@@ -12,7 +12,9 @@ from plum.type import (
     PromisedType,
     ResolvableType,
     _is_hint,
+    is_faithful,
     resolve_type_hint,
+    type_mapping,
 )
 
 
@@ -54,6 +56,15 @@ def test_is_hint():
     assert _is_hint(Callable)
 
 
+def test_type_mapping():
+    assert resolve_type_hint(int) is int
+    try:
+        type_mapping[int] = float
+        assert resolve_type_hint(int) is float
+    finally:
+        del type_mapping[int]
+
+
 @pytest.mark.parametrize(
     "pseudo_int",
     [
@@ -69,6 +80,8 @@ def test_resolve_type_hint(pseudo_int):
     assert resolve_type_hint(None) is None
     assert resolve_type_hint(Ellipsis) is Ellipsis
     assert resolve_type_hint(int) is int
+    assert resolve_type_hint(typing.Any) is typing.Any
+    assert resolve_type_hint(Callable) is Callable
 
     # Test composition.
     assert resolve_type_hint((pseudo_int, pseudo_int)) == (int, int)
@@ -97,3 +110,37 @@ def test_resolve_type_hint(pseudo_int):
     a = A()
     with pytest.warns(match=r"(?i)could not resolve the type hint"):
         assert resolve_type_hint(a) is a
+
+
+def test_is_faithful():
+    # Example of a not faithful type.
+    t_nf = Callable[[int], int]
+
+    # Test leaves.
+    assert is_faithful(typing.Any)
+    assert is_faithful(Callable)
+    assert is_faithful(None)
+    assert is_faithful(Ellipsis)
+
+    # Test composition.
+    # Lists:
+    assert is_faithful([int, float])
+    assert not is_faithful([int, t_nf])
+    # Tuples:
+    assert is_faithful((int, float))
+    assert not is_faithful((int, t_nf))
+    # `Callable`:
+    assert not is_faithful(Callable[[int], int])
+    # `Union`:
+    assert is_faithful(typing.Union[int, float])
+    assert not is_faithful(typing.Union[int, t_nf])
+
+    class A:
+        pass
+
+    # Test warning.
+    a = A()
+    with pytest.warns(
+        match=r"(?i)could not determine whether `(.*)` is faithful or not"
+    ):
+        assert not is_faithful(a)
