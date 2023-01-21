@@ -42,7 +42,6 @@ class Signature(Comparable):
     ):
         self.types = types
         self.varargs = varargs
-        self.has_varargs = varargs is not Missing
         self.return_type = return_type
         self.precedence = precedence
         self.implementation = implementation
@@ -50,6 +49,10 @@ class Signature(Comparable):
         types_are_faithful = all(is_faithful(t) for t in types)
         varargs_are_faithful = self.varargs is Missing or is_faithful(self.varargs)
         self.is_faithful = types_are_faithful and varargs_are_faithful
+
+    @property
+    def has_varargs(self):
+        return self.varargs is not Missing
 
     def __copy__(self):
         return Signature(
@@ -277,18 +280,18 @@ def append_default_args(signature, f):
         if p.kind != p.VAR_POSITIONAL and not _is_not_empty(p.default):
             break
 
-        # Copy last signature.
+        # Skip variable arguments. These will always be removed.
+        if p.kind == p.VAR_POSITIONAL:
+            continue
+
         copy = signatures[-1].__copy__()
 
-        # Remove variable arguments.
-        if p.kind == p.VAR_POSITIONAL:
-            # We could skip this method entirely, but the implementation is simpler if
-            # we retain it.
-            copy.varargs = Missing
+        # As specified over, these additional signatures should never have variable
+        # arguments.
+        copy.varargs = Missing
 
-        # Remove a normal positional argument.
-        else:
-            copy.types = copy.types[:-1]
+        # Remove the last positional argument.
+        copy.types = copy.types[:-1]
 
         signatures.append(copy)
 

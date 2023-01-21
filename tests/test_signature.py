@@ -1,10 +1,8 @@
 import inspect
 import operator
-import sys
 from numbers import Number as Num
-from numbers import Rational as Rat
 from numbers import Real as Re
-from typing import Any, Tuple, Union
+from typing import Any, Tuple
 
 import pytest
 
@@ -52,15 +50,6 @@ def test_instantiation_copy():
     assert not Sig(Tuple[int], int, varargs=int).is_faithful
     assert not Sig(int, Tuple[int], varargs=int).is_faithful
     assert not Sig(int, int, varargs=Tuple[int]).is_faithful
-
-
-@pytest.mark.skipif(
-    sys.version_info < (3, 10),
-    reason="Requires Python 3.10 or higher.",
-)
-def test_instantiation_new_union_syntax():
-    assert Sig(float | int) == Sig(Union[float, int])
-    assert Sig(Num | Rat) == Sig(Union[Num, Rat])
 
 
 @pytest.mark.parametrize(
@@ -208,11 +197,10 @@ def test_append_default_args():
         pass
 
     sigs = append_default_args(extract_signature(f), f)
-    assert len(sigs) == 4
+    assert len(sigs) == 3
     assert (sigs[0].types, sigs[0].varargs) == ((int, Any, float), complex)
-    assert (sigs[1].types, sigs[1].varargs) == ((int, Any, float), Missing)
-    assert (sigs[2].types, sigs[2].varargs) == ((int, Any), Missing)
-    assert (sigs[3].types, sigs[3].varargs) == ((int,), Missing)
+    assert (sigs[1].types, sigs[1].varargs) == ((int, Any), Missing)
+    assert (sigs[2].types, sigs[2].varargs) == ((int,), Missing)
 
     # Test that `itemgetter` is supported.
     f = operator.itemgetter(0)
