@@ -1,3 +1,4 @@
+import sys
 import typing
 
 import pytest
@@ -52,8 +53,25 @@ def test_moduletype(module, name, type):
 
 
 def test_is_hint():
+    assert not _is_hint(int)
     assert _is_hint(typing.Union[int, float])
     assert _is_hint(Callable)
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 9),
+    reason="Requires Python 3.9 or higher.",
+)
+def test_is_hint():
+    assert tuple[int]
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 10),
+    reason="Requires Python 3.10 or higher.",
+)
+def test_is_hint():
+    assert int | float
 
 
 def test_type_mapping():

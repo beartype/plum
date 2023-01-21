@@ -109,7 +109,18 @@ def _is_hint(x):
     Returns:
         bool: `True` if `x` is a type hint and `False` otherwise.
     """
-    return hasattr(x, "__module__") and x.__module__ in {"typing", "collections.abc"}
+    try:
+        if x.__module__ == "builtins":  # pragma: specific no cover 3.7 3.8
+            # Check if `x` is a subscripted built-in. We do this by checking the module
+            # of the type of `x`.
+            x = type(x)
+        return x.__module__ in {
+            "types",  # E.g., `tuple[int]`
+            "typing",
+            "collections.abc",  # E.g., `Callable`
+        }
+    except AttributeError:
+        return False
 
 
 def _hashable(x):
