@@ -48,8 +48,11 @@ def test_moduletype(module, name, type):
     t = ModuleType(module, name)
     assert t.__name__ == f"ModuleType[{module}.{name}]"
     assert t.resolve() is t
-    assert t.retrieve() is t
+    assert t.retrieve()
     assert t.resolve() is type
+
+    t = ModuleType("<nonexistent>", "f")
+    assert not t.retrieve()
 
 
 def test_is_hint():
@@ -62,15 +65,15 @@ def test_is_hint():
     sys.version_info < (3, 9),
     reason="Requires Python 3.9 or higher.",
 )
-def test_is_hint():
-    assert tuple[int]
+def test_is_hint_subscripted_builtins():
+    assert _is_hint(tuple[int])
 
 
 @pytest.mark.skipif(
     sys.version_info < (3, 10),
     reason="Requires Python 3.10 or higher.",
 )
-def test_is_hint():
+def test_is_hint_new_union():
     assert int | float
 
 
@@ -130,6 +133,19 @@ def test_resolve_type_hint(pseudo_int):
         assert resolve_type_hint(a) is a
 
 
+def test_resolve_type_hint_moduletype_recursion():
+    t = ModuleType("<nonexistent>", "f")
+    assert resolve_type_hint(t) == t
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 10),
+    reason="Requires Python 3.10 or higher.",
+)
+def test_resolve_type_hint_new_union():
+    assert resolve_type_hint(float | int) == float | int
+
+
 def test_is_faithful():
     # Example of a not faithful type.
     t_nf = Callable[[int], int]
@@ -162,3 +178,11 @@ def test_is_faithful():
         match=r"(?i)could not determine whether `(.*)` is faithful or not"
     ):
         assert not is_faithful(a)
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 10),
+    reason="Requires Python 3.10 or higher.",
+)
+def test_is_faithful_new_union():
+    assert not is_faithful(int | float)

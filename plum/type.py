@@ -2,6 +2,14 @@ import sys
 import typing
 import warnings
 
+try:  # pragma: specific no cover 3.7 3.8 3.9
+    from types import UnionType
+except ImportError:  # pragma: specific no cover 3.10
+
+    class UnionType:
+        """Replacement for :class:`types.UnionType`."""
+
+
 __all__ = [
     "PromisedType",
     "ModuleType",
@@ -97,7 +105,7 @@ class ModuleType(ResolvableType):
                 for name in self._name.split("."):
                     type = getattr(type, name)
                 self.deliver(type)
-        return self
+        return self._type is not None
 
 
 def _is_hint(x):
@@ -168,7 +176,14 @@ def resolve_type_hint(x):
             # hint itself.
             return x
         else:
-            return origin[resolve_type_hint(args)]
+            if origin is UnionType:  # pragma: specific no cover 3.7 3.8 3.9
+                # The new union syntax was used.
+                y = args[0]
+                for arg in args[1:]:
+                    y = y | arg
+                return y
+            else:
+                return origin[resolve_type_hint(args)]
 
     elif x is None:
         return x
@@ -182,7 +197,11 @@ def resolve_type_hint(x):
     elif isinstance(x, type):
         if isinstance(x, ResolvableType):
             if isinstance(x, ModuleType):
-                x.retrieve()
+                if not x.retrieve():
+                    # If the type could not be retrieved, then just return the
+                    # wrapper. Namely, `x.resolve()` will then return `x`, which means
+                    # that the below call will result in an infinite recursion.
+                    return x
             return resolve_type_hint(x.resolve())
         else:
             return x
