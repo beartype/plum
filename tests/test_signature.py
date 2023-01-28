@@ -7,12 +7,7 @@ from typing import Any, Tuple
 import pytest
 
 from plum.signature import Signature as Sig
-from plum.signature import (
-    _inspect_signature,
-    _is_not_empty,
-    append_default_args,
-    extract_signature,
-)
+from plum.signature import _inspect_signature, append_default_args, extract_signature
 from plum.util import Missing
 
 
@@ -52,24 +47,48 @@ def test_instantiation_copy():
     assert not Sig(int, int, varargs=Tuple[int]).is_faithful
 
 
+def _impl(x, y, *z):
+    return str(x)
+
+
 @pytest.mark.parametrize(
     "sig, expected",
     [
         (
             Sig(),
-            f"Signature(varargs={Missing!r}, return_type={Any!r})",
+            "Signature()",
         ),
         (
             Sig(int),
-            f"Signature({int!r}, varargs={Missing!r}, return_type={Any!r})",
+            "Signature(int)",
         ),
         (
             Sig(int, float),
-            f"Signature({int!r}, {float!r}, varargs={Missing!r}, return_type={Any!r})",
+            "Signature(int, float)",
         ),
         (
-            Sig(varargs=int, return_type=float),
-            f"Signature(varargs={int!r}, return_type={float!r})",
+            Sig(int, float, varargs=complex),
+            "Signature(int, float, varargs=complex)",
+        ),
+        (
+            Sig(int, float, varargs=complex, return_type=str),
+            "Signature(int, float, varargs=complex, return_type=str)",
+        ),
+        (
+            Sig(int, float, varargs=complex, return_type=str, precedence=1),
+            "Signature(int, float, varargs=complex, return_type=str, precedence=1)",
+        ),
+        (
+            Sig(
+                int,
+                float,
+                varargs=complex,
+                return_type=str,
+                precedence=1,
+                implementation=_impl,
+            ),
+            f"Signature(int, float, varargs=complex, return_type=str, precedence=1,"
+            f" implementation={_impl!r})",
         ),
     ],
 )
@@ -138,11 +157,6 @@ def test_match():
     assert not Sig(int, varargs=int).match(())
 
 
-def test_is_not_empty():
-    assert not _is_not_empty(inspect.Parameter.empty)
-    assert _is_not_empty(None)
-
-
 def test_inspect_signature():
     assert isinstance(_inspect_signature(lambda x: x), inspect.Signature)
     assert len(_inspect_signature(lambda x: x).parameters) == 1
@@ -187,7 +201,7 @@ def test_extract_signature():
     assert_signature(f_good, int)
     with pytest.raises(
         TypeError,
-        match=r"Default value `.*` is not an instance of the annotated type `.*`.",
+        match=r"Default value `1.0` is not an instance of the annotated type `int`.",
     ):
         extract_signature(f_bad)
 

@@ -6,7 +6,7 @@ from beartype.door import TypeHint, is_bearable
 from beartype.peps import resolve_pep563
 
 from .type import is_faithful, resolve_type_hint
-from .util import Comparable, Missing, multihash, wrap_lambda
+from .util import Comparable, Missing, multihash, repr_type, wrap_lambda
 
 __all__ = ["Signature", "extract_signature", "append_default_args"]
 
@@ -32,12 +32,16 @@ class Signature(Comparable):
         is_faithful (bool): Whether this signature only uses faithful types.
     """
 
+    _default_varargs = Missing
+    _default_return_type = typing.Any
+    _default_precedence = 0
+
     def __init__(
         self,
         *types,
-        varargs=Missing,
-        return_type=typing.Any,
-        precedence=0,
+        varargs=_default_varargs,
+        return_type=_default_return_type,
+        precedence=_default_precedence,
         implementation=None,
     ):
         self.types = types
@@ -64,15 +68,18 @@ class Signature(Comparable):
         )
 
     def __repr__(self):
-        types_repr = ", ".join(map(repr, self.types))
-        if types_repr:
-            types_repr += ", "
-        return (
-            f"Signature("
-            f"{types_repr}"
-            f"varargs={self.varargs!r}, "
-            f"return_type={self.return_type!r})"
-        )
+        parts = []
+        if self.types:
+            parts.append(", ".join(map(repr_type, self.types)))
+        if self.varargs != Signature._default_varargs:
+            parts.append("varargs=" + repr_type(self.varargs))
+        if self.return_type != Signature._default_return_type:
+            parts.append("return_type=" + repr_type(self.return_type))
+        if self.precedence != Signature._default_precedence:
+            parts.append("precedence=" + repr(self.precedence))
+        if self.implementation:
+            parts.append("implementation=" + repr(self.implementation))
+        return "Signature(" + ", ".join(parts) + ")"
 
     def __hash__(self):
         return multihash(Signature, *self.types, self.varargs)
@@ -145,19 +152,6 @@ class Signature(Comparable):
             return all(is_bearable(v, t) for v, t in zip(values, types))
 
 
-def _is_not_empty(t):
-    """Check if a type is *not* equal to `inspect.Parameter.empty`, without triggering
-    unwanted `__eq__`-like methods.
-
-    Args:
-        t (type): Type to check.
-
-    Returns:
-        bool: `True` if `t` is *not* `inspect.Parameter.empty`.
-    """
-    return t is not inspect.Parameter.empty
-
-
 def _inspect_signature(f):
     """Wrapper of :func:`inspect.signature` which adds support for certain non-function
     objects.
@@ -202,10 +196,10 @@ def extract_signature(f, precedence=0):
         p = sig.parameters[arg]
 
         # Parse and resolve annotation.
-        if _is_not_empty(p.annotation):
-            annotation = resolve_type_hint(p.annotation)
-        else:
+        if p.annotation is inspect.Parameter.empty:
             annotation = typing.Any
+        else:
+            annotation = resolve_type_hint(p.annotation)
 
         # Stop once we have seen all positional parameter without a default value.
         if p.kind in {p.KEYWORD_ONLY, p.VAR_KEYWORD}:
@@ -219,18 +213,18 @@ def extract_signature(f, precedence=0):
             types.append(annotation)
 
         # If there is a default parameter, make sure that it is of the annotated type.
-        if _is_not_empty(p.default):
+        if p.default is not inspect.Parameter.empty:
             if not is_bearable(p.default, annotation):
                 raise TypeError(
                     f"Default value `{p.default}` is not an instance "
-                    f"of the annotated type `{annotation}`."
+                    f"of the annotated type `{repr_type(annotation)}`."
                 )
 
     # Get possible return type.
-    if _is_not_empty(sig.return_annotation):
-        return_type = resolve_type_hint(sig.return_annotation)
-    else:
+    if sig.return_annotation is inspect.Parameter.empty:
         return_type = typing.Any
+    else:
+        return_type = resolve_type_hint(sig.return_annotation)
 
     # Assemble signature.
     signature = Signature(
@@ -277,7 +271,7 @@ def append_default_args(signature, f):
             continue
 
         # Stop when non-variable arguments without a default are reached.
-        if p.kind != p.VAR_POSITIONAL and not _is_not_empty(p.default):
+        if p.kind != p.VAR_POSITIONAL and p.default is inspect.Parameter.empty:
             break
 
         # Skip variable arguments. These will always be removed.
