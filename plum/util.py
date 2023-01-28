@@ -1,6 +1,8 @@
 import abc
+import typing
 
 __all__ = [
+    "repr_type",
     "Missing",
     "multihash",
     "Comparable",
@@ -9,6 +11,21 @@ __all__ = [
     "get_class",
     "get_context",
 ]
+
+
+def repr_type(x):
+    """Show a type or type hint in shorter form. This just calls
+    :func:`typing._type_repr`.
+
+    Args:
+        x (type or type hint): Type or type hint.
+
+    Returns:
+        str: Shorter form of `x`.
+    """
+    # :func:`typing._type_repr` is an internal function, but it should be available in
+    # Python versions 3.7 through 3.11.
+    return typing._type_repr(x)
 
 
 class _MissingType(type):

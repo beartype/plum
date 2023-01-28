@@ -1,3 +1,5 @@
+import typing
+
 import numpy as np
 import pytest
 
@@ -8,8 +10,18 @@ from plum.util import (
     get_context,
     is_in_class,
     multihash,
+    repr_type,
     wrap_lambda,
 )
+
+
+def test_repr_type():
+    class A:
+        pass
+
+    assert repr_type(int) == "int"
+    assert repr_type(A) == "tests.test_util.test_repr_type.<locals>.A"
+    assert repr_type(typing.Union[int, float]) == "typing.Union[int, float]"
 
 
 def test_missing():
