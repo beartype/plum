@@ -3,7 +3,7 @@ import os
 from .dispatcher import clear_all_cache
 from .type import type_mapping
 
-__all__ = ["activate", "deactivate"]
+__all__ = ["activate_autoreload", "deactivate_autoreload"]
 
 
 def _update_instances(old, new):
@@ -33,7 +33,7 @@ _update_instances_original = None
 """function: Original implementation of :func:`update_instances`."""
 
 
-def activate():
+def activate_autoreload():
     """Pirate Autoreload's `update_instance` function to have Plum work with
     Autoreload."""
     from IPython.extensions import autoreload  # type: ignore
@@ -47,8 +47,9 @@ def activate():
     autoreload.update_instances = _update_instances
 
 
-def deactivate():
-    """Disable Plum's autoreload hack."""
+def deactivate_autoreload():
+    """Disable Plum's autoreload hack. This undoes that
+    :func:`.autoreload.activate_autoreload` did."""
     global _update_instances_original
     if _update_instances_original is None:
         raise RuntimeError("Plum Autoreload module was never activated.")
@@ -70,7 +71,7 @@ if _autoload in ("y", "yes", "t", "true", "on", "1"):  # pragma: no cover
         ip = get_ipython()
         if ip is not None:
             if "IPython.extensions.storemagic" in ip.extension_manager.loaded:
-                activate()
+                activate_autoreload()
 
     except ImportError:
         pass
