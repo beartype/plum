@@ -100,9 +100,9 @@ def _new_repr(self):
     args_repr = [a if isinstance(a, str) else typing._type_repr(a) for a in args]
     # Like `typing` does, print `Optional` whenever possible.
     if len(args) == 2:
-        if isinstance(args[0], type(None)):
+        if args[0] is type(None):  # noqa: E721
             return f"typing.Optional[{args_repr[1]}]"
-        elif isinstance(args[1], type(None)):
+        elif args[1] is type(None):  # noqa: E721
             return f"typing.Optional[{args_repr[0]}]"
     # We would like to just print `args_repr[0]` whenever `len(args) == 1`, but
     # `beartype` seem to not be happy with this. Hence, always print
