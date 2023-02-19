@@ -31,8 +31,8 @@ def assert_cache_performance(f, f_native):
     # A first call should not be more than 2000 times slower than a cached call.
     assert dur_first <= 2000 * dur
 
-    # The cached call should be at least twice as fast than a first call.
-    assert dur <= dur_first / 2
+    # The cached call should be at least 5 times faster than a first call.
+    assert dur <= dur_first / 5
 
 
 def test_cache_function():
