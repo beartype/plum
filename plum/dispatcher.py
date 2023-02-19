@@ -1,25 +1,25 @@
-import logging
-import inspect
-
-from .function import ClassFunction, Function, extract_signature
-from .signature import Signature as Sig
-from .type import subclasscheck_cache
-from .util import is_in_class, get_class, check_future_annotations
+from .function import Function
+from .signature import Signature
+from .util import get_class, is_in_class
 
 __all__ = ["Dispatcher", "dispatch", "clear_all_cache"]
 
-log = logging.getLogger(__name__)
-
 
 class Dispatcher:
-    """A namespace for functions."""
+    """A namespace for functions.
+
+    Attributes:
+        functions (dict[str, :class:`.function.Function`]): Functions by name.
+        classes (dict[str, dict[str, :class:`.function.Function`]]): Methods of
+            all classes by the qualified name of a class.
+    """
 
     def __init__(self):
-        self._functions = {}
-        self._classes = {}
+        self.functions = {}
+        self.classes = {}
 
     def __call__(self, method=None, precedence=0):
-        """Decorator for a particular signature.
+        """Decorator to register for a particular signature.
 
         Args:
             precedence (int, optional): Precedence of the signature. Defaults to `0`.
@@ -27,137 +27,82 @@ class Dispatcher:
         Returns:
             function: Decorator.
         """
-
-        # If `method` is not given, some keywords are set: return another decorator.
         if method is None:
+            return lambda m: self(m, precedence=precedence)
 
-            def decorator(f_):
-                return self(f_, precedence=precedence)
+        # The signature will be automatically derived from `method`, so we can safely
+        # set the signature argument to `None`.
+        return self._add_method(method, None, precedence=precedence)
 
-            return decorator
-
-        if check_future_annotations(inspect.currentframe().f_back):
-            signature, return_type = None, None
-            delayed = method
-        else:
-            signature, return_type = extract_signature(method)
-            delayed = None
-
-        def construct_function(owner):
-            return self._add_method(
-                method,
-                [signature],
-                precedence=precedence,
-                return_type=return_type,
-                owner=owner,
-                delayed=delayed,
-            )
-
-        # Defer the construction if `method` is in a class. We defer the construction to
-        # allow the function to hold a reference to the class.
-        if is_in_class(method):
-            return ClassFunction(get_class(method), construct_function)
-        else:
-            return construct_function(None)
-
-    def multi(
-        self,
-        *signatures,
-        precedence=0,
-        return_type=object,
-    ):
-        """Create a decorator for multiple given signatures.
+    def multi(self, *signatures):
+        """Decorator to register multiple signatures at once.
 
         Args:
-            *signatures (tuple[type]): Signatures.
-            precedence (int, optional): Precedence of the signatures. Defaults to `0`.
-            return_type (type, optional): Expected return type. Defaults to `object.`
+            *signatures (tuple or :class:`.signature.Signature`): Signatures to
+                register.
 
         Returns:
             function: Decorator.
         """
-        signatures = [Sig(*types) for types in signatures]
-
-        def decorator(method):
-            def construct_function(owner):
-                return self._add_method(
-                    method,
-                    signatures,
-                    precedence=precedence,
-                    return_type=return_type,
-                    owner=owner,
+        resolved_signatures = []
+        for signature in signatures:
+            if isinstance(signature, Signature):
+                resolved_signatures.append(signature)
+            elif isinstance(signature, tuple):
+                resolved_signatures.append(Signature(*signature))
+            else:
+                raise ValueError(
+                    f"Signature `{signature}` must be a tuple or of type "
+                    f"`plum.signature.Signature`."
                 )
 
-            # Defer the construction if `method` is in a class. We defer the
-            # construction to allow the function to hold a reference to the class.
-            if is_in_class(method):
-                return ClassFunction(get_class(method), construct_function)
-            else:
-                return construct_function(None)
+        def decorator(method):
+            # The precedence will not be used, so we can safely set it to `None`.
+            return self._add_method(method, *resolved_signatures, precedence=None)
 
         return decorator
 
     def abstract(self, method):
         """Decorator for an abstract function definition. The abstract function
         definition does not implement any methods."""
+        return self._get_function(method)
 
-        def construct_abstract_function(owner):
-            return self._get_function(method, owner)
-
-        # Defer the construction if `method` is in a class. We defer the construction to
-        # allow the function to hold a reference to the class.
-        if is_in_class(method):
-            return ClassFunction(get_class(method), construct_abstract_function)
-        else:
-            return construct_abstract_function(None)
-
-    def _get_function(self, method, owner):
-        name = method.__name__
-
+    def _get_function(self, method):
         # If a class is the owner, use a namespace specific for that class. Otherwise,
         # use the global namespace.
-        if owner:
-            if owner not in self._classes:
-                self._classes[owner] = {}
-            namespace = self._classes[owner]
+        if is_in_class(method):
+            owner = get_class(method)
+            if owner not in self.classes:
+                self.classes[owner] = {}
+            namespace = self.classes[owner]
         else:
-            namespace = self._functions
+            owner = None
+            namespace = self.functions
 
         # Create a new function only if the function does not already exist.
+        name = method.__name__
         if name not in namespace:
             namespace[name] = Function(method, owner=owner)
 
         return namespace[name]
 
-    def _add_method(
-        self,
-        method,
-        signatures,
-        precedence,
-        return_type,
-        owner,
-        delayed=None,
-    ):
-        f = self._get_function(method, owner)
+    def _add_method(self, method, *signatures, precedence):
+        f = self._get_function(method)
         for signature in signatures:
-            f.register(signature, method, precedence, return_type, delayed)
+            f.register(method, signature, precedence)
         return f
 
     def clear_cache(self):
         """Clear cache."""
-        for f in self._functions.values():
+        for f in self.functions.values():
             f.clear_cache()
 
 
 def clear_all_cache():
-    """Clear all cache, including the cache of subclass checks. This
-    should be called if types are modified."""
-    # Clear function caches.
+    """Clear all cache, including the cache of subclass checks. This should be called
+    if types are modified."""
     for f in Function._instances:
         f.clear_cache()
-
-    # Clear subclass check cache.
-    subclasscheck_cache.clear()
 
 
 dispatch = Dispatcher()  #: A default dispatcher for convenience purposes.
