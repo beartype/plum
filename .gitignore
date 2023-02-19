@@ -6,6 +6,7 @@ plum/_version.py
 
 # Virtual environments
 venv
+.tox
 
 # Packaging
 *.egg-info
