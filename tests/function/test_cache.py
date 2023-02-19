@@ -57,13 +57,13 @@ def test_cache_function():
     assert_cache_performance(f, f_native)
 
     # Test cache correctness.
-    assert f(1) is None, "cache correctness 1"
+    assert f(1) is None
 
     @dispatch
     def f(x: int):
         return 1
 
-    assert f(1) == 1, "cache correctness 2"
+    assert f(1) == 1
 
 
 # This class needs to be in the global scope, otherwise it cannot its methods cannot
