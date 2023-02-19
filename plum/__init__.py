@@ -1,6 +1,7 @@
 from beartype.door import TypeHint as _TypeHint
 from beartype.door import is_bearable as _is_bearable
 
+from .alias import *  # noqa: F401, F403
 from .autoreload import *  # noqa: F401, F403
 from .dispatcher import *  # noqa: F401, F403
 from .function import *  # noqa: F401, F403
