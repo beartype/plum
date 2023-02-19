@@ -2,7 +2,7 @@ from typing import List, Union
 
 from plum import Dispatcher, Function, clear_all_cache
 
-from ..util import benchmark
+from .util import benchmark
 
 
 def assert_cache_performance(f, f_native):
