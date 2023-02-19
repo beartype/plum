@@ -1,5 +1,7 @@
 import collections
+import math
 import operator
+from functools import wraps
 from typing import Union
 
 import pytest
@@ -216,9 +218,134 @@ def test_unassignable_annotations():
     [
         (operator.attrgetter("x"), collections.namedtuple("NamedTuple", "x")(x=1), 1),
         (operator.itemgetter("x"), {"x": 1}, 1),
+        (math.sqrt, 4, 2),
     ],
 )
-def test_nonfunctions(f, x, res):
+def test_strange_functions(f, x, res):
     g = Function(lambda: None)
     g.dispatch(f)
     assert g(x) == res
+
+
+class A2:
+    @dispatch
+    def f(self, x: "A2"):
+        return "self"
+
+    @dispatch
+    def f(self, x: str):
+        return "str"
+
+
+def test_self_reference():
+    a = A2()
+    assert a.f(a) == "self"
+    assert a.f("1") == "str"
+
+
+class A3:
+    @dispatch
+    def f(self, x: int):
+        return "int1"
+
+    class A:
+        @dispatch
+        def f(self, x: int):
+            return "int2"
+
+        @dispatch
+        def f(self, x: str):
+            return "str2"
+
+    @dispatch
+    def f(self, x: str):
+        return "str1"
+
+
+def test_nested_class():
+    a1 = A3()
+    a2 = A3.A()
+
+    assert a1.f(1) == "int1"
+    assert a1.f("1") == "str1"
+
+    assert a2.f(1) == "int2"
+    assert a2.f("1") == "str2"
+
+
+def dec(f):
+    @wraps(f)
+    def f_wrapped(*args, **kw_args):
+        return f(*args, **kw_args)
+
+    return f_wrapped
+
+
+def test_decorator():
+    dispatch = Dispatcher()
+
+    @dec
+    @dispatch
+    @dec
+    def g(x: int):
+        return "int"
+
+    @dec
+    @dispatch
+    @dec
+    def g(x: str):
+        return "str"
+
+    assert g(1) == "int"
+    assert g("1") == "str"
+
+
+class A4:
+    @dec
+    @dispatch
+    @dec
+    def f(self, x: int):
+        return "int"
+
+    @dec
+    @dispatch
+    @dec
+    def f(self, x: str):
+        return "str"
+
+
+def test_decorator_in_class():
+    a = A4()
+
+    assert a.f(1) == "int"
+    assert a.f("1") == "str"
+
+
+class A5:
+    @property
+    def name(self):
+        return "name"
+
+    @name.setter
+    @dispatch
+    def name(self, x: str):
+        return "str"
+
+
+def test_property():
+    a = A5()
+
+    assert a.name == "name"
+    a.name = "another name"
+    with pytest.raises(NotFoundLookupError):
+        a.name = 1
+
+
+def test_none():
+    dispatch = Dispatcher()
+
+    @dispatch
+    def f(x: None) -> None:
+        return x
+
+    assert f(None) is None
