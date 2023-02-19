@@ -6,7 +6,7 @@ from beartype.door import TypeHint, is_bearable
 from beartype.peps import resolve_pep563
 
 from .type import is_faithful, resolve_type_hint
-from .util import Comparable, Missing, multihash, repr_type, wrap_lambda
+from .util import Comparable, Missing, multihash, repr_short, wrap_lambda
 
 __all__ = ["Signature", "extract_signature", "append_default_args"]
 
@@ -70,11 +70,11 @@ class Signature(Comparable):
     def __repr__(self):
         parts = []
         if self.types:
-            parts.append(", ".join(map(repr_type, self.types)))
+            parts.append(", ".join(map(repr_short, self.types)))
         if self.varargs != Signature._default_varargs:
-            parts.append("varargs=" + repr_type(self.varargs))
+            parts.append("varargs=" + repr_short(self.varargs))
         if self.return_type != Signature._default_return_type:
-            parts.append("return_type=" + repr_type(self.return_type))
+            parts.append("return_type=" + repr_short(self.return_type))
         if self.precedence != Signature._default_precedence:
             parts.append("precedence=" + repr(self.precedence))
         if self.implementation:
@@ -217,7 +217,7 @@ def extract_signature(f, precedence=0):
             if not is_bearable(p.default, annotation):
                 raise TypeError(
                     f"Default value `{p.default}` is not an instance "
-                    f"of the annotated type `{repr_type(annotation)}`."
+                    f"of the annotated type `{repr_short(annotation)}`."
                 )
 
     # Get possible return type.

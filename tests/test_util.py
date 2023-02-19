@@ -10,18 +10,18 @@ from plum.util import (
     get_context,
     is_in_class,
     multihash,
-    repr_type,
+    repr_short,
     wrap_lambda,
 )
 
 
-def test_repr_type():
+def test_repr_short():
     class A:
         pass
 
-    assert repr_type(int) == "int"
-    assert repr_type(A) == "tests.test_util.test_repr_type.<locals>.A"
-    assert repr_type(typing.Union[int, float]) == "typing.Union[int, float]"
+    assert repr_short(int) == "int"
+    assert repr_short(A) == "tests.test_util.test_repr_short.<locals>.A"
+    assert repr_short(typing.Union[int, float]) == "typing.Union[int, float]"
 
 
 def test_missing():

@@ -2,7 +2,7 @@ import abc
 import typing
 
 __all__ = [
-    "repr_type",
+    "repr_short",
     "Missing",
     "multihash",
     "Comparable",
@@ -13,15 +13,15 @@ __all__ = [
 ]
 
 
-def repr_type(x):
-    """Show a type or type hint in shorter form. This just calls
+def repr_short(x):
+    """Representation as a string, but in shorter form. This just calls
     :func:`typing._type_repr`.
 
     Args:
-        x (type or type hint): Type or type hint.
+        x (object): Object.
 
     Returns:
-        str: Shorter form of `x`.
+        str: Shorter representation of `x`.
     """
     # :func:`typing._type_repr` is an internal function, but it should be available in
     # Python versions 3.7 through 3.11.
