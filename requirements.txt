@@ -7,6 +7,7 @@ pytest
 pytest-cov
 coveralls
 black==22.3.0
+isort
 pre-commit
 setuptools_scm[toml]
 setuptools_scm_git_archive
