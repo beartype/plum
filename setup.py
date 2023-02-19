@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-requirements = []
+requirements = ["beartype"]
 
 setup(
     packages=find_packages(include=["plum*"]),
