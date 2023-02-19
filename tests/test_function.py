@@ -281,9 +281,9 @@ def test_call_exception_enhancement():
 dispatch = Dispatcher()
 
 
-class B:
+class B(metaclass=abc.ABCMeta):
     @dispatch
-    def __init__(self):
+    def __init__(self):  # noqa: B027
         pass
 
     def do(self, x):
@@ -321,6 +321,9 @@ def test_call_mro():
 
 
 def test_call_abstract():
+    # Check that ABC still works.
+    with pytest.raises(TypeError):
+        B()
     c = C()
 
     # Abstract methods should be ignored.
