@@ -234,7 +234,7 @@ def test_resolve_pending_registrations():
     assert g(1, 1.0, z=1j) == "ok"
 
 
-def test_change_exception():
+def test_enhance_exception():
     def f():
         pass
 
@@ -253,7 +253,7 @@ def test_change_exception():
     assert isinstance(g._enhance_exception(e), ValueError)
     assert (
         str(g._enhance_exception(e))
-        == "For function `g` of `tests.function.test_function.A`, go!"
+        == "For function `g` of `tests.test_function.A`, go!"
     )
 
 
@@ -332,7 +332,7 @@ def test_call_abstract():
 def test_call_object():
     with pytest.raises(
         NotFoundLookupError,
-        match=r"(?i)^for function `__init__` of `tests.function.test_function.B`",
+        match=r"(?i)^for function `__init__` of `tests.test_function.B`",
     ):
         # Construction requires no arguments. Giving an argument should propagate to
         # `B` and then error.
@@ -340,7 +340,7 @@ def test_call_object():
 
     with pytest.raises(
         NotFoundLookupError,
-        match=r"(?i)^for function `__call__` of `tests.function.test_function.C`",
+        match=r"(?i)^for function `__call__` of `tests.test_function.C`",
     ):
         # Calling requires no arguments.
         C()(1)
