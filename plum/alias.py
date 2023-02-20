@@ -25,6 +25,8 @@ Example:
 import typing
 from functools import wraps
 
+from .util import get_args
+
 __all__ = ["activate_union_aliases", "deactivate_union_aliases", "set_union_alias"]
 
 _union_type = type(typing.Union[int, float])
@@ -39,7 +41,7 @@ def _new_repr(self):
     Returns:
         str: Representation of a `typing.Union` taking into account union aliases.
     """
-    args = typing.get_args(self)
+    args = get_args(self)
     args_set = set(args)
 
     # Find all aliased unions contained in this union.
@@ -151,7 +153,7 @@ def set_union_alias(union, alias):
     if not isinstance(union, _union_type):
         args = (union,)
     else:
-        args = typing.get_args(union)
+        args = get_args(union)
     for existing_union, existing_alias in _aliased_unions:
         if set(existing_union) == set(args) and alias != existing_alias:
             if isinstance(union, _union_type):

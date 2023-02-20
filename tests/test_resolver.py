@@ -56,7 +56,7 @@ def test_register():
     r.register(Signature(int))
     r.register(Signature(float))
     assert r.is_faithful
-    r.register(Signature(typing.Literal[1]))
+    r.register(Signature(typing.Tuple[int]))
     assert not r.is_faithful
 
     # Test that signatures can be replaced.

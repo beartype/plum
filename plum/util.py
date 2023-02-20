@@ -2,6 +2,8 @@ import abc
 import typing
 
 __all__ = [
+    "get_args",
+    "get_origin",
     "repr_short",
     "Missing",
     "multihash",
@@ -11,6 +13,46 @@ __all__ = [
     "get_class",
     "get_context",
 ]
+
+try:  # pragma: specific no cover 3.7
+    from typing import get_args, get_origin
+except ImportError:  # pragma: specific no cover 3.8 3.9 3.10
+    import collections.abc
+
+    # The functions :func:`typing.get_origin` and :func:`typing.get_args` were only
+    # introduced in Python 3.8, but we need them already in Python 3.7. The below is
+    # a copy of their source in `typing.py` from Python 3.8.
+
+    def get_origin(x):
+        """Get the unsubscripted version of a type hint.
+
+        Args:
+            x (type hint): Type hint.
+
+        Returns:
+            type hint: Unsubcripted version of `x`.
+        """
+        if isinstance(x, typing._GenericAlias):
+            return x.__origin__
+        if x is typing.Generic:
+            return typing.Generic
+        return None
+
+    def get_args(x):
+        """Get the arguments a subscripted type hint.
+
+        Args:
+            x (type hint): Type hint.
+
+        Returns:
+            tuple: Arguments of `x`.
+        """
+        if isinstance(x, typing._GenericAlias) and not x._special:
+            args = x.__args__
+            if get_origin(x) is collections.abc.Callable and args[0] is not Ellipsis:
+                args = (list(args[:-1]), args[-1])
+            return args
+        return ()
 
 
 def repr_short(x):

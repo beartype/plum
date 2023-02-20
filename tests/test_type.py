@@ -1,12 +1,12 @@
 import sys
 import typing
 
-import pytest
-
 try:
-    from collections.abc import Callable
+    from typing import Callable
 except ImportError:
-    from typing import Callable  # Python 3.8 and earlier
+    from collections.abc import Callable
+
+import pytest
 
 from plum.type import (
     ModuleType,

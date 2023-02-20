@@ -2,6 +2,8 @@ import sys
 import typing
 import warnings
 
+from .util import get_args, get_origin
+
 try:  # pragma: specific no cover 3.7 3.8 3.9
     from types import UnionType
 except ImportError:  # pragma: specific no cover 3.10
@@ -168,8 +170,8 @@ def resolve_type_hint(x):
     if _hashable(x) and x in type_mapping:
         return resolve_type_hint(type_mapping[x])
     elif _is_hint(x):
-        origin = typing.get_origin(x)
-        args = typing.get_args(x)
+        origin = get_origin(x)
+        args = get_args(x)
         if args == ():
             # `origin` might not make sense here. For example, `get_origin(Any)` is
             # `None`. Since the hint wasn't subscripted, the right thing is to right the
@@ -183,7 +185,19 @@ def resolve_type_hint(x):
                     y = y | arg
                 return y
             else:
-                return origin[resolve_type_hint(args)]
+                args = resolve_type_hint(args)
+                try:
+                    return origin[args]
+                except TypeError as e:  # pragma specific no cover: 3.9 3.10
+                    # In Python 3.7 and 3.8, the origin might be a type that cannot be
+                    # subscripted. As a workaround, we get the name of the type,
+                    # capitalize it, and try to get it from `typing`. So far, this
+                    # seems to have worked fine.
+                    if sys.version_info.minor <= 8:
+                        return getattr(typing, origin.__name__.capitalize())[args]
+                    else:  # pragma: no cover
+                        # This branch can never be reached.
+                        raise e
 
     elif x is None:
         return x
@@ -211,7 +225,8 @@ def resolve_type_hint(x):
             f"Could not resolve the type hint of `{x}`. "
             f"I have ended the resolution here to not make your code break, but some "
             f"types might not be working correctly. "
-            f"Please open an issue at https://github.com/wesselb/plum."
+            f"Please open an issue at https://github.com/wesselb/plum.",
+            stacklevel=2,
         )
         return x
 
@@ -234,8 +249,8 @@ def is_faithful(x):
 
 def _is_faithful(x):
     if _is_hint(x):
-        origin = typing.get_origin(x)
-        args = typing.get_args(x)
+        origin = get_origin(x)
+        args = get_args(x)
         if args == ():
             # Unsubscripted type hints tend to be faithful. For example, `Any`, `List`,
             # `Tuple`, `Dict`, `Callable`, and `Generator` are. When we come across a
@@ -262,6 +277,7 @@ def _is_faithful(x):
             f"Could not determine whether `{x}` is faithful or not. "
             f"I have concluded that the type is not faithful, so your code might run "
             f"with subpar performance. "
-            f"Please open an issue at https://github.com/wesselb/plum."
+            f"Please open an issue at https://github.com/wesselb/plum.",
+            stacklevel=2,
         )
         return False
