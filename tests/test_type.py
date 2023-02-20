@@ -1,9 +1,9 @@
 import sys
 import typing
 
-try:
+if sys.version_info.minor <= 8:
     from typing import Callable
-except ImportError:
+else:
     from collections.abc import Callable
 
 import pytest
