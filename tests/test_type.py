@@ -129,7 +129,7 @@ def test_resolve_type_hint(pseudo_int):
 
     # Test warning.
     a = A()
-    with pytest.warns(match=r"(?i)could not resolve the type hint"):
+    with pytest.warns(Warning, match=r"(?i)could not resolve the type hint"):
         assert resolve_type_hint(a) is a
 
 
@@ -175,7 +175,7 @@ def test_is_faithful():
     # Test warning.
     a = A()
     with pytest.warns(
-        match=r"(?i)could not determine whether `(.*)` is faithful or not"
+        Warning, match=r"(?i)could not determine whether `(.*)` is faithful or not"
     ):
         assert not is_faithful(a)
 
