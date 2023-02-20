@@ -16,12 +16,13 @@ __all__ = [
 
 try:  # pragma: specific no cover 3.7
     from typing import get_args, get_origin
-except ImportError:  # pragma: specific no cover 3.8 3.9 3.10
+except ImportError:  # pragma: no cover
     import collections.abc
 
     # The functions :func:`typing.get_origin` and :func:`typing.get_args` were only
     # introduced in Python 3.8, but we need them already in Python 3.7. The below is
-    # a copy of their source in `typing.py` from Python 3.8.
+    # a copy of their source in `typing.py` from Python 3.8. Since we copied from
+    # the source, we also do not check for coverage.
 
     def get_origin(x):
         """Get the unsubscripted version of a type hint.
