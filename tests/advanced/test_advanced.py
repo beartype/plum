@@ -93,46 +93,34 @@ def test_metadata_and_printing():
     dispatch = Dispatcher()
 
     class A:
-        _dispatch = Dispatcher()
-
-        @_dispatch
+        @dispatch
         def g(self):
-            """docstring of g"""
+            """Docs of g"""
 
     @dispatch
     def f():
-        """docstring of f"""
+        """Docs of f"""
 
     assert f.__name__ == "f"
     assert f.__qualname__ == "test_metadata_and_printing.<locals>.f"
     assert f.__module__ == "tests.advanced.test_advanced"
-    assert f.__doc__ == "docstring of f"
-    # assert repr(f) == f"<function {f._f} with 1 method(s)>"
+    assert f.__doc__ == "Docs of f"
 
     assert f.invoke().__name__ == "f"
     assert f.invoke().__qualname__ == "test_metadata_and_printing.<locals>.f"
     assert f.invoke().__module__ == "tests.advanced.test_advanced"
-    assert f.invoke().__doc__ == "docstring of f"
-    n = len(hex(id(f))) + 1  # Do not check memory address and extra ">".
-    # Replace `cyfunction` with `function` to play nice with Cython.
-    assert repr(f.invoke())[:-n].replace("cyfunction", "function") == repr(f._f)[:-n]
+    assert f.invoke().__doc__ == "Docs of f"
 
-    a = A()
-    g = a.g
+    for g, ts in [(A().g, ()), (A.g, (A,))]:
+        assert g.__name__ == "g"
+        assert g.__qualname__ == "test_metadata_and_printing.<locals>.A.g"
+        assert g.__module__ == "tests.advanced.test_advanced"
+        assert g.__doc__ == "Docs of g"
 
-    name = "tests.advanced.test_advanced.test_metadata_and_printing.<locals>.A"
-
-    assert g.__name__ == "g"
-    assert g.__qualname__ == "test_metadata_and_printing.<locals>.A.g"
-    assert g.__module__ == "tests.advanced.test_advanced"
-    assert g.__doc__ == "docstring of g"
-    # Bound methods have a standard representation, so we don't test `__repr__`.
-
-    assert g.invoke().__name__ == "g"
-    assert g.invoke().__qualname__ == "test_metadata_and_printing.<locals>.A.g"
-    assert g.invoke().__module__ == "tests.advanced.test_advanced"
-    assert g.invoke().__doc__ == "docstring of g"
-    assert repr(g.invoke())[:-n] == repr(A._dispatch.classes[name]["g"]._f)[:-n]
+        assert g.invoke(*ts).__name__ == "g"
+        assert g.invoke(*ts).__qualname__ == "test_metadata_and_printing.<locals>.A.g"
+        assert g.invoke(*ts).__module__ == "tests.advanced.test_advanced"
+        assert g.invoke(*ts).__doc__ == "Docs of g"
 
 
 def test_invoke():

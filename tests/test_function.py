@@ -350,6 +350,8 @@ def test_call_object():
 
 
 def test_call_convert():
+    dispatch = Dispatcher()
+
     @dispatch
     def f(x) -> tuple:
         return x
@@ -358,6 +360,8 @@ def test_call_convert():
 
 
 def test_invoke():
+    dispatch = Dispatcher()
+
     @dispatch
     def f(x: int):
         return "int"
@@ -376,11 +380,24 @@ def test_invoke():
 
 
 def test_invoke_convert():
+    dispatch = Dispatcher()
+
     @dispatch
     def f(x: int) -> tuple:
         return x
 
     assert f.invoke(int)(1) == (1,)
+
+
+def test_invoke_wrapping():
+    dispatch = Dispatcher()
+
+    @dispatch
+    def f(x: int):
+        """Docs"""
+
+    assert f.invoke(int).__name__ == "f"
+    assert f.invoke(int).__doc__ == "Docs"
 
 
 def test_bound():
@@ -397,3 +414,7 @@ def test_bound():
 
     assert A().do.invoke(int)(1) == "int"
     assert A.do.invoke(A, int)(A(), 1) == "int"
+
+    # Also test that `invoke` is wrapped, like above.
+    assert A().do.invoke(int).__doc__ == "Docs"
+    assert A.do.invoke(A, int).__doc__ == "Docs"
