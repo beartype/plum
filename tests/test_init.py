@@ -1,3 +1,4 @@
+import typing
 from typing import Union
 
 import plum
@@ -18,3 +19,9 @@ def test_issubclass():
         Union[ModuleType("builtins", "int"), float],  # noqa: F821
         Union[ModuleType("numbers", "Number"), complex],  # noqa: F821
     )
+
+
+def test_backward_compatibility():
+    assert plum.Dict == typing.Dict
+    assert plum.List == typing.List
+    assert plum.Tuple == typing.Tuple
