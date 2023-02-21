@@ -169,15 +169,35 @@ def test_is_faithful():
     assert is_faithful(typing.Union[int, float])
     assert not is_faithful(typing.Union[int, t_nf])
 
-    class A:
+    class Meta(type):
+        def __instancecheck__(self, cls):
+            pass
+
+    class SomeClass:
         pass
 
+    class SomeOtherClass(metaclass=Meta):
+        pass
+
+    # Check the behaviour for standard classes.
+    assert is_faithful(SomeClass)
+    assert not is_faithful(SomeOtherClass)
+
+    class UnfaithfulClass:
+        __faithful__ = False
+
+    class FaithfulClass:
+        __faithful__ = True
+
+    # Check that `__faithful__` works.
+    assert not is_faithful(UnfaithfulClass)
+    assert is_faithful(FaithfulClass)
+
     # Test warning.
-    a = A()
     with pytest.warns(
         Warning, match=r"(?i)could not determine whether `(.*)` is faithful or not"
     ):
-        assert not is_faithful(a)
+        assert not is_faithful(1)
 
 
 @pytest.mark.skipif(

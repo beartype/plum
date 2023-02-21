@@ -155,17 +155,13 @@ values."""
 
 
 def resolve_type_hint(x):
-    """Resolve all :class:`ResolvableType` in a type hint.
-
-    If a type hint is not supported by this function, then the resolution process will
-    end early to not break your code. In that case, a warning will be thrown saying
-    that there may still be some remaining :class:`ResolvableType`s.
+    """Resolve all :class:`ResolvableType` in a type or type hint.
 
     Args:
-        x (object): Type hint.
+        x (type or type hint): Type hint.
 
     Returns:
-        object: `x`, but with all :class:`ResolvableType` resolved.
+        type or type hint: `x`, but with all :class:`ResolvableType`s resolved.
     """
     if _hashable(x) and x in type_mapping:
         return resolve_type_hint(type_mapping[x])
@@ -234,12 +230,19 @@ def resolve_type_hint(x):
 def is_faithful(x):
     """Check whether a type hint is faithful.
 
-    If a type hint is not supported by this function, then the function will return
-    early to not break your code. In that case, a warning will be thrown saying that the
-    dispatch performance may be subpar.
+    A type or type hint `t` is defined _faithful_ if, for all `x`, the following holds
+    true::
+
+        isinstance(x, x) == issubclass(type(x), t)
+
+    You can control whether types are faithful or not by setting the attribute
+    `__faithful__`::
+
+        class UnfaithfulType:
+            __faithful__ = False
 
     Args:
-        x (object): Type hint.
+        x (type or type hint): Type hint.
 
     Returns:
         bool: Whether `x` is faithful or not.
@@ -270,8 +273,13 @@ def _is_faithful(x):
     elif isinstance(x, (tuple, list)):
         return all(is_faithful(arg) for arg in x)
     elif isinstance(x, type):
+        if hasattr(x, "__faithful__"):
+            return x.__faithful__
+        else:
+            # This is the fallback method. Check whether `__instancecheck__` is default
+            # or not. If it is, assume that it is faithful.
+            return type(x).__instancecheck__ == type.__instancecheck__
         return True
-
     else:
         warnings.warn(
             f"Could not determine whether `{x}` is faithful or not. "
