@@ -15,11 +15,15 @@ Example:
   >> IntOrFloat
   typing.Union[IntOrFloat]
 
-  >> typing.Union[IntOrFloat, str]
-  typing.Union[IntOrFloat, str]
+  >> typing.Union[int, float]
+  typing.Union[IntOrFloat]
 
   >> typing.Union[int, float, str]
   typing.Union[IntOrFloat, str]
+
+Note that `IntOrFloat` prints to `typing.Union[IntOrFloat]` rather than just
+`IntOrFloat`. This is deliberate, with the goal of not breaking code that relies on
+parsing how unions print.
 """
 
 import typing
@@ -107,9 +111,7 @@ def _new_repr(self):
         elif args[1] is type(None):  # noqa: E721
             return f"typing.Optional[{args_repr[0]}]"
     # We would like to just print `args_repr[0]` whenever `len(args) == 1`, but
-    # `beartype` seem to not be happy with this. Hence, always print
-    # `typing.Union[<types>]`, even if there is just one type in `<types>`. I suppose
-    # this also serves of a reminder that aliased types are always unions.
+    # this might break code that parses how unions print.
     return "typing.Union[" + ", ".join(args_repr) + "]"
 
 
