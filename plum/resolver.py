@@ -134,5 +134,5 @@ class Resolver:
                 )
                 raise AmbiguousLookupError(
                     f"`{target}` is ambiguous among the following:\n"
-                    f"{listed_candidates}"
+                    f"  {listed_candidates}"
                 )
