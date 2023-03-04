@@ -1,9 +1,20 @@
+import abc
 from numbers import Number
-from typing import Union
+from typing import Optional, Tuple, Union
 
+import numpy as np
 import pytest
 
-from plum import Kind, ModuleType, Val, kind, parametric, type_parameter
+from plum import (
+    Dispatcher,
+    Kind,
+    ModuleType,
+    NotFoundLookupError,
+    Val,
+    kind,
+    parametric,
+    type_parameter,
+)
 from plum.parametric import CovariantMeta, is_concrete, is_type
 
 
@@ -19,15 +30,8 @@ class MyType(CovariantMeta):
     pass
 
 
-@pytest.mark.parametrize(
-    "parametric",
-    [
-        parametric,
-        # Also test that we can use our own metaclass.
-        parametric(metaclass=MyType),
-    ],
-)
-def test_parametric(parametric):
+@pytest.mark.parametrize("metaclass", [type, MyType])
+def test_parametric(metaclass):
     class Base1:
         pass
 
@@ -35,7 +39,7 @@ def test_parametric(parametric):
         pass
 
     @parametric
-    class A(Base1):
+    class A(Base1, metaclass=metaclass):
         pass
 
     assert issubclass(A, Base1)
@@ -200,10 +204,10 @@ def test_parametric_constructor():
     assert type_parameter(a1) == float
     assert type_parameter(a2) == float
     assert type(a1) == type(a2)
-    assert type(a1).__name__ == type(a2).__name__ == f"A[{float}]"
+    assert type(a1).__name__ == type(a2).__name__ == "A[float]"
 
 
-def test_parametric_override_type_parameters():
+def test_parametric_override_infer_type_parameter():
     @parametric
     class NTuple:
         @classmethod
@@ -219,6 +223,166 @@ def test_parametric_override_type_parameters():
             self.args = args
 
     assert isinstance(NTuple(1, 2, 3), NTuple[3, int])
+
+
+class NDArrayMeta(type):
+    def __instancecheck__(self, x):
+        if self.concrete:
+            shape, dtype = self.type_parameter
+        else:
+            shape, dtype = None, None
+        return (
+            isinstance(x, np.ndarray)
+            and (shape is None or x.shape == shape)
+            and (dtype is None or x.dtype == dtype)
+        )
+
+
+dispatch = Dispatcher()
+
+
+@parametric
+class NDArray(np.ndarray, metaclass=NDArrayMeta):
+    # `isinstance(x, NDArray[x, y])` is typically not equal to
+    # `issubclass(type(x), NDArray[s, dt])`!
+    __faithful__ = False
+
+    @classmethod
+    @dispatch
+    def __init_type_parameter__(
+        cls,
+        shape: Optional[Tuple[int, ...]],
+        dtype: Optional[type],
+    ):
+        """Validate the type parameter."""
+        return shape, dtype
+
+    @classmethod
+    @dispatch
+    def __le_type_parameter__(
+        cls,
+        left: Tuple[Optional[Tuple[int, ...]], Optional[type]],
+        right: Tuple[Optional[Tuple[int, ...]], Optional[type]],
+    ):
+        """Define an order on type parameters. That is, check whether `left <= right`
+        or not."""
+        shape_left, dtype_left = left
+        shape_right, dtype_right = right
+        le_shape = shape_right is None or shape_left == shape_right
+        le_dtype = dtype_right is None or dtype_left == dtype_right
+        return le_shape and le_dtype
+
+
+def test_parametric_override_init_type_parameter():
+    # Construct the parametric type in the right way.
+    assert issubclass(NDArray[(2, 2), int], np.ndarray)
+    assert issubclass(NDArray[(2, 2), None], np.ndarray)
+    assert issubclass(NDArray[None, int], np.ndarray)
+    assert issubclass(NDArray[None, None], np.ndarray)
+
+    # Construct it in an incorrect way.
+    with pytest.raises(NotFoundLookupError):
+        NDArray[None]
+    with pytest.raises(NotFoundLookupError):
+        NDArray[1, int]
+    with pytest.raises(NotFoundLookupError):
+        NDArray[(2, 2), 1]
+
+
+def test_parametric_override_le_type_parameter():
+    dispatch = Dispatcher()
+
+    @dispatch
+    def f(x: np.ndarray):
+        return "array"
+
+    @dispatch
+    def f(x: NDArray[(2, 2), None]):
+        return "2x2 array"
+
+    @dispatch
+    def f(x: NDArray[None, int]):
+        return "int array"
+
+    @dispatch
+    def f(x: NDArray[(2, 2), int]):
+        return "2x2 int array"
+
+    assert f(np.ones((3, 3))) == "array"
+    assert f(np.ones((3, 3), int)) == "int array"
+    assert f(np.ones((2, 2))) == "2x2 array"
+    assert f(np.ones((2, 2), int)) == "2x2 int array"
+    with pytest.raises(NotFoundLookupError):
+        assert f(1.0)
+
+
+def test_parametric_custom_metaclass():
+    @parametric
+    class A(metaclass=abc.ABCMeta):
+        @abc.abstractmethod
+        def method(self):
+            pass
+
+    class B(A[1]):
+        pass
+
+    class C(B):
+        pass
+
+    @parametric
+    class D(C):
+        def method(self):
+            pass
+
+    class E(A):
+        def method(self):
+            pass
+
+    with pytest.raises(TypeError):
+        A()
+    with pytest.raises(TypeError):
+        B()
+    with pytest.raises(TypeError):
+        C()
+    D()
+    E()
+
+
+def test_parametric_custom_metaclass_name_metaclass():
+    """Test that the name of the new metaclass is right."""
+
+    @parametric
+    class A(metaclass=abc.ABCMeta):
+        pass
+
+    class B(A):
+        pass
+
+    @parametric
+    class C(B, metaclass=abc.ABCMeta):
+        pass
+
+    for c in [A, B, C]:
+        assert type(c).__name__ == "CovariantMeta[abc.ABCMeta]"
+
+
+@parametric
+class A:
+    dispatch = Dispatcher()
+
+    @dispatch
+    def f(self):
+        pass
+
+
+def test_parametric_owner_inference():
+    # The owner should not be what's returned by `@parametric`, which is a proxy.
+    # Rather, the owner should be the class that really owns the methods, which should
+    # be the direct superclass of the proxy class.
+    assert A.f.owner != A
+    assert "f" not in A.__dict__
+    assert A.f.owner == A.__mro__[1]
+    assert "f" in A.__mro__[1].__dict__
 
 
 def test_is_concrete():

@@ -1,13 +1,13 @@
-from functools import partial
-
 from beartype.door import TypeHint
 from beartype.roar import BeartypeDoorNonpepException
 
 from .dispatcher import Dispatcher
+from .function import _owner_transfer
 from .type import resolve_type_hint
 from .util import repr_short
 
 __all__ = [
+    "CovariantMeta",
     "parametric",
     "type_parameter",
     "kind",
@@ -29,23 +29,44 @@ class ParametricTypeMeta(type):
 
     def __getitem__(cls, p):
         if not cls.concrete:
-            # `p` can be a tuple, in which case it must be splatted.
-            return cls.__new__(cls, *(p if isinstance(p, tuple) else (p,)))
+            # Initialise the type parameters. This can perform, e.g., validation.
+            p = p if isinstance(p, tuple) else (p,)  # Ensure that it is a tuple.
+            p = cls.__init_type_parameter__(*p)
+            # Type parameter has been initialised! Proceed to construct the type.
+            p = p if isinstance(p, tuple) else (p,)  # Again ensure that it is a tuple.
+            return cls.__new__(cls, *p)
         else:
             raise TypeError("Cannot specify type parameters. This type is concrete.")
 
-    def __call__(cls, *args, **kw_args):
-        # `Type(arg1, arg2, **kw_args)` will first construct the parametric subtype
-        # `T = Type[type(arg1), type(arg2)]` and then call the equivalent of
-        # `T(arg1, arg2, **kw_args)`.
+    def __concrete_class__(cls, *args, **kw_args):
+        """If `cls` is not a concrete class, infer the type parameters and return a
+        concrete class. If `cls` is already a concrete class, simply return it.
 
-        if hasattr(cls, "parametric") and cls.parametric:
+        Args:
+            *args: Positional arguments passed to the `__init__` method.
+            **kw_args: Keyword arguments passed to the `__init__` method.
+
+        Returns:
+            type: A concrete class.
+        """
+        if getattr(cls, "parametric", False):
             if not cls.concrete:
                 type_parameter = cls.__infer_type_parameter__(*args, **kw_args)
                 cls = cls[type_parameter]
+        return cls
 
-        # Calls `__new__` and `__init__`.
-        return type.__call__(cls, *args, **kw_args)
+    def __init_type_parameter__(cls, *ps):
+        """Function called to initialise the type parameters.
+
+        The default behaviour is to just return `ps`.
+
+        Args:
+            *ps (object): Type parameters.
+
+        Returns:
+            object: Initialised type parameters.
+        """
+        return ps
 
     def __infer_type_parameter__(cls, *args, **kw_args):
         """Function called when the constructor of this parametric type is called
@@ -70,13 +91,13 @@ class ParametricTypeMeta(type):
     @property
     def parametric(cls):
         """bool: Check whether the type is a parametric type."""
-        return hasattr(cls, "_parametric") and cls._parametric
+        return getattr(cls, "_parametric", False)
 
     @property
     def concrete(cls):
         """bool: Check whether the parametric type is instantiated or not."""
         if cls.parametric:
-            return hasattr(cls, "_concrete") and cls._concrete
+            return getattr(cls, "_concrete", False)
         else:
             raise RuntimeError(
                 "Cannot check whether a non-parametric type is instantiated or not."
@@ -93,6 +114,15 @@ class ParametricTypeMeta(type):
             )
 
 
+def _default_le_type_par(p_left, p_right):
+    if is_type(p_left) and is_type(p_right):
+        p_left = TypeHint(resolve_type_hint(p_left))
+        p_right = TypeHint(resolve_type_hint(p_right))
+        return p_left <= p_right
+    else:
+        return p_left == p_right
+
+
 class CovariantMeta(ParametricTypeMeta):
     """A metaclass that implements *covariance* of parametric types."""
 
@@ -100,121 +130,140 @@ class CovariantMeta(ParametricTypeMeta):
         if is_concrete(cls) and is_concrete(subclass):
             # Check that they are instances of the same parametric type.
             if all(issubclass(b, cls.__bases__) for b in subclass.__bases__):
-                par_subclass = subclass.type_parameter
-                par_cls = cls.type_parameter
-
+                p_sub = subclass.type_parameter
+                p_cls = cls.type_parameter
                 # Ensure that both are in tuple form.
-                if not isinstance(par_subclass, tuple):
-                    par_subclass = (par_subclass,)
-                if not isinstance(par_cls, tuple):
-                    par_cls = (par_cls,)
-
-                return cls._is_sub_type_parameter(par_cls, subclass, par_subclass)
+                p_sub = p_sub if isinstance(p_sub, tuple) else (p_sub,)
+                p_cls = p_cls if isinstance(p_cls, tuple) else (p_cls,)
+                return cls.__le_type_parameter__(p_sub, p_cls)
 
         # Default behaviour to `type`s subclass check.
         return type.__subclasscheck__(cls, subclass)
 
-    def _is_sub_type_parameter(cls, par_cls, subclass, par_subclass):
-        # Handle the case that the parameters are tuples of types.
-        return len(par_subclass) == len(par_cls) and all(
-            (
-                # Type parameter could be a type.
-                TypeHint(resolve_type_hint(pi_subclass))
-                <= TypeHint(resolve_type_hint(pi_self))
-                if (is_type(pi_subclass) and is_type(pi_self))
-                # Type parameter could also be an object.
-                else pi_subclass == pi_self
-            )
-            for pi_subclass, pi_self in zip(par_subclass, par_cls)
-        )
+    def __le_type_parameter__(cls, p_left, p_right):
+        # Check that there are an equal number of parameters.
+        if len(p_left) != len(p_right):
+            return False
+        # Check every pair of parameters.
+        return all(_default_le_type_par(p1, p2) for p1, p2 in zip(p_left, p_right))
 
 
-def parametric(Class=None, metaclass=CovariantMeta):
+def parametric(original_class=None):
     """A decorator for parametric classes.
 
     When the constructor of this parametric type is called before the type parameter
-    has been specified, the type parameters are inferred from the arguments of the
-    constructor by calling the following function.
-
-    The default implementation is shown here, but it is possible to override it.::
+    has been specified, the type parameter is inferred from the arguments of the
+    constructor by calling `__inter_type_parameter__`. The default implementation is
+    shown here, but it is possible to override it::
 
         @classmethod
-        def __infer_type_parameter__(cls, *args, **kw_args) -> Tuple:
+        def __infer_type_parameter__(cls, *args, **kw_args) -> tuple:
             return tuple(type(arg) for arg in args)
 
-    Args:
-        metaclass (type, optional): Metaclass of the parametric class. Defaults to
-            :class:`.parametric.CovariantMeta`.
+    After the type parameter is given or inferred, `__init_type_parameter__` is called.
+    Again, the default implementation is show here, but it is possible to override it::
+
+        @classmethod
+        def __init_type_parameter__(cls, *ps) -> tuple:
+            return ps
+
+    To determine which one instance of a parametric class is a subclass of another,
+    the type parameters are compared with `__le_type_parameter__`::
+
+        @classmethod
+        def __le_type_parameter__(cls, left, right) -> bool:
+            ...  # Is `left <= right`?
     """
 
-    # Allow the keyword arguments to be passed in without using `functools.partial`
-    # explicitly.
-    if Class is None:
-        return partial(parametric, metaclass=metaclass)
+    original_meta = type(original_class)
+
+    # Make a metaclass that derives from both the metaclass of `original_meta` and
+    # `CovariantMeta`, but make sure not to insert `CovariantMeta` twice, because that
+    # will error.
+
+    if CovariantMeta in original_meta.__mro__:
+        bases = (original_meta,)
+        name = original_meta.__name__
+    else:
+        bases = (CovariantMeta, original_meta)
+        name = f"CovariantMeta[{repr_short(original_meta)}]"
+
+    def __call__(cls, *args, **kw_args):
+        cls = cls.__concrete_class__(*args, **kw_args)
+        return original_meta.__call__(cls, *args, **kw_args)
+
+    meta = type(name, bases, {"__call__": __call__})
 
     subclasses = {}
-
-    if not issubclass(Class, object):  # pragma: no cover
-        raise RuntimeError(
-            f"To let {Class} be a parametric class, it must be a new-style class."
-        )
 
     def __new__(cls, *ps):
         # Only create a new subclass if it doesn't exist already.
         if ps not in subclasses:
 
             def __new__(cls, *args, **kw_args):
-                return Class.__new__(cls)
+                return original_class.__new__(cls)
 
             # Create subclass.
-            name = Class.__name__ + "[" + ", ".join(str(p) for p in ps) + "]"
-            SubClass = type.__new__(
-                metaclass,
+            name = original_class.__name__
+            name += "[" + ", ".join(repr_short(p) for p in ps) + "]"
+            subclass = meta(
                 name,
-                (ParametricClass,),
+                (parametric_class,),
                 {"__new__": __new__},
             )
-            SubClass._parametric = True
-            SubClass._concrete = True
-            SubClass._type_parameter = ps[0] if len(ps) == 1 else ps
-            SubClass.__module__ = Class.__module__
+            subclass._parametric = True
+            subclass._concrete = True
+            subclass._type_parameter = ps[0] if len(ps) == 1 else ps
+            subclass.__module__ = original_class.__module__
 
             # Attempt to correct docstring.
             try:
-                SubClass.__doc__ = Class.__doc__
+                subclass.__doc__ = original_class.__doc__
             except AttributeError:  # pragma: no cover
                 pass
 
-            subclasses[ps] = SubClass
+            subclasses[ps] = subclass
         return subclasses[ps]
 
     def __init_subclass__(cls, **kw_args):
         cls._parametric = False
+        # If the subclass has the same `__new__` as `ParametricClass`, then we should
+        # replace it with the `__new__` of `Class`. If the user already defined another
+        # `__new__`, then everything is fine.
         if cls.__new__ is __new__:
 
             def class_new(cls, *args, **kw_args):
-                return Class.__new__(cls)
+                return original_class.__new__(cls)
 
             cls.__new__ = class_new
-        Class.__init_subclass__(**kw_args)
+        original_class.__init_subclass__(**kw_args)
 
     # Create parametric class.
-    ParametricClass = metaclass(
-        Class.__name__,
-        (Class,),
+    parametric_class = meta(
+        original_class.__name__,
+        (original_class,),
         {"__new__": __new__, "__init_subclass__": __init_subclass__},
     )
-    ParametricClass._parametric = True
-    ParametricClass._concrete = False
-    ParametricClass.__module__ = Class.__module__
+    parametric_class._parametric = True
+    parametric_class._concrete = False
+    parametric_class.__module__ = original_class.__module__
+
+    # When dispatch is used in methods of `original_class`, because we return
+    # `parametric_class`, `parametric_class` will be inferred as the owner of those
+    # functions. This is erroneous, because the owner should be `original_class`. What
+    # will happen is that `original_class` will be the next in the MRO, which means
+    # that, whenever a `NotFoundLookupError` happens, the method will try itself again,
+    # resulting in an infinite loop. To prevent this from happening, we must adjust the
+    # owner.
+    _owner_transfer[parametric_class] = original_class
 
     # Attempt to correct docstring.
     try:
-        ParametricClass.__doc__ = Class.__doc__
+        parametric_class.__doc__ = original_class.__doc__
     except AttributeError:  # pragma: no cover
         pass
 
-    return ParametricClass
+    return parametric_class
 
 
 def is_concrete(t):
@@ -227,7 +276,7 @@ def is_concrete(t):
         bool: `True` if `t` is a concrete instance of a parametric type and `False`
             otherwise.
     """
-    return hasattr(t, "parametric") and t.parametric and t.concrete
+    return getattr(t, "parametric", False) and t.concrete
 
 
 def is_type(x):
