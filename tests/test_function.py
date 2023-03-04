@@ -409,7 +409,7 @@ class D(type):
 
 class E(D):
     @dispatch
-    def __init__(self, name: typing.Literal["Test"], bases: tuple, methods: dict):
+    def __init__(self, name: str, bases: typing.Tuple[type], methods: dict):
         pass
 
     @dispatch
@@ -418,12 +418,15 @@ class E(D):
 
 
 def test_call_type():
+    class A:
+        pass
+
     """Exactly like :func:`test_call_object`."""
     with pytest.raises(
         NotFoundLookupError,
         match=r"(?i)^for function `__init__` of `tests.test_function.E`",
     ):
-        E("Test2", (object,), {})  # Name must be `"Test"`.
+        E("Test", (A, object), {})  # Must have exactly one base.
 
     with pytest.raises(
         NotFoundLookupError,
