@@ -184,7 +184,7 @@ def resolve_type_hint(x):
                 args = resolve_type_hint(args)
                 try:
                     return origin[args]
-                except TypeError as e:  # pragma specific no cover: 3.9 3.10
+                except TypeError as e:  # pragma: specific no cover 3.9 3.10
                     # In Python 3.7 and 3.8, the origin might be a type that cannot be
                     # subscripted. As a workaround, we get the name of the type,
                     # capitalize it, and try to get it from `typing`. So far, this
@@ -279,7 +279,6 @@ def _is_faithful(x):
             # This is the fallback method. Check whether `__instancecheck__` is default
             # or not. If it is, assume that it is faithful.
             return type(x).__instancecheck__ == type.__instancecheck__
-        return True
     else:
         warnings.warn(
             f"Could not determine whether `{x}` is faithful or not. "
