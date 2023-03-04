@@ -134,7 +134,7 @@ def promote(obj1, obj2, *objs):
     """Promote objects to a common type.
 
     Args:
-        *objs (object): Objects to convert.
+        \\*objs (object): Objects to convert.
 
     Returns:
         tuple: `objs`, but all converted to a common type.

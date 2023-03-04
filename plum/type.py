@@ -161,7 +161,7 @@ def resolve_type_hint(x):
         x (type or type hint): Type hint.
 
     Returns:
-        type or type hint: `x`, but with all :class:`ResolvableType`s resolved.
+        type or type hint: `x`, but with all :class:`ResolvableType`\\s resolved.
     """
     if _hashable(x) and x in type_mapping:
         return resolve_type_hint(type_mapping[x])

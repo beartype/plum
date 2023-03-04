@@ -1,3 +1,4 @@
+import sys
 import typing
 
 import numpy as np
@@ -32,6 +33,12 @@ def test_missing():
     # `Missing` also has no boolean value.
     with pytest.raises(TypeError):
         bool(Missing)
+
+    # However, if Sphinx is loaded, `Missing` should evaluate to `False`.
+    assert "sphinx" not in sys.modules
+    sys.modules["sphinx"] = None
+    assert not Missing
+    del sys.modules["sphinx"]
 
 
 def test_multihash():

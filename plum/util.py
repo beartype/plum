@@ -1,4 +1,5 @@
 import abc
+import sys
 import typing
 
 __all__ = [
@@ -15,7 +16,17 @@ __all__ = [
 ]
 
 try:  # pragma: specific no cover 3.7
-    from typing import get_args, get_origin
+    from typing import get_args as _get_args
+    from typing import get_origin as _get_origin
+
+    # Wrap the functions, because we'll adjust their docstrings below.
+
+    def get_args(x):
+        return _get_args(x)
+
+    def get_origin(x):
+        return _get_origin(x)
+
 except ImportError:  # pragma: no cover
     import collections.abc
 
@@ -25,14 +36,6 @@ except ImportError:  # pragma: no cover
     # the source, we also do not check for coverage.
 
     def get_origin(x):
-        """Get the unsubscripted version of a type hint.
-
-        Args:
-            x (type hint): Type hint.
-
-        Returns:
-            type hint: Unsubcripted version of `x`.
-        """
         if isinstance(x, typing._GenericAlias):
             return x.__origin__
         if x is typing.Generic:
@@ -40,20 +43,36 @@ except ImportError:  # pragma: no cover
         return None
 
     def get_args(x):
-        """Get the arguments a subscripted type hint.
-
-        Args:
-            x (type hint): Type hint.
-
-        Returns:
-            tuple: Arguments of `x`.
-        """
         if isinstance(x, typing._GenericAlias) and not x._special:
             args = x.__args__
             if get_origin(x) is collections.abc.Callable and args[0] is not Ellipsis:
                 args = (list(args[:-1]), args[-1])
             return args
         return ()
+
+
+# If we were to add docstrings directly to the manual definitions of `get_origin` above,
+# then the docstrings would be different depending on whether an `ImportError` happened
+# or not. We don't want that. Hence, we set the docstrings below, regardless of which
+# case happened.
+
+get_origin.__doc__ = """Get the unsubscripted version of a type hint.
+
+Args:
+    x (type hint): Type hint.
+
+Returns:
+    type hint: Unsubcripted version of `x`.
+"""
+
+get_args.__doc__ = """Get the arguments a subscripted type hint.
+
+Args:
+    x (type hint): Type hint.
+
+Returns:
+    tuple: Arguments of `x`.
+"""
 
 
 def repr_short(x):
@@ -75,7 +94,12 @@ class _MissingType(type):
     """The type of :class:`Missing`."""
 
     def __bool__(self):
-        raise TypeError("`Missing` has no boolean value.")
+        # For some reason, Sphinx does attempt to evaluate `bool(Missing)`. Let's try
+        # to keep Sphinx working correctly by not raising an exception.
+        if "sphinx" in sys.modules:
+            return False
+        else:
+            raise TypeError("`Missing` has no boolean value.")
 
 
 class Missing(metaclass=_MissingType):

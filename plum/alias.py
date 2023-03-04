@@ -1,25 +1,25 @@
 """This module monkey patches `__repr__` and `__str__` of `typing.Union` to control how
 `typing.Unions` are displayed.
 
-Example:
+Example::
 
-  >> plum.activate_union_aliases()
+    >> plum.activate_union_aliases()
 
-  >> IntOrFloat = typing.Union[int, float]
+    >> IntOrFloat = typing.Union[int, float]
 
-  >> IntOrFloat
-  Union[int, float]
+    >> IntOrFloat
+    Union[int, float]
 
-  >> plum.set_union_alias(IntOrFloat, "IntOrFloat")
+    >> plum.set_union_alias(IntOrFloat, "IntOrFloat")
 
-  >> IntOrFloat
-  typing.Union[IntOrFloat]
+    >> IntOrFloat
+    typing.Union[IntOrFloat]
 
-  >> typing.Union[int, float]
-  typing.Union[IntOrFloat]
+    >> typing.Union[int, float]
+    typing.Union[IntOrFloat]
 
-  >> typing.Union[int, float, str]
-  typing.Union[IntOrFloat, str]
+    >> typing.Union[int, float, str]
+    typing.Union[IntOrFloat, str]
 
 Note that `IntOrFloat` prints to `typing.Union[IntOrFloat]` rather than just
 `IntOrFloat`. This is deliberate, with the goal of not breaking code that relies on
