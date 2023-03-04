@@ -4,7 +4,7 @@ import typing
 import pytest
 
 from plum import Dispatcher
-from plum.function import Function, _change_function_name, _convert
+from plum.function import Function, _change_function_name, _convert, _owner_transfer
 from plum.resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
 from plum.signature import Signature
 
@@ -80,10 +80,42 @@ class A:
 
 def test_owner():
     def f(x):
-        """Doc"""
+        pass
 
     assert Function(f).owner is None
     assert Function(f, owner="A").owner is A
+
+
+@pytest.fixture()
+def owner_transfer():
+    # Save and clear.
+    before = dict(_owner_transfer)
+    _owner_transfer.clear()
+
+    yield _owner_transfer
+
+    # Restore.
+    _owner_transfer.clear()
+    _owner_transfer.update(before)
+
+
+def test_owner_transfer(owner_transfer):
+    def f(x):
+        pass
+
+    class B:
+        pass
+
+    # Transfer once.
+    owner_transfer[A] = B
+    assert Function(f, owner="A").owner is B
+
+    class C:
+        pass
+
+    # Transfer twice.
+    owner_transfer[B] = C
+    assert Function(f, owner="A").owner is C
 
 
 def test_doc(monkeypatch):
@@ -251,10 +283,8 @@ def test_enhance_exception():
     assert str(f._enhance_exception(e)) == "For function `f`, go!"
 
     assert isinstance(g._enhance_exception(e), ValueError)
-    assert (
-        str(g._enhance_exception(e))
-        == "For function `g` of `tests.test_function.A`, go!"
-    )
+    expected = "For function `g` of `tests.test_function.A`, go!"
+    assert str(g._enhance_exception(e)) == expected
 
 
 def test_call_exception_enhancement():
@@ -294,7 +324,14 @@ class B(metaclass=abc.ABCMeta):
         pass
 
 
-class C(B):
+# Put a class in the middle of the two to make sure that MRO resolution works well.
+
+
+class Inbetween(B):
+    pass
+
+
+class C(Inbetween):
     @dispatch
     def __init__(self):
         pass
@@ -311,6 +348,10 @@ class C(B):
     def do_something_else(self, x: int):
         return "C"
 
+    @dispatch
+    def __le__(self, other: int):
+        return 1
+
 
 def test_call_mro():
     c = C()
@@ -318,6 +359,14 @@ def test_call_mro():
     # If method cannot be found, the next in the MRO should be invoked.
     assert c.do(1) == "C"
     assert c.do(1.0) == "B"
+
+    # Test a dunder method.
+    assert (c <= 2) == 1
+    with pytest.raises(
+        NotFoundLookupError,
+        match=r"(?i)^for function `__le__` of `tests.test_function.C`",
+    ):
+        c <= "2"  # noqa
 
 
 def test_call_abstract():
@@ -347,6 +396,41 @@ def test_call_object():
     ):
         # Calling requires no arguments.
         C()(1)
+
+
+dispatch = Dispatcher()
+
+
+class D(type):
+    @dispatch
+    def __call__(self, x: str):
+        pass
+
+
+class E(D):
+    @dispatch
+    def __init__(self, name: typing.Literal["Test"], bases: tuple, methods: dict):
+        pass
+
+    @dispatch
+    def __call__(self):
+        pass
+
+
+def test_call_type():
+    """Exactly like :func:`test_call_object`."""
+    with pytest.raises(
+        NotFoundLookupError,
+        match=r"(?i)^for function `__init__` of `tests.test_function.E`",
+    ):
+        E("Test2", (object,), {})  # Name must be `"Test"`.
+
+    with pytest.raises(
+        NotFoundLookupError,
+        match=r"(?i)^for function `__call__` of `tests.test_function.D`",
+    ):
+        # The call method will be tried at :class:`D` and only then error.
+        E("Test", (object,), {})(1)
 
 
 def test_call_convert():

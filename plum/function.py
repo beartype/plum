@@ -50,6 +50,11 @@ def _change_function_name(f, name):
     return f_renamed
 
 
+_owner_transfer = {}
+"""dict[type, type]: When the keys of this dictionary are detected as the owner of
+a function (see :meth:`Function.owner`), make the corresponding value the owner."""
+
+
 class Function:
     """A function.
 
@@ -84,6 +89,10 @@ class Function:
         if self._owner is None and self._owner_name is not None:
             name = self._owner_name.split(".")[-1]
             self._owner = self._f.__globals__[name]
+            # Check if the ownership needs to be transferred to another class. This
+            # can be very important for preventing infinite loops.
+            while self._owner in _owner_transfer:
+                self._owner = _owner_transfer[self._owner]
         return self._owner
 
     @property
@@ -287,30 +296,32 @@ class Function:
                 method = None
                 return_type = object
 
-                for c in self.owner.mro()[1:]:
-                    try:
-                        # We need to do `c.__dict__` here instead of `getattr(c, name)`,
-                        # since `c.__dunder__` will returns if `c` does not implement
-                        # `__dunder__`!
-                        method = c.__dict__[self._f.__name__]
+                for c in self.owner.__mro__[1:]:
+                    # Skip the top of the type hierarchy given by `object` and `type`.
+                    # We do not suddenly want to fall back to any unexpected default
+                    # behaviour.
+                    if c in {object, type}:
+                        continue
 
-                        # Ignore abstract methods.
-                        if (
-                            hasattr(method, "__isabstractmethod__")
-                            and method.__isabstractmethod__
-                        ):
-                            method = None
-                            continue
+                    # We need to check `c.__dict__` here instead of using `hasattr`
+                    # since e.g. `c.__le__` will return  even if `c` does not implement
+                    # `__le__`!
+                    if self._f.__name__ in c.__dict__:
+                        method = getattr(c, self._f.__name__)
+                    else:
+                        # For some reason, coverage fails to catch the `continue`
+                        # below. Add the do-nothing `_ = None` fixes this.
+                        # TODO: Remove this once coverage properly catches this.
+                        _ = None
+                        continue
 
-                        # We found a good candidate. Break.
-                        break
-                    except KeyError:
-                        pass
+                    # Ignore abstract methods.
+                    if getattr(method, "__isabstractmethod__", False):
+                        method = None
+                        continue
 
-                if method in {object.__init__, object.__call__}:
-                    # A magic method of `object` has been found that will surely
-                    # not support the passed arguments. Raise the original exception.
-                    raise e
+                    # We found a good candidate. Break.
+                    break
 
                 if not method:
                     # If no method has been found after walking through the MRO, raise
