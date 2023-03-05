@@ -1,3 +1,4 @@
+import abc
 import sys
 import typing
 import warnings
@@ -289,7 +290,10 @@ def _is_faithful(x):
         else:
             # This is the fallback method. Check whether `__instancecheck__` is default
             # or not. If it is, assume that it is faithful.
-            return type(x).__instancecheck__ == type.__instancecheck__
+            return type(x).__instancecheck__ in {
+                type.__instancecheck__,
+                abc.ABCMeta.__instancecheck__,
+            }
     else:
         warnings.warn(
             f"Could not determine whether `{x}` is faithful or not. "
