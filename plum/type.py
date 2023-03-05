@@ -12,6 +12,14 @@ except ImportError:  # pragma: specific no cover 3.10
         """Replacement for :class:`types.UnionType`."""
 
 
+try:  # pragma: specific no cover 3.7
+    from typing import Literal
+except ImportError:  # pragma: specific no cover 3.8 3.9 3.10
+
+    class Literal:
+        """A simple proxy for :class:`typing.Literal`."""
+
+
 __all__ = [
     "PromisedType",
     "ModuleType",
@@ -181,7 +189,9 @@ def resolve_type_hint(x):
                     y = y | arg
                 return y
             else:
-                args = resolve_type_hint(args)
+                # Do not resolve the arguments for `Literal`s.
+                if origin != Literal:
+                    args = resolve_type_hint(args)
                 try:
                     return origin[args]
                 except TypeError as e:  # pragma: specific no cover 3.9 3.10

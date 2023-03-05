@@ -6,6 +6,20 @@ if sys.version_info.minor <= 8:
 else:
     from collections.abc import Callable
 
+try:
+    from typing import Literal
+except ImportError:
+
+    class LiteralMeta(type):
+        """A simple proxy for :class:`typing.Literal`."""
+
+        def __getindex__(self, x):
+            return self
+
+    class Literal(metaclass=LiteralMeta):
+        __faithful__ = False
+
+
 import pytest
 
 from plum.type import (
@@ -206,3 +220,9 @@ def test_is_faithful():
 )
 def test_is_faithful_new_union():
     assert not is_faithful(int | float)
+
+
+def test_is_faithful_literal(recwarn):
+    assert not is_faithful(Literal[1])
+    # There should be no warnings.
+    assert len(recwarn) == 0
