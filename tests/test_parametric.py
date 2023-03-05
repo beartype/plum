@@ -207,22 +207,57 @@ def test_parametric_constructor():
     assert type(a1).__name__ == type(a2).__name__ == "A[float]"
 
 
+@parametric
+class NTuple:
+    dispatch = Dispatcher()
+
+    def __init__(self, *args):
+        # Check that the arguments satisfy the type specification.
+        n, t = type_parameter(self)
+        if len(args) != n or any(not isinstance(arg, t) for arg in args):
+            raise ValueError("Incorrect arguments!")
+
+        self.args = args
+
+    @classmethod
+    @dispatch
+    def __init_type_parameter__(self, n: int, t: type):
+        """Check whether the type parameters are valid."""
+        # In this case, we use `@dispatch` to check the validity of the type
+        # parameter.
+        return n, t
+
+    @classmethod
+    def __infer_type_parameter__(self, *args):
+        """Inter the type parameter from the arguments."""
+        n = len(args)
+        # For simplicity, take the type of the first argument! We could do something
+        # more refined here.
+        t = type(args[0])
+        return n, t
+
+
 def test_parametric_override_infer_type_parameter():
-    @parametric
-    class NTuple:
-        @classmethod
-        def __infer_type_parameter__(self, *args):
-            # Mimicks the type parameters of an `NTuple`.
-            T = type(args[0])
-            N = len(args)
-            return (N, T)
-
-        def __init__(self, *args):
-            T = type(self)._type_parameter[1]
-            assert all(isinstance(arg, T) for arg in args)
-            self.args = args
-
+    # Check type parameter inference.
     assert isinstance(NTuple(1, 2, 3), NTuple[3, int])
+
+    # Check type parameter initialisation.
+    with pytest.raises(NotFoundLookupError):
+        NTuple[2, "int"]
+    with pytest.raises(NotFoundLookupError):
+        NTuple[None, int]
+
+    # Check argument validation.
+    assert NTuple[2, int](1, 2)
+    with pytest.raises(ValueError):
+        assert NTuple[2, int](1, 2, 3)
+    with pytest.raises(ValueError):
+        assert NTuple[2, int](1, 2.0)
+
+    # Check covariance.
+    assert issubclass(NTuple[2, int], NTuple[2, Number])
+    assert not issubclass(NTuple[2, int], NTuple[2, float])
+    assert not issubclass(NTuple[3, int], NTuple[2, Number])
 
 
 class NDArrayMeta(type):
@@ -243,7 +278,7 @@ dispatch = Dispatcher()
 
 @parametric
 class NDArray(np.ndarray, metaclass=NDArrayMeta):
-    # `isinstance(x, NDArray[x, y])` is typically not equal to
+    # `isinstance(x, NDArray[s, dt])` is typically not equal to
     # `issubclass(type(x), NDArray[s, dt])`!
     __faithful__ = False
 
