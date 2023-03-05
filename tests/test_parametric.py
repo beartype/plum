@@ -278,10 +278,6 @@ dispatch = Dispatcher()
 
 @parametric
 class NDArray(np.ndarray, metaclass=NDArrayMeta):
-    # `isinstance(x, NDArray[s, dt])` is typically not equal to
-    # `issubclass(type(x), NDArray[s, dt])`!
-    __faithful__ = False
-
     @classmethod
     @dispatch
     def __init_type_parameter__(
