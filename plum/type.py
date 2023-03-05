@@ -74,14 +74,15 @@ class PromisedType(ResolvableType):
     """A type that is promised to be available when you will you need it.
 
     Args:
-        name (str): Name of the type that is promised.
+        name (str, optional): Name of the type that is promised. Defaults to
+            `"SomeType"`.
     """
 
-    def __init__(self, name):
+    def __init__(self, name="SomeType"):
         ResolvableType.__init__(self, f"PromisedType[{name}]")
         self._name = name
 
-    def __new__(cls, name):
+    def __new__(cls, name="SomeType"):
         return ResolvableType.__new__(cls, f"PromisedType[{name}]")
 
 

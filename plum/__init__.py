@@ -1,7 +1,7 @@
-# Plum previously exported `List`, `Tuple`, and `Dict`. As of recently, the user can
-# use the versions from `typing`. To not break backward compatibility, we still export
-# these types.
-from typing import Dict, List, Tuple  # noqa: F401
+# Plum previously exported a number of types. As of recently, the user can use the
+# versions from `typing`. To not break backward compatibility, we still export these
+# types.
+from typing import Dict, List, Tuple, Union  # noqa: F401
 
 from beartype.door import TypeHint as _TypeHint
 from beartype.door import is_bearable as _is_bearable

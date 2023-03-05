@@ -49,6 +49,11 @@ def test_promisedtype():
     assert t.resolve() is int
 
 
+def test_promsedtype_default_name():
+    t = PromisedType()
+    assert t.__name__ == "PromisedType[SomeType]"
+
+
 @pytest.mark.parametrize(
     "module, name, type",
     [

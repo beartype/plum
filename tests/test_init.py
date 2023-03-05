@@ -25,3 +25,4 @@ def test_backward_compatibility():
     assert plum.Dict == typing.Dict
     assert plum.List == typing.List
     assert plum.Tuple == typing.Tuple
+    assert plum.Union == typing.Union
