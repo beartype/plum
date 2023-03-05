@@ -107,7 +107,7 @@ class Function:
 
         # Append the docstrings of all other implementations to it. Exclude the
         # docstring from `self._f`, because that one forms the basis.
-        resolver_doc = self._resolver.doc(exclude=self._f.__doc__)
+        resolver_doc = self._resolver.doc(exclude=self._f)
         if resolver_doc:
             # Ensure a newline.
             while doc[-2:] != "\n\n":

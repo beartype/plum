@@ -46,7 +46,7 @@ def test_doc(monkeypatch):
     assert r.doc() == "first\nsecond\nthird"
 
     # Test that the explicit exclusion mechanism also works.
-    assert r.doc(exclude="third") == "first\nsecond"
+    assert r.doc(exclude=r.signatures[3].implementation) == "first\nsecond"
 
 
 def test_register():
