@@ -8,6 +8,10 @@
 
 Everybody likes multiple dispatch, just like everybody likes plums.
 
+*Note:*
+Plum 2 is now powered by [Beartype](https://github.com/beartype/beartype)!
+If you notice any issues with the new release, please open an issue.
+
 # Installation
 
 Plum requires Python 3.7 or higher.
