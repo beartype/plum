@@ -1,7 +1,8 @@
-from beartype.door import TypeHint, is_bearable
+from beartype.door import TypeHint
 
 import plum.function
 
+from . import _is_bearable
 from .dispatcher import Dispatcher
 from .type import resolve_type_hint
 from .util import repr_short
@@ -39,7 +40,7 @@ plum.function._promised_convert = convert
 
 @_dispatch
 def _convert(obj, type_to):
-    if is_bearable(obj, resolve_type_hint(type_to)):
+    if _is_bearable(obj, resolve_type_hint(type_to)):
         return obj
     else:
         raise TypeError(f"Cannot convert `{obj}` to `{repr_short(type_to)}`.")

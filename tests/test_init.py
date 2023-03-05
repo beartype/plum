@@ -1,8 +1,17 @@
 import typing
-from typing import Union
+from typing import List, Union
+
+import pytest
 
 import plum
 from plum import ModuleType
+
+
+@pytest.mark.xfail()
+def test_beartype_on_strategy():
+    # The `O(n)` strategy is not yet supported.
+    for _ in range(10):
+        assert not plum.isinstance([1, 1, 1, 1, None], List[int])
 
 
 def test_isinstance():

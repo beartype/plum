@@ -1,8 +1,11 @@
 # Plum previously exported a number of types. As of recently, the user can use the
 # versions from `typing`. To not break backward compatibility, we still export these
 # types.
+from functools import partial
 from typing import Dict, List, Tuple, Union  # noqa: F401
 
+from beartype import BeartypeConf as _BeartypeConf
+from beartype import BeartypeStrategy as _BeartypeStrategy
 from beartype.door import TypeHint as _TypeHint
 from beartype.door import is_bearable as _is_bearable
 
@@ -17,6 +20,11 @@ from .signature import *  # noqa: F401, F403
 from .type import *  # noqa: F401, F403
 from .type import resolve_type_hint
 from .util import *  # noqa: F401, F403
+
+# Ensure that type checking is always entirely correct! The default O(1) strategy
+# is super fast, but might yield unpredictable dispatch behaviour. The O(n) strategy
+# actually is not yet available, but we can already opt in to use it.
+_is_bearable = partial(_is_bearable, conf=_BeartypeConf(strategy=_BeartypeStrategy.On))
 
 
 def isinstance(instance, c):

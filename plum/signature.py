@@ -2,9 +2,10 @@ import inspect
 import operator
 import typing
 
-from beartype.door import TypeHint, is_bearable
+from beartype.door import TypeHint
 from beartype.peps import resolve_pep563
 
+from . import _is_bearable
 from .type import is_faithful, resolve_type_hint
 from .util import Comparable, Missing, multihash, repr_short, wrap_lambda
 
@@ -149,7 +150,7 @@ class Signature(Comparable):
             return False
         else:
             types = self.expand_varargs(len(values))
-            return all(is_bearable(v, t) for v, t in zip(values, types))
+            return all(_is_bearable(v, t) for v, t in zip(values, types))
 
 
 def _inspect_signature(f):
@@ -214,7 +215,7 @@ def extract_signature(f, precedence=0):
 
         # If there is a default parameter, make sure that it is of the annotated type.
         if p.default is not inspect.Parameter.empty:
-            if not is_bearable(p.default, annotation):
+            if not _is_bearable(p.default, annotation):
                 raise TypeError(
                     f"Default value `{p.default}` is not an instance "
                     f"of the annotated type `{repr_short(annotation)}`."
