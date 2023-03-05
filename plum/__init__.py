@@ -51,7 +51,7 @@ def issubclass(c1, c2):
 
     Args:
         c1 (type or object): First type or type hint.
-        c2 (type or object): First type or type hint.
+        c2 (type or object): Second type or type hint.
 
     Returns:
         bool: Whether `c1` is a subtype or sub-type hint of `c2`.
