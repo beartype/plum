@@ -13,7 +13,7 @@ except ImportError:
     class LiteralMeta(type):
         """A simple proxy for :class:`typing.Literal`."""
 
-        def __getindex__(self, x):
+        def __getitem__(self, item):
             return self
 
     class Literal(metaclass=LiteralMeta):
