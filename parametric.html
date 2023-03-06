@@ -1,0 +1,948 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Parametric Classes &#8212; Plum</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+<link href="_static/styles/bootstrap.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+<link href="_static/styles/pydata-sphinx-theme.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+
+  
+  <link href="_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=4ec06e9971c5264fbd345897d5258098f11cc577" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-thebe.css" />
+    <link rel="stylesheet" type="text/css" href="_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94">
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=796348d33e8b1d947c94">
+
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/clipboard.min.js"></script>
+    <script src="_static/copybutton.js"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?digest=8bf782fb4ee92b3d3646425e50f299c4e1fd152d"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="_static/togglebutton.js"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="_static/design-tabs.js"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"
+const thebe_selector = ".thebe,.cell"
+const thebe_selector_input = "pre"
+const thebe_selector_output = ".output, .cell_output"
+</script>
+    <script async="async" src="_static/sphinx-thebe.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'parametric';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Union Aliases" href="union_aliases.html" />
+    <link rel="prev" title="Method Precedence" href="precedence.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="docsearch:language" content="en">
+  </head>
+  
+  
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="180" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__primary" id="__primary">
+  <label class="overlay overlay-primary" for="__primary"></label>
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__secondary" id="__secondary">
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+      
+<form class="bd-search d-flex align-items-center" action="search.html" method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search this book..." aria-label="Search this book..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+    </div>
+  </div>
+
+  
+  <nav class="bd-header navbar navbar-expand-lg bd-navbar" id="navbar-main"><div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+      <span class="fa-solid fa-bars"></span>
+  </label>
+  <div id="navbar-start">
+    
+    
+  
+
+
+<a class="navbar-brand logo" href="intro.html">
+
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <img src="_static/logo.png" class="logo__image only-light" alt="Logo image">
+    <img src="_static/logo.png" class="logo__image only-dark" alt="Logo image">
+  
+  
+</a>
+    
+  </div>
+
+  
+  <div class="col-lg-9 navbar-header-items">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="basic_usage.html">
+                        Basic Usage
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="advanced_usage.html">
+                        Advanced Usage
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="api.html">
+                        Application Programming Interface
+                      </a>
+                    </li>
+                
+    </ul>
+</nav>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+        <div class="navbar-end-item navbar-persistent--container">
+          
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+        </div>
+      
+      
+      <div class="navbar-end-item">
+        <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+</button>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+
+
+  
+  
+    <div class="navbar-persistent--mobile">
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+    </div>
+  
+
+  
+  <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+  </label>
+  
+
+</div>
+  </nav>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="basic_usage.html">
+                        Basic Usage
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="advanced_usage.html">
+                        Advanced Usage
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="api.html">
+                        Application Programming Interface
+                      </a>
+                    </li>
+                
+    </ul>
+</nav>
+      </div>
+      
+      </div>
+    
+
+    
+    
+    <div class="sidebar-header-items__end">
+      
+      <div class="navbar-end-item">
+        <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+</button>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+      </ul>
+      </div>
+      
+    </div>
+    
+  </div>
+
+  
+  <div class="sidebar-start-items sidebar-primary__section">
+    <div class="sidebar-start-items__item">
+  
+
+
+<a class="navbar-brand logo" href="intro.html">
+
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <img src="_static/logo.png" class="logo__image only-light" alt="Logo image">
+    <img src="_static/logo.png" class="logo__image only-dark" alt="Logo image">
+  
+  
+</a>
+    </div>
+    <div class="sidebar-start-items__item">
+<form class="bd-search d-flex align-items-center" action="search.html" method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search this book..." aria-label="Search this book..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+    </div>
+    <div class="sidebar-start-items__item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="intro.html">
+                    Plum
+                </a>
+            </li>
+        </ul>
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="basic_usage.html">Basic Usage</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="types.html">Types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dispatch.html">Ways to Dispatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scope.html">Scope of Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="classes.html">Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="keyword_arguments.html">Keyword Arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="comparison.html">Comparison with Other Multiple Dispatch Implementations</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="advanced_usage.html">Advanced Usage</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="conversion_promotion.html">Conversion and Promotion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="precedence.html">Method Precedence</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Parametric Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="union_aliases.html">Union Aliases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="autoreload.html">Support for IPython Autoreload</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Application Programming Interface</a></li>
+</ul>
+
+    </div>
+</nav>
+    </div>
+  </div>
+  
+
+  
+  <div class="sidebar-end-items sidebar-primary__section">
+    <div class="sidebar-end-items__item">
+    </div>
+  </div>
+
+  
+  <div id="rtd-footer-container"></div>
+
+      </div>
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+        <div class="bd-content">
+          <div class="bd-article-container">
+            
+            <div class="bd-header-article">
+                
+
+
+
+<div class="col py-1 d-flex header-article-main">
+    <div class="header-article__left">
+        <label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" data-toggle="tooltip" data-placement="right" title="Toggle primary sidebar">
+            <span class="fa-solid fa-bars"></span>
+        </label>
+    </div>
+    <div class="header-article__right">
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm"
+  data-toggle="tooltip"
+data-placement="bottom"
+title="Fullscreen mode"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<div class="dropdown dropdown-repository-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      <li><a href="https://github.com/wesselb/plum" target="_blank"
+   class="btn btn-sm dropdown-item"
+   data-toggle="tooltip"
+data-placement="left"
+title="Source repository"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">repository</span>
+</a>
+</a>
+      
+      <li><a href="https://github.com/wesselb/plum/issues/new?title=Issue%20on%20page%20%2Fparametric.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm dropdown-item"
+   data-toggle="tooltip"
+data-placement="left"
+title="Open an issue"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">open issue</span>
+</a>
+</a>
+      
+  </ul>
+</div>
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      <li><a href="_sources/parametric.md" target="_blank"
+   class="btn btn-sm dropdown-item"
+   data-toggle="tooltip"
+data-placement="left"
+title="Download source file"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</a>
+      
+      <li>
+<button onclick="printPdf(this)"
+  class="btn btn-sm dropdown-item"
+  data-toggle="tooltip"
+data-placement="left"
+title="Print to PDF"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</a>
+      
+  </ul>
+</div>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary" data-toggle="tooltip" data-placement="left" title="Toggle secondary sidebar">
+            <span class="fa-solid fa-list"></span>
+        </label>
+    </div>
+</div>
+            </div>
+            
+            
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Parametric Classes</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#construction">
+   Construction
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#customisation">
+   Customisation
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#kind">
+   <code class="docutils literal notranslate">
+    <span class="pre">
+     Kind
+    </span>
+   </code>
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#val">
+   <code class="docutils literal notranslate">
+    <span class="pre">
+     Val
+    </span>
+   </code>
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#example-ndarray">
+   Example:
+   <code class="docutils literal notranslate">
+    <span class="pre">
+     NDArray
+    </span>
+   </code>
+  </a>
+ </li>
+</ul>
+
+            </nav>
+        </div>
+    </div>
+</div>
+
+            <article class="bd-article" role="main">
+              
+  <section id="parametric-classes">
+<span id="parametric"></span><h1>Parametric Classes<a class="headerlink" href="#parametric-classes" title="Permalink to this heading">#</a></h1>
+<section id="construction">
+<h2>Construction<a class="headerlink" href="#construction" title="Permalink to this heading">#</a></h2>
+<p>The decorator <code class="docutils literal notranslate"><span class="pre">&#64;parametric</span></code> can be used to create parametric classes:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span><span class="p">,</span> <span class="n">parametric</span>
+
+
+<span class="nd">@parametric</span>
+<span class="k">class</span> <span class="nc">A</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">x</span>
+</pre></div>
+</div>
+<p>You can create a version of <code class="docutils literal notranslate"><span class="pre">A</span></code> with a type parameter using <code class="docutils literal notranslate"><span class="pre">__getindex__</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span>
+<span class="go">__main__.A</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">A</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+<span class="go">__main__.A[builtins.int]</span>
+</pre></div>
+</div>
+<p>These types <code class="docutils literal notranslate"><span class="pre">A[int]</span></code> can be regarded as subclasses of <code class="docutils literal notranslate"><span class="pre">A</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">issubclass</span><span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">A</span><span class="p">)</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<p>We call <code class="docutils literal notranslate"><span class="pre">A[int]</span></code> a <em>concrete</em> parametric type.
+It is concrete because <code class="docutils literal notranslate"><span class="pre">A[int]</span></code> can be instantiated into an object:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span><span class="p">[</span><span class="nb">int</span><span class="p">](</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">&lt;__main__.A[int] at 0x7feb403d4d90&gt;</span>
+</pre></div>
+</div>
+<p>When you don’t instantiate a concrete parametric type, but try to instantiate <code class="docutils literal notranslate"><span class="pre">A</span></code>
+directly, the type parameter is automatically inferred from the argument:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">&lt;__main__.A[int] at 0x7feb6060e370&gt;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">A</span><span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">)</span>
+<span class="go">&lt;__main__.A[str] at 0x7feb801409d0&gt;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">A</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="go"> &lt;__main__.A[float] at 0x7feb5034be50&gt;</span>
+</pre></div>
+</div>
+<p>You can use parametric types to perform dispatch:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@dispatch</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">A</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s2">&quot;Just some A&quot;</span>
+    
+    
+<span class="nd">@dispatch</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">A</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
+    <span class="k">return</span> <span class="s2">&quot;A has an integer!&quot;</span>
+    
+    
+<span class="nd">@dispatch</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">A</span><span class="p">[</span><span class="nb">float</span><span class="p">]):</span>
+    <span class="k">return</span> <span class="s2">&quot;A has a float!&quot;</span>
+</pre></div>
+</div>
+<p>Note that parametric types are <em>covariant</em>, which means
+that <code class="docutils literal notranslate"><span class="pre">A[T1]</span></code> is a subtype of <code class="docutils literal notranslate"><span class="pre">A[T2]</span></code> whenever <code class="docutils literal notranslate"><span class="pre">T1</span></code> is a subtype of <code class="docutils literal notranslate"><span class="pre">T2</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">numbers</span> <span class="kn">import</span> <span class="n">Number</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">issubclass</span><span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">A</span><span class="p">[</span><span class="n">Number</span><span class="p">])</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<p>For a concrete parametric type or an instance of a concrete parametric type, you
+can extract the type parameter with <code class="docutils literal notranslate"><span class="pre">type_parameter</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">type_parameter</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">type_parameter</span><span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span>
+<span class="go">int</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">type_parameter</span><span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="nb">int</span><span class="p">]())</span>
+<span class="go">int</span>
+</pre></div>
+</div>
+</section>
+<section id="customisation">
+<h2>Customisation<a class="headerlink" href="#customisation" title="Permalink to this heading">#</a></h2>
+<p>You can customise precisely how type parameters are inferred and instantiated
+by overriding certain <code class="docutils literal notranslate"><span class="pre">&#64;classmethod</span></code>s:</p>
+<table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Class Method</p></th>
+<th class="head"><p>What does it do?</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">__init_type_parameter__</span></code></p></td>
+<td><p>Initialise the type parameter.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">__infer_type_parameter__</span></code></p></td>
+<td><p>Infer the type parameter from the arguments.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">__le_type_parameter__</span></code></p></td>
+<td><p>For a given <code class="docutils literal notranslate"><span class="pre">left</span></code> and <code class="docutils literal notranslate"><span class="pre">right</span></code>, check whether <code class="docutils literal notranslate"><span class="pre">Type[left]</span></code> is a subtype of <code class="docutils literal notranslate"><span class="pre">Type[Right]</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
+<p>How these methods work is best described with an example.
+See also <code class="docutils literal notranslate"><span class="pre">help(parametric)</span></code> for information.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span><span class="p">,</span> <span class="n">parametric</span><span class="p">,</span> <span class="n">type_parameter</span>
+
+
+<span class="nd">@parametric</span>
+<span class="k">class</span> <span class="nc">NTuple</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="c1"># Check that the arguments satisfy the type specification.</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="n">type_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">!=</span> <span class="n">n</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Incorrect arguments!&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">args</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="nd">@dispatch</span>
+    <span class="k">def</span> <span class="nf">__init_type_parameter__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">type</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether the type parameters are valid.&quot;&quot;&quot;</span>
+        <span class="c1"># In this case, we use `@dispatch` to check the validity of the type parameter.</span>
+        <span class="k">return</span> <span class="n">n</span><span class="p">,</span> <span class="n">t</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">__infer_type_parameter__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Inter the type parameter from the arguments.&quot;&quot;&quot;</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="c1"># For simplicity, take the type of the first argument! We could do something</span>
+        <span class="c1"># more refined here.</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  
+        <span class="k">return</span> <span class="n">n</span><span class="p">,</span> <span class="n">t</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">__le_type_parameter__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Is `NTuple[left]` a subtype of `NTuple[right]`?&quot;&quot;&quot;</span>
+        <span class="n">n_left</span><span class="p">,</span> <span class="n">t_left</span> <span class="o">=</span> <span class="n">left</span>
+        <span class="n">n_right</span><span class="p">,</span> <span class="n">t_right</span> <span class="o">=</span> <span class="n">right</span>
+        <span class="k">return</span> <span class="n">n_left</span> <span class="o">==</span> <span class="n">n_right</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">t_left</span><span class="p">,</span> <span class="n">t_right</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">NTuple</span></code> automatically infers an appropriate type parameter with
+<code class="docutils literal notranslate"><span class="pre">__infer_type_parameter__</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">NTuple</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span>
+<span class="go">&lt;__main__.NTuple[3, int] at 0x7fa9d84ccd00&gt;</span>
+</pre></div>
+</div>
+<p>It also validates any given type parameter using <code class="docutils literal notranslate"><span class="pre">__init_type_parameter__</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>     <span class="c1"># OK</span>
+<span class="go">__main__.NTuple[2, int]</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;int&quot;</span><span class="p">]</span>   <span class="c1"># Not OK</span>
+<span class="go">NotFoundLookupError: For function `__init_type_parameter__` of `__main__.NTuple`, `(&lt;class &#39;__main__.NTuple&#39;&gt;, 2, &#39;int&#39;)` could not be resolved.</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">NTuple</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>  <span class="c1"># Also not OK</span>
+<span class="go">NotFoundLookupError: For function `__init_type_parameter__` of `__main__.NTuple`, `(&lt;class &#39;__main__.NTuple&#39;&gt;, None, &lt;class &#39;int&#39;&gt;)` could not be resolved.</span>
+</pre></div>
+</div>
+<p>Given a valid type parameter, it validates the arguments:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="nb">int</span><span class="p">](</span><span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">)</span>
+<span class="go">&lt;__main__.NTuple[2, int] at 0x7fa9780a7d30&gt;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="nb">int</span><span class="p">](</span><span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span> 
+<span class="go">ValueError: Incorrect arguments!</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="nb">int</span><span class="p">](</span><span class="mi">10</span><span class="p">,</span> <span class="s2">&quot;11&quot;</span><span class="p">)</span>
+<span class="go">ValueError: Incorrect arguments!</span>
+</pre></div>
+</div>
+<p>Finally, it implements the desired covariance:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">numbers</span> <span class="kn">import</span> <span class="n">Number</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">issubclass</span><span class="p">(</span><span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="n">Number</span><span class="p">])</span>
+<span class="go">True</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">issubclass</span><span class="p">(</span><span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> 
+<span class="go">False</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">issubclass</span><span class="p">(</span><span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">NTuple</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="nb">int</span><span class="p">])</span> 
+<span class="go">False</span>
+</pre></div>
+</div>
+</section>
+<section id="kind">
+<h2><code class="docutils literal notranslate"><span class="pre">Kind</span></code><a class="headerlink" href="#kind" title="Permalink to this heading">#</a></h2>
+<p>Plum provides a convience parametric class <code class="docutils literal notranslate"><span class="pre">Kind</span></code> which you can use to quickly
+make a parametric wrapper object:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">Kind</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">this</span> <span class="o">=</span> <span class="n">Kind</span><span class="p">[</span><span class="s2">&quot;This&quot;</span><span class="p">](</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">this</span>
+<span class="go">&lt;plum.parametric.Kind[&#39;This&#39;] at 0x7fd6b861b520&gt;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">this</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+<span class="go">1</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">that</span> <span class="o">=</span> <span class="n">Kind</span><span class="p">[</span><span class="s2">&quot;That&quot;</span><span class="p">](</span><span class="s2">&quot;some&quot;</span><span class="p">,</span> <span class="s2">&quot;args&quot;</span><span class="p">,</span> <span class="s2">&quot;here&quot;</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">that</span>
+<span class="go">&lt;plum.parametric.Kind[&#39;That&#39;] at 0x7fd6b00d6850&gt;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">that</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+<span class="go">(&#39;some&#39;, &#39;args&#39;, &#39;here&#39;)</span>
+</pre></div>
+</div>
+<p>For example, you can use this in the following way:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span>
+
+
+<span class="nd">@dispatch</span>
+<span class="k">def</span> <span class="nf">i_expect_this</span><span class="p">(</span><span class="n">this</span><span class="p">:</span> <span class="n">Kind</span><span class="p">[</span><span class="s2">&quot;this&quot;</span><span class="p">]):</span>
+    <span class="n">arg</span> <span class="o">=</span> <span class="n">this</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+    <span class="o">...</span>
+
+
+<span class="nd">@dispatch</span>
+<span class="k">def</span> <span class="nf">i_expect_that</span><span class="p">(</span><span class="n">that</span><span class="p">:</span> <span class="n">Kind</span><span class="p">[</span><span class="s2">&quot;that&quot;</span><span class="p">]):</span>
+    <span class="n">arg0</span><span class="p">,</span> <span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span> <span class="o">=</span> <span class="n">that</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+</section>
+<section id="val">
+<h2><code class="docutils literal notranslate"><span class="pre">Val</span></code><a class="headerlink" href="#val" title="Permalink to this heading">#</a></h2>
+<p>Plum provides a parametric class <code class="docutils literal notranslate"><span class="pre">Val</span></code> which you can use to bring information
+from the object domain to the type domain.</p>
+<p>Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span><span class="p">,</span> <span class="n">Val</span>
+
+
+<span class="nd">@dispatch</span>
+<span class="k">def</span> <span class="nf">algorithm</span><span class="p">(</span><span class="n">setting</span><span class="p">:</span> <span class="n">Val</span><span class="p">[</span><span class="s2">&quot;fast&quot;</span><span class="p">],</span> <span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s2">&quot;Running fast!&quot;</span>
+
+
+<span class="nd">@dispatch</span>
+<span class="k">def</span> <span class="nf">algorithm</span><span class="p">(</span><span class="n">setting</span><span class="p">:</span> <span class="n">Val</span><span class="p">[</span><span class="s2">&quot;slow&quot;</span><span class="p">],</span> <span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s2">&quot;Running slowly...&quot;</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">algorithm</span><span class="p">(</span><span class="n">Val</span><span class="p">(</span><span class="s2">&quot;fast&quot;</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+<span class="go">&#39;Running fast!&#39;</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">algorithm</span><span class="p">(</span><span class="n">Val</span><span class="p">(</span><span class="s2">&quot;slow&quot;</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+<span class="go">&#39;Running slowly...&#39;</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">typing.Literal</span></code> fills a very similar purpose.
+You can use <code class="docutils literal notranslate"><span class="pre">Val</span></code> if <code class="docutils literal notranslate"><span class="pre">typing.Literal</span></code> is not available, e.g. on Python 3.7.</p>
+</section>
+<section id="example-ndarray">
+<h2>Example: <code class="docutils literal notranslate"><span class="pre">NDArray</span></code><a class="headerlink" href="#example-ndarray" title="Permalink to this heading">#</a></h2>
+<p>See <a class="reference internal" href="comparison.html#comparison-parametric"><span class="std std-ref">here</span></a>.</p>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./."
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+            </article>
+            
+
+            
+            
+            <footer class="bd-footer-article">
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+  <a class='left-prev' id="prev-link" href="precedence.html" title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+          <p class="prev-next-subtitle">previous</p>
+          <p class="prev-next-title">Method Precedence</p>
+      </div>
+  </a>
+  <a class='right-next' id="next-link" href="union_aliases.html" title="next page">
+  <div class="prev-next-info">
+      <p class="prev-next-subtitle">next</p>
+      <p class="prev-next-title">Union Aliases</p>
+  </div>
+  <i class="fa-solid fa-angle-right"></i>
+  </a>
+</div>
+            </footer>
+            
+          </div>
+          
+          
+          
+            <div class="bd-sidebar-secondary bd-toc">
+              
+<div class="toc-item">
+  
+<div class="tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+</div>
+<nav id="bd-toc-nav" class="page-toc">
+    <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#construction">
+   Construction
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#customisation">
+   Customisation
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#kind">
+   <code class="docutils literal notranslate">
+    <span class="pre">
+     Kind
+    </span>
+   </code>
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#val">
+   <code class="docutils literal notranslate">
+    <span class="pre">
+     Val
+    </span>
+   </code>
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#example-ndarray">
+   Example:
+   <code class="docutils literal notranslate">
+    <span class="pre">
+     NDArray
+    </span>
+   </code>
+  </a>
+ </li>
+</ul>
+
+</nav>
+</div>
+
+            </div>
+          
+          
+        </div>
+        <footer class="bd-footer-content">
+          <div class="bd-footer-content__inner">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Wessel Bruinsma, Filippo Vicentini, and Ruan Comelli
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+<p class="copyright">
+
+    &copy; Copyright 2022.<br>
+
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+Last updated on None.<br>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </div>
+        </footer>
+        
+
+      </main>
+    </div>
+  </div>
+
+  
+    
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=796348d33e8b1d947c94"></script>
+
+  </body>
+</html>

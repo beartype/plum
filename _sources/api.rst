@@ -9,13 +9,15 @@ Application Programming Interface
     :members:
 .. automodule:: plum.dispatcher
     :members:
+.. automodule:: plum.resolver
+    :members:
 .. automodule:: plum.parametric
     :members:
 .. automodule:: plum.promotion
     :members:
-.. automodule:: plum.autoreload
+.. automodule:: plum.alias
     :members:
-.. automodule:: plum.resolvable
+.. automodule:: plum.autoreload
     :members:
 .. automodule:: plum.util
     :members:

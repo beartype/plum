@@ -6,6 +6,7 @@ Multiple dispatch allows you to implement multiple *methods* for the same
 ```python
 from plum import dispatch
 
+
 @dispatch
 def f(x: str):
     return "This is a string!"
@@ -29,7 +30,7 @@ will be raised:
 
 ```python
 >>> f(1.0)
-NotFoundLookupError: For function "f", signature Signature(builtins.float) could not be resolved.
+NotFoundLookupError: For function `f`, `(1.0,)` could not be resolved.
 ```
 
 Instead of implementing a method for `float`s, let's implement a method for
@@ -37,6 +38,7 @@ all numbers:
 
 ```python
 from numbers import Number
+
 
 @dispatch
 def f(x: Number):
@@ -60,14 +62,10 @@ For a function `f`, all available methods can be obtained with `f.methods`:
 
 ```python
 >>> f.methods
-{Signature(builtins.str): (<function __main__.f(x:str)>, builtins.object),
- Signature(builtins.int): (<function __main__.f(x:int)>, builtins.object),
- Signature(numbers.Number): (<function __main__.f(x:numbers.Number)>,
-  builtins.object)}
+[Signature(str, implementation=<function f at 0x7f9f6014f160>),
+ Signature(int, implementation=<function f at 0x7f9f6029c280>),
+ Signature(numbers.Number, implementation=<function f at 0x7f9f801fdf70>)]
 ```
-
-In the values, the first element in the tuple is the implementation and the
-second element the return type.
 
 For an excellent and way more detailed overview of multiple dispatch, see the
 [manual of the Julia Language](https://docs.julialang.org/en/).

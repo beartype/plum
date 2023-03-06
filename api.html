@@ -1,48 +1,56 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
     <title>Application Programming Interface &#8212; Plum</title>
-    
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
   <!-- Loaded before other Sphinx assets -->
-  <link href="_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
-<link href="_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+  <link href="_static/styles/theme.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+<link href="_static/styles/bootstrap.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+<link href="_static/styles/pydata-sphinx-theme.css?digest=796348d33e8b1d947c94" rel="stylesheet">
 
-    
-  <link rel="stylesheet"
-    href="_static/vendor/fontawesome/5.13.0/css/all.min.css">
-  <link rel="preload" as="font" type="font/woff2" crossorigin
-    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
-  <link rel="preload" as="font" type="font/woff2" crossorigin
-    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+  
+  <link href="_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2">
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
+    <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=4ec06e9971c5264fbd345897d5258098f11cc577" type="text/css" />
     <link rel="stylesheet" type="text/css" href="_static/togglebutton.css" />
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
-    <link rel="stylesheet" type="text/css" href="_static/mystnb.css" />
+    <link rel="stylesheet" type="text/css" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
     <link rel="stylesheet" type="text/css" href="_static/sphinx-thebe.css" />
-    <link rel="stylesheet" type="text/css" href="_static/design-style.b7bb847fb20b106c3d81b95245e65545.min.css" />
-    
+    <link rel="stylesheet" type="text/css" href="_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
+  
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94">
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=796348d33e8b1d947c94">
 
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
     <script src="_static/clipboard.min.js"></script>
     <script src="_static/copybutton.js"></script>
-    <script src="_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?digest=8bf782fb4ee92b3d3646425e50f299c4e1fd152d"></script>
     <script>let toggleHintShow = 'Click to show';</script>
     <script>let toggleHintHide = 'Click to hide';</script>
     <script>let toggleOpenOnPrint = 'true';</script>
     <script src="_static/togglebutton.js"></script>
-    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script src="_static/design-tabs.js"></script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"
 const thebe_selector = ".thebe,.cell"
@@ -50,60 +58,249 @@ const thebe_selector_input = "pre"
 const thebe_selector_output = ".output, .cell_output"
 </script>
     <script async="async" src="_static/sphinx-thebe.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Advanced Usage" href="advanced_usage.html" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="docsearch:language" content="None">
-    
-
-    <!-- Google Analytics -->
-    
+    <link rel="prev" title="Support for IPython Autoreload" href="autoreload.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="docsearch:language" content="en">
   </head>
-  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
-<!-- Checkboxes to toggle the left sidebar -->
-<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
-<label class="overlay overlay-navbar" for="__navigation">
-    <div class="visually-hidden">Toggle navigation sidebar</div>
-</label>
-<!-- Checkboxes to toggle the in-page toc -->
-<input type="checkbox" class="sidebar-toggle" name="__page-toc" id="__page-toc" aria-label="Toggle in-page Table of Contents">
-<label class="overlay overlay-pagetoc" for="__page-toc">
-    <div class="visually-hidden">Toggle in-page Table of Contents</div>
-</label>
-<!-- Headers at the top -->
-<div class="announcement header-item noprint"></div>
-<div class="header header-item noprint"></div>
+  
+  
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="180" data-default-mode="">
 
-    
-    <div class="container-fluid" id="banner"></div>
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
 
-    
+  
+  <input type="checkbox" class="sidebar-toggle" name="__primary" id="__primary">
+  <label class="overlay overlay-primary" for="__primary"></label>
 
-    <div class="container-xl">
-      <div class="row">
-          
-<!-- Sidebar -->
-<div class="bd-sidebar noprint" id="site-navigation">
-    <div class="bd-sidebar__content">
-        <div class="bd-sidebar__top"><div class="navbar-brand-box">
-    <a class="navbar-brand text-wrap" href="index.html">
+  
+  <input type="checkbox" class="sidebar-toggle" name="__secondary" id="__secondary">
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
       
-        <!-- `logo` is deprecated in Sphinx 4.0, so remove this when we stop supporting 3 -->
+<form class="bd-search d-flex align-items-center" action="search.html" method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search this book..." aria-label="Search this book..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+    </div>
+  </div>
+
+  
+  <nav class="bd-header navbar navbar-expand-lg bd-navbar" id="navbar-main"><div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+      <span class="fa-solid fa-bars"></span>
+  </label>
+  <div id="navbar-start">
+    
+    
+  
+
+
+<a class="navbar-brand logo" href="intro.html">
+
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <img src="_static/logo.png" class="logo__image only-light" alt="Logo image">
+    <img src="_static/logo.png" class="logo__image only-dark" alt="Logo image">
+  
+  
+</a>
+    
+  </div>
+
+  
+  <div class="col-lg-9 navbar-header-items">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
         
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="basic_usage.html">
+                        Basic Usage
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="advanced_usage.html">
+                        Advanced Usage
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="#">
+                        Application Programming Interface
+                      </a>
+                    </li>
+                
+    </ul>
+</nav>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+        <div class="navbar-end-item navbar-persistent--container">
+          
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+        </div>
       
       
-      <img src="_static/logo.png" class="logo" alt="logo">
+      <div class="navbar-end-item">
+        <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+</button>
+      </div>
       
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+      </ul>
+      </div>
       
-      <h1 class="site-logo" id="site-title">Plum</h1>
+    </div>
+  </div>
+
+
+  
+  
+    <div class="navbar-persistent--mobile">
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+    </div>
+  
+
+  
+
+</div>
+  </nav>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
       
-    </a>
-</div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
-  <i class="icon fas fa-search"></i>
-  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search this book..." aria-label="Search this book..." autocomplete="off" >
-</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
-    <div class="bd-toc-item active">
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="basic_usage.html">
+                        Basic Usage
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="advanced_usage.html">
+                        Advanced Usage
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="#">
+                        Application Programming Interface
+                      </a>
+                    </li>
+                
+    </ul>
+</nav>
+      </div>
+      
+      </div>
+    
+
+    
+    
+    <div class="sidebar-header-items__end">
+      
+      <div class="navbar-end-item">
+        <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+</button>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+      </ul>
+      </div>
+      
+    </div>
+    
+  </div>
+
+  
+  <div class="sidebar-start-items sidebar-primary__section">
+    <div class="sidebar-start-items__item">
+  
+
+
+<a class="navbar-brand logo" href="intro.html">
+
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <img src="_static/logo.png" class="logo__image only-light" alt="Logo image">
+    <img src="_static/logo.png" class="logo__image only-dark" alt="Logo image">
+  
+  
+</a>
+    </div>
+    <div class="sidebar-start-items__item">
+<form class="bd-search d-flex align-items-center" action="search.html" method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search this book..." aria-label="Search this book..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+    </div>
+    <div class="sidebar-start-items__item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
         
         <ul class="nav bd-sidenav bd-sidenav__home-link">
             <li class="toctree-l1">
@@ -113,272 +310,200 @@ const thebe_selector_output = ".output, .cell_output"
             </li>
         </ul>
         <ul class="current nav bd-sidenav">
- <li class="toctree-l1 has-children">
-  <a class="reference internal" href="basic_usage.html">
-   Basic Usage
-  </a>
-  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
-  <label for="toctree-checkbox-1">
-   <i class="fas fa-chevron-down">
-   </i>
-  </label>
-  <ul>
-   <li class="toctree-l2">
-    <a class="reference internal" href="scope.html">
-     Scope of Functions
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="classes.html">
-     Classes
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="keyword_arguments.html">
-     Keyword Arguments and Default Values
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="comparison.html">
-     Comparison with
-     <code class="docutils literal notranslate">
-      <span class="pre">
-       multipledispatch
-      </span>
-     </code>
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="type_system.html">
-     Type System
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="conversion_promotion.html">
-     Conversion and Promotion
-    </a>
-   </li>
-  </ul>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="advanced_usage.html">
-   Advanced Usage
-  </a>
- </li>
- <li class="toctree-l1 current active">
-  <a class="current reference internal" href="#">
-   Application Programming Interface
-  </a>
- </li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="basic_usage.html">Basic Usage</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="types.html">Types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dispatch.html">Ways to Dispatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scope.html">Scope of Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="classes.html">Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="keyword_arguments.html">Keyword Arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="comparison.html">Comparison with Other Multiple Dispatch Implementations</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="advanced_usage.html">Advanced Usage</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="conversion_promotion.html">Conversion and Promotion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="precedence.html">Method Precedence</a></li>
+<li class="toctree-l2"><a class="reference internal" href="parametric.html">Parametric Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="union_aliases.html">Union Aliases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="autoreload.html">Support for IPython Autoreload</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Application Programming Interface</a></li>
 </ul>
 
     </div>
-</nav></div>
-        <div class="bd-sidebar__bottom">
-             <!-- To handle the deprecated key -->
-            
-            <div class="navbar_extra_footer">
-            Powered by <a href="https://jupyterbook.org">Jupyter Book</a>
-            </div>
-            
-        </div>
+</nav>
     </div>
-    <div id="rtd-footer-container"></div>
-</div>
+  </div>
+  
 
+  
+  <div class="sidebar-end-items sidebar-primary__section">
+    <div class="sidebar-end-items__item">
+    </div>
+  </div>
 
-          
+  
+  <div id="rtd-footer-container"></div>
 
-
-          
-<!-- A tiny helper pixel to detect if we've scrolled -->
-<div class="sbt-scroll-pixel-helper"></div>
-<!-- Main content -->
-<div class="col py-0 content-container">
-    
-    <div class="header-article row sticky-top noprint">
+      </div>
+      <main id="main-content" class="bd-main">
         
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+        <div class="bd-content">
+          <div class="bd-article-container">
+            
+            <div class="bd-header-article">
+                
 
 
 
 <div class="col py-1 d-flex header-article-main">
     <div class="header-article__left">
-        
-        <label for="__navigation"
-  class="headerbtn"
-  data-toggle="tooltip"
-data-placement="right"
-title="Toggle navigation"
->
-  
-
-<span class="headerbtn__icon-container">
-  <i class="fas fa-bars"></i>
-  </span>
-
-</label>
-
-        
+        <label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" data-toggle="tooltip" data-placement="right" title="Toggle primary sidebar">
+            <span class="fa-solid fa-bars"></span>
+        </label>
     </div>
     <div class="header-article__right">
 <button onclick="toggleFullScreen()"
-  class="headerbtn"
+  class="btn btn-sm"
   data-toggle="tooltip"
 data-placement="bottom"
 title="Fullscreen mode"
 >
   
 
-<span class="headerbtn__icon-container">
+<span class="btn__icon-container">
   <i class="fas fa-expand"></i>
   </span>
 
 </button>
 
-<div class="menu-dropdown menu-dropdown-repository-buttons">
-  <button class="headerbtn menu-dropdown__trigger"
-      aria-label="Source repositories">
-      <i class="fab fa-github"></i>
+
+
+<div class="dropdown dropdown-repository-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
   </button>
-  <div class="menu-dropdown__content">
-    <ul>
-      <li>
-        <a href="https://github.com/wesselb/plum"
-   class="headerbtn"
+  <ul class="dropdown-menu">
+      <li><a href="https://github.com/wesselb/plum" target="_blank"
+   class="btn btn-sm dropdown-item"
    data-toggle="tooltip"
 data-placement="left"
 title="Source repository"
 >
   
 
-<span class="headerbtn__icon-container">
+<span class="btn__icon-container">
   <i class="fab fa-github"></i>
   </span>
-<span class="headerbtn__text-container">repository</span>
+<span class="btn__text-container">repository</span>
 </a>
-
-      </li>
+</a>
       
-      <li>
-        <a href="https://github.com/wesselb/plum/issues/new?title=Issue%20on%20page%20%2Fapi.html&body=Your%20issue%20content%20here."
-   class="headerbtn"
+      <li><a href="https://github.com/wesselb/plum/issues/new?title=Issue%20on%20page%20%2Fapi.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm dropdown-item"
    data-toggle="tooltip"
 data-placement="left"
 title="Open an issue"
 >
   
 
-<span class="headerbtn__icon-container">
+<span class="btn__icon-container">
   <i class="fas fa-lightbulb"></i>
   </span>
-<span class="headerbtn__text-container">open issue</span>
+<span class="btn__text-container">open issue</span>
 </a>
-
-      </li>
+</a>
       
-    </ul>
-  </div>
+  </ul>
 </div>
 
-<div class="menu-dropdown menu-dropdown-download-buttons">
-  <button class="headerbtn menu-dropdown__trigger"
-      aria-label="Download this page">
-      <i class="fas fa-download"></i>
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
   </button>
-  <div class="menu-dropdown__content">
-    <ul>
-      <li>
-        <a href="_sources/api.rst"
-   class="headerbtn"
+  <ul class="dropdown-menu">
+      <li><a href="_sources/api.rst" target="_blank"
+   class="btn btn-sm dropdown-item"
    data-toggle="tooltip"
 data-placement="left"
 title="Download source file"
 >
   
 
-<span class="headerbtn__icon-container">
+<span class="btn__icon-container">
   <i class="fas fa-file"></i>
   </span>
-<span class="headerbtn__text-container">.rst</span>
+<span class="btn__text-container">.rst</span>
 </a>
-
-      </li>
+</a>
       
       <li>
-        
 <button onclick="printPdf(this)"
-  class="headerbtn"
+  class="btn btn-sm dropdown-item"
   data-toggle="tooltip"
 data-placement="left"
 title="Print to PDF"
 >
   
 
-<span class="headerbtn__icon-container">
+<span class="btn__icon-container">
   <i class="fas fa-file-pdf"></i>
   </span>
-<span class="headerbtn__text-container">.pdf</span>
+<span class="btn__text-container">.pdf</span>
 </button>
-
-      </li>
+</a>
       
-    </ul>
-  </div>
+  </ul>
 </div>
 
     </div>
 </div>
-
-<!-- Table of contents -->
-<div class="col-md-3 bd-toc show noprint">
-</div>
-    </div>
-    <div class="article row">
-        <div class="col pl-md-3 pl-lg-5 content-container">
-            <!-- Table of contents that is only displayed when printing the page -->
-            <div id="jb-print-docs-body" class="onlyprint">
-                <h1>Application Programming Interface</h1>
-                <!-- Table of contents -->
-                <div id="print-main-content">
-                    <div id="jb-print-toc">
-                        
-                    </div>
-                </div>
             </div>
-            <main id="main-content" role="main">
-                
-              <div>
-                
+            
+            
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Application Programming Interface</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+            <article class="bd-article" role="main">
+              
   <section id="module-plum.type">
-<span id="application-programming-interface"></span><h1>Application Programming Interface<a class="headerlink" href="#module-plum.type" title="Permalink to this headline">#</a></h1>
+<span id="application-programming-interface"></span><h1>Application Programming Interface<a class="headerlink" href="#module-plum.type" title="Permalink to this heading">#</a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="plum.type.ComparableType">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.type.</span></span><span class="sig-name descname"><span class="pre">ComparableType</span></span><a class="reference internal" href="_modules/plum/type.html#ComparableType"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.type.ComparableType" title="Permalink to this definition">#</a></dt>
-<dd><p>A Plum type that can be compared to other Plum types.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="plum.type.ComparableType.get_types">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_types</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/type.html#ComparableType.get_types"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.type.ComparableType.get_types" title="Permalink to this definition">#</a></dt>
-<dd><p>Get the types encapsulated by this Plum type.</p>
+<dt class="sig sig-object py" id="plum.type.ModuleType">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.type.</span></span><span class="sig-name descname"><span class="pre">ModuleType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/type.html#ModuleType"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.type.ModuleType" title="Permalink to this definition">#</a></dt>
+<dd><p>A type from another module.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Types encapsulated.</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>tuple[type]</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> (<em>str</em>) – Module that the type lives in.</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – Name of the type that is promised.</p></li>
+</ul>
 </dd>
 </dl>
-</dd></dl>
-
 <dl class="py method">
-<dt class="sig sig-object py" id="plum.type.ComparableType.mro">
-<span class="sig-name descname"><span class="pre">mro</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/type.html#ComparableType.mro"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.type.ComparableType.mro" title="Permalink to this definition">#</a></dt>
-<dd><p>Get the MRO.</p>
+<dt class="sig sig-object py" id="plum.type.ModuleType.retrieve">
+<span class="sig-name descname"><span class="pre">retrieve</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/type.html#ModuleType.retrieve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.type.ModuleType.retrieve" title="Permalink to this definition">#</a></dt>
+<dd><p>Attempt to retrieve the type from the reference module.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>MRO.</p>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><cite>self</cite>.</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>tuple[type]</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#plum.type.ModuleType" title="plum.type.ModuleType"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModuleType</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -387,591 +512,273 @@ title="Print to PDF"
 
 <dl class="py class">
 <dt class="sig sig-object py" id="plum.type.PromisedType">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.type.</span></span><span class="sig-name descname"><span class="pre">PromisedType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/type.html#PromisedType"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.type.PromisedType" title="Permalink to this definition">#</a></dt>
-<dd><p>A promised Plum type.</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="plum.type.ResolvableType">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.type.</span></span><span class="sig-name descname"><span class="pre">ResolvableType</span></span><a class="reference internal" href="_modules/plum/type.html#ResolvableType"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.type.ResolvableType" title="Permalink to this definition">#</a></dt>
-<dd><p>A resolvable Plum type.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="plum.type.ResolvableType.get_types">
-<span class="sig-name descname"><span class="pre">get_types</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/type.html#ResolvableType.get_types"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.type.ResolvableType.get_types" title="Permalink to this definition">#</a></dt>
-<dd><p>Get the types encapsulated by this Plum type.</p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.type.</span></span><span class="sig-name descname"><span class="pre">PromisedType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'SomeType'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/type.html#PromisedType"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.type.PromisedType" title="Permalink to this definition">#</a></dt>
+<dd><p>A type that is promised to be available when you will you need it.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Types encapsulated.</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>tuple[type]</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the type that is promised. Defaults to
+<cite>“SomeType”</cite>.</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py property">
-<dt class="sig sig-object py" id="plum.type.ResolvableType.parametric">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parametric</span></span><a class="headerlink" href="#plum.type.ResolvableType.parametric" title="Permalink to this definition">#</a></dt>
-<dd><p>Boolean that indicates whether this is or contains a parametric
-type.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="plum.type.is_faithful">
+<span class="sig-prename descclassname"><span class="pre">plum.type.</span></span><span class="sig-name descname"><span class="pre">is_faithful</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/type.html#is_faithful"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.type.is_faithful" title="Permalink to this definition">#</a></dt>
+<dd><p>Check whether a type hint is faithful.</p>
+<p>A type or type hint <cite>t</cite> is defined _faithful_ if, for all <cite>x</cite>, the following holds
+true:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="nb">issubclass</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">t</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can control whether types are faithful or not by setting the attribute
+<cite>__faithful__</cite>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">UnfaithfulType</span><span class="p">:</span>
+    <span class="n">__faithful__</span> <span class="o">=</span> <span class="kc">False</span>
+</pre></div>
+</div>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>type</em><em> or </em><em>type hint</em>) – Type hint.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether <cite>x</cite> is faithful or not.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py property">
-<dt class="sig sig-object py" id="plum.type.ResolvableType.runtime_type_of">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">runtime_type_of</span></span><a class="headerlink" href="#plum.type.ResolvableType.runtime_type_of" title="Permalink to this definition">#</a></dt>
-<dd><p>Boolean that indicates whether this type can only be determined at
-runtime by <cite>plum.type_of</cite> instead of built-in <cite>type</cite>.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="plum.type.resolve_type_hint">
+<span class="sig-prename descclassname"><span class="pre">plum.type.</span></span><span class="sig-name descname"><span class="pre">resolve_type_hint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/type.html#resolve_type_hint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.type.resolve_type_hint" title="Permalink to this definition">#</a></dt>
+<dd><p>Resolve all <code class="xref py py-class docutils literal notranslate"><span class="pre">ResolvableType</span></code> in a type or type hint.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>type</em><em> or </em><em>type hint</em>) – Type hint.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><cite>x</cite>, but with all <code class="xref py py-class docutils literal notranslate"><span class="pre">ResolvableType</span></code>s resolved.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>type or type hint</p>
 </dd>
 </dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="plum.type.Type">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.type.</span></span><span class="sig-name descname"><span class="pre">Type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/type.html#Type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.type.Type" title="Permalink to this definition">#</a></dt>
-<dd><p>A Plum type encapsulating a single type.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>type</strong> (<em>type</em>) – Type to encapsulate.</p>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="plum.type.Type.get_types">
-<span class="sig-name descname"><span class="pre">get_types</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/type.html#Type.get_types"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.type.Type.get_types" title="Permalink to this definition">#</a></dt>
-<dd><p>Get the types encapsulated by this Plum type.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Types encapsulated.</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>tuple[type]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="plum.type.Type.parametric">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parametric</span></span><a class="headerlink" href="#plum.type.Type.parametric" title="Permalink to this definition">#</a></dt>
-<dd><p>Boolean that indicates whether this is or contains a parametric
-type.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="plum.type.Type.runtime_type_of">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">runtime_type_of</span></span><a class="headerlink" href="#plum.type.Type.runtime_type_of" title="Permalink to this definition">#</a></dt>
-<dd><p>Boolean that indicates whether this type can only be determined at
-runtime by <cite>plum.type_of</cite> instead of built-in <cite>type</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="plum.type.TypeMeta">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.type.</span></span><span class="sig-name descname"><span class="pre">TypeMeta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bases</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">namespace</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/type.html#TypeMeta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.type.TypeMeta" title="Permalink to this definition">#</a></dt>
-<dd><p>Types can also be instantiated with indexing.</p>
 </dd></dl>
 
 <dl class="py data">
-<dt class="sig sig-object py" id="plum.type.TypeType">
-<span class="sig-prename descclassname"><span class="pre">plum.type.</span></span><span class="sig-name descname"><span class="pre">TypeType</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Union[builtins.type,</span> <span class="pre">plum.type.AbstractType]</span></em><a class="headerlink" href="#plum.type.TypeType" title="Permalink to this definition">#</a></dt>
-<dd><p>The type of a type or Plum type.</p>
+<dt class="sig sig-object py" id="plum.type.type_mapping">
+<span class="sig-prename descclassname"><span class="pre">plum.type.</span></span><span class="sig-name descname"><span class="pre">type_mapping</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#plum.type.type_mapping" title="Permalink to this definition">#</a></dt>
+<dd><p>When running <a class="reference internal" href="#plum.type.resolve_type_hint" title="plum.type.resolve_type_hint"><code class="xref py py-func docutils literal notranslate"><span class="pre">resolve_type_hint()</span></code></a>, map keys in this dictionary to the
+values.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>ptype</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="plum.type.Union">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.type.</span></span><span class="sig-name descname"><span class="pre">Union</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">types</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/type.html#Union"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.type.Union" title="Permalink to this definition">#</a></dt>
-<dd><p>A union of Plum types.</p>
-<div class="admonition important">
-<p class="admonition-title">Important</p>
-<dl class="simple">
-<dt><cite>Union</cite> should not be used to generically refer to anything! Use</dt><dd><p><cite>Union[object]</cite> instead.</p>
-</dd>
-</dl>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>*types</strong> (<em>type</em><em> or </em><em>ptype</em>) – Types or Plum types to encapsulate.</p></li>
-<li><p><strong>alias</strong> (<em>str</em><em>, </em><em>optional</em>) – Give the union a name.</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="plum.type.Union.get_types">
-<span class="sig-name descname"><span class="pre">get_types</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/type.html#Union.get_types"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.type.Union.get_types" title="Permalink to this definition">#</a></dt>
-<dd><p>Get the types encapsulated by this Plum type.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Types encapsulated.</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>tuple[type]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="plum.type.Union.parametric">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parametric</span></span><a class="headerlink" href="#plum.type.Union.parametric" title="Permalink to this definition">#</a></dt>
-<dd><p>Boolean that indicates whether this is or contains a parametric
-type.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="plum.type.Union.runtime_type_of">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">runtime_type_of</span></span><a class="headerlink" href="#plum.type.Union.runtime_type_of" title="Permalink to this definition">#</a></dt>
-<dd><p>Boolean that indicates whether this type can only be determined at
-runtime by <cite>plum.type_of</cite> instead of built-in <cite>type</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="plum.type.VarArgs">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.type.</span></span><span class="sig-name descname"><span class="pre">VarArgs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type=&lt;class</span> <span class="pre">'object'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/type.html#VarArgs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.type.VarArgs" title="Permalink to this definition">#</a></dt>
-<dd><p>Plum type that represents a variable number of the same Plum type.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>type</strong> (<em>type</em><em> or </em><em>ptype</em><em>, </em><em>optional</em>) – Type or Plum type of the variable
-number of types. Defaults to <cite>object</cite>.</p>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="plum.type.VarArgs.expand">
-<span class="sig-name descname"><span class="pre">expand</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/type.html#VarArgs.expand"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.type.VarArgs.expand" title="Permalink to this definition">#</a></dt>
-<dd><p>Expand the varargs to a tuple of types.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>num</strong> (<em>int</em>) – Length of the tuple.</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Expansion.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>tuple</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="plum.type.VarArgs.parametric">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parametric</span></span><a class="headerlink" href="#plum.type.VarArgs.parametric" title="Permalink to this definition">#</a></dt>
-<dd><p>Boolean that indicates whether this is or contains a parametric
-type.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="plum.type.VarArgs.runtime_type_of">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">runtime_type_of</span></span><a class="headerlink" href="#plum.type.VarArgs.runtime_type_of" title="Permalink to this definition">#</a></dt>
-<dd><p>Boolean that indicates whether this type can only be determined at
-runtime by <cite>plum.type_of</cite> instead of built-in <cite>type</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="plum.type.deliver_forward_reference">
-<span class="sig-prename descclassname"><span class="pre">plum.type.</span></span><span class="sig-name descname"><span class="pre">deliver_forward_reference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/type.html#deliver_forward_reference"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.type.deliver_forward_reference" title="Permalink to this definition">#</a></dt>
-<dd><p>Deliver a forward reference.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>type</strong> (<em>type</em>) – Type to deliver.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="plum.type.is_object">
-<span class="sig-prename descclassname"><span class="pre">plum.type.</span></span><span class="sig-name descname"><span class="pre">is_object</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/type.html#is_object"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.type.is_object" title="Permalink to this definition">#</a></dt>
-<dd><p>A fast comparison to check if a Plum type is <cite>object</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>t</strong> (<em>ptype</em>) – Type to check.</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p><cite>t</cite> is <cite>object</cite>.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="plum.type.is_type">
-<span class="sig-prename descclassname"><span class="pre">plum.type.</span></span><span class="sig-name descname"><span class="pre">is_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/type.html#is_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.type.is_type" title="Permalink to this definition">#</a></dt>
-<dd><p>Fast check for whether an object is a type.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>t</strong> (<em>object</em>) – Object to check.</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p><cite>t</cite> is <cite>object</cite>.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="plum.type.ptype">
-<span class="sig-prename descclassname"><span class="pre">plum.type.</span></span><span class="sig-name descname"><span class="pre">ptype</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/type.html#ptype"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.type.ptype" title="Permalink to this definition">#</a></dt>
-<dd><p>Convert object to a type.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>obj</strong> (<em>object</em>) – Object to convert to type.</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Plum type corresponding to <cite>obj</cite>.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">type.AbstractType</span></code></p>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
 
 <span class="target" id="module-plum.signature"></span><dl class="py class">
 <dt class="sig sig-object py" id="plum.signature.Signature">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.signature.</span></span><span class="sig-name descname"><span class="pre">Signature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">types</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/signature.html#Signature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.signature.Signature" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.signature.</span></span><span class="sig-name descname"><span class="pre">Signature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*types</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">varargs=&lt;class</span> <span class="pre">'plum.util.Missing'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_type=typing.Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precedence=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">implementation=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/signature.html#Signature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.signature.Signature" title="Permalink to this definition">#</a></dt>
 <dd><p>Signature.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>*types</strong> (<em>type</em><em> or </em><em>ptype</em>) – Types of the arguments.</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>*types</strong> (<em>tuple</em><em>[</em><em>type</em><em>, </em><em>...</em><em>]</em>) – Types of the arguments.</p></li>
+<li><p><strong>varargs</strong> (<em>type</em><em>, </em><em>optional</em>) – Type of the variable arguments.</p></li>
+<li><p><strong>return_type</strong> (<em>type</em><em>, </em><em>optional</em>) – Type of the return value. Defaults to <cite>Any</cite>.</p></li>
+<li><p><strong>precedence</strong> (<em>int</em><em>, </em><em>optional</em>) – Precedence. Default to <cite>0</cite>.</p></li>
+<li><p><strong>implementation</strong> (<em>function</em><em>, </em><em>optional</em>) – Implementation.</p></li>
+</ul>
 </dd>
 </dl>
-<dl class="py property">
-<dt class="sig sig-object py" id="plum.signature.Signature.base">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">base</span></span><a class="headerlink" href="#plum.signature.Signature.base" title="Permalink to this definition">#</a></dt>
-<dd><p>Base of the tuple.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="plum.signature.Signature.expand_varargs_to">
-<span class="sig-name descname"><span class="pre">expand_varargs_to</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/signature.html#Signature.expand_varargs_to"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.signature.Signature.expand_varargs_to" title="Permalink to this definition">#</a></dt>
-<dd><p>Expand varargs to a given <a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><code class="xref py py-class docutils literal notranslate"><span class="pre">signature.Signature</span></code></a>.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="plum.signature.Signature.types">
+<span class="sig-name descname"><span class="pre">types</span></span><a class="headerlink" href="#plum.signature.Signature.types" title="Permalink to this definition">#</a></dt>
+<dd><p>Types of the arguments.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>other</strong> (<a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><code class="xref py py-class docutils literal notranslate"><span class="pre">signature.Signature</span></code></a>) – Other tuple to expand to.</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Tuple of Plum types that matches <cite>other</cite>.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>tuple[ptype]</p>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[type, …]</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py method">
+<dl class="py attribute">
+<dt class="sig sig-object py" id="plum.signature.Signature.varargs">
+<span class="sig-name descname"><span class="pre">varargs</span></span><a class="headerlink" href="#plum.signature.Signature.varargs" title="Permalink to this definition">#</a></dt>
+<dd><p>Type of the variable number of
+arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>type or <a class="reference internal" href="#plum.util.Missing" title="plum.util.Missing"><code class="xref py py-class docutils literal notranslate"><span class="pre">util.Missing</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="plum.signature.Signature.has_varargs">
-<span class="sig-name descname"><span class="pre">has_varargs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/signature.html#Signature.has_varargs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.signature.Signature.has_varargs" title="Permalink to this definition">#</a></dt>
-<dd><p>Check whether this signature has varargs.</p>
+<span class="sig-name descname"><span class="pre">has_varargs</span></span><a class="headerlink" href="#plum.signature.Signature.has_varargs" title="Permalink to this definition">#</a></dt>
+<dd><p>Whether <cite>varargs</cite> is not <a class="reference internal" href="#plum.util.Missing" title="plum.util.Missing"><code class="xref py py-class docutils literal notranslate"><span class="pre">util.Missing</span></code></a>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><cite>True</cite> if and only if this signature has varargs.</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="plum.signature.Signature.is_compatible">
-<span class="sig-name descname"><span class="pre">is_compatible</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/signature.html#Signature.is_compatible"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.signature.Signature.is_compatible" title="Permalink to this definition">#</a></dt>
-<dd><p>Check whether this signature is compatible with another one.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>other</strong> (<a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><code class="xref py py-class docutils literal notranslate"><span class="pre">signature.Signature</span></code></a>) – Other signature to check
-compatibility with.</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Compatibility.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py property">
-<dt class="sig sig-object py" id="plum.signature.Signature.varargs_type">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">varargs_type</span></span><a class="headerlink" href="#plum.signature.Signature.varargs_type" title="Permalink to this definition">#</a></dt>
-<dd><p>Type of the varargs.</p>
-</dd></dl>
-
-</dd></dl>
-
-<span class="target" id="module-plum.function"></span><dl class="py exception">
-<dt class="sig sig-object py" id="plum.function.AmbiguousLookupError">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.function.</span></span><span class="sig-name descname"><span class="pre">AmbiguousLookupError</span></span><a class="reference internal" href="_modules/plum/function.html#AmbiguousLookupError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.function.AmbiguousLookupError" title="Permalink to this definition">#</a></dt>
-<dd><p>A signature cannot be resolved due to ambiguity.</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="plum.function.ClassFunction">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.function.</span></span><span class="sig-name descname"><span class="pre">ClassFunction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">class_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">construct_function</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/function.html#ClassFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.function.ClassFunction" title="Permalink to this definition">#</a></dt>
-<dd><p>A function that is part of a class.</p>
-<p>This wrapper provides a mechanism that allows the function to be constructed with
-a reference to the class that it owns. The construction is deferred until
-<cite>__set_name__</cite> is called.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="plum.signature.Signature.return_type">
+<span class="sig-name descname"><span class="pre">return_type</span></span><a class="headerlink" href="#plum.signature.Signature.return_type" title="Permalink to this definition">#</a></dt>
+<dd><p>Return type.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>class_name</strong> (<em>str</em>) – Name of the class that owns the function.</p></li>
-<li><p><strong>construct_function</strong> (<em>function</em>) – Constructor for the function: takes in a
-reference to the class  that owns the function and gives back the function.</p></li>
-</ul>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>type</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py class">
-<dt class="sig sig-object py" id="plum.function.Function">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.function.</span></span><span class="sig-name descname"><span class="pre">Function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">owner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/function.html#Function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.function.Function" title="Permalink to this definition">#</a></dt>
-<dd><p>A function.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="plum.signature.Signature.precedence">
+<span class="sig-name descname"><span class="pre">precedence</span></span><a class="headerlink" href="#plum.signature.Signature.precedence" title="Permalink to this definition">#</a></dt>
+<dd><p>Precedence.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>f</strong> (<em>function</em>) – Function that is wrapped.</p></li>
-<li><p><strong>owner</strong> (<em>type</em><em>, </em><em>optional</em>) – Class of which the function is part.</p></li>
-</ul>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
 </dd>
 </dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="plum.function.Function.clear_cache">
-<span class="sig-name descname"><span class="pre">clear_cache</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reregister</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/function.html#Function.clear_cache"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.function.Function.clear_cache" title="Permalink to this definition">#</a></dt>
-<dd><p>Clear cache.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="plum.signature.Signature.implementation">
+<span class="sig-name descname"><span class="pre">implementation</span></span><a class="headerlink" href="#plum.signature.Signature.implementation" title="Permalink to this definition">#</a></dt>
+<dd><p>Implementation.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>reregister</strong> (<em>bool</em><em>, </em><em>optional</em>) – Also reregister all methods. Defaults to
-<cite>True</cite>.</p>
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>function or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="plum.signature.Signature.is_faithful">
+<span class="sig-name descname"><span class="pre">is_faithful</span></span><a class="headerlink" href="#plum.signature.Signature.is_faithful" title="Permalink to this definition">#</a></dt>
+<dd><p>Whether this signature only uses faithful types.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="plum.function.Function.dispatch">
-<span class="sig-name descname"><span class="pre">dispatch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precedence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/function.html#Function.dispatch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.function.Function.dispatch" title="Permalink to this definition">#</a></dt>
-<dd><p>A decorator to extend the function with another signature.</p>
+<dt class="sig sig-object py" id="plum.signature.Signature.expand_varargs">
+<span class="sig-name descname"><span class="pre">expand_varargs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/signature.html#Signature.expand_varargs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.signature.Signature.expand_varargs" title="Permalink to this definition">#</a></dt>
+<dd><p>Expand variable arguments.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>precedence</strong> (<em>int</em><em>, </em><em>optional</em>) – Precedence of the signature. Defaults to <cite>0</cite>.</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>n</strong> (<em>int</em>) – Desired number of types.</p>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Decorator.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Expanded types.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>function</p>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[type, …]</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="plum.function.Function.dispatch_multi">
-<span class="sig-name descname"><span class="pre">dispatch_multi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*signatures</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precedence=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_type=&lt;class</span> <span class="pre">'object'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/function.html#Function.dispatch_multi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.function.Function.dispatch_multi" title="Permalink to this definition">#</a></dt>
-<dd><p>A decorator to extend the function with multiple signatures.</p>
+<dt class="sig sig-object py" id="plum.signature.Signature.match">
+<span class="sig-name descname"><span class="pre">match</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/signature.html#Signature.match"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.signature.Signature.match" title="Permalink to this definition">#</a></dt>
+<dd><p>Check whether values match the signature.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>*signatures</strong> (tuple[type] or <a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><code class="xref py py-class docutils literal notranslate"><span class="pre">signature.Signature</span></code></a>) – Signatures.</p></li>
-<li><p><strong>precedence</strong> (<em>int</em><em>, </em><em>optional</em>) – Precedence of the signatures. Defaults to <cite>0</cite>.</p></li>
-<li><p><strong>return_type</strong> (<em>type</em><em>, </em><em>optional</em>) – Expected return type. Defaults to <cite>object.</cite></p></li>
-</ul>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>values</strong> (<em>tuple</em>) – Values.</p>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Decorator.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><cite>True</cite> if <cite>values</cite> match this signature and <cite>False</cite> otherwise.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>function</p>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="plum.function.Function.invoke">
-<span class="sig-name descname"><span class="pre">invoke</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">types</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/function.html#Function.invoke"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.function.Function.invoke" title="Permalink to this definition">#</a></dt>
-<dd><p>Invoke a particular method.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>*types</strong> – Types to resolve.</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Method.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>function</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="plum.function.Function.methods">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">methods</span></span><a class="headerlink" href="#plum.function.Function.methods" title="Permalink to this definition">#</a></dt>
-<dd><p>All available
-methods.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>dict[<a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><code class="xref py py-class docutils literal notranslate"><span class="pre">signature.Signature</span></code></a>,tuple[function,ptype]]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="plum.function.Function.precedences">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">precedences</span></span><a class="headerlink" href="#plum.function.Function.precedences" title="Permalink to this definition">#</a></dt>
-<dd><p>For every signature, the method
-precedence.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>dict[<a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><code class="xref py py-class docutils literal notranslate"><span class="pre">signature.Signature</span></code></a>,int]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="plum.function.Function.register">
-<span class="sig-name descname"><span class="pre">register</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precedence=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_type=&lt;class</span> <span class="pre">'object'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delayed=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/function.html#Function.register"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.function.Function.register" title="Permalink to this definition">#</a></dt>
-<dd><p>Register a method.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>signature</strong> (<a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><code class="xref py py-class docutils literal notranslate"><span class="pre">signature.Signature</span></code></a> or None) – Signature of the method.</p></li>
-<li><p><strong>f</strong> (<em>function</em>) – Function that implements the method.</p></li>
-<li><p><strong>precedence</strong> (<em>int</em><em>, </em><em>optional</em>) – Precedence of the function. Defaults
-to <cite>0</cite>.</p></li>
-<li><p><strong>return_type</strong> (<em>type</em><em> or </em><em>ptype</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Return type of the function.
-Defaults to <cite>object</cite>.</p></li>
-<li><p><strong>delayed</strong> (<em>function</em><em>, </em><em>optional</em>) – If the signature and return type could not
-yet be extracted, e.g. in the case of
-<cite>from __future__ import annotations</cite>, then delay the extraction until
-registration and use <cite>get_type_hints</cite> to resolve all type hints.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="plum.function.Function.resolve_method">
-<span class="sig-name descname"><span class="pre">resolve_method</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">types</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/function.html#Function.resolve_method"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.function.Function.resolve_method" title="Permalink to this definition">#</a></dt>
-<dd><p>Get the method and return type corresponding to types of arguments.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>*types</strong> (<em>type</em>) – Types of arguments.</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Tuple containing method and return type.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>tuple</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="plum.function.Function.resolve_signature">
-<span class="sig-name descname"><span class="pre">resolve_signature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signature</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/function.html#Function.resolve_signature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.function.Function.resolve_signature" title="Permalink to this definition">#</a></dt>
-<dd><p>Resolve a signature to get the most specific signature amongst the
-signatures of all applicable methods.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>signature</strong> (<a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><code class="xref py py-class docutils literal notranslate"><span class="pre">signature.Signature</span></code></a>) – Signature to resolve.</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p><dl class="simple">
-<dt>The most specific signature among the</dt><dd><p>signatures of all applicable methods.</p>
-</dd>
-</dl>
-</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><code class="xref py py-class docutils literal notranslate"><span class="pre">signature.Signature</span></code></a></p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py exception">
-<dt class="sig sig-object py" id="plum.function.NotFoundLookupError">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.function.</span></span><span class="sig-name descname"><span class="pre">NotFoundLookupError</span></span><a class="reference internal" href="_modules/plum/function.html#NotFoundLookupError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.function.NotFoundLookupError" title="Permalink to this definition">#</a></dt>
-<dd><p>A signature cannot be resolved because no applicable method can be found.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="plum.function.extract_signature">
-<span class="sig-prename descclassname"><span class="pre">plum.function.</span></span><span class="sig-name descname"><span class="pre">extract_signature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">get_type_hints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/function.html#extract_signature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.function.extract_signature" title="Permalink to this definition">#</a></dt>
-<dd><p>Extract the signature from a function.</p>
+<dt class="sig sig-object py" id="plum.signature.append_default_args">
+<span class="sig-prename descclassname"><span class="pre">plum.signature.</span></span><span class="sig-name descname"><span class="pre">append_default_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/signature.html#append_default_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.signature.append_default_args" title="Permalink to this definition">#</a></dt>
+<dd><p>Returns a list of signatures of function <cite>f</cite>, where those signatures are derived
+from the input arguments of <cite>f</cite> by treating every non-keyword-only argument with a
+default value as a keyword-only argument turn by turn.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>f</strong> (<em>function</em>) – Function to extract signature from.</p></li>
-<li><p><strong>get_type_hints</strong> (<em>bool</em><em>, </em><em>optional</em>) – Use <code class="xref py py-func docutils literal notranslate"><span class="pre">typing.get_type_hints()</span></code> to resolve
-the type hints. Defaults to <cite>False</cite>.</p></li>
+<li><p><strong>f</strong> (<em>function</em>) – Function to extract default arguments from.</p></li>
+<li><p><strong>signature</strong> (<a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><code class="xref py py-class docutils literal notranslate"><span class="pre">signature.Signature</span></code></a>) – Signature of <cite>f</cite> from which to
+remove default arguments.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p><dl class="simple">
-<dt>Signature and return type of the</dt><dd><p>function.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>list of signatures excluding from 0 to all
+default arguments.</p>
 </dd>
-</dl>
-</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>tuple[<a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><code class="xref py py-class docutils literal notranslate"><span class="pre">signature.Signature</span></code></a>, ptype]</p>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><code class="xref py py-class docutils literal notranslate"><span class="pre">signature.Signature</span></code></a>]</p>
 </dd>
 </dl>
 </dd></dl>
 
-<span class="target" id="module-plum.dispatcher"></span><dl class="py class">
+<dl class="py function">
+<dt class="sig sig-object py" id="plum.signature.extract_signature">
+<span class="sig-prename descclassname"><span class="pre">plum.signature.</span></span><span class="sig-name descname"><span class="pre">extract_signature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precedence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/signature.html#extract_signature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.signature.extract_signature" title="Permalink to this definition">#</a></dt>
+<dd><p>Extract the signature from a function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>f</strong> (<em>function</em>) – Function to extract signature from.</p></li>
+<li><p><strong>precedence</strong> (<em>int</em><em>, </em><em>optional</em>) – Precedence of the method.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Signature.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><code class="xref py py-class docutils literal notranslate"><span class="pre">Signature</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<span class="target" id="module-plum.function"></span><span class="target" id="module-plum.dispatcher"></span><dl class="py class">
 <dt class="sig sig-object py" id="plum.dispatcher.Dispatcher">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.dispatcher.</span></span><span class="sig-name descname"><span class="pre">Dispatcher</span></span><a class="reference internal" href="_modules/plum/dispatcher.html#Dispatcher"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.dispatcher.Dispatcher" title="Permalink to this definition">#</a></dt>
 <dd><p>A namespace for functions.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="plum.dispatcher.Dispatcher.functions">
+<span class="sig-name descname"><span class="pre">functions</span></span><a class="headerlink" href="#plum.dispatcher.Dispatcher.functions" title="Permalink to this definition">#</a></dt>
+<dd><p>Functions by name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, <code class="xref py py-class docutils literal notranslate"><span class="pre">function.Function</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="plum.dispatcher.Dispatcher.classes">
+<span class="sig-name descname"><span class="pre">classes</span></span><a class="headerlink" href="#plum.dispatcher.Dispatcher.classes" title="Permalink to this definition">#</a></dt>
+<dd><p>Methods of
+all classes by the qualified name of a class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, dict[str, <code class="xref py py-class docutils literal notranslate"><span class="pre">function.Function</span></code>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="plum.dispatcher.Dispatcher.abstract">
 <span class="sig-name descname"><span class="pre">abstract</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/dispatcher.html#Dispatcher.abstract"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.dispatcher.Dispatcher.abstract" title="Permalink to this definition">#</a></dt>
@@ -987,20 +794,17 @@ definition does not implement any methods.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="plum.dispatcher.Dispatcher.multi">
-<span class="sig-name descname"><span class="pre">multi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*signatures</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precedence=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_type=&lt;class</span> <span class="pre">'object'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/dispatcher.html#Dispatcher.multi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.dispatcher.Dispatcher.multi" title="Permalink to this definition">#</a></dt>
-<dd><p>Create a decorator for multiple given signatures.</p>
+<span class="sig-name descname"><span class="pre">multi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">signatures</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/dispatcher.html#Dispatcher.multi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.dispatcher.Dispatcher.multi" title="Permalink to this definition">#</a></dt>
+<dd><p>Decorator to register multiple signatures at once.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>*signatures</strong> (<em>tuple</em><em>[</em><em>type</em><em>]</em>) – Signatures.</p></li>
-<li><p><strong>precedence</strong> (<em>int</em><em>, </em><em>optional</em>) – Precedence of the signatures. Defaults to <cite>0</cite>.</p></li>
-<li><p><strong>return_type</strong> (<em>type</em><em>, </em><em>optional</em>) – Expected return type. Defaults to <cite>object.</cite></p></li>
-</ul>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>*signatures</strong> (tuple or <a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><code class="xref py py-class docutils literal notranslate"><span class="pre">signature.Signature</span></code></a>) – Signatures to
+register.</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Decorator.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>function</p>
 </dd>
 </dl>
@@ -1011,8 +815,8 @@ definition does not implement any methods.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="plum.dispatcher.clear_all_cache">
 <span class="sig-prename descclassname"><span class="pre">plum.dispatcher.</span></span><span class="sig-name descname"><span class="pre">clear_all_cache</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/dispatcher.html#clear_all_cache"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.dispatcher.clear_all_cache" title="Permalink to this definition">#</a></dt>
-<dd><p>Clear all cache, including the cache of subclass checks. This
-should be called if types are modified.</p>
+<dd><p>Clear all cache, including the cache of subclass checks. This should be called
+if types are modified.</p>
 </dd></dl>
 
 <dl class="py data">
@@ -1021,270 +825,28 @@ should be called if types are modified.</p>
 <dd><p>A default dispatcher for convenience purposes.</p>
 </dd></dl>
 
+<span class="target" id="module-plum.resolver"></span><dl class="py exception">
+<dt class="sig sig-object py" id="plum.resolver.AmbiguousLookupError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.resolver.</span></span><span class="sig-name descname"><span class="pre">AmbiguousLookupError</span></span><a class="reference internal" href="_modules/plum/resolver.html#AmbiguousLookupError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.resolver.AmbiguousLookupError" title="Permalink to this definition">#</a></dt>
+<dd><p>A signature cannot be resolved due to ambiguity.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="plum.resolver.NotFoundLookupError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.resolver.</span></span><span class="sig-name descname"><span class="pre">NotFoundLookupError</span></span><a class="reference internal" href="_modules/plum/resolver.html#NotFoundLookupError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.resolver.NotFoundLookupError" title="Permalink to this definition">#</a></dt>
+<dd><p>A signature cannot be resolved because no applicable method can be found.</p>
+</dd></dl>
+
 <span class="target" id="module-plum.parametric"></span><dl class="py class">
-<dt class="sig sig-object py" id="plum.parametric.Dict">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.parametric.</span></span><span class="sig-name descname"><span class="pre">Dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value_type</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/parametric.html#Dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.parametric.Dict" title="Permalink to this definition">#</a></dt>
-<dd><p>Parametric dictionary Plum type.</p>
-<div class="admonition important">
-<p class="admonition-title">Important</p>
-<p><cite>Dict</cite> should not be used to generically refer to a dictionary! Use <cite>dict</cite> instead.</p>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>key_type</strong> (<em>type</em><em> or </em><em>ptype</em>) – Type of the keys.</p></li>
-<li><p><strong>value_type</strong> (<em>type</em><em> or </em><em>ptype</em>) – Type of the values.</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="plum.parametric.Dict.get_types">
-<span class="sig-name descname"><span class="pre">get_types</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/parametric.html#Dict.get_types"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.parametric.Dict.get_types" title="Permalink to this definition">#</a></dt>
-<dd><p>Get the types encapsulated by this Plum type.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Types encapsulated.</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>tuple[type]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="plum.parametric.Dict.parametric">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parametric</span></span><a class="headerlink" href="#plum.parametric.Dict.parametric" title="Permalink to this definition">#</a></dt>
-<dd><p>Boolean that indicates whether this is or contains a parametric
-type.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="plum.parametric.Dict.runtime_type_of">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">runtime_type_of</span></span><a class="headerlink" href="#plum.parametric.Dict.runtime_type_of" title="Permalink to this definition">#</a></dt>
-<dd><p>Boolean that indicates whether this type can only be determined at
-runtime by <cite>plum.type_of</cite> instead of built-in <cite>type</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="plum.parametric.Iterable">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.parametric.</span></span><span class="sig-name descname"><span class="pre">Iterable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">el_type=&lt;class</span> <span class="pre">'plum.parametric._NotSpecified'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/parametric.html#Iterable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.parametric.Iterable" title="Permalink to this definition">#</a></dt>
-<dd><p>Parametric iterable Plum type.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>el_type</strong> (<em>type</em><em> or </em><em>ptype</em><em>, </em><em>optional</em>) – Type of the elements.</p>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="plum.parametric.Iterable.get_types">
-<span class="sig-name descname"><span class="pre">get_types</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/parametric.html#Iterable.get_types"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.parametric.Iterable.get_types" title="Permalink to this definition">#</a></dt>
-<dd><p>Get the types encapsulated by this Plum type.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Types encapsulated.</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>tuple[type]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="plum.parametric.Iterable.parametric">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parametric</span></span><a class="headerlink" href="#plum.parametric.Iterable.parametric" title="Permalink to this definition">#</a></dt>
-<dd><p>Boolean that indicates whether this is or contains a parametric
-type.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="plum.parametric.Iterable.runtime_type_of">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">runtime_type_of</span></span><a class="headerlink" href="#plum.parametric.Iterable.runtime_type_of" title="Permalink to this definition">#</a></dt>
-<dd><p>Boolean that indicates whether this type can only be determined at
-runtime by <cite>plum.type_of</cite> instead of built-in <cite>type</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
+<dt class="sig sig-object py" id="plum.parametric.CovariantMeta">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.parametric.</span></span><span class="sig-name descname"><span class="pre">CovariantMeta</span></span><a class="reference internal" href="_modules/plum/parametric.html#CovariantMeta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.parametric.CovariantMeta" title="Permalink to this definition">#</a></dt>
+<dd><p>A metaclass that implements <em>covariance</em> of parametric types.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="plum.parametric.Kind">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.parametric.</span></span><span class="sig-name descname"><span class="pre">Kind</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw_args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#plum.parametric.Kind" title="Permalink to this definition">#</a></dt>
 <dd><p>A default kind provided for convenience.</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="plum.parametric.List">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.parametric.</span></span><span class="sig-name descname"><span class="pre">List</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">el_type</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/parametric.html#List"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.parametric.List" title="Permalink to this definition">#</a></dt>
-<dd><p>Parametric list Plum type.</p>
-<div class="admonition important">
-<p class="admonition-title">Important</p>
-<p><cite>List</cite> should not be used to generically refer to a list! Use <cite>list</cite> instead.</p>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>el_type</strong> (<em>type</em><em> or </em><em>ptype</em>) – Element type.</p>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="plum.parametric.List.get_types">
-<span class="sig-name descname"><span class="pre">get_types</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/parametric.html#List.get_types"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.parametric.List.get_types" title="Permalink to this definition">#</a></dt>
-<dd><p>Get the types encapsulated by this Plum type.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Types encapsulated.</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>tuple[type]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="plum.parametric.List.parametric">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parametric</span></span><a class="headerlink" href="#plum.parametric.List.parametric" title="Permalink to this definition">#</a></dt>
-<dd><p>Boolean that indicates whether this is or contains a parametric
-type.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="plum.parametric.List.runtime_type_of">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">runtime_type_of</span></span><a class="headerlink" href="#plum.parametric.List.runtime_type_of" title="Permalink to this definition">#</a></dt>
-<dd><p>Boolean that indicates whether this type can only be determined at
-runtime by <cite>plum.type_of</cite> instead of built-in <cite>type</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="plum.parametric.Sequence">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.parametric.</span></span><span class="sig-name descname"><span class="pre">Sequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">el_type=&lt;class</span> <span class="pre">'plum.parametric._NotSpecified'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/parametric.html#Sequence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.parametric.Sequence" title="Permalink to this definition">#</a></dt>
-<dd><p>Parametric iterable Plum type.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>el_type</strong> (<em>type</em><em> or </em><em>ptype</em><em>, </em><em>optional</em>) – Type of the elements.</p>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="plum.parametric.Sequence.get_types">
-<span class="sig-name descname"><span class="pre">get_types</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/parametric.html#Sequence.get_types"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.parametric.Sequence.get_types" title="Permalink to this definition">#</a></dt>
-<dd><p>Get the types encapsulated by this Plum type.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Types encapsulated.</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>tuple[type]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="plum.parametric.Sequence.parametric">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parametric</span></span><a class="headerlink" href="#plum.parametric.Sequence.parametric" title="Permalink to this definition">#</a></dt>
-<dd><p>Boolean that indicates whether this is or contains a parametric
-type.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="plum.parametric.Sequence.runtime_type_of">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">runtime_type_of</span></span><a class="headerlink" href="#plum.parametric.Sequence.runtime_type_of" title="Permalink to this definition">#</a></dt>
-<dd><p>Boolean that indicates whether this type can only be determined at
-runtime by <cite>plum.type_of</cite> instead of built-in <cite>type</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="plum.parametric.Tuple">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.parametric.</span></span><span class="sig-name descname"><span class="pre">Tuple</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">el_types</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/parametric.html#Tuple"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.parametric.Tuple" title="Permalink to this definition">#</a></dt>
-<dd><p>Parametric tuple Plum type.</p>
-<div class="admonition important">
-<p class="admonition-title">Important</p>
-<p><cite>Tuple</cite> should not be used to generically refer to a tuple! Use <cite>tuple</cite> instead.</p>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>*el_types</strong> (<em>type</em><em> or </em><em>ptype</em>) – Element types.</p>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="plum.parametric.Tuple.get_types">
-<span class="sig-name descname"><span class="pre">get_types</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/parametric.html#Tuple.get_types"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.parametric.Tuple.get_types" title="Permalink to this definition">#</a></dt>
-<dd><p>Get the types encapsulated by this Plum type.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Types encapsulated.</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>tuple[type]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="plum.parametric.Tuple.parametric">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parametric</span></span><a class="headerlink" href="#plum.parametric.Tuple.parametric" title="Permalink to this definition">#</a></dt>
-<dd><p>Boolean that indicates whether this is or contains a parametric
-type.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="plum.parametric.Tuple.runtime_type_of">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">runtime_type_of</span></span><a class="headerlink" href="#plum.parametric.Tuple.runtime_type_of" title="Permalink to this definition">#</a></dt>
-<dd><p>Boolean that indicates whether this type can only be determined at
-runtime by <cite>plum.type_of</cite> instead of built-in <cite>type</cite>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py class">
@@ -1299,13 +861,13 @@ domain.</p>
 <span class="sig-prename descclassname"><span class="pre">plum.parametric.</span></span><span class="sig-name descname"><span class="pre">kind</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">SuperClass=&lt;class</span> <span class="pre">'object'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/parametric.html#kind"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.parametric.kind" title="Permalink to this definition">#</a></dt>
 <dd><p>Create a parametric wrapper type for dispatch purposes.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>SuperClass</strong> (<em>type</em>) – Super class.</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>New parametric type wrapper.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>object</p>
 </dd>
 </dl>
@@ -1313,57 +875,46 @@ domain.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="plum.parametric.parametric">
-<span class="sig-prename descclassname"><span class="pre">plum.parametric.</span></span><span class="sig-name descname"><span class="pre">parametric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Class=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">runtime_type_of=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metaclass=&lt;class</span> <span class="pre">'plum.parametric.CovariantMeta'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/parametric.html#parametric"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.parametric.parametric" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">plum.parametric.</span></span><span class="sig-name descname"><span class="pre">parametric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_class</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/parametric.html#parametric"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.parametric.parametric" title="Permalink to this definition">#</a></dt>
 <dd><p>A decorator for parametric classes.</p>
 <p>When the constructor of this parametric type is called before the type parameter
-has been specified, the type parameters are inferred from the arguments of the
-constructor by calling the following function.</p>
-<p>The default implementation is shown here, but it is possible to override it.:</p>
+has been specified, the type parameter is inferred from the arguments of the
+constructor by calling <cite>__inter_type_parameter__</cite>. The default implementation is
+shown here, but it is possible to override it:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@classmethod</span>
-<span class="k">def</span> <span class="nf">__infer_type_parameter__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">__infer_type_parameter__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
     <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">)</span>
 </pre></div>
 </div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>runtime_type_of</strong> (<em>bool</em><em>, </em><em>optional</em>) – Require the use of <a class="reference internal" href="#plum.parametric.type_of" title="plum.parametric.type_of"><code class="xref py py-func docutils literal notranslate"><span class="pre">parametric.type_of()</span></code></a>
-at runtime to determine the types of arguments at runtime. Defaults to
-<cite>False</cite></p></li>
-<li><p><strong>metaclass</strong> (<em>type</em><em>, </em><em>optional</em>) – Metaclass of the parametric class. Defaults to
-<code class="xref py py-class docutils literal notranslate"><span class="pre">parametric.CovariantMeta</span></code>.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="plum.parametric.type_of">
-<span class="sig-prename descclassname"><span class="pre">plum.parametric.</span></span><span class="sig-name descname"><span class="pre">type_of</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/parametric.html#type_of"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.parametric.type_of" title="Permalink to this definition">#</a></dt>
-<dd><p>Get the Plum type of an object.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>obj</strong> (<em>object</em>) – Object to get type of.</p>
-</dd>
-</dl>
-<dl class="simple">
-<dt>Returns</dt><dd><p>ptype: Plum type of <cite>obj</cite>.</p>
-</dd>
-</dl>
+<p>After the type parameter is given or inferred, <cite>__init_type_parameter__</cite> is called.
+Again, the default implementation is show here, but it is possible to override it:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@classmethod</span>
+<span class="k">def</span> <span class="nf">__init_type_parameter__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">ps</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">ps</span>
+</pre></div>
+</div>
+<p>To determine which one instance of a parametric class is a subclass of another,
+the type parameters are compared with <cite>__le_type_parameter__</cite>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@classmethod</span>
+<span class="k">def</span> <span class="nf">__le_type_parameter__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="o">...</span>  <span class="c1"># Is `left &lt;= right`?</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="plum.parametric.type_parameter">
-<span class="sig-prename descclassname"><span class="pre">plum.parametric.</span></span><span class="sig-name descname"><span class="pre">type_parameter</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/parametric.html#type_parameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.parametric.type_parameter" title="Permalink to this definition">#</a></dt>
-<dd><p>Get the type parameter of an instance of a parametric type.</p>
+<span class="sig-prename descclassname"><span class="pre">plum.parametric.</span></span><span class="sig-name descname"><span class="pre">type_parameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/parametric.html#type_parameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.parametric.type_parameter" title="Permalink to this definition">#</a></dt>
+<dd><p>Get the type parameter of concrete parametric type or an instance of a concrete
+parametric type.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>object</em>) – Instance of a parametric type.</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>object</em>) – Concrete parametric type or instance thereof.</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Type parameter.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>object</p>
 </dd>
 </dl>
@@ -1374,7 +925,7 @@ at runtime to determine the types of arguments at runtime. Defaults to
 <span class="sig-prename descclassname"><span class="pre">plum.promotion.</span></span><span class="sig-name descname"><span class="pre">add_conversion_method</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type_from</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type_to</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/promotion.html#add_conversion_method"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.promotion.add_conversion_method" title="Permalink to this definition">#</a></dt>
 <dd><p>Add a conversion method to convert an object from one type to another.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>type_from</strong> (<em>type</em>) – Type to convert from.</p></li>
 <li><p><strong>type_to</strong> (<em>type</em>) – Type to convert to.</p></li>
@@ -1387,10 +938,10 @@ type <cite>type_to</cite>.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="plum.promotion.add_promotion_rule">
-<span class="sig-prename descclassname"><span class="pre">plum.promotion.</span></span><span class="sig-name descname"><span class="pre">add_promotion_rule</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/promotion.html#add_promotion_rule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.promotion.add_promotion_rule" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">plum.promotion.</span></span><span class="sig-name descname"><span class="pre">add_promotion_rule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type_to</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/promotion.html#add_promotion_rule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.promotion.add_promotion_rule" title="Permalink to this definition">#</a></dt>
 <dd><p>Add a promotion rule.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>type1</strong> (<em>type</em>) – First type to promote.</p></li>
 <li><p><strong>type2</strong> (<em>type</em>) – Second type to promote.</p></li>
@@ -1406,7 +957,7 @@ type <cite>type_to</cite>.</p></li>
 <dd><p>Decorator to add a conversion method to convert an object from one
 type to another.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>type_from</strong> (<em>type</em>) – Type to convert from.</p></li>
 <li><p><strong>type_to</strong> (<em>type</em>) – Type to convert to.</p></li>
@@ -1417,19 +968,19 @@ type to another.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="plum.promotion.convert">
-<span class="sig-prename descclassname"><span class="pre">plum.promotion.</span></span><span class="sig-name descname"><span class="pre">convert</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/promotion.html#convert"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.promotion.convert" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">plum.promotion.</span></span><span class="sig-name descname"><span class="pre">convert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type_to</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/promotion.html#convert"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.promotion.convert" title="Permalink to this definition">#</a></dt>
 <dd><p>Convert an object to a particular type.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>obj</strong> (<em>object</em>) – Object to convert.</p></li>
 <li><p><strong>type_to</strong> (<em>type</em>) – Type to convert to.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><cite>obj</cite> converted to type <cite>type_to</cite>.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>object</p>
 </dd>
 </dl>
@@ -1437,93 +988,92 @@ type to another.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="plum.promotion.promote">
-<span class="sig-prename descclassname"><span class="pre">plum.promotion.</span></span><span class="sig-name descname"><span class="pre">promote</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/promotion.html#promote"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.promotion.promote" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">plum.promotion.</span></span><span class="sig-name descname"><span class="pre">promote</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj2</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">objs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/promotion.html#promote"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.promotion.promote" title="Permalink to this definition">#</a></dt>
 <dd><p>Promote objects to a common type.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>*objs (object): Objects to convert.</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple: <cite>objs</cite>, but all converted to a common type.</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>This function has further implementations documented below.</p>
+<p>pprroommoottee(obj: object)</p>
+<p>pprroommoottee()</p>
+</dd></dl>
+
+<span class="target" id="module-plum.alias"></span><p>This module monkey patches <cite>__repr__</cite> and <cite>__str__</cite> of <cite>typing.Union</cite> to control how
+<cite>typing.Unions</cite> are displayed.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;&gt;</span> <span class="n">plum</span><span class="o">.</span><span class="n">activate_union_aliases</span><span class="p">()</span>
+
+<span class="o">&gt;&gt;</span> <span class="n">IntOrFloat</span> <span class="o">=</span> <span class="n">typing</span><span class="o">.</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+
+<span class="o">&gt;&gt;</span> <span class="n">IntOrFloat</span>
+<span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+
+<span class="o">&gt;&gt;</span> <span class="n">plum</span><span class="o">.</span><span class="n">set_union_alias</span><span class="p">(</span><span class="n">IntOrFloat</span><span class="p">,</span> <span class="s2">&quot;IntOrFloat&quot;</span><span class="p">)</span>
+
+<span class="o">&gt;&gt;</span> <span class="n">IntOrFloat</span>
+<span class="n">typing</span><span class="o">.</span><span class="n">Union</span><span class="p">[</span><span class="n">IntOrFloat</span><span class="p">]</span>
+
+<span class="o">&gt;&gt;</span> <span class="n">typing</span><span class="o">.</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+<span class="n">typing</span><span class="o">.</span><span class="n">Union</span><span class="p">[</span><span class="n">IntOrFloat</span><span class="p">]</span>
+
+<span class="o">&gt;&gt;</span> <span class="n">typing</span><span class="o">.</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+<span class="n">typing</span><span class="o">.</span><span class="n">Union</span><span class="p">[</span><span class="n">IntOrFloat</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Note that <cite>IntOrFloat</cite> prints to <cite>typing.Union[IntOrFloat]</cite> rather than just
+<cite>IntOrFloat</cite>. This is deliberate, with the goal of not breaking code that relies on
+parsing how unions print.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="plum.alias.activate_union_aliases">
+<span class="sig-prename descclassname"><span class="pre">plum.alias.</span></span><span class="sig-name descname"><span class="pre">activate_union_aliases</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/alias.html#activate_union_aliases"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.alias.activate_union_aliases" title="Permalink to this definition">#</a></dt>
+<dd><p>When printing <cite>typing.Union`s, replace all aliased unions by the aliased names.
+This monkey patches `__repr__</cite> and <cite>__str__</cite> for <cite>typing.Union</cite>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="plum.alias.deactivate_union_aliases">
+<span class="sig-prename descclassname"><span class="pre">plum.alias.</span></span><span class="sig-name descname"><span class="pre">deactivate_union_aliases</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/alias.html#deactivate_union_aliases"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.alias.deactivate_union_aliases" title="Permalink to this definition">#</a></dt>
+<dd><p>Undo what <code class="xref py py-func docutils literal notranslate"><span class="pre">alias.activate()</span></code> did. This restores the original  <cite>__repr__</cite>
+and <cite>__str__</cite> for <cite>typing.Union</cite>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="plum.alias.set_union_alias">
+<span class="sig-prename descclassname"><span class="pre">plum.alias.</span></span><span class="sig-name descname"><span class="pre">set_union_alias</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">union</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/alias.html#set_union_alias"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.alias.set_union_alias" title="Permalink to this definition">#</a></dt>
+<dd><p>Change how a <cite>typing.Union</cite> is printed. This does not modify <cite>union</cite>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>*objs</strong> (<em>object</em>) – Objects to convert.</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>union</strong> (<em>type</em><em> or </em><em>type hint</em>) – A union.</p></li>
+<li><p><strong>alias</strong> (<em>str</em>) – How to print <cite>union</cite>.</p></li>
+</ul>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p><cite>objs</cite>, but all converted to a common type.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><cite>union</cite>.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>tuple</p>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>type or type hint</p>
 </dd>
 </dl>
 </dd></dl>
 
 <span class="target" id="module-plum.autoreload"></span><dl class="py function">
-<dt class="sig sig-object py" id="plum.autoreload.activate">
-<span class="sig-prename descclassname"><span class="pre">plum.autoreload.</span></span><span class="sig-name descname"><span class="pre">activate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/autoreload.html#activate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.autoreload.activate" title="Permalink to this definition">#</a></dt>
-<dd><p>Pirate autoreload’s <cite>update_instance</cite> function to handle Plum types.</p>
+<dt class="sig sig-object py" id="plum.autoreload.activate_autoreload">
+<span class="sig-prename descclassname"><span class="pre">plum.autoreload.</span></span><span class="sig-name descname"><span class="pre">activate_autoreload</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/autoreload.html#activate_autoreload"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.autoreload.activate_autoreload" title="Permalink to this definition">#</a></dt>
+<dd><p>Pirate Autoreload’s <cite>update_instance</cite> function to have Plum work with
+Autoreload.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="plum.autoreload.deactivate">
-<span class="sig-prename descclassname"><span class="pre">plum.autoreload.</span></span><span class="sig-name descname"><span class="pre">deactivate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/autoreload.html#deactivate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.autoreload.deactivate" title="Permalink to this definition">#</a></dt>
-<dd><p>Disable Plum’s autoreload hack.</p>
-</dd></dl>
-
-<span class="target" id="module-plum.resolvable"></span><dl class="py class">
-<dt class="sig sig-object py" id="plum.resolvable.Promise">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.resolvable.</span></span><span class="sig-name descname"><span class="pre">Promise</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/resolvable.html#Promise"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.resolvable.Promise" title="Permalink to this definition">#</a></dt>
-<dd><p>An object that is promised to be resolvable when asked for.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="plum.resolvable.Promise.deliver">
-<span class="sig-name descname"><span class="pre">deliver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/resolvable.html#Promise.deliver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.resolvable.Promise.deliver" title="Permalink to this definition">#</a></dt>
-<dd><p>Deliver the promise.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>obj</strong> – The object to deliver.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="plum.resolvable.Promise.resolve">
-<span class="sig-name descname"><span class="pre">resolve</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/resolvable.html#Promise.resolve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.resolvable.Promise.resolve" title="Permalink to this definition">#</a></dt>
-<dd><p>Resolve the object.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Promised object.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="plum.resolvable.Promise.resolved">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">resolved</span></span><a class="headerlink" href="#plum.resolvable.Promise.resolved" title="Permalink to this definition">#</a></dt>
-<dd><p><cite>True</cite> if the promise has been kept.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py exception">
-<dt class="sig sig-object py" id="plum.resolvable.ResolutionError">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.resolvable.</span></span><span class="sig-name descname"><span class="pre">ResolutionError</span></span><a class="reference internal" href="_modules/plum/resolvable.html#ResolutionError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.resolvable.ResolutionError" title="Permalink to this definition">#</a></dt>
-<dd><p>Object could not be resolved.</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="plum.resolvable.Resolvable">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.resolvable.</span></span><span class="sig-name descname"><span class="pre">Resolvable</span></span><a class="reference internal" href="_modules/plum/resolvable.html#Resolvable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.resolvable.Resolvable" title="Permalink to this definition">#</a></dt>
-<dd><p>An object that can be resolved and compared.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="plum.resolvable.Resolvable.resolve">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">resolve</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/resolvable.html#Resolvable.resolve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.resolvable.Resolvable.resolve" title="Permalink to this definition">#</a></dt>
-<dd><p>Resolve the object.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Promised object.</p>
-</dd>
-</dl>
-</dd></dl>
-
+<dt class="sig sig-object py" id="plum.autoreload.deactivate_autoreload">
+<span class="sig-prename descclassname"><span class="pre">plum.autoreload.</span></span><span class="sig-name descname"><span class="pre">deactivate_autoreload</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/autoreload.html#deactivate_autoreload"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.autoreload.deactivate_autoreload" title="Permalink to this definition">#</a></dt>
+<dd><p>Disable Plum’s autoreload hack. This undoes that
+<a class="reference internal" href="#plum.autoreload.activate_autoreload" title="plum.autoreload.activate_autoreload"><code class="xref py py-func docutils literal notranslate"><span class="pre">autoreload.activate_autoreload()</span></code></a> did.</p>
 </dd></dl>
 
 <span class="target" id="module-plum.util"></span><dl class="py class">
@@ -1536,38 +1086,37 @@ type to another.</p>
 <span class="sig-name descname"><span class="pre">is_comparable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/util.html#Comparable.is_comparable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.util.Comparable.is_comparable" title="Permalink to this definition">#</a></dt>
 <dd><p>Check whether this object is comparable with another one.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>other</strong> (<a class="reference internal" href="#plum.util.Comparable" title="plum.util.Comparable"><code class="xref py py-class docutils literal notranslate"><span class="pre">util.Comparable</span></code></a>) – Object to check comparability
-with.</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>other</strong> (<em>object</em>) – Object to check comparability with.</p>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p><dl class="simple">
-<dt><cite>True</cite> if the object is comparable with <cite>other</cite> and <cite>False</cite></dt><dd><p>otherwise.</p>
-</dd>
-</dl>
-</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>bool</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether the object is comparable with <cite>other</cite>.</p>
 </dd>
 </dl>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="plum.util.Missing">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.util.</span></span><span class="sig-name descname"><span class="pre">Missing</span></span><a class="reference internal" href="_modules/plum/util.html#Missing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.util.Missing" title="Permalink to this definition">#</a></dt>
+<dd><p>A class that can be used to indicate that a value is missing. This class cannot
+be instantiated and has no boolean value.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="plum.util.check_future_annotations">
-<span class="sig-prename descclassname"><span class="pre">plum.util.</span></span><span class="sig-name descname"><span class="pre">check_future_annotations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frame</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/util.html#check_future_annotations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.util.check_future_annotations" title="Permalink to this definition">#</a></dt>
-<dd><p>Check if <cite>from __future__ import annotations</cite> is active in a frame.</p>
+<dt class="sig sig-object py" id="plum.util.get_args">
+<span class="sig-prename descclassname"><span class="pre">plum.util.</span></span><span class="sig-name descname"><span class="pre">get_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/util.html#get_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.util.get_args" title="Permalink to this definition">#</a></dt>
+<dd><p>Get the arguments a subscripted type hint.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>frame</strong> (<em>object</em>) – Frame.</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>type hint</em>) – Type hint.</p>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p><cite>True</cite> if it is activated, otherwise <cite>False</cite>.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Arguments of <cite>x</cite>.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>bool</p>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1578,13 +1127,13 @@ with.</p>
 <dd><p>Assuming that <cite>f</cite> is part of a class, get the fully qualified name of the
 class.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>f</strong> (<em>function</em>) – Method to get class name for.</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Fully qualified name of class.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>str</p>
 </dd>
 </dl>
@@ -1598,14 +1147,31 @@ class.</p>
 If <cite>f</cite> is not part of a class, then the context corresponds to the scope of the
 function.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>f</strong> (<em>function</em>) – Method to get context for.</p>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Context.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The context of <cite>f</cite>.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="plum.util.get_origin">
+<span class="sig-prename descclassname"><span class="pre">plum.util.</span></span><span class="sig-name descname"><span class="pre">get_origin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/util.html#get_origin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.util.get_origin" title="Permalink to this definition">#</a></dt>
+<dd><p>Get the unsubscripted version of a type hint.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>type hint</em>) – Type hint.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Unsubcripted version of <cite>x</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>type hint</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1615,13 +1181,13 @@ function.</p>
 <span class="sig-prename descclassname"><span class="pre">plum.util.</span></span><span class="sig-name descname"><span class="pre">is_in_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/util.html#is_in_class"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.util.is_in_class" title="Permalink to this definition">#</a></dt>
 <dd><p>Check if a function is part of a class.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>f</strong> (<em>function</em>) – Function to check.</p>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p><cite>True</cite> if <cite>f</cite> is part of a class, else <cite>False</cite>.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether <cite>f</cite> is part of a class.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
@@ -1632,32 +1198,32 @@ function.</p>
 <span class="sig-prename descclassname"><span class="pre">plum.util.</span></span><span class="sig-name descname"><span class="pre">multihash</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/util.html#multihash"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.util.multihash" title="Permalink to this definition">#</a></dt>
 <dd><p>Multi-argument order-sensitive hash.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>*args</strong> – Objects to hash.</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Hash.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>int</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="plum.util.unquote">
-<span class="sig-prename descclassname"><span class="pre">plum.util.</span></span><span class="sig-name descname"><span class="pre">unquote</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/util.html#unquote"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.util.unquote" title="Permalink to this definition">#</a></dt>
-<dd><p>Remove quotes from a string at the outermost level.</p>
-<p>If <cite>x</cite> is not a string, <cite>x</cite> is returned immediately.</p>
+<dt class="sig sig-object py" id="plum.util.repr_short">
+<span class="sig-prename descclassname"><span class="pre">plum.util.</span></span><span class="sig-name descname"><span class="pre">repr_short</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/util.html#repr_short"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.util.repr_short" title="Permalink to this definition">#</a></dt>
+<dd><p>Representation as a string, but in shorter form. This just calls
+<code class="xref py py-func docutils literal notranslate"><span class="pre">typing._type_repr()</span></code>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>str</em><em> or </em><em>object</em>) – String to remove quotes from.</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>object</em>) – Object.</p>
 </dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p><cite>x</cite> but without quotes.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Shorter representation of <cite>x</cite>.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>str or object</p>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1665,15 +1231,15 @@ function.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="plum.util.wrap_lambda">
 <span class="sig-prename descclassname"><span class="pre">plum.util.</span></span><span class="sig-name descname"><span class="pre">wrap_lambda</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/util.html#wrap_lambda"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.util.wrap_lambda" title="Permalink to this definition">#</a></dt>
-<dd><p>Wrap a function in a lambda function.</p>
+<dd><p>Wrap a callable in a lambda function.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>f</strong> (<em>function</em>) – Function to wrap.</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>f</strong> (<em>Callable</em>) – Function to wrap.</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Wrapped version of <cite>f</cite>.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>function</p>
 </dd>
 </dl>
@@ -1693,7 +1259,7 @@ function.</p>
             mode: "python"
         },
         kernelOptions: {
-            kernelName: "python3",
+            name: "python3",
             path: "./."
         },
         predefinedOutput: true
@@ -1701,43 +1267,77 @@ function.</p>
     </script>
     <script>kernelName = 'python3'</script>
 
-              </div>
-              
-            </main>
-            <footer class="footer-article noprint">
-                
-    <!-- Previous / next buttons -->
+            </article>
+            
+
+            
+            
+            <footer class="bd-footer-article">
+                <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-    <a class='left-prev' id="prev-link" href="advanced_usage.html" title="previous page">
-        <i class="fas fa-angle-left"></i>
-        <div class="prev-next-info">
-            <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Advanced Usage</p>
-        </div>
-    </a>
+  <a class='left-prev' id="prev-link" href="autoreload.html" title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+          <p class="prev-next-subtitle">previous</p>
+          <p class="prev-next-title">Support for IPython Autoreload</p>
+      </div>
+  </a>
 </div>
             </footer>
+            
+          </div>
+          
+          
+          
+          
         </div>
-    </div>
-    <div class="footer-content row">
-        <footer class="col footer"><p>
+        <footer class="bd-footer-content">
+          <div class="bd-footer-content__inner">
+            
+<div class="bd-footer-content__inner container">
   
-    By Wessel Bruinsma, Filippo Vicentini, and Ruan Comelli<br/>
-  
-      &copy; Copyright 2022.<br/>
-</p>
-        </footer>
-    </div>
+  <div class="footer-item">
     
-</div>
+<p class="component-author">
+By Wessel Bruinsma, Filippo Vicentini, and Ruan Comelli
+</p>
 
-
-      </div>
-    </div>
+  </div>
   
-  <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+  <div class="footer-item">
+    
+<p class="copyright">
 
+    &copy; Copyright 2022.<br>
+
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+Last updated on None.<br>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </div>
+        </footer>
+        
+
+      </main>
+    </div>
+  </div>
+
+  
+    
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=796348d33e8b1d947c94"></script>
 
   </body>
 </html>

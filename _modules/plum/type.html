@@ -1,47 +1,55 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>plum.type &#8212; Plum</title>
-    
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+  <link href="../../_static/styles/theme.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+<link href="../../_static/styles/bootstrap.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=796348d33e8b1d947c94" rel="stylesheet">
 
-    
-  <link rel="stylesheet"
-    href="../../_static/vendor/fontawesome/5.13.0/css/all.min.css">
-  <link rel="preload" as="font" type="font/woff2" crossorigin
-    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
-  <link rel="preload" as="font" type="font/woff2" crossorigin
-    href="../../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+  
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2">
 
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
+    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=4ec06e9971c5264fbd345897d5258098f11cc577" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx-thebe.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/design-style.b7bb847fb20b106c3d81b95245e65545.min.css" />
-    
+    <link rel="stylesheet" type="text/css" href="../../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
+  
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94">
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=796348d33e8b1d947c94">
 
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
     <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../../_static/doctools.js"></script>
     <script src="../../_static/clipboard.min.js"></script>
     <script src="../../_static/copybutton.js"></script>
-    <script src="../../_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?digest=8bf782fb4ee92b3d3646425e50f299c4e1fd152d"></script>
     <script>let toggleHintShow = 'Click to show';</script>
     <script>let toggleHintHide = 'Click to hide';</script>
     <script>let toggleOpenOnPrint = 'true';</script>
     <script src="../../_static/togglebutton.js"></script>
-    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown, .tag_hide_input div.cell_input, .tag_hide-input div.cell_input, .tag_hide_output div.cell_output, .tag_hide-output div.cell_output, .tag_hide_cell.cell, .tag_hide-cell.cell';</script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script src="../../_static/design-tabs.js"></script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"
 const thebe_selector = ".thebe,.cell"
@@ -49,59 +57,248 @@ const thebe_selector_input = "pre"
 const thebe_selector_output = ".output, .cell_output"
 </script>
     <script async="async" src="../../_static/sphinx-thebe.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/plum/type';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="docsearch:language" content="None">
-    
-
-    <!-- Google Analytics -->
-    
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="docsearch:language" content="en">
   </head>
-  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
-<!-- Checkboxes to toggle the left sidebar -->
-<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
-<label class="overlay overlay-navbar" for="__navigation">
-    <div class="visually-hidden">Toggle navigation sidebar</div>
-</label>
-<!-- Checkboxes to toggle the in-page toc -->
-<input type="checkbox" class="sidebar-toggle" name="__page-toc" id="__page-toc" aria-label="Toggle in-page Table of Contents">
-<label class="overlay overlay-pagetoc" for="__page-toc">
-    <div class="visually-hidden">Toggle in-page Table of Contents</div>
-</label>
-<!-- Headers at the top -->
-<div class="announcement header-item noprint"></div>
-<div class="header header-item noprint"></div>
+  
+  
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="180" data-default-mode="">
 
-    
-    <div class="container-fluid" id="banner"></div>
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
 
-    
+  
+  <input type="checkbox" class="sidebar-toggle" name="__primary" id="__primary">
+  <label class="overlay overlay-primary" for="__primary"></label>
 
-    <div class="container-xl">
-      <div class="row">
-          
-<!-- Sidebar -->
-<div class="bd-sidebar noprint" id="site-navigation">
-    <div class="bd-sidebar__content">
-        <div class="bd-sidebar__top"><div class="navbar-brand-box">
-    <a class="navbar-brand text-wrap" href="../../index.html">
+  
+  <input type="checkbox" class="sidebar-toggle" name="__secondary" id="__secondary">
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
       
-        <!-- `logo` is deprecated in Sphinx 4.0, so remove this when we stop supporting 3 -->
+<form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search this book..." aria-label="Search this book..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+    </div>
+  </div>
+
+  
+  <nav class="bd-header navbar navbar-expand-lg bd-navbar" id="navbar-main"><div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+      <span class="fa-solid fa-bars"></span>
+  </label>
+  <div id="navbar-start">
+    
+    
+  
+
+
+<a class="navbar-brand logo" href="../../intro.html">
+
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <img src="../../_static/logo.png" class="logo__image only-light" alt="Logo image">
+    <img src="../../_static/logo.png" class="logo__image only-dark" alt="Logo image">
+  
+  
+</a>
+    
+  </div>
+
+  
+  <div class="col-lg-9 navbar-header-items">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
         
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../basic_usage.html">
+                        Basic Usage
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../advanced_usage.html">
+                        Advanced Usage
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../api.html">
+                        Application Programming Interface
+                      </a>
+                    </li>
+                
+    </ul>
+</nav>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+        <div class="navbar-end-item navbar-persistent--container">
+          
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+        </div>
       
       
-      <img src="../../_static/logo.png" class="logo" alt="logo">
+      <div class="navbar-end-item">
+        <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+</button>
+      </div>
       
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+      </ul>
+      </div>
       
-      <h1 class="site-logo" id="site-title">Plum</h1>
+    </div>
+  </div>
+
+
+  
+  
+    <div class="navbar-persistent--mobile">
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+    </div>
+  
+
+  
+
+</div>
+  </nav>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
       
-    </a>
-</div><form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
-  <i class="icon fas fa-search"></i>
-  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search this book..." aria-label="Search this book..." autocomplete="off" >
-</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
-    <div class="bd-toc-item active">
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../basic_usage.html">
+                        Basic Usage
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../advanced_usage.html">
+                        Advanced Usage
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../api.html">
+                        Application Programming Interface
+                      </a>
+                    </li>
+                
+    </ul>
+</nav>
+      </div>
+      
+      </div>
+    
+
+    
+    
+    <div class="sidebar-header-items__end">
+      
+      <div class="navbar-end-item">
+        <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+</button>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+      </ul>
+      </div>
+      
+    </div>
+    
+  </div>
+
+  
+  <div class="sidebar-start-items sidebar-primary__section">
+    <div class="sidebar-start-items__item">
+  
+
+
+<a class="navbar-brand logo" href="../../intro.html">
+
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <img src="../../_static/logo.png" class="logo__image only-light" alt="Logo image">
+    <img src="../../_static/logo.png" class="logo__image only-dark" alt="Logo image">
+  
+  
+</a>
+    </div>
+    <div class="sidebar-start-items__item">
+<form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search this book..." aria-label="Search this book..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+    </div>
+    <div class="sidebar-start-items__item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
         
         <ul class="nav bd-sidenav bd-sidenav__home-link">
             <li class="toctree-l1">
@@ -111,701 +308,507 @@ const thebe_selector_output = ".output, .cell_output"
             </li>
         </ul>
         <ul class="nav bd-sidenav">
- <li class="toctree-l1 has-children">
-  <a class="reference internal" href="../../basic_usage.html">
-   Basic Usage
-  </a>
-  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
-  <label for="toctree-checkbox-1">
-   <i class="fas fa-chevron-down">
-   </i>
-  </label>
-  <ul>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../../scope.html">
-     Scope of Functions
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../../classes.html">
-     Classes
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../../keyword_arguments.html">
-     Keyword Arguments and Default Values
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../../comparison.html">
-     Comparison with
-     <code class="docutils literal notranslate">
-      <span class="pre">
-       multipledispatch
-      </span>
-     </code>
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../../type_system.html">
-     Type System
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../../conversion_promotion.html">
-     Conversion and Promotion
-    </a>
-   </li>
-  </ul>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../advanced_usage.html">
-   Advanced Usage
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="../../api.html">
-   Application Programming Interface
-  </a>
- </li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../basic_usage.html">Basic Usage</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../types.html">Types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../dispatch.html">Ways to Dispatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../scope.html">Scope of Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../classes.html">Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../keyword_arguments.html">Keyword Arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../comparison.html">Comparison with Other Multiple Dispatch Implementations</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../advanced_usage.html">Advanced Usage</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../conversion_promotion.html">Conversion and Promotion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../precedence.html">Method Precedence</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../parametric.html">Parametric Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../union_aliases.html">Union Aliases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../autoreload.html">Support for IPython Autoreload</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">Application Programming Interface</a></li>
 </ul>
 
     </div>
-</nav></div>
-        <div class="bd-sidebar__bottom">
-             <!-- To handle the deprecated key -->
-            
-            <div class="navbar_extra_footer">
-            Powered by <a href="https://jupyterbook.org">Jupyter Book</a>
-            </div>
-            
-        </div>
+</nav>
     </div>
-    <div id="rtd-footer-container"></div>
-</div>
+  </div>
+  
 
+  
+  <div class="sidebar-end-items sidebar-primary__section">
+    <div class="sidebar-end-items__item">
+    </div>
+  </div>
 
-          
+  
+  <div id="rtd-footer-container"></div>
 
-
-          
-<!-- A tiny helper pixel to detect if we've scrolled -->
-<div class="sbt-scroll-pixel-helper"></div>
-<!-- Main content -->
-<div class="col py-0 content-container">
-    
-    <div class="header-article row sticky-top noprint">
+      </div>
+      <main id="main-content" class="bd-main">
         
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+        <div class="bd-content">
+          <div class="bd-article-container">
+            
+            <div class="bd-header-article">
+                
 
 
 
 <div class="col py-1 d-flex header-article-main">
     <div class="header-article__left">
-        
-        <label for="__navigation"
-  class="headerbtn"
-  data-toggle="tooltip"
-data-placement="right"
-title="Toggle navigation"
->
-  
-
-<span class="headerbtn__icon-container">
-  <i class="fas fa-bars"></i>
-  </span>
-
-</label>
-
-        
+        <label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" data-toggle="tooltip" data-placement="right" title="Toggle primary sidebar">
+            <span class="fa-solid fa-bars"></span>
+        </label>
     </div>
     <div class="header-article__right">
 <button onclick="toggleFullScreen()"
-  class="headerbtn"
+  class="btn btn-sm"
   data-toggle="tooltip"
 data-placement="bottom"
 title="Fullscreen mode"
 >
   
 
-<span class="headerbtn__icon-container">
+<span class="btn__icon-container">
   <i class="fas fa-expand"></i>
   </span>
 
 </button>
 
-<div class="menu-dropdown menu-dropdown-repository-buttons">
-  <button class="headerbtn menu-dropdown__trigger"
-      aria-label="Source repositories">
-      <i class="fab fa-github"></i>
+
+
+<div class="dropdown dropdown-repository-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
   </button>
-  <div class="menu-dropdown__content">
-    <ul>
-      <li>
-        <a href="https://github.com/wesselb/plum"
-   class="headerbtn"
+  <ul class="dropdown-menu">
+      <li><a href="https://github.com/wesselb/plum" target="_blank"
+   class="btn btn-sm dropdown-item"
    data-toggle="tooltip"
 data-placement="left"
 title="Source repository"
 >
   
 
-<span class="headerbtn__icon-container">
+<span class="btn__icon-container">
   <i class="fab fa-github"></i>
   </span>
-<span class="headerbtn__text-container">repository</span>
+<span class="btn__text-container">repository</span>
 </a>
-
-      </li>
+</a>
       
-      <li>
-        <a href="https://github.com/wesselb/plum/issues/new?title=Issue%20on%20page%20%2F_modules/plum/type.html&body=Your%20issue%20content%20here."
-   class="headerbtn"
+      <li><a href="https://github.com/wesselb/plum/issues/new?title=Issue%20on%20page%20%2F_modules/plum/type.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm dropdown-item"
    data-toggle="tooltip"
 data-placement="left"
 title="Open an issue"
 >
   
 
-<span class="headerbtn__icon-container">
+<span class="btn__icon-container">
   <i class="fas fa-lightbulb"></i>
   </span>
-<span class="headerbtn__text-container">open issue</span>
+<span class="btn__text-container">open issue</span>
 </a>
-
-      </li>
+</a>
       
-    </ul>
-  </div>
+  </ul>
 </div>
 
     </div>
 </div>
-
-<!-- Table of contents -->
-<div class="col-md-3 bd-toc show noprint">
-</div>
-    </div>
-    <div class="article row">
-        <div class="col pl-md-3 pl-lg-5 content-container">
-            <!-- Table of contents that is only displayed when printing the page -->
-            <div id="jb-print-docs-body" class="onlyprint">
-                <h1></h1>
-                <!-- Table of contents -->
-                <div id="print-main-content">
-                    <div id="jb-print-toc">
-                        
-                    </div>
-                </div>
             </div>
-            <main id="main-content" role="main">
-                
-              <div>
-                
+            
+            
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+            <article class="bd-article" role="main">
+              
   <h1>Source code for plum.type</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">abc</span>
-<span class="kn">import</span> <span class="nn">inspect</span>
-<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">typing</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
 
-<span class="kn">from</span> <span class="nn">.resolvable</span> <span class="kn">import</span> <span class="n">Resolvable</span><span class="p">,</span> <span class="n">Promise</span>
-<span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="n">multihash</span><span class="p">,</span> <span class="n">Comparable</span><span class="p">,</span> <span class="n">unquote</span>
+<span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="n">get_args</span><span class="p">,</span> <span class="n">get_origin</span>
 
-<span class="c1"># Define the type for `A | B` expressions.</span>
-<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">10</span><span class="p">):</span>  <span class="c1"># pragma: specific no cover 3.7 3.8 3.9</span>
+<span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.7 3.8 3.9</span>
     <span class="kn">from</span> <span class="nn">types</span> <span class="kn">import</span> <span class="n">UnionType</span>
-<span class="k">else</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.10</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.10</span>
 
     <span class="k">class</span> <span class="nc">UnionType</span><span class="p">:</span>
-        <span class="k">pass</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Replacement for :class:`types.UnionType`.&quot;&quot;&quot;</span>
+
+
+<span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.7</span>
+    <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.8 3.9 3.10</span>
+
+    <span class="k">class</span> <span class="nc">Literal</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;A simple proxy for :class:`typing.Literal`.&quot;&quot;&quot;</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;TypeMeta&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;VarArgs&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;promised_type_of&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;subclasscheck_cache&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;ComparableType&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;Union&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;Type&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;ResolvableType&quot;</span><span class="p">,</span>
     <span class="s2">&quot;PromisedType&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;deliver_forward_reference&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;PromisedList&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;PromisedTuple&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;PromisedDict&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;PromisedIterable&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;PromisedSequence&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;ptype&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;TypeType&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;is_object&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;is_type&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ModuleType&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;type_mapping&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;resolve_type_hint&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;is_faithful&quot;</span><span class="p">,</span>
 <span class="p">]</span>
-<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="TypeMeta"><a class="viewcode-back" href="../../api.html#plum.type.TypeMeta">[docs]</a><span class="k">class</span> <span class="nc">TypeMeta</span><span class="p">(</span><span class="n">abc</span><span class="o">.</span><span class="n">ABCMeta</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Types can also be instantiated with indexing.&quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="p">(</span><span class="o">*</span><span class="n">p</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="p">(</span><span class="n">p</span><span class="p">)</span></div>
-
-
-<span class="k">class</span> <span class="nc">AbstractType</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">TypeMeta</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;An abstract class defining the top of the Plum type hierarchy.</span>
-
-<span class="sd">    Any instance of a subclass of :class:`.type.AbstractType` will be henceforth</span>
-<span class="sd">    referred to be of type Plum type or `ptype`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
-    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
-
-    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
-    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
-
-    <span class="nd">@property</span>
-    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
-    <span class="k">def</span> <span class="nf">parametric</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;bool: Boolean that indicates whether this is or contains a parametric</span>
-<span class="sd">        type.&quot;&quot;&quot;</span>
-
-    <span class="nd">@property</span>
-    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
-    <span class="k">def</span> <span class="nf">runtime_type_of</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;bool: Boolean that indicates whether this type can only be determined at</span>
-<span class="sd">        runtime by `plum.type_of` instead of built-in `type`.&quot;&quot;&quot;</span>
-
-
-<div class="viewcode-block" id="VarArgs"><a class="viewcode-back" href="../../api.html#plum.type.VarArgs">[docs]</a><span class="k">class</span> <span class="nc">VarArgs</span><span class="p">(</span><span class="n">AbstractType</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Plum type that represents a variable number of the same Plum type.</span>
+<span class="k">class</span> <span class="nc">ResolvableType</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A resolvable type that will resolve to `type` after `type` has been delivered via</span>
+<span class="sd">    :meth:`.ResolvableType.deliver`. Before then, it will resolve to itself.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        type (type or ptype, optional): Type or Plum type of the variable</span>
-<span class="sd">            number of types. Defaults to `object`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">object</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">ptype</span><span class="p">(</span><span class="nb">type</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">multihash</span><span class="p">(</span><span class="n">VarArgs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s2">&quot;VarArgs(</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">))</span>
-
-<div class="viewcode-block" id="VarArgs.expand"><a class="viewcode-back" href="../../api.html#plum.type.VarArgs.expand">[docs]</a>    <span class="k">def</span> <span class="nf">expand</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Expand the varargs to a tuple of types.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            num (int): Length of the tuple.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            tuple: Expansion.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">,)</span> <span class="o">*</span> <span class="n">num</span></div>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">parametric</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">parametric</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">runtime_type_of</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">runtime_type_of</span></div>
-
-
-<span class="n">promised_type_of</span> <span class="o">=</span> <span class="n">Promise</span><span class="p">()</span>  <span class="c1"># Resolves to `.parametric.type_of`.</span>
-<span class="n">subclasscheck_cache</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># Cache results of `__subclasscheck__`.</span>
-
-
-<div class="viewcode-block" id="ComparableType"><a class="viewcode-back" href="../../api.html#plum.type.ComparableType">[docs]</a><span class="k">class</span> <span class="nc">ComparableType</span><span class="p">(</span><span class="n">AbstractType</span><span class="p">,</span> <span class="n">Comparable</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A Plum type that can be compared to other Plum types.&quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="fm">__le__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">issubclass</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="fm">__subclasscheck__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subclass</span><span class="p">):</span>
-        <span class="c1"># Cache results for performance.</span>
-        <span class="n">key</span> <span class="o">=</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="nb">hash</span><span class="p">(</span><span class="n">subclass</span><span class="p">)</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">subclasscheck_cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-            <span class="n">check</span> <span class="o">=</span> <span class="nb">all</span><span class="p">([</span><span class="nb">issubclass</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_types</span><span class="p">())</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">subclass</span><span class="o">.</span><span class="n">get_types</span><span class="p">()])</span>
-            <span class="n">subclasscheck_cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">check</span>  <span class="c1"># Cache result of check.</span>
-            <span class="k">return</span> <span class="n">check</span>
-
-    <span class="k">def</span> <span class="fm">__instancecheck__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">promised_type_of</span><span class="o">.</span><span class="n">resolve</span><span class="p">()(</span><span class="n">instance</span><span class="p">),</span> <span class="bp">self</span><span class="p">)</span>
-
-<div class="viewcode-block" id="ComparableType.get_types"><a class="viewcode-back" href="../../api.html#plum.type.ComparableType.get_types">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
-    <span class="k">def</span> <span class="nf">get_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the types encapsulated by this Plum type.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            tuple[type]: Types encapsulated.</span>
-<span class="sd">        &quot;&quot;&quot;</span></div>
-
-<div class="viewcode-block" id="ComparableType.mro"><a class="viewcode-back" href="../../api.html#plum.type.ComparableType.mro">[docs]</a>    <span class="k">def</span> <span class="nf">mro</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the MRO.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            tuple[type]: MRO.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">types</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_types</span><span class="p">()</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">types</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Exactly one type must be encapsulated to get the MRO.&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">types</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">mro</span><span class="p">()</span></div></div>
-
-
-<div class="viewcode-block" id="Union"><a class="viewcode-back" href="../../api.html#plum.type.Union">[docs]</a><span class="k">class</span> <span class="nc">Union</span><span class="p">(</span><span class="n">ComparableType</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A union of Plum types.</span>
-
-<span class="sd">    IMPORTANT:</span>
-<span class="sd">        `Union` should not be used to generically refer to anything! Use</span>
-<span class="sd">            `Union[object]` instead.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        *types (type or ptype): Types or Plum types to encapsulate.</span>
-<span class="sd">        alias (str, optional): Give the union a name.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;_types&quot;</span><span class="p">]</span>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">types</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="c1"># Lazily convert to a set to avoid resolution errors.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_types</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">ptype</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">types</span><span class="p">)</span>
-
-        <span class="c1"># Constuct alias if one is given.</span>
-        <span class="k">if</span> <span class="n">alias</span><span class="p">:</span>
-            <span class="n">frame</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">stack</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
-            <span class="n">module</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getmodule</span><span class="p">(</span><span class="n">frame</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="k">if</span> <span class="n">module</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">alias</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">module</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">alias</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="k">else</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">alias</span> <span class="o">=</span> <span class="n">alias</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">alias</span> <span class="o">=</span> <span class="kc">None</span>
-
-    <span class="k">def</span> <span class="nf">_to_set</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">,</span> <span class="nb">set</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_types</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_to_set</span><span class="p">()</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">multihash</span><span class="p">(</span><span class="n">Union</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">))</span>
-
-    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_to_set</span><span class="p">()</span>
-
-        <span class="c1"># Show the alias if one is given.</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">alias</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">alias</span>
-
-        <span class="c1"># Otherwise, show all the types it contains.</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">repr</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;Union[&quot;</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;]&quot;</span>
-
-<div class="viewcode-block" id="Union.get_types"><a class="viewcode-back" href="../../api.html#plum.type.Union.get_types">[docs]</a>    <span class="k">def</span> <span class="nf">get_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_to_set</span><span class="p">()</span>
-        <span class="k">return</span> <span class="nb">sum</span><span class="p">([</span><span class="n">t</span><span class="o">.</span><span class="n">get_types</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">],</span> <span class="p">())</span></div>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">parametric</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_to_set</span><span class="p">()</span>
-        <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">parametric</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">runtime_type_of</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_to_set</span><span class="p">()</span>
-        <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">runtime_type_of</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="Type"><a class="viewcode-back" href="../../api.html#plum.type.Type">[docs]</a><span class="k">class</span> <span class="nc">Type</span><span class="p">(</span><span class="n">ComparableType</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A Plum type encapsulating a single type.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        type (type): Type to encapsulate.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;_type&quot;</span><span class="p">]</span>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="o">=</span> <span class="nb">type</span>
-
-    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">multihash</span><span class="p">(</span><span class="n">Type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_type</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_type</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span>
-
-<div class="viewcode-block" id="Type.get_types"><a class="viewcode-back" href="../../api.html#plum.type.Type.get_types">[docs]</a>    <span class="k">def</span> <span class="nf">get_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_type</span><span class="p">,)</span></div>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">parametric</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c1"># Types don&#39;t specify `parametric` except for Plum parametric types.</span>
-        <span class="k">return</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_type</span><span class="p">,</span> <span class="s2">&quot;parametric&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span><span class="o">.</span><span class="n">parametric</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">runtime_type_of</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c1"># Types don&#39;t specify `runtime_type_of` except for custom Plum types.</span>
-        <span class="k">return</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_type</span><span class="p">,</span> <span class="s2">&quot;runtime_type_of&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span><span class="o">.</span><span class="n">runtime_type_of</span></div>
-
-
-<div class="viewcode-block" id="ResolvableType"><a class="viewcode-back" href="../../api.html#plum.type.ResolvableType">[docs]</a><span class="k">class</span> <span class="nc">ResolvableType</span><span class="p">(</span><span class="n">ComparableType</span><span class="p">,</span> <span class="n">Resolvable</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A resolvable Plum type.&quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="n">ptype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resolve</span><span class="p">()))</span>
-
-    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolved</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">repr</span><span class="p">(</span><span class="n">ptype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resolve</span><span class="p">()))</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;&lt;ResolvableType: unresolved&gt;&quot;</span>
-
-<div class="viewcode-block" id="ResolvableType.get_types"><a class="viewcode-back" href="../../api.html#plum.type.ResolvableType.get_types">[docs]</a>    <span class="k">def</span> <span class="nf">get_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">ptype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span><span class="o">.</span><span class="n">get_types</span><span class="p">()</span></div>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">parametric</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">ptype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span><span class="o">.</span><span class="n">parametric</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">runtime_type_of</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">ptype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span><span class="o">.</span><span class="n">runtime_type_of</span></div>
-
-
-<div class="viewcode-block" id="PromisedType"><a class="viewcode-back" href="../../api.html#plum.type.PromisedType">[docs]</a><span class="k">class</span> <span class="nc">PromisedType</span><span class="p">(</span><span class="n">ResolvableType</span><span class="p">,</span> <span class="n">Promise</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A promised Plum type.&quot;&quot;&quot;</span></div>
-
-
-<span class="n">_unresolved_forward_references</span> <span class="o">=</span> <span class="p">[]</span>
-
-
-<span class="k">def</span> <span class="nf">get_forward_reference</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Get a type referring to a forward referenced type.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        name (str): Name of type.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        ptype: Type referring to `name`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># The name can possibly be wrapped in an extra set of quotes if the future</span>
-    <span class="c1"># `annotations` is used and the type is given as a string. E.g., see</span>
-    <span class="c1">#   https://github.com/wesselb/plum/issues/41</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="n">unquote</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-    <span class="n">reference</span> <span class="o">=</span> <span class="n">ForwardReferencedType</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-    <span class="n">_unresolved_forward_references</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">reference</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">reference</span>
-
-
-<div class="viewcode-block" id="deliver_forward_reference"><a class="viewcode-back" href="../../api.html#plum.type.deliver_forward_reference">[docs]</a><span class="k">def</span> <span class="nf">deliver_forward_reference</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Deliver a forward reference.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        type (type): Type to deliver.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">currently_unresolved_forward_references</span> <span class="o">=</span> <span class="n">_unresolved_forward_references</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">_unresolved_forward_references</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">reference</span> <span class="ow">in</span> <span class="n">currently_unresolved_forward_references</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">reference</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="nb">type</span><span class="o">.</span><span class="vm">__name__</span><span class="p">:</span>
-            <span class="n">reference</span><span class="o">.</span><span class="n">deliver</span><span class="p">(</span><span class="n">Type</span><span class="p">(</span><span class="nb">type</span><span class="p">))</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">_unresolved_forward_references</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">reference</span><span class="p">)</span></div>
-
-
-<span class="k">class</span> <span class="nc">ForwardReferencedType</span><span class="p">(</span><span class="n">PromisedType</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A Plum type referring to forward-references type.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        name (str): Name of the type.</span>
-
-<span class="sd">    Attributes:</span>
-<span class="sd">        name (str): Name of the type.</span>
+<span class="sd">        name (str): Name of the type to be delivered.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
-        <span class="n">PromisedType</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="nb">type</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="p">(),</span> <span class="p">{})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolved</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__repr__</span><span class="p">()</span>
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="p">(),</span> <span class="p">{})</span>
+
+    <span class="k">def</span> <span class="nf">deliver</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Deliver the type.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            type (type): Type to deliver.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            :class:`ResolvableType`: `self`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="o">=</span> <span class="nb">type</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve the type.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            type: If no type has been delivered, this will return itself. If a type</span>
+<span class="sd">                `type` has been delivered via :meth:`.ResolvableType.deliver`, this will</span>
+<span class="sd">                return that type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;ForwardReferencedType(name=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2">)&quot;</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span>
 
 
-<span class="n">PromisedList</span> <span class="o">=</span> <span class="n">Promise</span><span class="p">()</span>  <span class="c1"># This will resolve to `.parametric.List`.</span>
-<span class="n">PromisedTuple</span> <span class="o">=</span> <span class="n">Promise</span><span class="p">()</span>  <span class="c1"># This will resolve to `.parametric.Tuple`.</span>
-<span class="n">PromisedDict</span> <span class="o">=</span> <span class="n">Promise</span><span class="p">()</span>  <span class="c1"># This will resolve to `.parametric.Dict`.</span>
-<span class="n">PromisedIterable</span> <span class="o">=</span> <span class="n">Promise</span><span class="p">()</span>  <span class="c1"># This will resolve to `.parametric.Iterable`.</span>
-<span class="n">PromisedSequence</span> <span class="o">=</span> <span class="n">Promise</span><span class="p">()</span>  <span class="c1"># This will resolve to `.parametric.Sequence`.</span>
-
-
-<div class="viewcode-block" id="ptype"><a class="viewcode-back" href="../../api.html#plum.type.ptype">[docs]</a><span class="k">def</span> <span class="nf">ptype</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Convert object to a type.</span>
+<div class="viewcode-block" id="PromisedType"><a class="viewcode-back" href="../../api.html#plum.type.PromisedType">[docs]</a><span class="k">class</span> <span class="nc">PromisedType</span><span class="p">(</span><span class="n">ResolvableType</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A type that is promised to be available when you will you need it.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        obj (object): Object to convert to type.</span>
+<span class="sd">        name (str, optional): Name of the type that is promised. Defaults to</span>
+<span class="sd">            `&quot;SomeType&quot;`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;SomeType&quot;</span><span class="p">):</span>
+        <span class="n">ResolvableType</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;PromisedType[</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">name</span>
+
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;SomeType&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ResolvableType</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;PromisedType[</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ModuleType"><a class="viewcode-back" href="../../api.html#plum.type.ModuleType">[docs]</a><span class="k">class</span> <span class="nc">ModuleType</span><span class="p">(</span><span class="n">ResolvableType</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A type from another module.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        module (str): Module that the type lives in.</span>
+<span class="sd">        name (str): Name of the type that is promised.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">module</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;__builtin__&quot;</span><span class="p">,</span> <span class="s2">&quot;__builtins__&quot;</span><span class="p">}:</span>
+            <span class="n">module</span> <span class="o">=</span> <span class="s2">&quot;builtins&quot;</span>
+        <span class="n">ResolvableType</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;ModuleType[</span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_module</span> <span class="o">=</span> <span class="n">module</span>
+
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ResolvableType</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;ModuleType[</span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ModuleType.retrieve"><a class="viewcode-back" href="../../api.html#plum.type.ModuleType.retrieve">[docs]</a>    <span class="k">def</span> <span class="nf">retrieve</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Attempt to retrieve the type from the reference module.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            :class:`ModuleType`: `self`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+                <span class="nb">type</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
+                    <span class="nb">type</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">deliver</span><span class="p">(</span><span class="nb">type</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">_is_hint</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if an object is a type hint.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x (object): Object.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        :class:`.type.AbstractType`: Plum type corresponding to `obj`.</span>
+<span class="sd">        bool: `True` if `x` is a type hint and `False` otherwise.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># If `obj` is already a Plum type, we&#39;re done.</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">AbstractType</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">obj</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">==</span> <span class="s2">&quot;builtins&quot;</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.7 3.8</span>
+            <span class="c1"># Check if `x` is a subscripted built-in. We do this by checking the module</span>
+            <span class="c1"># of the type of `x`.</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="vm">__module__</span> <span class="ow">in</span> <span class="p">{</span>
+            <span class="s2">&quot;types&quot;</span><span class="p">,</span>  <span class="c1"># E.g., `tuple[int]`</span>
+            <span class="s2">&quot;typing&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;collections.abc&quot;</span><span class="p">,</span>  <span class="c1"># E.g., `Callable`</span>
+        <span class="p">}</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
 
-    <span class="c1"># Handle mapping from `typing` module.</span>
-    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;__module__&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">==</span> <span class="s2">&quot;typing&quot;</span><span class="p">:</span>
-        <span class="c1"># Print type as string and remove the module prefix.</span>
-        <span class="n">obj_str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">obj_str</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;typing.&quot;</span><span class="p">):</span>
-            <span class="n">obj_str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">obj</span><span class="p">)[</span><span class="nb">len</span><span class="p">(</span><span class="s2">&quot;typing.&quot;</span><span class="p">)</span> <span class="p">:]</span>
 
-        <span class="c1"># Dissect the type.</span>
-        <span class="n">parts</span> <span class="o">=</span> <span class="n">obj_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;[&quot;</span><span class="p">)</span>
-        <span class="n">obj_str</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">obj_is_parametrised</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
+<span class="k">def</span> <span class="nf">_hashable</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if an object is hashable.</span>
 
-        <span class="c1"># Remove a potential argument.</span>
-        <span class="n">obj_str</span> <span class="o">=</span> <span class="n">obj_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;(&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+<span class="sd">    Args:</span>
+<span class="sd">        x (object): Object to check.</span>
 
-        <span class="k">if</span> <span class="n">obj_str</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;&lt;&quot;</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
-            <span class="c1"># The type is private. This is a type of a `typing` type. This case is</span>
-            <span class="c1"># necessary for Python 3.7+.</span>
-            <span class="k">pass</span>
-        <span class="k">elif</span> <span class="n">obj_str</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;Union&quot;</span><span class="p">,</span> <span class="s2">&quot;Optional&quot;</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">obj_is_parametrised</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">Union</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">ptype</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">__args__</span><span class="p">))</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">Union</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">obj_str</span> <span class="o">==</span> <span class="s2">&quot;List&quot;</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">obj_is_parametrised</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">PromisedList</span><span class="o">.</span><span class="n">resolve</span><span class="p">()(</span><span class="o">*</span><span class="p">(</span><span class="n">ptype</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">__args__</span><span class="p">))</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">Type</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">obj_str</span> <span class="o">==</span> <span class="s2">&quot;Tuple&quot;</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">obj_is_parametrised</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">PromisedTuple</span><span class="o">.</span><span class="n">resolve</span><span class="p">()(</span><span class="o">*</span><span class="p">(</span><span class="n">ptype</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">__args__</span><span class="p">))</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">Type</span><span class="p">(</span><span class="nb">tuple</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">obj_str</span> <span class="o">==</span> <span class="s2">&quot;Dict&quot;</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">obj_is_parametrised</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">PromisedDict</span><span class="o">.</span><span class="n">resolve</span><span class="p">()(</span><span class="o">*</span><span class="p">(</span><span class="n">ptype</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">__args__</span><span class="p">))</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">Type</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">obj_str</span> <span class="o">==</span> <span class="s2">&quot;Iterable&quot;</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">obj_is_parametrised</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">PromisedIterable</span><span class="o">.</span><span class="n">resolve</span><span class="p">()(</span><span class="o">*</span><span class="p">(</span><span class="n">ptype</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">__args__</span><span class="p">))</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">PromisedIterable</span><span class="o">.</span><span class="n">resolve</span><span class="p">()()</span>
-        <span class="k">elif</span> <span class="n">obj_str</span> <span class="o">==</span> <span class="s2">&quot;Sequence&quot;</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">obj_is_parametrised</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">PromisedSequence</span><span class="o">.</span><span class="n">resolve</span><span class="p">()(</span><span class="o">*</span><span class="p">(</span><span class="n">ptype</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">__args__</span><span class="p">))</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">PromisedSequence</span><span class="o">.</span><span class="n">resolve</span><span class="p">()()</span>
-        <span class="k">elif</span> <span class="n">obj_str</span> <span class="o">==</span> <span class="s2">&quot;ForwardRef&quot;</span> <span class="ow">or</span> <span class="n">obj_str</span> <span class="o">==</span> <span class="s2">&quot;_ForwardRef&quot;</span><span class="p">:</span>
-            <span class="c1"># This depends on the implementation below!</span>
-            <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">__forward_arg__</span>
-        <span class="k">elif</span> <span class="n">obj_str</span> <span class="o">==</span> <span class="s2">&quot;Any&quot;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">Type</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">obj_str</span> <span class="o">==</span> <span class="s2">&quot;Callable&quot;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">Type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        bool: `True` if `x` is hashable and `False` otherwise.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="nb">hash</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+
+<span class="n">type_mapping</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="sd">&quot;&quot;&quot;dict: When running :func:`resolve_type_hint`, map keys in this dictionary to the</span>
+<span class="sd">values.&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="resolve_type_hint"><a class="viewcode-back" href="../../api.html#plum.type.resolve_type_hint">[docs]</a><span class="k">def</span> <span class="nf">resolve_type_hint</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve all :class:`ResolvableType` in a type or type hint.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x (type or type hint): Type hint.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        type or type hint: `x`, but with all :class:`ResolvableType`\\s resolved.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">_hashable</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">and</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">type_mapping</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">type_mapping</span><span class="p">[</span><span class="n">x</span><span class="p">])</span>
+    <span class="k">elif</span> <span class="n">_is_hint</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="n">origin</span> <span class="o">=</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">get_args</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">args</span> <span class="o">==</span> <span class="p">():</span>
+            <span class="c1"># `origin` might not make sense here. For example, `get_origin(Any)` is</span>
+            <span class="c1"># `None`. Since the hint wasn&#39;t subscripted, the right thing is to right the</span>
+            <span class="c1"># hint itself.</span>
+            <span class="k">return</span> <span class="n">x</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s1">&#39;There is currently no support for &quot;</span><span class="si">{</span><span class="n">obj</span><span class="si">}</span><span class="s1">&quot;. &#39;</span>
-                <span class="sa">f</span><span class="s2">&quot;Please open an issue at https://github.com/wesselb/plum/issues&quot;</span>
-            <span class="p">)</span>  <span class="c1"># pragma: no cover</span>
+            <span class="k">if</span> <span class="n">origin</span> <span class="ow">is</span> <span class="n">UnionType</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.7 3.8 3.9</span>
+                <span class="c1"># The new union syntax was used.</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+                    <span class="n">y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">|</span> <span class="n">arg</span>
+                <span class="k">return</span> <span class="n">y</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Do not resolve the arguments for `Literal`s.</span>
+                <span class="k">if</span> <span class="n">origin</span> <span class="o">!=</span> <span class="n">Literal</span><span class="p">:</span>
+                    <span class="n">args</span> <span class="o">=</span> <span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">origin</span><span class="p">[</span><span class="n">args</span><span class="p">]</span>
+                <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.9 3.10</span>
+                    <span class="c1"># In Python 3.7 and 3.8, the origin might be a type that cannot be</span>
+                    <span class="c1"># subscripted. As a workaround, we get the name of the type,</span>
+                    <span class="c1"># capitalize it, and try to get it from `typing`. So far, this</span>
+                    <span class="c1"># seems to have worked fine.</span>
+                    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="o">.</span><span class="n">minor</span> <span class="o">&lt;=</span> <span class="mi">8</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">typing</span><span class="p">,</span> <span class="n">origin</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">capitalize</span><span class="p">())[</span><span class="n">args</span><span class="p">]</span>
+                    <span class="k">else</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+                        <span class="c1"># This branch can never be reached.</span>
+                        <span class="k">raise</span> <span class="n">e</span>
 
-    <span class="c1"># Support Python 3.10 `int | float` syntax.</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">UnionType</span><span class="p">):</span>  <span class="c1"># pragma: specific no cover 3.7 3.8 3.9</span>
-        <span class="k">return</span> <span class="n">Union</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">ptype</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">__args__</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">x</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">x</span>
+    <span class="k">elif</span> <span class="n">x</span> <span class="ow">is</span> <span class="bp">Ellipsis</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">x</span>
 
-    <span class="c1"># Strings are forward references.</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">get_forward_reference</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">x</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">x</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ResolvableType</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ModuleType</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">x</span><span class="o">.</span><span class="n">retrieve</span><span class="p">():</span>
+                    <span class="c1"># If the type could not be retrieved, then just return the</span>
+                    <span class="c1"># wrapper. Namely, `x.resolve()` will then return `x`, which means</span>
+                    <span class="c1"># that the below call will result in an infinite recursion.</span>
+                    <span class="k">return</span> <span class="n">x</span>
+            <span class="k">return</span> <span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">x</span>
 
-    <span class="c1"># If `obj` is a `type`, wrap it in a `Type`.</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">Type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">Type</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span>
-
-    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Could not convert &quot;</span><span class="si">{</span><span class="n">obj</span><span class="si">}</span><span class="s1">&quot; to a type.&#39;</span><span class="p">)</span></div>
-
-
-<span class="n">TypeType</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="nb">type</span><span class="p">,</span> <span class="n">AbstractType</span><span class="p">]</span>
-<span class="sd">&quot;&quot;&quot;ptype: The type of a type or Plum type.&quot;&quot;&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Could not resolve the type hint of `</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">`. &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;I have ended the resolution here to not make your code break, but some &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;types might not be working correctly. &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Please open an issue at https://github.com/wesselb/plum.&quot;</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span></div>
 
 
-<div class="viewcode-block" id="is_object"><a class="viewcode-back" href="../../api.html#plum.type.is_object">[docs]</a><span class="k">def</span> <span class="nf">is_object</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A fast comparison to check if a Plum type is `object`.</span>
+<div class="viewcode-block" id="is_faithful"><a class="viewcode-back" href="../../api.html#plum.type.is_faithful">[docs]</a><span class="k">def</span> <span class="nf">is_faithful</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check whether a type hint is faithful.</span>
+
+<span class="sd">    A type or type hint `t` is defined _faithful_ if, for all `x`, the following holds</span>
+<span class="sd">    true::</span>
+
+<span class="sd">        isinstance(x, x) == issubclass(type(x), t)</span>
+
+<span class="sd">    You can control whether types are faithful or not by setting the attribute</span>
+<span class="sd">    `__faithful__`::</span>
+
+<span class="sd">        class UnfaithfulType:</span>
+<span class="sd">            __faithful__ = False</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        t (ptype): Type to check.</span>
+<span class="sd">        x (type or type hint): Type hint.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        bool: `t` is `object`.</span>
+<span class="sd">        bool: Whether `x` is faithful or not.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">get_types</span><span class="p">()</span> <span class="o">==</span> <span class="p">(</span><span class="nb">object</span><span class="p">,)</span></div>
+    <span class="k">return</span> <span class="n">_is_faithful</span><span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="is_type"><a class="viewcode-back" href="../../api.html#plum.type.is_type">[docs]</a><span class="k">def</span> <span class="nf">is_type</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Fast check for whether an object is a type.</span>
+<span class="k">def</span> <span class="nf">_is_faithful</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">_is_hint</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="n">origin</span> <span class="o">=</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">get_args</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">args</span> <span class="o">==</span> <span class="p">():</span>
+            <span class="c1"># Unsubscripted type hints tend to be faithful. For example, `Any`, `List`,</span>
+            <span class="c1"># `Tuple`, `Dict`, `Callable`, and `Generator` are. When we come across a</span>
+            <span class="c1"># counter-example, we will refine this logic.</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">{</span><span class="n">typing</span><span class="o">.</span><span class="n">Union</span><span class="p">,</span> <span class="n">typing</span><span class="o">.</span><span class="n">Optional</span><span class="p">}:</span>
+                <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">is_faithful</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
 
-<span class="sd">    Args:</span>
-<span class="sd">        t (object): Object to check.</span>
+    <span class="k">elif</span> <span class="n">x</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">elif</span> <span class="n">x</span> <span class="o">==</span> <span class="bp">Ellipsis</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
 
-<span class="sd">    Returns:</span>
-<span class="sd">        bool: `t` is `object`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">TypeType</span><span class="o">.</span><span class="n">get_types</span><span class="p">())</span></div>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">is_faithful</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">x</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s2">&quot;__faithful__&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">__faithful__</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># This is the fallback method. Check whether `__instancecheck__` is default</span>
+            <span class="c1"># or not. If it is, assume that it is faithful.</span>
+            <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="fm">__instancecheck__</span> <span class="ow">in</span> <span class="p">{</span>
+                <span class="nb">type</span><span class="o">.</span><span class="fm">__instancecheck__</span><span class="p">,</span>
+                <span class="n">abc</span><span class="o">.</span><span class="n">ABCMeta</span><span class="o">.</span><span class="fm">__instancecheck__</span><span class="p">,</span>
+            <span class="p">}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Could not determine whether `</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">` is faithful or not. &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;I have concluded that the type is not faithful, so your code might run &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;with subpar performance. &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Please open an issue at https://github.com/wesselb/plum.&quot;</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
 </pre></div>
 
-              </div>
-              
-            </main>
-            <footer class="footer-article noprint">
-                
-    <!-- Previous / next buttons -->
+            </article>
+            
+
+            
+            
+            <footer class="bd-footer-article">
+                <!-- Previous / next buttons -->
 <div class='prev-next-area'>
 </div>
             </footer>
+            
+          </div>
+          
+          
+          
+          
         </div>
-    </div>
-    <div class="footer-content row">
-        <footer class="col footer"><p>
+        <footer class="bd-footer-content">
+          <div class="bd-footer-content__inner">
+            
+<div class="bd-footer-content__inner container">
   
-    By Wessel Bruinsma, Filippo Vicentini, and Ruan Comelli<br/>
-  
-      &copy; Copyright 2022.<br/>
-</p>
-        </footer>
-    </div>
+  <div class="footer-item">
     
-</div>
+<p class="component-author">
+By Wessel Bruinsma, Filippo Vicentini, and Ruan Comelli
+</p>
 
-
-      </div>
-    </div>
+  </div>
   
-  <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+  <div class="footer-item">
+    
+<p class="copyright">
 
+    &copy; Copyright 2022.<br>
+
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+Last updated on None.<br>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </div>
+        </footer>
+        
+
+      </main>
+    </div>
+  </div>
+
+  
+    
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=796348d33e8b1d947c94"></script>
 
   </body>
 </html>
