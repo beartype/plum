@@ -8,6 +8,10 @@
 
 Everybody likes multiple dispatch, just like everybody likes plums.
 
+*Note:*
+Plum 2 is now powered by [Beartype](https://github.com/beartype/beartype)!
+If you notice any issues with the new release, please open an issue.
+
 # Installation
 
 Plum requires Python 3.7 or higher.
@@ -28,6 +32,7 @@ Plum brings your type annotations to life:
 from numbers import Number
 
 from plum import dispatch
+
 
 @dispatch
 def f(x: str):
@@ -52,10 +57,10 @@ def f(x: Number):
 'This is an integer!'
 
 >>> f(1.0)
-"This is a number, but I don't know which type."
+'This is a number, but I don't know which type.'
 
 >>> f(object())
-NotFoundLookupError: For function "f", signature Signature(builtins.object) could not be resolved.
+NotFoundLookupError: For function `f`, `(<object object at 0x7fb528458190>,)` could not be resolved.
 ```
 
 This also works for multiple arguments, enabling some neat design patterns:
@@ -65,31 +70,32 @@ from numbers import Number, Real, Rational
 
 from plum import dispatch
 
+
 @dispatch
 def multiply(x: Number, y: Number):
-    return "fallback implementation of multiplication"
+    return "Performing fallback implementation of multiplication..."
 
 
 @dispatch
 def multiply(x: Real, y: Real):
-    return "specialised implementation for reals"
+    return "Performing specialised implementation for reals..."
 
 
 @dispatch
 def multiply(x: Rational, y: Rational):
-    return "specialised implementation for rationals"
+    return "Performing specialised implementation for rationals..."
 ```
 
 ```python
 >>> multiply(1, 1)
-'specialised implementation for rationals'
+'Performing specialised implementation for rationals...'
 
 >>> multiply(1.0, 1.0)
-'specialised implementation for reals'
+'Performing specialised implementation for reals...'
 
 >>> multiply(1j, 1j)
-'fallback implementation of multiplication'
+'Performing fallback implementation of multiplication...'
 
 >>> multiply(1, 1.0)  # For mixed types, it automatically chooses the right optimisation!
-'specialised implementation for reals'
+'Performing specialised implementation for reals...'
 ```

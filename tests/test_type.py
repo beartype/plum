@@ -1,241 +1,245 @@
+import abc
+import sys
 import typing
+
+if sys.version_info.minor <= 8:
+    from typing import Callable
+else:
+    from collections.abc import Callable
+
+try:
+    from typing import Literal
+except ImportError:
+
+    class LiteralMeta(type):
+        """A simple proxy for :class:`typing.Literal`."""
+
+        def __getitem__(self, item):
+            return self
+
+    class Literal(metaclass=LiteralMeta):
+        __faithful__ = False
+
 
 import pytest
 
-from plum.parametric import List, Tuple, Dict, Iterable, Sequence
-from plum.resolvable import ResolutionError
 from plum.type import (
-    VarArgs,
-    Union,
-    Type,
+    ModuleType,
     PromisedType,
-    deliver_forward_reference,
-    get_forward_reference,
-    ptype,
-    is_object,
-    is_type,
-    TypeType,
+    ResolvableType,
+    _is_hint,
+    is_faithful,
+    resolve_type_hint,
+    type_mapping,
 )
 
 
-def test_varargs():
-    assert hash(VarArgs(int)) == hash(VarArgs(int))
-    assert repr(VarArgs(int)) == f"VarArgs({Type(int)!r})"
-    assert VarArgs(int).expand(2) == (Type(int), Type(int))
-    assert not VarArgs(int).parametric
-    assert not VarArgs(int).runtime_type_of
-    assert VarArgs(List[int]).parametric
-    assert VarArgs(List[int]).runtime_type_of
-
-
-def test_comparabletype():
-    assert isinstance(1, Union[int])
-    assert not isinstance("1", Union[int])
-    assert isinstance("1", Union[int, str])
-    assert issubclass(Union[int], Union[int])
-    assert issubclass(Union[int], Union[int, str])
-    assert not issubclass(Union[int, str], Union[int])
-    assert Union[int].mro() == int.mro()
-    with pytest.raises(RuntimeError):
-        Union[int, str].mro()
-
-
-def test_union():
-    assert hash(Union[int, str]) == hash(Union[str, int])
-    assert repr(Union[int, str]) == repr(Union[int, str])
-    assert set(Union[int, str].get_types()) == {str, int}
-    assert not Union[int].parametric
-    assert not Union[int].runtime_type_of
-
-    assert Union[Tuple[int], Tuple[int, int]].parametric
-    assert Union[Tuple[int], Tuple[int, int]].runtime_type_of
-
-    # Test equivalence between `Union` and `Type`.
-    assert hash(Union[int]) == hash(Type(int))
-    assert hash(Union[int, str]) != hash(Type(int))
-    assert repr(Union[int]) == repr(Type(int))
-    assert repr(Union[int, str]) != repr(Type(int))
-
-    # Test lazy conversion to set.
-    t = Union[int, int, str]
-    assert isinstance(t._types, tuple)
-    t.get_types()
-    assert isinstance(t._types, set)
-
-    # Test aliases.
-    assert repr(Union(int, alias="MyUnion")) == "tests.test_type.MyUnion"
-    assert repr(Union(int, str, alias="MyUnion")) == "tests.test_type.MyUnion"
-
-
-def test_type():
-    assert hash(Type(int)) == hash(Type(int))
-    assert hash(Type(int)) != hash(Type(str))
-    assert repr(Type(int)) == f"{int.__module__}.{int.__name__}"
-    assert Type(int).get_types() == (int,)
-    assert not Type(int).parametric
-    assert not Type(int).runtime_type_of
-    assert Type(List[int]).parametric
-    assert Type(List[int]).runtime_type_of
+def test_resolvabletype():
+    t = ResolvableType("int")
+    assert t.__name__ == "int"
+    assert t.resolve() is t
+    assert t.deliver(int) is t
+    assert t.resolve() is int
 
 
 def test_promisedtype():
+    t = PromisedType("int")
+    assert t.__name__ == "PromisedType[int]"
+    assert t.resolve() is t
+    assert t.deliver(int) is t
+    assert t.resolve() is int
+
+
+def test_promsedtype_default_name():
     t = PromisedType()
-    with pytest.raises(ResolutionError):
-        hash(t)
-    with pytest.raises(ResolutionError):
-        t.get_types()
-
-    assert "unresolved" in repr(t)
-
-    t.deliver(Type(int))
-    assert hash(t) == hash(Type(int))
-    assert repr(t) == repr(Type(int))
-    assert t.get_types() == Type(int).get_types()
-    assert not t.parametric
-    assert not t.runtime_type_of
-
-    t = PromisedType()
-    t.deliver(List[int])
-    assert t.parametric
-    assert t.runtime_type_of
+    assert t.__name__ == "PromisedType[SomeType]"
 
 
-def test_forwardreferencedtype():
+@pytest.mark.parametrize(
+    "module, name, type",
+    [
+        ("typing", "Union", typing.Union),
+        ("__builtin__", "int", int),
+        ("__builtins__", "int", int),
+        ("builtins", "int", int),
+    ],
+)
+def test_moduletype(module, name, type):
+    t = ModuleType(module, name)
+    assert t.__name__ == f"ModuleType[{module}.{name}]"
+    assert t.resolve() is t
+    assert t.retrieve()
+    assert t.resolve() is type
+
+    t = ModuleType("<nonexistent>", "f")
+    assert not t.retrieve()
+
+
+def test_is_hint():
+    assert not _is_hint(int)
+    assert _is_hint(typing.Union[int, float])
+    assert _is_hint(Callable)
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 9),
+    reason="Requires Python 3.9 or higher.",
+)
+def test_is_hint_subscripted_builtins():
+    assert _is_hint(tuple[int])
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 10),
+    reason="Requires Python 3.10 or higher.",
+)
+def test_is_hint_new_union():
+    assert int | float
+
+
+def test_type_mapping():
+    assert resolve_type_hint(int) is int
+    try:
+        type_mapping[int] = float
+        assert resolve_type_hint(int) is float
+    finally:
+        del type_mapping[int]
+
+
+@pytest.mark.parametrize(
+    "pseudo_int",
+    [
+        PromisedType("int").deliver(int),
+        # We deliver a promised type to a promised type, which means that the
+        # resolution must resolve deliveries.
+        PromisedType("int").deliver(PromisedType("int").deliver(int)),
+        ModuleType("builtins", "int"),
+    ],
+)
+def test_resolve_type_hint(pseudo_int):
+    # Test leaves.
+    assert resolve_type_hint(None) is None
+    assert resolve_type_hint(Ellipsis) is Ellipsis
+    assert resolve_type_hint(int) is int
+    assert resolve_type_hint(typing.Any) is typing.Any
+    assert resolve_type_hint(Callable) is Callable
+
+    # Test composition.
+    assert resolve_type_hint((pseudo_int, pseudo_int)) == (int, int)
+    assert resolve_type_hint([pseudo_int, pseudo_int]) == [int, int]
+
+    def _combo1(fake, real):
+        return typing.Union[fake, float], typing.Union[real, float]
+
+    def _combo2(fake, real):
+        return Callable[[fake, float], fake], Callable[[real, float], real]
+
+    def _combo3(fake, real):
+        return _combo2(*_combo1(fake, real))
+
+    def _combo4(fake, real):
+        return _combo3(*_combo2(*_combo1(fake, real)))
+
+    for combo in [_combo1, _combo2, _combo3, _combo4]:
+        fake, real = combo(pseudo_int, int)
+        assert resolve_type_hint(fake) == real
+
     class A:
         pass
 
-    class B:
-        pass
-
-    t_a = get_forward_reference("A")
-    t_b = get_forward_reference("B")
-
-    with pytest.raises(ResolutionError):
-        t_a.resolve()
-    with pytest.raises(ResolutionError):
-        t_b.resolve()
-
-    deliver_forward_reference(A)
-
-    assert t_a == Type(A)
-    with pytest.raises(ResolutionError):
-        t_b.resolve()
-
-    deliver_forward_reference(B)
-
-    assert t_a == Type(A)
-    assert t_b == Type(B)
+    # Test warning.
+    a = A()
+    with pytest.warns(Warning, match=r"(?i)could not resolve the type hint"):
+        assert resolve_type_hint(a) is a
 
 
-@pytest.mark.parametrize("name", ['"A"', "'A'", "\"'A'\""])
-def test_forwardreferencedtype_unquoting(name):
-    class A:
-        pass
-
-    t = get_forward_reference(name)
-    deliver_forward_reference(A)
-    t.resolve()
-    assert t == Type(A)
+def test_resolve_type_hint_moduletype_recursion():
+    t = ModuleType("<nonexistent>", "f")
+    assert resolve_type_hint(t) == t
 
 
-def test_ptype():
-    class A:
-        pass
-
-    t = Type(int)
-    assert ptype(t) is t
-    assert ptype(int) == t
-
-    # Check `None` as valid type annotation.
-    assert ptype(None) == Type(type(None))
-
-    # Check conversion of strings.
-    t = ptype("A")
-    deliver_forward_reference(A)
-    assert t == Type(A)
-
-    with pytest.raises(RuntimeError):
-        ptype(1)
+@pytest.mark.skipif(
+    sys.version_info < (3, 10),
+    reason="Requires Python 3.10 or higher.",
+)
+def test_resolve_type_hint_new_union():
+    assert resolve_type_hint(float | int) == float | int
 
 
-def test_ptype_typing_mapping():
-    class A:
-        pass
+def test_is_faithful():
+    # Example of a not faithful type.
+    t_nf = Callable[[int], int]
 
-    # `Union`:
-    assert ptype(typing.Union[typing.Union[int], list]) == Union[Union[int], list]
-    assert ptype(typing.Union) == Union[object]
+    # Test leaves.
+    assert is_faithful(typing.Any)
+    assert is_faithful(Callable)
+    assert is_faithful(None)
+    assert is_faithful(Ellipsis)
 
-    # `Optional`:
-    assert ptype(typing.Optional[int]) == Union[int, type(None)]
-    assert ptype(typing.Optional) == Union[object]
-
-    # `List`:
-    assert ptype(typing.List[typing.List[int]]) == List[List[int]]
-    assert ptype(typing.List) == Type(list)
-
-    # `Tuple`:
-    assert ptype(typing.Tuple[typing.Tuple[int], list]) == Tuple[Tuple[int], list]
-    assert ptype(typing.Tuple) == Type(tuple)
-
-    # `Dict`:
-    assert ptype(typing.Dict[typing.List[int], list]) == Dict[List[int], list]
-    assert ptype(typing.Dict) == Type(dict)
-
-    # `Iterable`:
-    assert ptype(typing.Iterable[typing.List[int]]) == Iterable[List[int]]
-    assert ptype(typing.Iterable) == Iterable()
-
-    # `Sequence`:
-    assert ptype(typing.Sequence[typing.List[int]]) == Sequence[List[int]]
-    assert ptype(typing.Sequence) == Sequence()
-
-    # `ForwardRef`:
-    if hasattr(typing, "ForwardRef"):
-        t = ptype(typing.ForwardRef("A"))
-    else:
-        # The `typing` package is different for Python 3.6.
-        t = ptype(typing._ForwardRef("A"))
-    deliver_forward_reference(A)
-    assert t == Type(A)
-
-    # `Any`:
-    assert ptype(typing.Any) == ptype(object)
-
+    # Test composition.
+    # Lists:
+    assert is_faithful([int, float])
+    assert not is_faithful([int, t_nf])
+    # Tuples:
+    assert is_faithful((int, float))
+    assert not is_faithful((int, t_nf))
     # `Callable`:
-    assert ptype(typing.Callable) == Type(typing.Callable)
+    assert not is_faithful(Callable[[int], int])
+    # `Union`:
+    assert is_faithful(typing.Union[int, float])
+    assert not is_faithful(typing.Union[int, t_nf])
 
-    # Check propagation of conversion of strings.
-    t = ptype(typing.Union["A"])
-    deliver_forward_reference(A)
-    assert t == ptype(Union[A])
-
-    t = ptype(typing.List["A"])
-    deliver_forward_reference(A)
-    assert t == ptype(List[A])
-
-    t = ptype(typing.Tuple["A"])
-    deliver_forward_reference(A)
-    assert t == ptype(Tuple[A])
+    # Test warning.
+    with pytest.warns(
+        Warning, match=r"(?i)could not determine whether `(.*)` is faithful or not"
+    ):
+        assert not is_faithful(1)
 
 
-def test_typetype():
-    Promised = PromisedType()
-    Promised.deliver(int)
+def test_is_faithful_custom_metaclass():
+    class A:
+        pass
 
-    assert ptype(type(int)) <= TypeType
-    assert ptype(type(Promised)) <= TypeType
+    class BMeta(type):
+        def __instancecheck__(self, cls):
+            pass
 
-    assert not (ptype(int) <= TypeType)
-    assert not (ptype(Promised) <= TypeType)
+    class B(metaclass=BMeta):
+        pass
+
+    assert is_faithful(A)
+    assert not is_faithful(B)
 
 
-def test_is_object():
-    assert is_object(Type(object))
-    assert not is_object(Type(int))
+def test_is_faithful_abcmeta():
+    class A(metaclass=abc.ABCMeta):
+        pass
+
+    assert is_faithful(A)
 
 
-def test_is_type():
-    assert is_type(int)
-    assert is_type(Type(int))
-    assert not is_type(1)
+def test_is_faithful_dunder():
+    """Check that `__faithful__` works."""
+
+    class UnfaithfulClass:
+        __faithful__ = False
+
+    class FaithfulClass:
+        __faithful__ = True
+
+    assert not is_faithful(UnfaithfulClass)
+    assert is_faithful(FaithfulClass)
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 10),
+    reason="Requires Python 3.10 or higher.",
+)
+def test_is_faithful_new_union():
+    assert not is_faithful(int | float)
+
+
+def test_is_faithful_literal(recwarn):
+    assert not is_faithful(Literal[1])
+    # There should be no warnings.
+    assert len(recwarn) == 0

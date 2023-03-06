@@ -1,9 +1,11 @@
-import logging
+from beartype.door import TypeHint
 
+import plum.function
+
+from . import _is_bearable
 from .dispatcher import Dispatcher
-from .function import promised_convert
-from .parametric import type_of
-from .type import ptype, TypeType
+from .type import resolve_type_hint
+from .util import repr_short
 
 __all__ = [
     "convert",
@@ -13,13 +15,11 @@ __all__ = [
     "promote",
 ]
 
-log = logging.getLogger(__name__)
-
 _dispatch = Dispatcher()
 
 
 @_dispatch
-def convert(obj, type_to: TypeType):
+def convert(obj, type_to):
     """Convert an object to a particular type.
 
     Args:
@@ -29,21 +29,21 @@ def convert(obj, type_to: TypeType):
     Returns:
         object: `obj` converted to type `type_to`.
     """
-    return _convert.invoke(type_of(obj), type_to)(obj, type_to)
+    type_to = resolve_type_hint(type_to)
+    # TODO: Can we implement this without using `type`?!
+    return _convert.invoke(type(obj), type_to)(obj, type_to)
 
 
 # Deliver `convert`.
-promised_convert.deliver(convert)
+plum.function._promised_convert = convert
 
 
 @_dispatch
 def _convert(obj, type_to):
-    type_from = type_of(obj)
-    type_to = ptype(type_to)
-    if type_from <= type_to:
+    if _is_bearable(obj, resolve_type_hint(type_to)):
         return obj
     else:
-        raise TypeError(f'Cannot convert a "{type_from}" to a "{type_to}".')
+        raise TypeError(f"Cannot convert `{obj}` to `{repr_short(type_to)}`.")
 
 
 def add_conversion_method(type_from, type_to, f):
@@ -91,20 +91,22 @@ def _promotion_rule(type1, type2):
     """Promotion rule.
 
     Args:
-        type1 (ptype): First type to promote.
-        type2 (ptype): Second type to promote.
+        type1 (type): First type to promote.
+        type2 (type): Second type to promote.
 
     Returns:
         type: Type to convert to.
     """
-    type1 = ptype(type1)
-    type2 = ptype(type2)
-    if type1 <= type2:
+    type1 = resolve_type_hint(type1)
+    type2 = resolve_type_hint(type2)
+    if TypeHint(type1) <= TypeHint(type2):
         return type2
-    elif type2 <= type1:
+    elif TypeHint(type2) <= TypeHint(type1):
         return type1
     else:
-        raise TypeError(f'No promotion rule for "{type1}" and "{type2}".')
+        raise TypeError(
+            f"No promotion rule for `{repr_short(type1)}` and `{repr_short(type2)}`."
+        )
 
 
 @_dispatch
@@ -121,11 +123,11 @@ def add_promotion_rule(type1, type2, type_to):
     def rule(t1: type1, t2: type2):
         return type_to
 
-    if ptype(type1) != ptype(type2):
+    # If the types are the same, the method will get overwritten.
 
-        @_promotion_rule.dispatch
-        def rule(t1: type2, t2: type1):
-            return type_to
+    @_promotion_rule.dispatch
+    def rule(t1: type2, t2: type1):
+        return type_to
 
 
 @_dispatch
@@ -133,7 +135,7 @@ def promote(obj1, obj2, *objs):
     """Promote objects to a common type.
 
     Args:
-        *objs (object): Objects to convert.
+        \\*objs (object): Objects to convert.
 
     Returns:
         tuple: `objs`, but all converted to a common type.
@@ -142,23 +144,28 @@ def promote(obj1, obj2, *objs):
     objs = (obj1, obj2) + objs
 
     # Get the types of the objects.
-    types = [type_of(obj) for obj in objs]
+    # TODO: Can we implement this without calling `type`?!
+    types = [type(obj) for obj in objs]
+
+    def _promote_types(t0, t1):
+        return resolve_type_hint(_promotion_rule.invoke(t0, t1)(t0, t1))
 
     # Find the common type.
-    common_type = _promotion_rule.invoke(types[0], types[1])(types[0], types[1])
-    for i, t in enumerate(types[2:]):
-        common_type = _promotion_rule.invoke(common_type, t)(common_type, t)
+    _promotion_rule._resolve_pending_registrations()
+    common_type = _promote_types(types[0], types[1])
+    for t in types[2:]:
+        common_type = _promote_types(common_type, t)
 
     # Convert objects and return.
-    return tuple(convert(obj, ptype(common_type)) for obj in objs)
+    return tuple(convert(obj, common_type) for obj in objs)
 
 
 @_dispatch
-def promote(obj):
+def promote(obj: object):
     # Promote should always return a tuple to avoid edge cases.
     return (obj,)
 
 
-@_dispatch()
+@_dispatch
 def promote():
     return ()

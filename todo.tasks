@@ -1,42 +1,19 @@
+TODO:
+    ☐ Explicitly mention that `@dispatch` can be used on magic methods. (Email from Mukesh.)
+    ☐ Standardise printing of type parameters.
+    ☐ Rename `LICENCE` to `LICENCE.txt`.
+
+Documentation:
+    ☐ Union aliases
+    ☐ Callable type
+
 Features:
     Type system:
         ☐ Type intersection.
             ☐ Show method to break ambiguity.
-        ☐ Concrete classes and type variables to perform diagonal dispatch.
-        ☐ Support typing module: parametrised generics and type variables.
-        ☐ Move to __getitem__ for instantiating types.
-        Signatures from annotations:
-            ☐ Test.
-            ☐ Keyword argument to Dispatcher.
-    Efficiency:
-        ☐ Further optimise Function.__call__ with Cython. @critical
-        ☐ Improved type resolution algorithm.
-        ☐ More efficient caching strategy.
-    Other:
         ☐ Improved formatting of error messages.
-    Documentation:
-        ☐ Union aliases.
-        ☐ Callable type.
+        ☐ Type check keyword arguments.
 
- Other:
-    ☐ Is there a better alternative to numeric method precedences?
-    ☐ Refactor tests to use PyTest: remove raises, fixtures, and parametrisation. @high
-
-
-＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿＿
-Archive:
- ✓ Inconsistent behaviour of `A.__subclassses__()` in `test_type.test_self` and `test_dispatcher_function.test_invoke_inheritance` in Python 2.7. @done (19-04-27 22:22) @project(Bugs)
-  See note before `test_dispatcher_function.test_invoke_inheritance`.
- ✓ Split up tests. @critical @done (18-06-19 03:24) @project(Refactor)
- ✓ Docstrings: make distinction between Plum types and Python types. @critical @done (18-06-19 03:24) @project(Refactor)
- ✓ Coverage. @critical @done (18-06-19 03:24) @project(Refactor)
- ✓ mro(): check single types. @done (18-06-19 01:44) @project(Refactor)
- ✓ __repr__ and __str__. @done (18-06-19 01:44) @project(Refactor)
- ✓ Rework Union–Type hierarchy. @done (18-06-19 01:44) @project(Refactor)
- ✓ Plum types in Union/Varargs. @done (18-06-19 01:44) @project(Refactor)
- ✓ Hash consistency of promised types. @done (18-06-19 01:44) @project(Refactor)
- ✓ More neatly handle UnboundCalls. @done (18-06-19 00:14) @project(Refactor)
- ✓ Interaction between cache and adding new methods. @done (18-06-03 11:51) @project(Bugs)
- ✓ Read the Docs. @done (17-11-13 15:43) @project(Documentation)
- ✓ Union type. @done (17-11-10 17:04) @project(Features)
- ✓ Julia naming. @done (17-11-10 15:02) @project(Features)
+    Tooling:
+        ☐ Make package work with `mypy` and linters.
+            Use `@overload`?

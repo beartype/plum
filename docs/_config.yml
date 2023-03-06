@@ -4,6 +4,11 @@ author: Wessel Bruinsma, Filippo Vicentini, and Ruan Comelli
 copyright: "2022"
 logo: logo.png
 
+# Enable definition lists.
+parse:
+  myst_enable_extensions:
+    - deflist
+
 # Force re-execution of notebooks on each build.
 # See https://jupyterbook.org/content/execute.html
 execute:

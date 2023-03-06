@@ -1,6 +1,44 @@
-import numpy as np
+import sys
+import typing
 
-from plum.util import multihash, Comparable, is_in_class, get_class, get_context
+import numpy as np
+import pytest
+
+from plum.util import (
+    Comparable,
+    Missing,
+    get_class,
+    get_context,
+    is_in_class,
+    multihash,
+    repr_short,
+    wrap_lambda,
+)
+
+
+def test_repr_short():
+    class A:
+        pass
+
+    assert repr_short(int) == "int"
+    assert repr_short(A) == "tests.test_util.test_repr_short.<locals>.A"
+    assert repr_short(typing.Union[int, float]) == "typing.Union[int, float]"
+
+
+def test_missing():
+    # `Missing` cannot be instantiated.
+    with pytest.raises(TypeError):
+        Missing()
+
+    # `Missing` also has no boolean value.
+    with pytest.raises(TypeError):
+        bool(Missing)
+
+    # However, if Sphinx is loaded, `Missing` should evaluate to `False`.
+    assert "sphinx" not in sys.modules
+    sys.modules["sphinx"] = None
+    assert not Missing
+    del sys.modules["sphinx"]
 
 
 def test_multihash():
@@ -37,6 +75,10 @@ class A:
 
 def f(self):
     pass
+
+
+def test_wrap_lambda():
+    assert wrap_lambda(int)("1") == 1
 
 
 def test_is_in_class():

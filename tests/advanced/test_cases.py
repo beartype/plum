@@ -1,15 +1,21 @@
-import abc
-
 import pytest
 
-from functools import wraps, WRAPPER_UPDATES
-
-from plum import Dispatcher, NotFoundLookupError, AmbiguousLookupError
+from plum import AmbiguousLookupError, Dispatcher, NotFoundLookupError
 from plum.type import PromisedType
-from tests.test_signature import Num, Re, FP
-
 
 dispatch = Dispatcher()
+
+
+class Num:
+    pass
+
+
+class Re(Num):
+    pass
+
+
+class Rat(Re):
+    pass
 
 
 class ComputableObject:
@@ -52,8 +58,8 @@ class Device:
         return "another result"
 
 
-PromisedCalculator = PromisedType()
-PromisedHammer = PromisedType()
+PromisedCalculator = PromisedType("Calculator")
+PromisedHammer = PromisedType("Hammer")
 
 
 class Hammer(Device):
@@ -93,7 +99,7 @@ def test_method_dispatch():
     device = Device()
 
     assert device.do() == "doing nothing"
-    assert device.do(FP(), FP()) == "doing a real and a number"
+    assert device.do(Rat(), Rat()) == "doing a real and a number"
     assert device.do(Re(), Re()) == "doing a real and a number"
     assert device.do(Num(), Re()) == "doing two numbers"
     assert device.do(device) == "doing a device"
@@ -155,7 +161,7 @@ def f(a: Num, b: Num):
 
 
 @dispatch
-def f(a: Num, b: FP):
+def f(a: Num, b: Rat):
     return "a number and a float"
 
 
@@ -170,12 +176,12 @@ def f(a: Num, b: Num, *cs: Re):
 
 
 @dispatch
-def f(a: FP, b: Num, *cs: Re):
+def f(a: Rat, b: Num, *cs: Re):
     return "a float, a number, and more reals"
 
 
 @dispatch
-def f(a: Re, b: Num, *cs: FP):
+def f(a: Re, b: Num, *cs: Rat):
     return "a real, a number, and more floats"
 
 
@@ -192,162 +198,14 @@ def test_varargs():
     assert f(Num(), Num()) == "two numbers"
     assert f(Num(), Num(), Num()) == "two or more numbers"
     with pytest.raises(LookupError):
-        f(FP(), FP(), FP())
+        f(Rat(), Rat(), Rat())
     with pytest.raises(LookupError):
-        f(FP(), Re(), FP())
+        f(Rat(), Re(), Rat())
     with pytest.raises(LookupError):
-        f(FP(), Num(), FP())
-    assert f(FP(), Num(), Re()) == "a float, a number, and more reals"
-    assert f(Re(), Num(), FP()) == "a real, a number, and more floats"
-    assert f(Num(), FP(), FP()) == "two numbers and more reals"
-    assert f(Num(), Num(), FP()) == "two numbers and more reals"
+        f(Rat(), Num(), Rat())
+    assert f(Rat(), Num(), Re()) == "a float, a number, and more reals"
+    assert f(Re(), Num(), Rat()) == "a real, a number, and more floats"
+    assert f(Num(), Rat(), Rat()) == "two numbers and more reals"
+    assert f(Num(), Num(), Rat()) == "two numbers and more reals"
     with pytest.raises(LookupError):
-        f(FP(), FP())
-
-
-def test_abc_abstractmethod():
-    class A(metaclass=abc.ABCMeta):
-        @abc.abstractmethod
-        def f(self, x):
-            pass
-
-    class B(A):
-        @dispatch
-        def f(self, x: int):
-            return x
-
-    # Check that ABC still works.
-    with pytest.raises(TypeError):
-        A()
-
-    # Check that the abstract method is not dispatched to.
-    b = B()
-    assert b.f(1) == 1
-    with pytest.raises(NotFoundLookupError):
-        b.f("1")
-
-
-def test_self_reference():
-    class A:
-        @dispatch
-        def f(self, x: "A"):
-            return "self"
-
-        @dispatch
-        def f(self, x: str):
-            return "str"
-
-    a = A()
-
-    assert a.f(a) == "self"
-    assert a.f("1") == "str"
-
-
-def test_nested_class():
-    class A:
-        @dispatch
-        def f(self, x: int):
-            return "int1"
-
-        class A:
-            @dispatch
-            def f(self, x: int):
-                return "int2"
-
-            @dispatch
-            def f(self, x: str):
-                return "str2"
-
-        @dispatch
-        def f(self, x: str):
-            return "str1"
-
-    a1 = A()
-    a2 = A.A()
-
-    assert a1.f(1) == "int1"
-    assert a1.f("1") == "str1"
-
-    assert a2.f(1) == "int2"
-    assert a2.f("1") == "str2"
-
-
-def dec(f):
-    @wraps(f)
-    def f_wrapped(*args, **kw_args):
-        return f(*args, **kw_args)
-
-    return f_wrapped
-
-
-def test_decorator():
-    dispatch = Dispatcher()
-
-    @dec
-    @dispatch
-    @dec
-    def g(x: int):
-        return "int"
-
-    @dec
-    @dispatch
-    @dec
-    def g(x: str):
-        return "str"
-
-    assert g(1) == "int"
-    assert g("1") == "str"
-
-
-def test_decorator_in_class():
-    class A:
-        @dec
-        @dispatch
-        @dec
-        def f(self, x: int):
-            return "int"
-
-        # Cannot use a decorator before `dispatch` here!
-        @dispatch
-        @dec
-        def f(self, x: str):
-            return "str"
-
-    a = A()
-
-    assert a.f(1) == "int"
-    assert a.f("1") == "str"
-
-
-def test_property():
-    class A:
-        @property
-        def name(self):
-            return "name"
-
-        @name.setter
-        @dispatch
-        def name(self, x: str):
-            return "str"
-
-        # This setup requires that the class has another method!
-        @dispatch
-        def f(self):
-            pass
-
-    a = A()
-
-    assert a.name == "name"
-    a.name = "another name"
-    with pytest.raises(NotFoundLookupError):
-        a.name = 1
-
-
-def test_none():
-    dispatch = Dispatcher()
-
-    @dispatch
-    def f(x: None) -> None:
-        return x
-
-    assert f(None) is None
+        f(Rat(), Rat())

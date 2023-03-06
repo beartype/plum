@@ -2,27 +2,29 @@
 
 Consider the following package design.
 
-**package/\_\_init\_\_.py**
+`package/__init__.py`:
 
 ```python
 import a
 import b
 ```
 
-**package/a.py**
+`package/a.py`:
 
 ```python
 from plum import dispatch
+
 
 @dispatch
 def f(x: int):
    return "int"
 ```
 
-**package/b.py**
+`package/b.py`:
 
 ```python
 from plum import dispatch
+
 
 @dispatch
 def f(x: float):
@@ -38,18 +40,34 @@ In a design like this, the methods for `f` recorded by `dispatch` are _global_:
 'float'
 ```
 
-This could be what you want, but it can also be undesirable, because it means that
-someone could accidentally overwrite your methods.
-To keep your functions private, you can create new dispatchers:
+This could be what you want, but it could also be undesirable.
+In addition, by using the global `@dispatch`, someone could accidentally overwrite
+your methods.
 
-**package/\_\_init\_\_.py**
+`other_package/some_file.py`:
+```python
+from plum import dispatch
+
+
+# If another package happens to also define `f` for an `int`, then that overwrites
+# your method!
+
+@dispatch
+def f(x: int):
+    ...
+```
+
+To prevent this from happening and to keep your functions private, you can create new
+dispatchers.
+
+`package/__init__.py`:
 
 ```python
 import a
 import b
 ```
 
-**package/a.py**
+`package/a.py`:
 
 ```python
 from plum import Dispatcher
@@ -62,7 +80,7 @@ def f(x: int):
    return "int"
 ```
 
-**package/b.py**
+`package/b.py`:
 
 ```python
 from plum import Dispatcher
@@ -83,12 +101,12 @@ def f(x: float):
 'int'
 
 >>> f(1.0)
-NotFoundLookupError: For function "f", signature Signature(builtins.float) could not be resolved.
+NotFoundLookupError: For function `f`, `(1.0,)` could not be resolved.
 
 >>> from package.b import f
 
 >>> f(1)
-NotFoundLookupError: For function "f", signature Signature(builtins.int) could not be resolved.
+NotFoundLookupError: For function `f`, `(1,)` could not be resolved.
 
 >>> f(1.0)
 'float'
