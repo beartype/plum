@@ -9,6 +9,7 @@ from beartype import BeartypeStrategy as _BeartypeStrategy
 from beartype.door import TypeHint as _TypeHint
 from beartype.door import is_bearable as _is_bearable
 
+from ._version import __version__  # noqa: F401
 from .alias import *  # noqa: F401, F403
 from .autoreload import *  # noqa: F401, F403
 from .dispatcher import *  # noqa: F401, F403
