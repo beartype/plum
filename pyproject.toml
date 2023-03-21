@@ -1,11 +1,83 @@
 [build-system]
-requires = [
-    "setuptools>=50",
+requires = ["hatchling>=1.8.0", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "plum-dispatch"
+description="Multiple dispatch in Python"
+authors=[
+    {name = "Wessel Bruinsma", email="wessel.p.bruinsma@gmail.com"},
+]
+license = {text= "MIT"}
+readme = "README.md"
+keywords = ["multiple dispatch"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Development Status :: 5 - Production/Stable",
+]
+dynamic = ["version"]
+
+requires-python = ">=3.7"
+dependencies = ["beartype"]
+
+[project.optional-dependencies]
+dev = [
+    "numpy",
+    "pytest>=6",
+    "pytest-cov",
+    "coveralls",
+    "pre-commit",
+    "IPython",
+    "black==22.10.0",
+    "ghp-import",
     "wheel",
-    "toml",
-    "setuptools_scm[toml]>=6.0",
-    "setuptools_scm_git_archive",
+    "build",
+    "tox",
 ]
 
-[tool.setuptools_scm]
-write_to = "plum/_version.py"
+[project.urls]
+ repository = "https://github.com/wesselb/plum"
+
+[tool.hatch.build]
+include = ["plum*"]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "plum/_version.py"
+
+# Development tools
+[tool.coverage.run]
+branch = true
+command_line = "-m pytest --verbose test"
+source = ["plum"]
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests",
+]
+
+# Formatting tools
+[tool.black]
+line-length = 88
+target-version = ['py37', 'py38', 'py39']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+src_paths = ["plum", "tests"]
