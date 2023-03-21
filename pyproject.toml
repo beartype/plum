@@ -33,6 +33,7 @@ dev = [
     "wheel",
     "build",
     "tox",
+    "jupyter-book",
 ]
 
 [project.urls]
