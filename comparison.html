@@ -370,6 +370,7 @@ document.write(`
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#powered-by-beartype">Powered by Beartype</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#design-goal-mimic-julia-s-type-system">Design Goal: Mimic Julia’s Type System</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#correct-handling-of-default-values">Correct Handling of Default Values</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#careful-synergy-with-oop">Careful Synergy With OOP</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parametric-classes">Parametric Classes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#feature-rich">Feature Rich</a></li>
@@ -465,6 +466,42 @@ For example, compare with Julia:</p>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
 <span class="go">&#39;second&#39;</span>
+</pre></div>
+</div>
+</section>
+<section id="correct-handling-of-default-values">
+<h2>Correct Handling of Default Values<a class="headerlink" href="#correct-handling-of-default-values" title="Permalink to this heading">#</a></h2>
+<p>Plum correctly handles default values.</p>
+<p>For example,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">multimethod</span> <span class="kn">import</span> <span class="n">multimethod</span>
+
+
+<span class="nd">@multimethod</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">y</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># OK</span>
+<span class="go">1</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>  <span class="c1"># Not OK: no error is raised!</span>
+<span class="go">1.0</span>
+</pre></div>
+</div>
+<p>In comparison,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span>
+
+
+<span class="nd">@dispatch</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">y</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># OK</span>
+<span class="go">1</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>  <span class="c1"># OK: error is raised!</span>
+<span class="go">NotFoundLookupError: For function `f`, `(1, 1.0)` could not be resolved.</span>
 </pre></div>
 </div>
 </section>
@@ -704,6 +741,7 @@ a powerful tool to simplify more complicated designs;</p></li>
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#powered-by-beartype">Powered by Beartype</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#design-goal-mimic-julia-s-type-system">Design Goal: Mimic Julia’s Type System</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#correct-handling-of-default-values">Correct Handling of Default Values</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#careful-synergy-with-oop">Careful Synergy With OOP</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parametric-classes">Parametric Classes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#feature-rich">Feature Rich</a></li>

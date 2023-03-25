@@ -93,6 +93,49 @@ Just to sanity check that things are indeed working correctly:
 'second'
 ```
 
+## Correct Handling of Default Values
+
+Plum correctly handles default values.
+
+For example,
+
+```python
+from multimethod import multimethod
+
+
+@multimethod
+def f(x: int, y: int = 1):
+    return y
+```
+
+```python
+>>> f(1, 1)  # OK
+1
+
+>>> f(1, 1.0)  # Not OK: no error is raised!
+1.0
+```
+
+In comparison,
+
+```python
+from plum import dispatch
+
+
+@dispatch
+def f(x: int, y: int = 1):
+    return y
+```
+
+```python
+>>> f(1, 1)  # OK
+1
+
+>>> f(1, 1.0)  # OK: error is raised!
+NotFoundLookupError: For function `f`, `(1, 1.0)` could not be resolved.
+```
+
+
 ## Careful Synergy With OOP
 
 Plum takes OOP very seriously.
