@@ -1,8 +1,8 @@
-# [Plum: Multiple Dispatch in Python](https://github.com/wesselb/plum)
+# [Plum: Multiple Dispatch in Python](https://github.com/beartype/plum)
 
 [![DOI](https://zenodo.org/badge/110279931.svg)](https://zenodo.org/badge/latestdoi/110279931)
-[![CI](https://github.com/wesselb/plum/workflows/CI/badge.svg?branch=master)](https://github.com/beartype/plum/actions?query=workflow%3ACI)
-[![Coverage Status](https://coveralls.io/repos/github/wesselb/plum/badge.svg?branch=master&service=github)](https://coveralls.io/github/wesselb/plum?branch=master)
+[![CI](https://github.com/beartype/plum/workflows/CI/badge.svg?branch=master)](https://github.com/beartype/plum/actions?query=workflow%3ACI)
+[![Coverage Status](https://coveralls.io/repos/github/beartype/plum/badge.svg?branch=master&service=github)](https://coveralls.io/github/beartype/plum?branch=master)
 [![Latest Docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://beartype.github.io/plum)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
@@ -20,9 +20,9 @@ Plum requires Python 3.7 or higher.
 pip install plum-dispatch
 ```
 
-# [Documentation](https://wesselb.github.io/plum)
+# [Documentation](https://beartype.github.io/plum)
 
-See [here](https://wesselb.github.io/plum).
+See [here](https://beartype.github.io/plum).
 
 # What's This?
 
