@@ -48,7 +48,7 @@ def activate_autoreload():
 
 
 def deactivate_autoreload():
-    """Disable Plum's autoreload hack. This undoes that
+    """Disable Plum's autoreload hack. This undoes what
     :func:`.autoreload.activate_autoreload` did."""
     global _update_instances_original
     if _update_instances_original is None:
