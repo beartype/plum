@@ -65,7 +65,7 @@ Returns:
     type hint: Unsubcripted version of `x`.
 """
 
-get_args.__doc__ = """Get the arguments a subscripted type hint.
+get_args.__doc__ = """Get the arguments of a subscripted type hint.
 
 Args:
     x (type hint): Type hint.
