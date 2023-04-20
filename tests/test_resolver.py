@@ -1,8 +1,8 @@
-import pydoc
 import typing
 
 import pytest
 
+import plum.resolver
 from plum.resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
 from plum.signature import Signature
 
@@ -16,7 +16,7 @@ def test_initialisation():
 def test_doc(monkeypatch):
     # Let the `pydoc` documenter simply return the docstring. This makes testing
     # simpler.
-    monkeypatch.setattr(pydoc.TextDoc, "document", lambda _, x: x.__doc__)
+    monkeypatch.setattr(plum.resolver, "_document", lambda x: x.__doc__)
 
     r = Resolver()
 

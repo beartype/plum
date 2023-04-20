@@ -1,4 +1,5 @@
 import pydoc
+import sys
 
 __all__ = ["AmbiguousLookupError", "NotFoundLookupError"]
 
@@ -9,6 +10,42 @@ class AmbiguousLookupError(LookupError):
 
 class NotFoundLookupError(LookupError):
     """A signature cannot be resolved because no applicable method can be found."""
+
+
+def _document(f):
+    """Generate documentation for a function `f`.
+
+    The generated documentation contains both the function definition and the
+    docstring. The docstring is on the same level of indentation of the function
+    definition.
+
+    If the package :mod:`sphinx` is imported, then the function definition will include
+    a Sphinx directive to displays the function definition in a nice way.
+
+    Args:
+        f (function): Function.
+
+    Returns:
+        str: Documentation for `f`.
+    """
+    # :class:`pydoc._PlainTextDoc` removes styling. This styling will display
+    # erroneously in Sphinx.
+    parts = pydoc._PlainTextDoc().document(f).split("\n")
+
+    # Separate out the function definition and the lines corresponding to the body.
+    title = parts[0]
+    body = parts[1:]
+
+    # Remove indentation from every line of the body. This indentation defaults to
+    # four spaces.
+    body = [line[4:] for line in body]
+
+    # If `sphinx` is imported, assume that we're building the documentation. In that
+    # case, display the function definition in a nice way.
+    if "sphinx" in sys.modules:
+        title = ".. py:function:: " + title + "\n   :noindex:"
+
+    return "\n".join([title] + body)
 
 
 class Resolver:
@@ -36,7 +73,7 @@ class Resolver:
         """
         # Generate all docstrings, possibly excluding `exclude`.
         docs = [
-            pydoc.TextDoc().document(sig.implementation)
+            _document(sig.implementation)
             for sig in self.signatures
             if not (exclude and sig.implementation == exclude)
         ]
