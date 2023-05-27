@@ -56,77 +56,27 @@ _owner_transfer = {}
 a function (see :meth:`Function.owner`), make the corresponding value the owner."""
 
 
-def _detect_indentation(lines, default=" " * 4):
-    """Automatically detect indentation.
-
-    Args:
-        lines (list[str]): Lines.
-        default (str, optional): Default indentation. This is used if `lines` is empty
-            or contains only empty lines.
-
-    Returns:
-        str: Indentation.
-    """
-    # Determine indentation by checking the minimum number of leading spaces on all
-    # non-empty lines.
-    num_spaces = [len(line) - len(line.lstrip()) for line in lines if line.strip()]
-    if num_spaces:
-        return " " * min(num_spaces)
-    else:
-        return default
-
-
 class _FunctionMeta(type):
+    """:class:`Function` implements `__doc__`, which overrides the docstring of the
+    class. This simple metaclass ensures that `Function.__doc__` still prints as the
+    docstring of the class."""
+
     @property
     def __doc__(self):
-        """str or None: Documentation of the function. This consists of the
-        documentation of the function given at initialisation with the documentation
-        of all other registered methods appended.
-
-        Upon instantiation, this property is available through `obj.__doc__`.
-        """
-        print("gettinnn it")
-        if isinstance(self, _FunctionMeta):
-            return self._class_doc
-
-        self._resolve_pending_registrations()
-
-        # Derive the basis of the docstring from `self._f`.
-        doc = self._doc
-
-        # Append the docstrings of all other implementations to it. Exclude the
-        # docstring from `self._f`, because that one forms the basis.
-        resolver_doc = self._resolver.doc(exclude=self._f)
-        if resolver_doc:
-            # Ensure a newline.
-            while doc[-2:] != "\n\n":
-                doc += "\n"
-
-            # Extend the documentation.
-            doc += textwrap.indent(
-                "This function has further implementations documented below.\n\n"
-                + resolver_doc,
-                # Do not include the first line when detecting the indentation.
-                _detect_indentation(doc.split("\n")[1:]),
-            )
-
-        # If the docstring is empty, return `None`, which is consistent with omitting
-        # the docstring.
-        return doc if doc else None
-
-    @__doc__.setter
-    def __doc__(self, value):
-        # Ensure that `self._doc` remains a string.
-        self._doc = value if value else ""
+        return self._class_doc
 
 
 class Function(metaclass=_FunctionMeta):
-    _class_doc = """A function.
+    """A function.
 
     Args:
         f (function): Function that is wrapped.
         owner (str, optional): Name of the class that owns the function.
     """
+
+    # When we set `__doc__`, we will lose the docstring of the class, so we save it now.
+    # Correctly printing the docstring is handled by :class:`_FunctionMeta`.
+    _class_doc = __doc__
 
     _instances = []
 
@@ -135,8 +85,7 @@ class Function(metaclass=_FunctionMeta):
 
         self._f = f
         self._cache = {}
-        wraps(f)(self)  # Assigns `self.__doc__`, which we need to remove again.
-        del self.__doc__
+        wraps(f)(self)  # Sets `self._doc`.
 
         # `owner` is the name of the owner. We will later attempt to resolve to
         # which class it actually points.
@@ -159,6 +108,47 @@ class Function(metaclass=_FunctionMeta):
             while self._owner in _owner_transfer:
                 self._owner = _owner_transfer[self._owner]
         return self._owner
+
+    @property
+    def __doc__(self):
+        """str or None: Documentation of the function. This consists of the
+        documentation of the function given at initialisation with the documentation
+        of all other registered methods appended.
+
+        Upon instantiation, this property is available through `obj.__doc__`.
+        """
+        self._resolve_pending_registrations()
+
+        # Derive the basis of the docstring from `self._f`, removing any indentation.
+        doc = self._doc.strip()
+        if doc:
+            # Do not include the first line when removing the indentation.
+            lines = doc.splitlines()
+            doc = lines[0]
+            # There might not be more than one line.
+            if len(lines) > 1:
+                doc += "\n" + textwrap.dedent("\n".join(lines[1:]))
+
+        # Append the docstrings of all other implementations to it. Exclude the
+        # docstring from `self._f`, because that one forms the basis (see boave).
+        resolver_doc = self._resolver.doc(exclude=self._f)
+        if resolver_doc:
+            # Add a newline if the documentation is non-empty.
+            if doc:
+                doc = doc + "\n\n"
+            doc += resolver_doc
+            # Replace separators with horizontal lines of the right length.
+            separator_length = max(map(len, doc.splitlines()))
+            doc = doc.replace("<separator>", "-" * separator_length)
+
+        # If the docstring is empty, return `None`, which is consistent with omitting
+        # the docstring.
+        return doc if doc else None
+
+    @__doc__.setter
+    def __doc__(self, value):
+        # Ensure that `self._doc` remains a string.
+        self._doc = value if value else ""
 
     @property
     def methods(self):

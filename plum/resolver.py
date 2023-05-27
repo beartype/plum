@@ -17,7 +17,10 @@ def _document(f):
 
     The generated documentation contains both the function definition and the
     docstring. The docstring is on the same level of indentation of the function
-    definition.
+    definition. There will be no trailing newlines.
+
+    If the package :mod:`sphinx` is not imported, then the function definition will
+    be preceded by the string `<separator>`.
 
     If the package :mod:`sphinx` is imported, then the function definition will include
     a Sphinx directive to displays the function definition in a nice way.
@@ -30,7 +33,7 @@ def _document(f):
     """
     # :class:`pydoc._PlainTextDoc` removes styling. This styling will display
     # erroneously in Sphinx.
-    parts = pydoc._PlainTextDoc().document(f).split("\n")
+    parts = pydoc._PlainTextDoc().document(f).rstrip().split("\n")
 
     # Separate out the function definition and the lines corresponding to the body.
     title = parts[0]
@@ -44,8 +47,12 @@ def _document(f):
     # case, display the function definition in a nice way.
     if "sphinx" in sys.modules:
         title = ".. py:function:: " + title + "\n   :noindex:"
+    else:
+        title = "<separator>\n\n" + title
+    title += "\n"  # Add a newline to separate the title from the body.
 
-    return "\n".join([title] + body)
+    # Ensure that there are no trailing newlines. This can happen if the body is empty.
+    return "\n".join([title] + body).rstrip()
 
 
 class Resolver:
@@ -84,7 +91,9 @@ class Resolver:
         for d in docs:
             if d not in unique_docs:
                 unique_docs.append(d)
-        return "\n".join(unique_docs)
+        # The unique documentations have no trailing newlines, so separate them with
+        # a newline.
+        return "\n\n".join(unique_docs)
 
     def register(self, signature):
         """Register a new signature.

@@ -1,11 +1,12 @@
 import abc
+import textwrap
 import typing
 
 import pytest
 
 from plum import Dispatcher
 from plum.function import Function, _change_function_name, _convert, _owner_transfer
-from plum.resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
+from plum.resolver import AmbiguousLookupError, NotFoundLookupError
 from plum.signature import Signature
 
 
@@ -118,35 +119,98 @@ def test_owner_transfer(owner_transfer):
     assert Function(f, owner="A").owner is C
 
 
+def test_functionmeta():
+    assert Function.__doc__ == Function._class_doc
+
+
 def test_doc(monkeypatch):
-    # Test empty documentation.
-    assert Function(lambda: None).__doc__ is None
-
-    # Test the self-exclusion mechanism.
     def f(x: int):
-        """Doc"""
+        """
+        Process an int.
+        """
 
-    f = Function(f).dispatch(f)
-    assert f.__doc__ == "Doc"
+    def f2(x: float):
+        """Process a float.
 
-    @f.dispatch
-    def f(x: float):
+        Args:
+            x (float): Argument.
+        """
+
+    # Test the following:
+    #   (1) the self-exclusion mechanism,
+    #   (2) single-line original docstring,
+    #   (3) the trimming of whitespace of the original docstring, and
+    #   (4) the replacement of `<separator>` by lines of the right length.
+    g = Function(f).dispatch(f)
+    assert g.__doc__ == "Process an int."
+    g.dispatch(f2)
+    expected_doc = """
+    Process an int.
+
+    ------------------------
+
+    f(x: float)
+
+    Process a float.
+
+    Args:
+        x (float): Argument.
+    """
+    assert g.__doc__ == textwrap.dedent(expected_doc).strip()
+
+    def f(x: int):
+        """
+        Process an int.
+
+        Args:
+            x (int): A very long argument.
+        """
+
+    # Test multi-line original docstring.
+    g = Function(f).dispatch(f)
+    expected_doc = """
+    Process an int.
+
+    Args:
+        x (int): A very long argument.
+    """
+    assert g.__doc__ == textwrap.dedent(expected_doc).strip()
+    g.dispatch(f2)
+    expected_doc = """
+    Process an int.
+
+    Args:
+        x (int): A very long argument.
+
+    ----------------------------------
+
+    f(x: float)
+
+    Process a float.
+
+    Args:
+        x (float): Argument.
+    """
+    assert g.__doc__ == textwrap.dedent(expected_doc).strip()
+
+    def f(x: int):
         pass
 
-    assert "further implementations" in f.__doc__
+    # Test empty original docstring.
+    g = Function(f).dispatch(f)
+    assert g.__doc__ is None
+    g.dispatch(f2)
+    expected_doc = """
+    ------------------------
 
-    # Let the resolver return something simple to make testing easier.
-    monkeypatch.setattr(Resolver, "doc", lambda _, exclude: "more docs")
+    f(x: float)
 
-    def f(x: int):
-        """Doc"""
+    Process a float.
 
-    f = Function(f).dispatch(f)
-    assert f.__doc__ == (
-        "Doc\n\n"
-        "This function has further implementations documented below.\n\n"
-        "more docs"
-    )
+    Args:
+        x (float): Argument.
+    """
+    assert g.__doc__ == textwrap.dedent(expected_doc).strip()
 
 
 def test_methods():

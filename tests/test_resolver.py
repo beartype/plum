@@ -1,9 +1,11 @@
+import sys
+import textwrap
 import typing
 
 import pytest
 
 import plum.resolver
-from plum.resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
+from plum.resolver import AmbiguousLookupError, NotFoundLookupError, Resolver, _document
 from plum.signature import Signature
 
 
@@ -11,6 +13,69 @@ def test_initialisation():
     r = Resolver()
     # Without any registered signatures, the resolver should be faithful.
     assert r.is_faithful
+
+
+def test_document_nosphinx():
+    """Test the following:
+    (1) remove trailing newlines,
+    (2) appropriately remove trailing newlines,
+    (3) appropriately remove indentation, ignoring the first line,
+    (4) separate the title from the body.
+    """
+
+    def f(x):
+        """Title.
+
+        Hello.
+
+        Args:
+            x (object): Input.
+
+        """
+
+    expected_doc = """
+    <separator>
+
+    f(x)
+
+    Title.
+
+    Hello.
+
+    Args:
+        x (object): Input.
+    """
+    assert _document(f) == textwrap.dedent(expected_doc).strip()
+
+
+def test_document_sphinx(monkeypatch):
+    """Like :func:`test_document_nosphinx`, but when :mod:`sphinx`
+    is imported."""
+    # Fake import :mod:`sphinx`.
+    monkeypatch.setitem(sys.modules, "sphinx", None)
+
+    def f(x):
+        """Title.
+
+        Hello.
+
+        Args:
+            x (object): Input.
+
+        """
+
+    expected_doc = """
+    .. py:function:: f(x)
+       :noindex:
+
+    Title.
+
+    Hello.
+
+    Args:
+        x (object): Input.
+    """
+    assert _document(f) == textwrap.dedent(expected_doc).strip()
 
 
 def test_doc(monkeypatch):
@@ -34,7 +99,7 @@ def test_doc(monkeypatch):
         _MockSignature("second"),
         _MockSignature("third"),
     ]
-    assert r.doc() == "first\nsecond\nthird"
+    assert r.doc() == "first\n\nsecond\n\nthird"
 
     # Test that duplicates are excluded.
     r.signatures = [
@@ -43,10 +108,10 @@ def test_doc(monkeypatch):
         _MockSignature("second"),
         _MockSignature("third"),
     ]
-    assert r.doc() == "first\nsecond\nthird"
+    assert r.doc() == "first\n\nsecond\n\nthird"
 
     # Test that the explicit exclusion mechanism also works.
-    assert r.doc(exclude=r.signatures[3].implementation) == "first\nsecond"
+    assert r.doc(exclude=r.signatures[3].implementation) == "first\n\nsecond"
 
 
 def test_register():
