@@ -18,12 +18,12 @@
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../../_static/styles/theme.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
-<link href="../../_static/styles/bootstrap.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
-<link href="../../_static/styles/pydata-sphinx-theme.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
+  <link href="../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
 
   
-  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
   <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
@@ -37,8 +37,8 @@
     <link rel="stylesheet" type="text/css" href="../../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=12da95d707ffb74b382d" />
-<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=12da95d707ffb74b382d" />
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
@@ -321,6 +321,7 @@ document.write(`
                   
   <h1>Source code for plum.resolver</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">pydoc</span>
+<span class="kn">import</span> <span class="nn">sys</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;AmbiguousLookupError&quot;</span><span class="p">,</span> <span class="s2">&quot;NotFoundLookupError&quot;</span><span class="p">]</span>
 
@@ -331,6 +332,49 @@ document.write(`
 
 <div class="viewcode-block" id="NotFoundLookupError"><a class="viewcode-back" href="../../api.html#plum.resolver.NotFoundLookupError">[docs]</a><span class="k">class</span> <span class="nc">NotFoundLookupError</span><span class="p">(</span><span class="ne">LookupError</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A signature cannot be resolved because no applicable method can be found.&quot;&quot;&quot;</span></div>
+
+
+<span class="k">def</span> <span class="nf">_document</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate documentation for a function `f`.</span>
+
+<span class="sd">    The generated documentation contains both the function definition and the</span>
+<span class="sd">    docstring. The docstring is on the same level of indentation of the function</span>
+<span class="sd">    definition. There will be no trailing newlines.</span>
+
+<span class="sd">    If the package :mod:`sphinx` is not imported, then the function definition will</span>
+<span class="sd">    be preceded by the string `&lt;separator&gt;`.</span>
+
+<span class="sd">    If the package :mod:`sphinx` is imported, then the function definition will include</span>
+<span class="sd">    a Sphinx directive to displays the function definition in a nice way.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        f (function): Function.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        str: Documentation for `f`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># :class:`pydoc._PlainTextDoc` removes styling. This styling will display</span>
+    <span class="c1"># erroneously in Sphinx.</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="n">pydoc</span><span class="o">.</span><span class="n">_PlainTextDoc</span><span class="p">()</span><span class="o">.</span><span class="n">document</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Separate out the function definition and the lines corresponding to the body.</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">body</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+    <span class="c1"># Remove indentation from every line of the body. This indentation defaults to</span>
+    <span class="c1"># four spaces.</span>
+    <span class="n">body</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="p">[</span><span class="mi">4</span><span class="p">:]</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">body</span><span class="p">]</span>
+
+    <span class="c1"># If `sphinx` is imported, assume that we&#39;re building the documentation. In that</span>
+    <span class="c1"># case, display the function definition in a nice way.</span>
+    <span class="k">if</span> <span class="s2">&quot;sphinx&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="s2">&quot;.. py:function:: &quot;</span> <span class="o">+</span> <span class="n">title</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">   :noindex:&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="s2">&quot;&lt;separator&gt;</span><span class="se">\n\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">title</span>
+    <span class="n">title</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>  <span class="c1"># Add a newline to separate the title from the body.</span>
+
+    <span class="c1"># Ensure that there are no trailing newlines. This can happen if the body is empty.</span>
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">title</span><span class="p">]</span> <span class="o">+</span> <span class="n">body</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span>
 
 
 <span class="k">class</span> <span class="nc">Resolver</span><span class="p">:</span>
@@ -358,7 +402,7 @@ document.write(`
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Generate all docstrings, possibly excluding `exclude`.</span>
         <span class="n">docs</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">pydoc</span><span class="o">.</span><span class="n">TextDoc</span><span class="p">()</span><span class="o">.</span><span class="n">document</span><span class="p">(</span><span class="n">sig</span><span class="o">.</span><span class="n">implementation</span><span class="p">)</span>
+            <span class="n">_document</span><span class="p">(</span><span class="n">sig</span><span class="o">.</span><span class="n">implementation</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">sig</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">signatures</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">exclude</span> <span class="ow">and</span> <span class="n">sig</span><span class="o">.</span><span class="n">implementation</span> <span class="o">==</span> <span class="n">exclude</span><span class="p">)</span>
         <span class="p">]</span>
@@ -369,7 +413,9 @@ document.write(`
         <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">docs</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">d</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">unique_docs</span><span class="p">:</span>
                 <span class="n">unique_docs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
-        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">unique_docs</span><span class="p">)</span>
+        <span class="c1"># The unique documentations have no trailing newlines, so separate them with</span>
+        <span class="c1"># a newline.</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">unique_docs</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signature</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Register a new signature.</span>
@@ -467,9 +513,15 @@ document.write(`
               
               
                 <footer class="bd-footer-article">
-                  <!-- Previous / next buttons -->
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
 <div class="prev-next-area">
+</div></div>
+  
 </div>
+
                 </footer>
               
             </div>
@@ -479,7 +531,7 @@ document.write(`
             
           </div>
           <footer class="bd-footer-content">
-            <div class="bd-footer-content__inner">
+            
 <div class="bd-footer-content__inner container">
   
   <div class="footer-item">
@@ -509,7 +561,7 @@ By Wessel Bruinsma, Filippo Vicentini, and Ruan Comelli
     
   </div>
   
-</div></div>
+</div>
           </footer>
         
 
@@ -518,8 +570,8 @@ By Wessel Bruinsma, Filippo Vicentini, and Ruan Comelli
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="../../_static/scripts/bootstrap.js?digest=12da95d707ffb74b382d"></script>
-<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=12da95d707ffb74b382d"></script>
+  <script src="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
 
   <footer class="bd-footer">
   </footer>
