@@ -50,13 +50,17 @@ Help on Function in module __main__:
 f(x: numbers.Number, y: numbers.Number)
     Multiply two numbers.
 
-    This function has further implementations documented below.
+    ---------------------
 
     f(x: float, y: float)
-        Multiply two floats.
+
+    Multiply two floats.
+
+    ---------------------
 
     f(x: int, y: int)
-        Multiply two ints.
+
+    Multiply two ints.
 ```
 
 ## Extend a Function From Another Package
