@@ -117,7 +117,21 @@ class Function(metaclass=_FunctionMeta):
 
         Upon instantiation, this property is available through `obj.__doc__`.
         """
-        self._resolve_pending_registrations()
+        try:
+            self._resolve_pending_registrations()
+        except NameError:
+            # When `staticmethod` is combined with
+            # `from __future__ import annotations`, in Python 3.10 and higher
+            # `staticmethod` will attempt to inherit `__doc__` (see
+            # https://docs.python.org/3/library/functions.html#staticmethod). Since
+            # we are still in class construction, forward references are not yet
+            # defined, so attempting to resolve all pending methods might fail with a
+            # `NameError`. This is fine, because later calling `__doc__` on the
+            # `staticmethod` will again call this `__doc__`, at which point all methods
+            # will resolve properly. For now, we just ignore the error and undo the
+            # partially completed :meth:`Function._resolve_pending_registrations` by
+            # clearing the cache.
+            self.clear_cache(reregister=False)
 
         # Derive the basis of the docstring from `self._f`, removing any indentation.
         doc = self._doc.strip()
