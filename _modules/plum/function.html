@@ -439,7 +439,21 @@ document.write(`
 
 <span class="sd">        Upon instantiation, this property is available through `obj.__doc__`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_pending_registrations</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_pending_registrations</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>
+            <span class="c1"># When `staticmethod` is combined with</span>
+            <span class="c1"># `from __future__ import annotations`, in Python 3.10 and higher</span>
+            <span class="c1"># `staticmethod` will attempt to inherit `__doc__` (see</span>
+            <span class="c1"># https://docs.python.org/3/library/functions.html#staticmethod). Since</span>
+            <span class="c1"># we are still in class construction, forward references are not yet</span>
+            <span class="c1"># defined, so attempting to resolve all pending methods might fail with a</span>
+            <span class="c1"># `NameError`. This is fine, because later calling `__doc__` on the</span>
+            <span class="c1"># `staticmethod` will again call this `__doc__`, at which point all methods</span>
+            <span class="c1"># will resolve properly. For now, we just ignore the error and undo the</span>
+            <span class="c1"># partially completed :meth:`Function._resolve_pending_registrations` by</span>
+            <span class="c1"># clearing the cache.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">clear_cache</span><span class="p">(</span><span class="n">reregister</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
         <span class="c1"># Derive the basis of the docstring from `self._f`, removing any indentation.</span>
         <span class="n">doc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_doc</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
