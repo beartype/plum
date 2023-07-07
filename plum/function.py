@@ -400,8 +400,8 @@ class Function(metaclass=_FunctionMeta):
         Returns:
             function: Method.
         """
-        # Need this before cache
-        if len(self._pending) > 0:
+        # Do this before attempting to cache. See above.
+        if self._pending:
             self._resolve_pending_registrations()
 
         # Attempt to use the cache based on the types.
