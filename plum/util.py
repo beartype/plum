@@ -1,7 +1,7 @@
 import abc
 import sys
 import typing
-
+from typing import Callable
 __all__ = [
     "get_args",
     "get_origin",
@@ -171,7 +171,7 @@ def wrap_lambda(f):
     return lambda x: f(x)
 
 
-def is_in_class(f):
+def is_in_class(f: Callable) -> bool:
     """Check if a function is part of a class.
 
     Args:
@@ -189,7 +189,7 @@ def _split_parts(f):
     return qualified_name.split(".")
 
 
-def get_class(f):
+def get_class(f: Callable) -> str:
     """Assuming that `f` is part of a class, get the fully qualified name of the
     class.
 
@@ -203,7 +203,7 @@ def get_class(f):
     return ".".join(parts[:-1])
 
 
-def get_context(f):
+def get_context(f) -> str:
     """Get the fully qualified name of the context for `f`.
 
     If `f` is part of a class, then the context corresponds to the scope of the class.

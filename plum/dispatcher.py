@@ -1,3 +1,5 @@
+from typing import Optional, Callable
+
 from .function import Function
 from .signature import Signature
 from .util import get_class, is_in_class
@@ -15,10 +17,10 @@ class Dispatcher:
     """
 
     def __init__(self):
-        self.functions = {}
-        self.classes = {}
+        self.functions: dict[str, Function] = {}
+        self.classes: dict[str, dict[str, Function]] = {}
 
-    def __call__(self, method=None, precedence=0):
+    def __call__(self, method: Optional[Callable] = None, precedence: int = 0):
         """Decorator to register for a particular signature.
 
         Args:
@@ -67,7 +69,7 @@ class Dispatcher:
         definition does not implement any methods."""
         return self._get_function(method)
 
-    def _get_function(self, method):
+    def _get_function(self, method: Callable) -> Function:
         # If a class is the owner, use a namespace specific for that class. Otherwise,
         # use the global namespace.
         if is_in_class(method):
@@ -86,7 +88,7 @@ class Dispatcher:
 
         return namespace[name]
 
-    def _add_method(self, method, *signatures, precedence):
+    def _add_method(self, method: Callable, *signatures: Optional[Signature], precedence: Optional[int]):
         f = self._get_function(method)
         for signature in signatures:
             f.register(method, signature, precedence)

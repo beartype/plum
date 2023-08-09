@@ -1,6 +1,8 @@
 import pydoc
 import sys
+from typing import Callable, Union
 
+from plum import signature
 __all__ = ["AmbiguousLookupError", "NotFoundLookupError"]
 
 
@@ -12,7 +14,7 @@ class NotFoundLookupError(LookupError):
     """A signature cannot be resolved because no applicable method can be found."""
 
 
-def _document(f):
+def _document(f: Callable) -> str:
     """Generate documentation for a function `f`.
 
     The generated documentation contains both the function definition and the
@@ -64,8 +66,8 @@ class Resolver:
     """
 
     def __init__(self):
-        self.signatures = []
-        self.is_faithful = True
+        self.signatures: list[signature.Signature] = []
+        self.is_faithful: bool = True
 
     def doc(self, exclude=None):
         """Concatenate the docstrings of all methods of this function. Remove duplicate
@@ -95,7 +97,7 @@ class Resolver:
         # a newline.
         return "\n\n".join(unique_docs)
 
-    def register(self, signature):
+    def register(self, signature: signature.Signature):
         """Register a new signature.
 
         Args:
@@ -115,10 +117,10 @@ class Resolver:
         # Use a double negation for slightly better performance.
         self.is_faithful = not any(not s.is_faithful for s in self.signatures)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.signatures)
 
-    def resolve(self, target):
+    def resolve(self, target: Union[tuple[object, ...], signature.Signature]) -> signature.Signature:
         """Find the most specific signature that satisfies a target.
 
         Args:

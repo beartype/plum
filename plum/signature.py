@@ -1,6 +1,7 @@
 import inspect
 import operator
 import typing
+from typing import Callable, Optional
 
 from beartype.door import TypeHint
 from beartype.peps import resolve_pep563
@@ -39,13 +40,13 @@ class Signature(Comparable):
 
     def __init__(
         self,
-        *types,
+        *types: type,
         varargs=_default_varargs,
-        return_type=_default_return_type,
-        precedence=_default_precedence,
-        implementation=None,
+        return_type: type = _default_return_type,
+        precedence: int = _default_precedence,
+        implementation: Optional[Callable] = None,
     ):
-        self.types = types
+        self.types: tuple[type] = types
         self.varargs = varargs
         self.return_type = return_type
         self.precedence = precedence
@@ -56,7 +57,7 @@ class Signature(Comparable):
         self.is_faithful = types_are_faithful and varargs_are_faithful
 
     @property
-    def has_varargs(self):
+    def has_varargs(self) -> bool:
         return self.varargs is not Missing
 
     def __copy__(self):
@@ -68,7 +69,7 @@ class Signature(Comparable):
             implementation=self.implementation,
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         parts = []
         if self.types:
             parts.append(", ".join(map(repr_short, self.types)))
@@ -85,7 +86,7 @@ class Signature(Comparable):
     def __hash__(self):
         return multihash(Signature, *self.types, self.varargs)
 
-    def expand_varargs(self, n):
+    def expand_varargs(self, n: int) -> tuple[type]:
         """Expand variable arguments.
 
         Args:
@@ -100,7 +101,7 @@ class Signature(Comparable):
         else:
             return self.types
 
-    def __le__(self, other):
+    def __le__(self, other) -> bool:
         # If this signature has variable arguments, but the other does not, then this
         # signature cannot be possibly smaller.
         if self.has_varargs and not other.has_varargs:
@@ -132,7 +133,7 @@ class Signature(Comparable):
             [TypeHint(x) <= TypeHint(y) for x, y in zip(self_types, other_types)]
         )
 
-    def match(self, values):
+    def match(self, values) -> bool:
         """Check whether values match the signature.
 
         Args:
@@ -153,7 +154,7 @@ class Signature(Comparable):
             return all(_is_bearable(v, t) for v, t in zip(values, types))
 
 
-def _inspect_signature(f):
+def _inspect_signature(f) -> inspect.Signature:
     """Wrapper of :func:`inspect.signature` which adds support for certain non-function
     objects.
 
@@ -170,7 +171,7 @@ def _inspect_signature(f):
     return inspect.signature(f)
 
 
-def extract_signature(f, precedence=0):
+def extract_signature(f: Callable, precedence: int = 0) -> Signature:
     """Extract the signature from a function.
 
     Args:
@@ -239,7 +240,7 @@ def extract_signature(f, precedence=0):
     return signature
 
 
-def append_default_args(signature, f):
+def append_default_args(signature:Signature, f: Callable) -> list[Signature]:
     """Returns a list of signatures of function `f`, where those signatures are derived
     from the input arguments of `f` by treating every non-keyword-only argument with a
     default value as a keyword-only argument turn by turn.
