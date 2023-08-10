@@ -159,7 +159,7 @@ class Comparable(metaclass=abc.ABCMeta):
         return self < other or self == other or self > other
 
 
-def wrap_lambda(f):
+def wrap_lambda(f: Callable) -> Callable:
     """Wrap a callable in a lambda function.
 
     Args:
@@ -184,7 +184,7 @@ def is_in_class(f: Callable) -> bool:
     return len(parts) >= 2 and parts[-2] != "<locals>"
 
 
-def _split_parts(f):
+def _split_parts(f: Callable) -> str:
     qualified_name = f.__module__ + "." + f.__qualname__
     return qualified_name.split(".")
 
