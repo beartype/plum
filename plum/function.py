@@ -372,6 +372,11 @@ class Function(metaclass=_FunctionMeta):
                     # the original exception.
                     raise e
 
+        # If the resolver is faithful, then we can perform caching using the types of
+        # the arguments. If the resolver is not faithful, then we cannot.
+        if self._resolver.is_faithful:
+            self._cache[types] = method, return_type
+        
         return method, return_type
 
     def __call__(self, *args, **kw_args):
