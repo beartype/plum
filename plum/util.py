@@ -2,6 +2,7 @@ import abc
 import sys
 import typing
 from typing import Callable
+
 __all__ = [
     "get_args",
     "get_origin",

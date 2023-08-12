@@ -2,7 +2,8 @@ import pydoc
 import sys
 from typing import Callable, Union
 
-from plum import signature
+from plum.signature import Signature
+
 __all__ = ["AmbiguousLookupError", "NotFoundLookupError"]
 
 
@@ -66,7 +67,7 @@ class Resolver:
     """
 
     def __init__(self):
-        self.signatures: list[signature.Signature] = []
+        self.signatures: list[Signature] = []
         self.is_faithful: bool = True
 
     def doc(self, exclude=None):
@@ -97,7 +98,7 @@ class Resolver:
         # a newline.
         return "\n\n".join(unique_docs)
 
-    def register(self, signature: signature.Signature):
+    def register(self, signature: Signature):
         """Register a new signature.
 
         Args:
@@ -120,7 +121,7 @@ class Resolver:
     def __len__(self) -> int:
         return len(self.signatures)
 
-    def resolve(self, target: Union[tuple[object, ...], signature.Signature]) -> signature.Signature:
+    def resolve(self, target: Union[tuple[object, ...], Signature]) -> Signature:
         """Find the most specific signature that satisfies a target.
 
         Args:

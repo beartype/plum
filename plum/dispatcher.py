@@ -1,4 +1,4 @@
-from typing import Optional, Callable, Union
+from typing import Callable, Optional, Union
 
 from .function import Function
 from .signature import Signature
@@ -88,7 +88,12 @@ class Dispatcher:
 
         return namespace[name]
 
-    def _add_method(self, method: Callable, *signatures: Optional[Signature], precedence: Optional[int]) -> Function:
+    def _add_method(
+        self,
+        method: Callable,
+        *signatures: Optional[Signature],
+        precedence: Optional[int],
+    ) -> Function:
         f = self._get_function(method)
         for signature in signatures:
             f.register(method, signature, precedence)

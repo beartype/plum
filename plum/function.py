@@ -1,7 +1,7 @@
 import textwrap
 from functools import wraps
 from types import MethodType
-from typing import Any, Callable, Optional, Union, TypeVar
+from typing import Any, Callable, Optional, TypeVar, Union
 
 from .resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
 from .signature import Signature, append_default_args, extract_signature
@@ -18,6 +18,7 @@ _promised_convert = None
 Self = TypeVar("Self")
 
 SomeExceptionType = TypeVar("SomeExceptionType", bound=Exception)
+
 
 def _convert(obj: Any, target_type: type):
     """Convert an object to a particular type. Only converts if `target_type` is set.
@@ -174,7 +175,9 @@ class Function(metaclass=_FunctionMeta):
         self._resolve_pending_registrations()
         return self._resolver.signatures
 
-    def dispatch(self: Self, method: Optional[Callable] = None, precedence=0) -> Union[Self, Callable[[Callable], Self]]:
+    def dispatch(
+        self: Self, method: Optional[Callable] = None, precedence=0
+    ) -> Union[Self, Callable[[Callable], Self]]:
         """Decorator to extend the function with another signature.
 
         Args:
@@ -189,7 +192,9 @@ class Function(metaclass=_FunctionMeta):
         self.register(method, precedence=precedence)
         return self
 
-    def dispatch_multi(self: Self, *signatures: Union[Signature, tuple[type, ...]]) -> Callable[[Callable], Self]:
+    def dispatch_multi(
+        self: Self, *signatures: Union[Signature, tuple[type, ...]]
+    ) -> Callable[[Callable], Self]:
         """Decorator to extend the function with multiple signatures at once.
 
         Args:
@@ -236,7 +241,9 @@ class Function(metaclass=_FunctionMeta):
             self._resolved = []
             self._resolver = Resolver()
 
-    def register(self, f: Callable, signature: Optional[Signature] = None, precedence=0) -> None:
+    def register(
+        self, f: Callable, signature: Optional[Signature] = None, precedence=0
+    ) -> None:
         """Register a method.
 
         Either `signature` or `precedence` must be given.
@@ -306,7 +313,9 @@ class Function(metaclass=_FunctionMeta):
         message = str(e)
         return type(e)(prefix + message[0].lower() + message[1:])
 
-    def resolve_method(self, target: Union[tuple[object, ...], Signature], types: tuple[type]) -> tuple[Callable, type]:
+    def resolve_method(
+        self, target: Union[tuple[object, ...], Signature], types: tuple[type]
+    ) -> tuple[Callable, type]:
         """Find the method and return type for arguments.
 
         Args:
