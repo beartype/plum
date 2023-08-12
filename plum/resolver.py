@@ -1,6 +1,6 @@
 import pydoc
 import sys
-from typing import Callable, Union
+from typing import Callable, List, Tuple, Union
 
 from plum.signature import Signature
 
@@ -67,7 +67,7 @@ class Resolver:
     """
 
     def __init__(self):
-        self.signatures: list[Signature] = []
+        self.signatures: List[Signature] = []
         self.is_faithful: bool = True
 
     def doc(self, exclude=None):
@@ -121,7 +121,7 @@ class Resolver:
     def __len__(self) -> int:
         return len(self.signatures)
 
-    def resolve(self, target: Union[tuple[object, ...], Signature]) -> Signature:
+    def resolve(self, target: Union[Tuple[object, ...], Signature]) -> Signature:
         """Find the most specific signature that satisfies a target.
 
         Args:

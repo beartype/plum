@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Union
+from typing import Callable, Dict, Optional, Tuple, Union
 
 from .function import Function
 from .signature import Signature
@@ -17,8 +17,8 @@ class Dispatcher:
     """
 
     def __init__(self):
-        self.functions: dict[str, Function] = {}
-        self.classes: dict[str, dict[str, Function]] = {}
+        self.functions: Dict[str, Function] = {}
+        self.classes: Dict[str, Dict[str, Function]] = {}
 
     def __call__(self, method: Optional[Callable] = None, precedence: int = 0):
         """Decorator to register for a particular signature.
@@ -36,7 +36,7 @@ class Dispatcher:
         # set the signature argument to `None`.
         return self._add_method(method, None, precedence=precedence)
 
-    def multi(self, *signatures: Union[Signature, tuple[type, ...]]) -> Callable:
+    def multi(self, *signatures: Union[Signature, Tuple[type, ...]]) -> Callable:
         """Decorator to register multiple signatures at once.
 
         Args:

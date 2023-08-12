@@ -1,7 +1,7 @@
 import inspect
 import operator
 import typing
-from typing import Callable, Optional
+from typing import Callable, List, Optional, Tuple
 
 from beartype.door import TypeHint
 from beartype.peps import resolve_pep563
@@ -46,7 +46,7 @@ class Signature(Comparable):
         precedence: int = _default_precedence,
         implementation: Optional[Callable] = None,
     ):
-        self.types: tuple[type] = types
+        self.types: Tuple[type] = types
         self.varargs = varargs
         self.return_type = return_type
         self.precedence = precedence
@@ -86,7 +86,7 @@ class Signature(Comparable):
     def __hash__(self):
         return multihash(Signature, *self.types, self.varargs)
 
-    def expand_varargs(self, n: int) -> tuple[type]:
+    def expand_varargs(self, n: int) -> Tuple[type]:
         """Expand variable arguments.
 
         Args:
@@ -240,7 +240,7 @@ def extract_signature(f: Callable, precedence: int = 0) -> Signature:
     return signature
 
 
-def append_default_args(signature: Signature, f: Callable) -> list[Signature]:
+def append_default_args(signature: Signature, f: Callable) -> List[Signature]:
     """Returns a list of signatures of function `f`, where those signatures are derived
     from the input arguments of `f` by treating every non-keyword-only argument with a
     default value as a keyword-only argument turn by turn.

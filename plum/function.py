@@ -1,7 +1,7 @@
 import textwrap
 from functools import wraps
 from types import MethodType
-from typing import Any, Callable, Optional, TypeVar, Union
+from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union
 
 from .resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
 from .signature import Signature, append_default_args, extract_signature
@@ -98,9 +98,9 @@ class Function(metaclass=_FunctionMeta):
         self._owner: Optional[type] = None
 
         # Initialise pending and resolved methods.
-        self._pending: list[tuple[Callable, Optional[Signature], int]] = []
+        self._pending: List[Tuple[Callable, Optional[Signature], int]] = []
         self._resolver = Resolver()
-        self._resolved: list[tuple[Callable, Signature, int]] = []
+        self._resolved: List[Tuple[Callable, Signature, int]] = []
 
     @property
     def owner(self):
@@ -170,7 +170,7 @@ class Function(metaclass=_FunctionMeta):
         self._doc = value if value else ""
 
     @property
-    def methods(self) -> list[Signature]:
+    def methods(self) -> List[Signature]:
         """list[:class:`.signature.Signature`]: All available methods."""
         self._resolve_pending_registrations()
         return self._resolver.signatures
@@ -193,7 +193,7 @@ class Function(metaclass=_FunctionMeta):
         return self
 
     def dispatch_multi(
-        self: Self, *signatures: Union[Signature, tuple[type, ...]]
+        self: Self, *signatures: Union[Signature, Tuple[type, ...]]
     ) -> Callable[[Callable], Self]:
         """Decorator to extend the function with multiple signatures at once.
 
@@ -314,8 +314,8 @@ class Function(metaclass=_FunctionMeta):
         return type(e)(prefix + message[0].lower() + message[1:])
 
     def resolve_method(
-        self, target: Union[tuple[object, ...], Signature], types: tuple[type]
-    ) -> tuple[Callable, type]:
+        self, target: Union[Tuple[object, ...], Signature], types: Tuple[type]
+    ) -> Tuple[Callable, type]:
         """Find the method and return type for arguments.
 
         Args:
