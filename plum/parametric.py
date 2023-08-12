@@ -1,3 +1,5 @@
+from typing import Union
+
 from beartype.door import TypeHint
 from beartype.roar import BeartypeDoorNonpepException
 
@@ -114,7 +116,7 @@ class ParametricTypeMeta(type):
             )
 
 
-def _default_le_type_par(p_left, p_right):
+def _default_le_type_par(p_left: Union[type, object], p_right: Union[type, object]):
     if is_type(p_left) and is_type(p_right):
         p_left = TypeHint(resolve_type_hint(p_left))
         p_right = TypeHint(resolve_type_hint(p_right))

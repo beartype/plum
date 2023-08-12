@@ -1,4 +1,4 @@
-from typing import Optional, Callable
+from typing import Optional, Callable, Union
 
 from .function import Function
 from .signature import Signature
@@ -36,7 +36,7 @@ class Dispatcher:
         # set the signature argument to `None`.
         return self._add_method(method, None, precedence=precedence)
 
-    def multi(self, *signatures):
+    def multi(self, *signatures: Union[Signature, tuple[type, ...]]) -> Callable:
         """Decorator to register multiple signatures at once.
 
         Args:
@@ -64,7 +64,7 @@ class Dispatcher:
 
         return decorator
 
-    def abstract(self, method):
+    def abstract(self, method: Callable) -> Function:
         """Decorator for an abstract function definition. The abstract function
         definition does not implement any methods."""
         return self._get_function(method)
@@ -88,7 +88,7 @@ class Dispatcher:
 
         return namespace[name]
 
-    def _add_method(self, method: Callable, *signatures: Optional[Signature], precedence: Optional[int]):
+    def _add_method(self, method: Callable, *signatures: Optional[Signature], precedence: Optional[int]) -> Function:
         f = self._get_function(method)
         for signature in signatures:
             f.register(method, signature, precedence)

@@ -35,7 +35,7 @@ def _convert(obj: Any, target_type: type):
         return _promised_convert(obj, target_type)
 
 
-def _change_function_name(f, name):
+def _change_function_name(f: Callable, name: str) -> Callable:
     """It is not always the case that `f.__name__` is writable. To solve this, first
     create a temporary function that wraps `f` and then change the name.
 
