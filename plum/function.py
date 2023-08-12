@@ -1,7 +1,7 @@
 import textwrap
 from functools import wraps
 from types import MethodType
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Optional, Union, TypeVar
 
 from .resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
 from .signature import Signature, append_default_args, extract_signature
@@ -14,6 +14,10 @@ __all__ = ["Function"]
 _promised_convert = None
 """function or None: This will be set to :func:`.parametric.convert`."""
 
+# replace this by from typing import Self in python 3.11
+Self = TypeVar("Self")
+
+SomeExceptionType = TypeVar("SomeExceptionType", bound=Exception)
 
 def _convert(obj: Any, target_type: type):
     """Convert an object to a particular type. Only converts if `target_type` is set.
@@ -31,7 +35,7 @@ def _convert(obj: Any, target_type: type):
         return _promised_convert(obj, target_type)
 
 
-def _change_function_name(f, name):
+def _change_function_name(f: Callable, name: str) -> Callable:
     """It is not always the case that `f.__name__` is writable. To solve this, first
     create a temporary function that wraps `f` and then change the name.
 
@@ -160,17 +164,17 @@ class Function(metaclass=_FunctionMeta):
         return doc if doc else None
 
     @__doc__.setter
-    def __doc__(self, value):
+    def __doc__(self, value: str):
         # Ensure that `self._doc` remains a string.
         self._doc = value if value else ""
 
     @property
-    def methods(self):
+    def methods(self) -> list[Signature]:
         """list[:class:`.signature.Signature`]: All available methods."""
         self._resolve_pending_registrations()
         return self._resolver.signatures
 
-    def dispatch(self, method: Optional[Callable] = None, precedence=0):
+    def dispatch(self: Self, method: Optional[Callable] = None, precedence=0) -> Union[Self, Callable[[Callable], Self]]:
         """Decorator to extend the function with another signature.
 
         Args:
@@ -185,7 +189,7 @@ class Function(metaclass=_FunctionMeta):
         self.register(method, precedence=precedence)
         return self
 
-    def dispatch_multi(self, *signatures):
+    def dispatch_multi(self: Self, *signatures: Union[Signature, tuple[type, ...]]) -> Callable[[Callable], Self]:
         """Decorator to extend the function with multiple signatures at once.
 
         Args:
@@ -215,7 +219,7 @@ class Function(metaclass=_FunctionMeta):
 
         return decorator
 
-    def clear_cache(self, reregister: bool = True):
+    def clear_cache(self, reregister: bool = True) -> None:
         """Clear cache.
 
         Args:
@@ -232,7 +236,7 @@ class Function(metaclass=_FunctionMeta):
             self._resolved = []
             self._resolver = Resolver()
 
-    def register(self, f: Callable, signature: Optional[Signature] = None, precedence=0):
+    def register(self, f: Callable, signature: Optional[Signature] = None, precedence=0) -> None:
         """Register a method.
 
         Either `signature` or `precedence` must be given.
@@ -246,7 +250,7 @@ class Function(metaclass=_FunctionMeta):
         """
         self._pending.append((f, signature, precedence))
 
-    def _resolve_pending_registrations(self):
+    def _resolve_pending_registrations(self) -> None:
         # Keep track of whether anything registered.
         registered = False
 
@@ -283,7 +287,7 @@ class Function(metaclass=_FunctionMeta):
             # Clear cache.
             self.clear_cache(reregister=False)
 
-    def _enhance_exception(self, e):
+    def _enhance_exception(self, e: SomeExceptionType) -> SomeExceptionType:
         """Enchance an exception by prepending a prefix to the message of the exception
         which specifies that the message is for this function.
 

@@ -240,7 +240,7 @@ def extract_signature(f: Callable, precedence: int = 0) -> Signature:
     return signature
 
 
-def append_default_args(signature:Signature, f: Callable) -> list[Signature]:
+def append_default_args(signature: Signature, f: Callable) -> list[Signature]:
     """Returns a list of signatures of function `f`, where those signatures are derived
     from the input arguments of `f` by treating every non-keyword-only argument with a
     default value as a keyword-only argument turn by turn.
