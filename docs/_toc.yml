@@ -12,6 +12,7 @@ chapters:
   - file: classes
   - file: keyword_arguments
   - file: comparison
+  - file: integration
 - file: advanced_usage
   sections:
   - file: conversion_promotion
