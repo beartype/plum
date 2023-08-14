@@ -7,8 +7,6 @@ In this section, we collect various patterns in which Plum plays nicely with typ
 ## Overload Support
 
 At the moment, the only know pattern in which Plum produces `mypy`-compliant code uses `typing.overload`.
-This pattern requires `typing-extensions` to be installed.
-`typing-extensions` is not part of Plum's dependencies.
 
 An example is as follows:
 
