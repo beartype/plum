@@ -6,7 +6,7 @@ from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union
 from .resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
 from .signature import Signature, append_default_args, extract_signature
 from .type import resolve_type_hint
-from .util import repr_short
+from .util import TypeHint, repr_short
 
 __all__ = ["Function"]
 
@@ -14,13 +14,16 @@ __all__ = ["Function"]
 _promised_convert = None
 """function or None: This will be set to :func:`.parametric.convert`."""
 
-# replace this by from typing import Self in python 3.11
-Self = TypeVar("Self")
+# `typing.Self` is available for Python 3.11 and higher.
+try:  # pragma: specific no cover 3.11
+    from typing import Self
+except ImportError:  # pragma: specific no cover 3.7 3.8 3.9 3.10
+    Self = TypeVar("Self", bound="Function")
 
 SomeExceptionType = TypeVar("SomeExceptionType", bound=Exception)
 
 
-def _convert(obj: Any, target_type: type):
+def _convert(obj: Any, target_type: TypeHint) -> Any:
     """Convert an object to a particular type. Only converts if `target_type` is set.
 
     Args:
@@ -193,7 +196,7 @@ class Function(metaclass=_FunctionMeta):
         return self
 
     def dispatch_multi(
-        self: Self, *signatures: Union[Signature, Tuple[type, ...]]
+        self: Self, *signatures: Union[Signature, Tuple[TypeHint, ...]]
     ) -> Callable[[Callable], Self]:
         """Decorator to extend the function with multiple signatures at once.
 
@@ -314,8 +317,8 @@ class Function(metaclass=_FunctionMeta):
         return type(e)(prefix + message[0].lower() + message[1:])
 
     def resolve_method(
-        self, target: Union[Tuple[object, ...], Signature], types: Tuple[type]
-    ) -> Tuple[Callable, type]:
+        self, target: Union[Tuple[object, ...], Signature], types: Tuple[TypeHint]
+    ) -> Tuple[Callable, TypeHint]:
         """Find the method and return type for arguments.
 
         Args:
@@ -404,7 +407,7 @@ class Function(metaclass=_FunctionMeta):
 
         return _convert(method(*args, **kw_args), return_type)
 
-    def invoke(self, *types: type):
+    def invoke(self, *types: TypeHint) -> Callable:
         """Invoke a particular method.
 
         Args:

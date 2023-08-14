@@ -2,7 +2,7 @@ from typing import Callable, Dict, Optional, Tuple, Union
 
 from .function import Function
 from .signature import Signature
-from .util import get_class, is_in_class
+from .util import TypeHint, get_class, is_in_class
 
 __all__ = ["Dispatcher", "dispatch", "clear_all_cache"]
 
@@ -36,7 +36,7 @@ class Dispatcher:
         # set the signature argument to `None`.
         return self._add_method(method, None, precedence=precedence)
 
-    def multi(self, *signatures: Union[Signature, Tuple[type, ...]]) -> Callable:
+    def multi(self, *signatures: Union[Signature, Tuple[TypeHint, ...]]) -> Callable:
         """Decorator to register multiple signatures at once.
 
         Args:

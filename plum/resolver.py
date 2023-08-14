@@ -70,7 +70,7 @@ class Resolver:
         self.signatures: List[Signature] = []
         self.is_faithful: bool = True
 
-    def doc(self, exclude=None):
+    def doc(self, exclude: Union[Callable, None] = None) -> str:
         """Concatenate the docstrings of all methods of this function. Remove duplicate
         docstrings before concatenating.
 
@@ -98,7 +98,7 @@ class Resolver:
         # a newline.
         return "\n\n".join(unique_docs)
 
-    def register(self, signature: Signature):
+    def register(self, signature: Signature) -> None:
         """Register a new signature.
 
         Args:

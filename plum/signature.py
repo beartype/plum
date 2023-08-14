@@ -3,12 +3,12 @@ import operator
 import typing
 from typing import Callable, List, Optional, Tuple
 
-from beartype.door import TypeHint
+import beartype.door
 from beartype.peps import resolve_pep563
 
 from . import _is_bearable
 from .type import is_faithful, resolve_type_hint
-from .util import Comparable, Missing, multihash, repr_short, wrap_lambda
+from .util import Comparable, Missing, TypeHint, multihash, repr_short, wrap_lambda
 
 __all__ = ["Signature", "extract_signature", "append_default_args"]
 
@@ -40,13 +40,13 @@ class Signature(Comparable):
 
     def __init__(
         self,
-        *types: type,
+        *types: TypeHint,
         varargs=_default_varargs,
-        return_type: type = _default_return_type,
+        return_type: TypeHint = _default_return_type,
         precedence: int = _default_precedence,
         implementation: Optional[Callable] = None,
     ):
-        self.types: Tuple[type] = types
+        self.types: Tuple[TypeHint] = types
         self.varargs = varargs
         self.return_type = return_type
         self.precedence = precedence
@@ -86,7 +86,7 @@ class Signature(Comparable):
     def __hash__(self):
         return multihash(Signature, *self.types, self.varargs)
 
-    def expand_varargs(self, n: int) -> Tuple[type]:
+    def expand_varargs(self, n: int) -> Tuple[TypeHint, ...]:
         """Expand variable arguments.
 
         Args:
@@ -113,7 +113,10 @@ class Signature(Comparable):
         if (
             self.has_varargs
             and other.has_varargs
-            and not (TypeHint(self.varargs) <= TypeHint(other.varargs))
+            and not (
+                beartype.door.TypeHint(self.varargs)
+                <= beartype.door.TypeHint(other.varargs)
+            )
         ):
             return False
 
@@ -130,7 +133,10 @@ class Signature(Comparable):
         self_types = self.expand_varargs(len(other.types))
         other_types = other.expand_varargs(len(self.types))
         return all(
-            [TypeHint(x) <= TypeHint(y) for x, y in zip(self_types, other_types)]
+            [
+                beartype.door.TypeHint(x) <= beartype.door.TypeHint(y)
+                for x, y in zip(self_types, other_types)
+            ]
         )
 
     def match(self, values) -> bool:

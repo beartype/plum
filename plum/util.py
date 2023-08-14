@@ -1,7 +1,7 @@
 import abc
 import sys
 import typing
-from typing import Callable
+from typing import Callable, List
 
 __all__ = [
     "get_args",
@@ -14,6 +14,7 @@ __all__ = [
     "is_in_class",
     "get_class",
     "get_context",
+    "TypeHint",
 ]
 
 try:  # pragma: specific no cover 3.7
@@ -51,6 +52,13 @@ except ImportError:  # pragma: no cover
             return args
         return ()
 
+
+# We use this to indicate a reader that we expect a type hint.
+# Using just "object" as a type hint is technically correct for "int | None" for example
+# but does not convey the intention to a reader.
+# Furthermore, if later on, Python has a proper type for
+# type hints, we can just replace it here
+TypeHint = object
 
 # If we were to add docstrings directly to the manual definitions of `get_origin` above,
 # then the docstrings would be different depending on whether an `ImportError` happened
@@ -185,7 +193,7 @@ def is_in_class(f: Callable) -> bool:
     return len(parts) >= 2 and parts[-2] != "<locals>"
 
 
-def _split_parts(f: Callable) -> str:
+def _split_parts(f: Callable) -> List[str]:
     qualified_name = f.__module__ + "." + f.__qualname__
     return qualified_name.split(".")
 
