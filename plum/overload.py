@@ -1,6 +1,12 @@
 from typing import Callable, TypeVar
 
-from typing_extensions import get_overloads, overload
+try:
+    from typing_extensions import get_overloads, overload
+except ImportError:
+    raise RuntimeError(
+        "To use `plum.overload`, `typing-extensions` must be installed. "
+        "Please run `pip install typing-extensions."
+    )
 
 from .function import Function
 
