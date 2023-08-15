@@ -1,12 +1,12 @@
 import textwrap
 from functools import wraps
 from types import MethodType
-from typing import Any
+from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union
 
 from .resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
 from .signature import Signature, append_default_args, extract_signature
 from .type import resolve_type_hint
-from .util import repr_short
+from .util import TypeHint, repr_short
 
 __all__ = ["Function"]
 
@@ -14,8 +14,16 @@ __all__ = ["Function"]
 _promised_convert = None
 """function or None: This will be set to :func:`.parametric.convert`."""
 
+# `typing.Self` is available for Python 3.11 and higher.
+try:  # pragma: specific no cover 3.11
+    from typing import Self
+except ImportError:  # pragma: specific no cover 3.7 3.8 3.9 3.10
+    Self = TypeVar("Self", bound="Function")
 
-def _convert(obj, target_type):
+SomeExceptionType = TypeVar("SomeExceptionType", bound=Exception)
+
+
+def _convert(obj: Any, target_type: TypeHint) -> Any:
     """Convert an object to a particular type. Only converts if `target_type` is set.
 
     Args:
@@ -31,7 +39,7 @@ def _convert(obj, target_type):
         return _promised_convert(obj, target_type)
 
 
-def _change_function_name(f, name):
+def _change_function_name(f: Callable, name: str) -> Callable:
     """It is not always the case that `f.__name__` is writable. To solve this, first
     create a temporary function that wraps `f` and then change the name.
 
@@ -80,22 +88,22 @@ class Function(metaclass=_FunctionMeta):
 
     _instances = []
 
-    def __init__(self, f, owner=None):
+    def __init__(self, f: Callable, owner: Optional[str] = None):
         Function._instances.append(self)
 
-        self._f = f
+        self._f: Callable = f
         self._cache = {}
         wraps(f)(self)  # Sets `self._doc`.
 
         # `owner` is the name of the owner. We will later attempt to resolve to
         # which class it actually points.
-        self._owner_name = owner
-        self._owner = None
+        self._owner_name: Optional[str] = owner
+        self._owner: Optional[type] = None
 
         # Initialise pending and resolved methods.
-        self._pending = []
+        self._pending: List[Tuple[Callable, Optional[Signature], int]] = []
         self._resolver = Resolver()
-        self._resolved = []
+        self._resolved: List[Tuple[Callable, Signature, int]] = []
 
     @property
     def owner(self):
@@ -110,7 +118,7 @@ class Function(metaclass=_FunctionMeta):
         return self._owner
 
     @property
-    def __doc__(self):
+    def __doc__(self) -> Optional[str]:
         """str or None: Documentation of the function. This consists of the
         documentation of the function given at initialisation with the documentation
         of all other registered methods appended.
@@ -160,17 +168,19 @@ class Function(metaclass=_FunctionMeta):
         return doc if doc else None
 
     @__doc__.setter
-    def __doc__(self, value):
+    def __doc__(self, value: str):
         # Ensure that `self._doc` remains a string.
         self._doc = value if value else ""
 
     @property
-    def methods(self):
+    def methods(self) -> List[Signature]:
         """list[:class:`.signature.Signature`]: All available methods."""
         self._resolve_pending_registrations()
         return self._resolver.signatures
 
-    def dispatch(self, method=None, precedence=0):
+    def dispatch(
+        self: Self, method: Optional[Callable] = None, precedence=0
+    ) -> Union[Self, Callable[[Callable], Self]]:
         """Decorator to extend the function with another signature.
 
         Args:
@@ -185,7 +195,9 @@ class Function(metaclass=_FunctionMeta):
         self.register(method, precedence=precedence)
         return self
 
-    def dispatch_multi(self, *signatures):
+    def dispatch_multi(
+        self: Self, *signatures: Union[Signature, Tuple[TypeHint, ...]]
+    ) -> Callable[[Callable], Self]:
         """Decorator to extend the function with multiple signatures at once.
 
         Args:
@@ -215,7 +227,7 @@ class Function(metaclass=_FunctionMeta):
 
         return decorator
 
-    def clear_cache(self, reregister=True):
+    def clear_cache(self, reregister: bool = True) -> None:
         """Clear cache.
 
         Args:
@@ -232,7 +244,9 @@ class Function(metaclass=_FunctionMeta):
             self._resolved = []
             self._resolver = Resolver()
 
-    def register(self, f, signature=None, precedence=0):
+    def register(
+        self, f: Callable, signature: Optional[Signature] = None, precedence=0
+    ) -> None:
         """Register a method.
 
         Either `signature` or `precedence` must be given.
@@ -246,7 +260,7 @@ class Function(metaclass=_FunctionMeta):
         """
         self._pending.append((f, signature, precedence))
 
-    def _resolve_pending_registrations(self):
+    def _resolve_pending_registrations(self) -> None:
         # Keep track of whether anything registered.
         registered = False
 
@@ -283,7 +297,7 @@ class Function(metaclass=_FunctionMeta):
             # Clear cache.
             self.clear_cache(reregister=False)
 
-    def _enhance_exception(self, e):
+    def _enhance_exception(self, e: SomeExceptionType) -> SomeExceptionType:
         """Enchance an exception by prepending a prefix to the message of the exception
         which specifies that the message is for this function.
 
@@ -302,7 +316,9 @@ class Function(metaclass=_FunctionMeta):
         message = str(e)
         return type(e)(prefix + message[0].lower() + message[1:])
 
-    def resolve_method(self, target, types):
+    def resolve_method(
+        self, target: Union[Tuple[object, ...], Signature], types: Tuple[TypeHint]
+    ) -> Tuple[Callable, TypeHint]:
         """Find the method and return type for arguments.
 
         Args:
@@ -391,7 +407,7 @@ class Function(metaclass=_FunctionMeta):
 
         return _convert(method(*args, **kw_args), return_type)
 
-    def invoke(self, *types):
+    def invoke(self, *types: TypeHint) -> Callable:
         """Invoke a particular method.
 
         Args:
@@ -424,7 +440,7 @@ class Function(metaclass=_FunctionMeta):
         else:
             return self
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"<function {self._f} with {len(self._resolver)} registered and"
             f" {len(self._pending)} pending method(s)>"
