@@ -10,7 +10,7 @@ from .function import Function
 
 __all__ = ["overload", "dispatch"]
 
-T = TypeVar("T", bound=Callable)
+T = TypeVar("T", bound=Callable[..., Any])
 
 
 def dispatch(f: Callable) -> Function:
