@@ -13,7 +13,7 @@ __all__ = ["overload", "dispatch"]
 T = TypeVar("T", bound=Callable)
 
 
-def dispatch(f: T) -> T:
+def dispatch(f: Callable) -> Function:
     """Decorator to register a particular signature."""
     f_plum = Function(f)
     for method in get_overloads(f):
