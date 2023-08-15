@@ -320,13 +320,15 @@ document.write(`
                 <article class="bd-article" role="main">
                   
   <h1>Source code for plum.parametric</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">beartype.door</span> <span class="kn">import</span> <span class="n">TypeHint</span>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">beartype.door</span>
 <span class="kn">from</span> <span class="nn">beartype.roar</span> <span class="kn">import</span> <span class="n">BeartypeDoorNonpepException</span>
 
 <span class="kn">from</span> <span class="nn">.dispatcher</span> <span class="kn">import</span> <span class="n">Dispatcher</span>
 <span class="kn">from</span> <span class="nn">.function</span> <span class="kn">import</span> <span class="n">_owner_transfer</span>
 <span class="kn">from</span> <span class="nn">.type</span> <span class="kn">import</span> <span class="n">resolve_type_hint</span>
-<span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="n">repr_short</span>
+<span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="n">TypeHint</span><span class="p">,</span> <span class="n">repr_short</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;CovariantMeta&quot;</span><span class="p">,</span>
@@ -436,10 +438,12 @@ document.write(`
             <span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_default_le_type_par</span><span class="p">(</span><span class="n">p_left</span><span class="p">,</span> <span class="n">p_right</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_default_le_type_par</span><span class="p">(</span>
+    <span class="n">p_left</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">TypeHint</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span> <span class="n">p_right</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">TypeHint</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
     <span class="k">if</span> <span class="n">is_type</span><span class="p">(</span><span class="n">p_left</span><span class="p">)</span> <span class="ow">and</span> <span class="n">is_type</span><span class="p">(</span><span class="n">p_right</span><span class="p">):</span>
-        <span class="n">p_left</span> <span class="o">=</span> <span class="n">TypeHint</span><span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">p_left</span><span class="p">))</span>
-        <span class="n">p_right</span> <span class="o">=</span> <span class="n">TypeHint</span><span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">p_right</span><span class="p">))</span>
+        <span class="n">p_left</span> <span class="o">=</span> <span class="n">beartype</span><span class="o">.</span><span class="n">door</span><span class="o">.</span><span class="n">TypeHint</span><span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">p_left</span><span class="p">))</span>
+        <span class="n">p_right</span> <span class="o">=</span> <span class="n">beartype</span><span class="o">.</span><span class="n">door</span><span class="o">.</span><span class="n">TypeHint</span><span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">p_right</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">p_left</span> <span class="o">&lt;=</span> <span class="n">p_right</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">p_left</span> <span class="o">==</span> <span class="n">p_right</span>
@@ -614,7 +618,7 @@ document.write(`
 <span class="sd">        bool: Whether `x` is a type or a type hint.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">TypeHint</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">beartype</span><span class="o">.</span><span class="n">door</span><span class="o">.</span><span class="n">TypeHint</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="k">return</span> <span class="kc">True</span>
     <span class="k">except</span> <span class="n">BeartypeDoorNonpepException</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span>
@@ -694,7 +698,7 @@ document.write(`
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The value must be specified.&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">repr_short</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot;()&quot;</span>
 
     <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
