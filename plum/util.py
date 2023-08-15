@@ -1,10 +1,12 @@
 import abc
 import sys
 import typing
+from typing import Callable, List
 
 __all__ = [
-    "get_args",
     "get_origin",
+    "get_args",
+    "TypeHint",
     "repr_short",
     "Missing",
     "multihash",
@@ -73,6 +75,12 @@ Args:
 Returns:
     tuple: Arguments of `x`.
 """
+
+# We use this to indicate a reader that we expect a type hint. Using just `object` as a
+# type hint is technically correct for `int | None` for example, but does not convey the
+# intention to a reader. Furthermore, if later on, Python has a proper type for type
+# hints, we can just replace it here.
+TypeHint = object
 
 
 def repr_short(x):
@@ -159,7 +167,7 @@ class Comparable(metaclass=abc.ABCMeta):
         return self < other or self == other or self > other
 
 
-def wrap_lambda(f):
+def wrap_lambda(f: Callable) -> Callable:
     """Wrap a callable in a lambda function.
 
     Args:
@@ -171,7 +179,7 @@ def wrap_lambda(f):
     return lambda x: f(x)
 
 
-def is_in_class(f):
+def is_in_class(f: Callable) -> bool:
     """Check if a function is part of a class.
 
     Args:
@@ -184,12 +192,12 @@ def is_in_class(f):
     return len(parts) >= 2 and parts[-2] != "<locals>"
 
 
-def _split_parts(f):
+def _split_parts(f: Callable) -> List[str]:
     qualified_name = f.__module__ + "." + f.__qualname__
     return qualified_name.split(".")
 
 
-def get_class(f):
+def get_class(f: Callable) -> str:
     """Assuming that `f` is part of a class, get the fully qualified name of the
     class.
 
@@ -203,7 +211,7 @@ def get_class(f):
     return ".".join(parts[:-1])
 
 
-def get_context(f):
+def get_context(f) -> str:
     """Get the fully qualified name of the context for `f`.
 
     If `f` is part of a class, then the context corresponds to the scope of the class.

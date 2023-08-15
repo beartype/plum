@@ -1,6 +1,8 @@
+from typing import Callable, Dict, Optional, Tuple, Union
+
 from .function import Function
 from .signature import Signature
-from .util import get_class, is_in_class
+from .util import TypeHint, get_class, is_in_class
 
 __all__ = ["Dispatcher", "dispatch", "clear_all_cache"]
 
@@ -15,10 +17,14 @@ class Dispatcher:
     """
 
     def __init__(self):
-        self.functions = {}
-        self.classes = {}
+        self.functions: Dict[str, Function] = {}
+        self.classes: Dict[str, Dict[str, Function]] = {}
 
-    def __call__(self, method=None, precedence=0):
+    def __call__(
+        self,
+        method: Optional[Callable] = None,
+        precedence: int = 0,
+    ) -> Callable:
         """Decorator to register for a particular signature.
 
         Args:
@@ -34,7 +40,7 @@ class Dispatcher:
         # set the signature argument to `None`.
         return self._add_method(method, None, precedence=precedence)
 
-    def multi(self, *signatures):
+    def multi(self, *signatures: Union[Signature, Tuple[TypeHint, ...]]) -> Callable:
         """Decorator to register multiple signatures at once.
 
         Args:
@@ -62,12 +68,12 @@ class Dispatcher:
 
         return decorator
 
-    def abstract(self, method):
+    def abstract(self, method: Callable) -> Function:
         """Decorator for an abstract function definition. The abstract function
         definition does not implement any methods."""
         return self._get_function(method)
 
-    def _get_function(self, method):
+    def _get_function(self, method: Callable) -> Function:
         # If a class is the owner, use a namespace specific for that class. Otherwise,
         # use the global namespace.
         if is_in_class(method):
@@ -86,7 +92,12 @@ class Dispatcher:
 
         return namespace[name]
 
-    def _add_method(self, method, *signatures, precedence):
+    def _add_method(
+        self,
+        method: Callable,
+        *signatures: Optional[Signature],
+        precedence: Optional[int],
+    ) -> Function:
         f = self._get_function(method)
         for signature in signatures:
             f.register(method, signature, precedence)
