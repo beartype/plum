@@ -17,7 +17,7 @@ classifiers = [
 ]
 dynamic = ["version"]
 
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 dependencies = ["beartype"]
 
 [project.optional-dependencies]
@@ -62,7 +62,7 @@ testpaths = [
 # Formatting tools
 [tool.black]
 line-length = 88
-target-version = ['py37', 'py38', 'py39']
+target-version = ['py38', 'py39']
 include = '\.pyi?$'
 exclude = '''
 /(
