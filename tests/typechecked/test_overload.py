@@ -23,4 +23,4 @@ def test_overload() -> None:
     assert f(1) == 1
     assert f("1") == "1"
     with pytest.raises(NotFoundLookupError):
-        f(1.0)  # type: ignore
+        f(1.0)  # mypy: E: [call-overload]
