@@ -40,7 +40,7 @@ class Dispatcher:
         overloads = get_overloads(method)
         if overloads:
             for overload_method in overloads:
-                # All `f` returned by `self._add_method` are be the same.
+                # All `f` returned by `self._add_method` are the same.
                 f = self._add_method(overload_method, None, precedence=precedence)
             # We do not need to register `method`, because it is not an implementation.
             return f
