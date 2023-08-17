@@ -372,8 +372,8 @@ class Val:
             val (object): The value to be moved to the type domain.
         """
         warnings.warn(
-            "plum.Val is deprecated and will be removed in a future version, "
-            "please use typing.Literal instead.",
+            "`plum.Val` is deprecated and will be removed in a future version. "
+            "Please use `typing.Literal` instead.",
             stacklevel=2,
         )
         if type(self).concrete:
