@@ -24,7 +24,7 @@ jobs:
           python -m pip install --upgrade --no-cache-dir -e '.[dev]'
       - name: Test linter assertions
         run: |
-          python check_linter_assertions.py
+          python check_linter_assertions.py tests/typechecked
       - name: Test
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
