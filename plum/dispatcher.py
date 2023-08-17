@@ -21,19 +21,11 @@ class Dispatcher:
         self.classes: Dict[str, Dict[str, Function]] = {}
 
     @overload
-    def __call__(
-        self,
-        method: Callable,
-        precedence: int
-    ) -> Function:
+    def __call__(self, method: Callable, precedence: int) -> Function:
         ...
 
     @overload
-    def __call__(
-        self,
-        method: None,
-        precedence: int
-    ) -> Callable[[Callable], Function]:
+    def __call__(self, method: None, precedence: int) -> Callable[[Callable], Function]:
         ...
 
     def __call__(
