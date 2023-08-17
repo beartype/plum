@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Optional, Tuple, Union
+from typing import Callable, Dict, Optional, Tuple, Union, overload
 
 from .function import Function
 from .signature import Signature
@@ -20,11 +20,27 @@ class Dispatcher:
         self.functions: Dict[str, Function] = {}
         self.classes: Dict[str, Dict[str, Function]] = {}
 
+    @overload
+    def __call__(
+        self,
+        method: Callable,
+        precedence: int
+    ) -> Function:
+        ...
+
+    @overload
+    def __call__(
+        self,
+        method: None,
+        precedence: int
+    ) -> Callable[[Callable], Function]:
+        ...
+
     def __call__(
         self,
         method: Optional[Callable] = None,
         precedence: int = 0,
-    ) -> Callable:
+    ) -> Union[Function, Callable[[Callable], Function]]:
         """Decorator to register for a particular signature.
 
         Args:
