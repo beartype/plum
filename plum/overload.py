@@ -1,4 +1,5 @@
 import sys
+from functools import wraps
 from typing import Any, Callable, TypeVar
 
 if sys.version_info >= (3, 11):  # pragma: specific no cover 3.7 3.8 3.9 3.10
@@ -13,9 +14,9 @@ __all__ = ["overload", "dispatch"]
 T = TypeVar("T", bound=Callable[..., Any])
 
 
-def dispatch(f: Callable) -> Function:
+def dispatch(f: T) -> T:
     """Decorator to register a particular signature."""
     f_plum = Function(f)
     for method in get_overloads(f):
         f_plum.dispatch(method)
-    return f_plum
+    return wraps(f)(f_plum)
