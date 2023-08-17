@@ -1,7 +1,8 @@
 import pytest
 
-from plum import NotFoundLookupError
-from plum.overload import dispatch, overload
+from plum import Dispatcher, NotFoundLookupError, overload
+
+dispatch = Dispatcher()
 
 
 @overload

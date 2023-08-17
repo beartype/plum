@@ -11,7 +11,7 @@ At the moment, the only know pattern in which Plum produces `mypy`-compliant cod
 An example is as follows:
 
 ```python
-from plum.overload import dispatch, overload
+from plum import dispatch, overload
 
 
 @overload
@@ -29,6 +29,6 @@ def f(x):
     pass
 ```
 
-In the above, for Python versions prior to 3.11, `plum.overload.overload` is `typing_extensions.overload`.
+In the above, for Python versions prior to 3.11, `plum.overload` is `typing_extensions.overload`.
 For this pattern in all Python versions prior to 3.11, you must use `typing_extensions.overload`, not `typing.overload`.
-By importing `overload` from `plum.overload`, you will always use the correct `overload`.
+By importing `overload` from `plum`, you will always use the correct `overload`.

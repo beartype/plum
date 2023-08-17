@@ -2,7 +2,13 @@ import abc
 import sys
 import typing
 
+if sys.version_info.minor <= 8:  # pragma: specific no cover 3.9 3.10 3.11
+    from typing import Callable
+else:  # pragma: specific no cover 3.7 3.8
+    from collections.abc import Callable
+
 __all__ = [
+    "Callable",
     "get_args",
     "get_origin",
     "repr_short",

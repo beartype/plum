@@ -2,11 +2,6 @@ import abc
 import sys
 import typing
 
-if sys.version_info.minor <= 8:
-    from typing import Callable
-else:
-    from collections.abc import Callable
-
 try:
     from typing import Literal
 except ImportError:
@@ -32,6 +27,7 @@ from plum.type import (
     resolve_type_hint,
     type_mapping,
 )
+from plum.util import Callable
 
 
 def test_resolvabletype():
