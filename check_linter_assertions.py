@@ -251,4 +251,6 @@ if __name__ == "__main__":
     status = True
     status |= check_linter(source_dir, "mypy")
     status |= check_linter(source_dir, "pyright")
+    if status:
+        print("All OK!")
     exit(0 if status else 1)
