@@ -339,7 +339,7 @@ document.write(`
 <span class="c1"># `typing.Self` is available for Python 3.11 and higher.</span>
 <span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.11</span>
     <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Self</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.7 3.8 3.9 3.10</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.8 3.9 3.10</span>
     <span class="n">Self</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;Self&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="s2">&quot;Function&quot;</span><span class="p">)</span>
 
 <span class="n">SomeExceptionType</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;SomeExceptionType&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="ne">Exception</span><span class="p">)</span>

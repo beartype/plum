@@ -634,7 +634,9 @@ from the object domain to the type domain.</p>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">typing.Literal</span></code> fills a very similar purpose.
-You can use <code class="docutils literal notranslate"><span class="pre">Val</span></code> if <code class="docutils literal notranslate"><span class="pre">typing.Literal</span></code> is not available, e.g. on Python 3.7.</p>
+We recommend using <code class="docutils literal notranslate"><span class="pre">typing.Literal</span></code> instead. <code class="docutils literal notranslate"><span class="pre">Val</span></code> is only useful for Python
+versions that do not have <code class="docutils literal notranslate"><span class="pre">typing.Literal</span></code>. Those are Python 3.7 and below, but
+plum does not support those versions.</p>
 </section>
 <section id="example-ndarray">
 <h2>Example: <code class="docutils literal notranslate"><span class="pre">NDArray</span></code><a class="headerlink" href="#example-ndarray" title="Permalink to this heading">#</a></h2>

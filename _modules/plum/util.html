@@ -326,8 +326,6 @@ document.write(`
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;get_origin&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;get_args&quot;</span><span class="p">,</span>
     <span class="s2">&quot;TypeHint&quot;</span><span class="p">,</span>
     <span class="s2">&quot;repr_short&quot;</span><span class="p">,</span>
     <span class="s2">&quot;Missing&quot;</span><span class="p">,</span>
@@ -338,65 +336,6 @@ document.write(`
     <span class="s2">&quot;get_class&quot;</span><span class="p">,</span>
     <span class="s2">&quot;get_context&quot;</span><span class="p">,</span>
 <span class="p">]</span>
-
-<span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.7</span>
-    <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">get_args</span> <span class="k">as</span> <span class="n">_get_args</span>
-    <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">get_origin</span> <span class="k">as</span> <span class="n">_get_origin</span>
-
-    <span class="c1"># Wrap the functions, because we&#39;ll adjust their docstrings below.</span>
-
-    <span class="k">def</span> <span class="nf">get_args</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">_get_args</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">get_origin</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">_get_origin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
-    <span class="kn">import</span> <span class="nn">collections.abc</span>
-
-    <span class="c1"># The functions :func:`typing.get_origin` and :func:`typing.get_args` were only</span>
-    <span class="c1"># introduced in Python 3.8, but we need them already in Python 3.7. The below is</span>
-    <span class="c1"># a copy of their source in `typing.py` from Python 3.8. Since we copied from</span>
-    <span class="c1"># the source, we also do not check for coverage.</span>
-
-<div class="viewcode-block" id="get_origin"><a class="viewcode-back" href="../../api.html#plum.util.get_origin">[docs]</a>    <span class="k">def</span> <span class="nf">get_origin</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">typing</span><span class="o">.</span><span class="n">_GenericAlias</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">__origin__</span>
-        <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="n">typing</span><span class="o">.</span><span class="n">Generic</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">typing</span><span class="o">.</span><span class="n">Generic</span>
-        <span class="k">return</span> <span class="kc">None</span></div>
-
-<div class="viewcode-block" id="get_args"><a class="viewcode-back" href="../../api.html#plum.util.get_args">[docs]</a>    <span class="k">def</span> <span class="nf">get_args</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">typing</span><span class="o">.</span><span class="n">_GenericAlias</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">x</span><span class="o">.</span><span class="n">_special</span><span class="p">:</span>
-            <span class="n">args</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">__args__</span>
-            <span class="k">if</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">is</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Callable</span> <span class="ow">and</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">Ellipsis</span><span class="p">:</span>
-                <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">args</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="n">args</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-            <span class="k">return</span> <span class="n">args</span>
-        <span class="k">return</span> <span class="p">()</span></div>
-
-
-<span class="c1"># If we were to add docstrings directly to the manual definitions of `get_origin` above,</span>
-<span class="c1"># then the docstrings would be different depending on whether an `ImportError` happened</span>
-<span class="c1"># or not. We don&#39;t want that. Hence, we set the docstrings below, regardless of which</span>
-<span class="c1"># case happened.</span>
-
-<span class="n">get_origin</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;Get the unsubscripted version of a type hint.</span>
-
-<span class="s2">Args:</span>
-<span class="s2">    x (type hint): Type hint.</span>
-
-<span class="s2">Returns:</span>
-<span class="s2">    type hint: Unsubcripted version of `x`.</span>
-<span class="s2">&quot;&quot;&quot;</span>
-
-<span class="n">get_args</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;Get the arguments of a subscripted type hint.</span>
-
-<span class="s2">Args:</span>
-<span class="s2">    x (type hint): Type hint.</span>
-
-<span class="s2">Returns:</span>
-<span class="s2">    tuple: Arguments of `x`.</span>
-<span class="s2">&quot;&quot;&quot;</span>
 
 <span class="c1"># We use this to indicate a reader that we expect a type hint. Using just `object` as a</span>
 <span class="c1"># type hint is technically correct for `int | None` for example, but does not convey the</span>
