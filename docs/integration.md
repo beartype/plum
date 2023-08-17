@@ -30,5 +30,5 @@ def f(x):
 ```
 
 In the above, for Python versions prior to 3.11, `plum.overload` is `typing_extensions.overload`.
-For this pattern in all Python versions prior to 3.11, you must use `typing_extensions.overload`, not `typing.overload`.
+For this pattern to work in Python versions prior to 3.11, you must use `typing_extensions.overload`, not `typing.overload`.
 By importing `overload` from `plum`, you will always use the correct `overload`.
