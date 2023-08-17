@@ -28,8 +28,7 @@ parsing how unions print.
 
 import typing
 from functools import wraps
-
-from .util import get_args
+from typing import get_args
 
 __all__ = ["activate_union_aliases", "deactivate_union_aliases", "set_union_alias"]
 

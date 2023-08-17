@@ -2,23 +2,14 @@ import abc
 import sys
 import typing
 import warnings
+from typing import Literal, get_args, get_origin
 
-from .util import get_args, get_origin
-
-try:  # pragma: specific no cover 3.7 3.8 3.9
+try:  # pragma: specific no cover 3.8 3.9
     from types import UnionType
 except ImportError:  # pragma: specific no cover 3.10 3.11
 
     class UnionType:
         """Replacement for :class:`types.UnionType`."""
-
-
-try:  # pragma: specific no cover 3.7
-    from typing import Literal
-except ImportError:  # pragma: specific no cover 3.8 3.9 3.10 3.11
-
-    class Literal:
-        """A simple proxy for :class:`typing.Literal`."""
 
 
 __all__ = [
@@ -130,7 +121,7 @@ def _is_hint(x):
         bool: `True` if `x` is a type hint and `False` otherwise.
     """
     try:
-        if x.__module__ == "builtins":  # pragma: specific no cover 3.7 3.8
+        if x.__module__ == "builtins":  # pragma: specific no cover 3.8
             # Check if `x` is a subscripted built-in. We do this by checking the module
             # of the type of `x`.
             x = type(x)
@@ -184,7 +175,7 @@ def resolve_type_hint(x):
             # hint itself.
             return x
         else:
-            if origin is UnionType:  # pragma: specific no cover 3.7 3.8 3.9
+            if origin is UnionType:  # pragma: specific no cover 3.8 3.9
                 # The new union syntax was used.
                 y = args[0]
                 for arg in args[1:]:
@@ -197,7 +188,7 @@ def resolve_type_hint(x):
                 try:
                     return origin[args]
                 except TypeError as e:  # pragma: specific no cover 3.9 3.10 3.11
-                    # In Python 3.7 and 3.8, the origin might be a type that cannot be
+                    # In Python 3.8, the origin might be a type that cannot be
                     # subscripted. As a workaround, we get the name of the type,
                     # capitalize it, and try to get it from `typing`. So far, this
                     # seems to have worked fine.
