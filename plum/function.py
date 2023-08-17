@@ -17,7 +17,7 @@ _promised_convert = None
 # `typing.Self` is available for Python 3.11 and higher.
 try:  # pragma: specific no cover 3.11
     from typing import Self
-except ImportError:  # pragma: specific no cover 3.7 3.8 3.9 3.10
+except ImportError:  # pragma: specific no cover 3.8 3.9 3.10
     Self = TypeVar("Self", bound="Function")
 
 SomeExceptionType = TypeVar("SomeExceptionType", bound=Exception)

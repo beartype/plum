@@ -1,3 +1,4 @@
+import warnings
 from typing import Union
 
 import beartype.door
@@ -370,6 +371,11 @@ class Val:
         Args:
             val (object): The value to be moved to the type domain.
         """
+        warnings.warn(
+            "plum.Val is deprecated and will be removed in a future version, "
+            "please use typing.Literal instead.",
+            stacklevel=2,
+        )
         if type(self).concrete:
             if val is not None and type_parameter(self) != val:
                 raise ValueError("The value must be equal to the type parameter.")
