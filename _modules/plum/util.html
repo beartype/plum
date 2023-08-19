@@ -161,6 +161,7 @@ const thebe_selector_output = ".output, .cell_output"
 <li class="toctree-l2"><a class="reference internal" href="../../classes.html">Classes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../keyword_arguments.html">Keyword Arguments</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../comparison.html">Comparison with Other Multiple Dispatch Implementations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../integration.html">Integration with Linters and <code class="docutils literal notranslate"><span class="pre">mypy</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../advanced_usage.html">Advanced Usage</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
@@ -325,7 +326,13 @@ document.write(`
 <span class="kn">import</span> <span class="nn">typing</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span>
 
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="o">.</span><span class="n">minor</span> <span class="o">&lt;=</span> <span class="mi">8</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.9 3.10 3.11</span>
+    <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span>
+<span class="k">else</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.8</span>
+    <span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
+
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;Callable&quot;</span><span class="p">,</span>
     <span class="s2">&quot;TypeHint&quot;</span><span class="p">,</span>
     <span class="s2">&quot;repr_short&quot;</span><span class="p">,</span>
     <span class="s2">&quot;Missing&quot;</span><span class="p">,</span>

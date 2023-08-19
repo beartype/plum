@@ -9,7 +9,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>Scope of Functions &#8212; Plum</title>
+    <title>Integration with Linters and mypy &#8212; Plum</title>
   
   
   
@@ -61,11 +61,11 @@ const thebe_selector_input = "pre"
 const thebe_selector_output = ".output, .cell_output"
 </script>
     <script async="async" src="_static/sphinx-thebe.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'scope';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'integration';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Classes" href="classes.html" />
-    <link rel="prev" title="Ways to Dispatch" href="dispatch.html" />
+    <link rel="next" title="Advanced Usage" href="advanced_usage.html" />
+    <link rel="prev" title="Comparison with Other Multiple Dispatch Implementations" href="comparison.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -160,11 +160,11 @@ const thebe_selector_output = ".output, .cell_output"
 <li class="toctree-l1 current active has-children"><a class="reference internal" href="basic_usage.html">Basic Usage</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="types.html">Types</a></li>
 <li class="toctree-l2"><a class="reference internal" href="dispatch.html">Ways to Dispatch</a></li>
-<li class="toctree-l2 current active"><a class="current reference internal" href="#">Scope of Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scope.html">Scope of Functions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="classes.html">Classes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="keyword_arguments.html">Keyword Arguments</a></li>
 <li class="toctree-l2"><a class="reference internal" href="comparison.html">Comparison with Other Multiple Dispatch Implementations</a></li>
-<li class="toctree-l2"><a class="reference internal" href="integration.html">Integration with Linters and <code class="docutils literal notranslate"><span class="pre">mypy</span></code></a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Integration with Linters and <code class="docutils literal notranslate"><span class="pre">mypy</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="advanced_usage.html">Advanced Usage</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
@@ -247,7 +247,7 @@ const thebe_selector_output = ".output, .cell_output"
       
       
       
-      <li><a href="https://github.com/wesselb/plum/issues/new?title=Issue%20on%20page%20%2Fscope.html&body=Your%20issue%20content%20here." target="_blank"
+      <li><a href="https://github.com/wesselb/plum/issues/new?title=Issue%20on%20page%20%2Fintegration.html&body=Your%20issue%20content%20here." target="_blank"
    class="btn btn-sm btn-source-issues-button dropdown-item"
    title="Open an issue"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -277,7 +277,7 @@ const thebe_selector_output = ".output, .cell_output"
       
       
       
-      <li><a href="_sources/scope.md" target="_blank"
+      <li><a href="_sources/integration.md" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -346,7 +346,9 @@ document.write(`
   </button>
 `);
 </script>
-
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
 </div></div>
       
     </div>
@@ -357,11 +359,19 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Scope of Functions</h1>
+    <h1>Integration with Linters and mypy</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
             
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overload-support">Overload Support</a></li>
+</ul>
+            </nav>
         </div>
     </div>
 </div>
@@ -371,100 +381,37 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article" role="main">
                   
-  <section id="scope-of-functions">
-<h1>Scope of Functions<a class="headerlink" href="#scope-of-functions" title="Permalink to this heading">#</a></h1>
-<p>Consider the following package design.</p>
-<p><code class="docutils literal notranslate"><span class="pre">package/__init__.py</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">a</span>
-<span class="kn">import</span> <span class="nn">b</span>
-</pre></div>
-</div>
-<p><code class="docutils literal notranslate"><span class="pre">package/a.py</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span>
+  <section id="integration-with-linters-and-mypy">
+<h1>Integration with Linters and <code class="docutils literal notranslate"><span class="pre">mypy</span></code><a class="headerlink" href="#integration-with-linters-and-mypy" title="Permalink to this heading">#</a></h1>
+<p>Plum’s integration with linters and <code class="docutils literal notranslate"><span class="pre">mypy</span></code> is unfortunately limited.
+Properly supporting multiple dispatch in these tools is challenging for a <a class="reference external" href="https://github.com/python/mypy/issues/11727">variety of reasons</a>.
+In this section, we collect various patterns in which Plum plays nicely with type checking.</p>
+<section id="overload-support">
+<h2>Overload Support<a class="headerlink" href="#overload-support" title="Permalink to this heading">#</a></h2>
+<p>At the moment, the only know pattern in which Plum produces <code class="docutils literal notranslate"><span class="pre">mypy</span></code>-compliant code uses <code class="docutils literal notranslate"><span class="pre">typing.overload</span></code>.</p>
+<p>An example is as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span><span class="p">,</span> <span class="n">overload</span>
+
+
+<span class="nd">@overload</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">x</span>
+
+
+<span class="nd">@overload</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">x</span>
 
 
 <span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-   <span class="k">return</span> <span class="s2">&quot;int&quot;</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">pass</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">package/b.py</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span>
-
-
-<span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-   <span class="k">return</span> <span class="s2">&quot;float&quot;</span>
-</pre></div>
-</div>
-<p>In a design like this, the methods for <code class="docutils literal notranslate"><span class="pre">f</span></code> recorded by <code class="docutils literal notranslate"><span class="pre">dispatch</span></code> are <em>global</em>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">package.a</span> <span class="kn">import</span> <span class="n">f</span>
-
-<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
-<span class="go">&#39;float&#39;</span>
-</pre></div>
-</div>
-<p>This could be what you want, but it could also be undesirable.
-In addition, by using the global <code class="docutils literal notranslate"><span class="pre">&#64;dispatch</span></code>, someone could accidentally overwrite
-your methods.</p>
-<p><code class="docutils literal notranslate"><span class="pre">other_package/some_file.py</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span>
-
-
-<span class="c1"># If another package happens to also define `f` for an `int`, then that overwrites</span>
-<span class="c1"># your method!</span>
-
-<span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-    <span class="o">...</span>
-</pre></div>
-</div>
-<p>To prevent this from happening and to keep your functions private, you can create new
-dispatchers.</p>
-<p><code class="docutils literal notranslate"><span class="pre">package/__init__.py</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">a</span>
-<span class="kn">import</span> <span class="nn">b</span>
-</pre></div>
-</div>
-<p><code class="docutils literal notranslate"><span class="pre">package/a.py</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">Dispatcher</span>
-
-<span class="n">dispatch</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">()</span>
-
-
-<span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-   <span class="k">return</span> <span class="s2">&quot;int&quot;</span>
-</pre></div>
-</div>
-<p><code class="docutils literal notranslate"><span class="pre">package/b.py</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">Dispatcher</span>
-
-<span class="n">dispatch</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">()</span>
-
-
-<span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-   <span class="k">return</span> <span class="s2">&quot;float&quot;</span>
-</pre></div>
-</div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">package.a</span> <span class="kn">import</span> <span class="n">f</span>
-
-<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<span class="go">&#39;int&#39;</span>
-
-<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
-<span class="go">NotFoundLookupError: For function `f`, `(1.0,)` could not be resolved.</span>
-
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">package.b</span> <span class="kn">import</span> <span class="n">f</span>
-
-<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<span class="go">NotFoundLookupError: For function `f`, `(1,)` could not be resolved.</span>
-
-<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
-<span class="go">&#39;float&#39;</span>
-</pre></div>
-</div>
+<p>In the above, for Python versions prior to 3.11, <code class="docutils literal notranslate"><span class="pre">plum.overload</span></code> is <code class="docutils literal notranslate"><span class="pre">typing_extensions.overload</span></code>.
+For this pattern to work in Python versions prior to 3.11, you must use <code class="docutils literal notranslate"><span class="pre">typing_extensions.overload</span></code>, not <code class="docutils literal notranslate"><span class="pre">typing.overload</span></code>.
+By importing <code class="docutils literal notranslate"><span class="pre">overload</span></code> from <code class="docutils literal notranslate"><span class="pre">plum</span></code>, you will always use the correct <code class="docutils literal notranslate"><span class="pre">overload</span></code>.</p>
+</section>
 </section>
 
     <script type="text/x-thebe-config">
@@ -499,20 +446,20 @@ dispatchers.</p>
     <div class="footer-article-item"><!-- Previous / next buttons -->
 <div class="prev-next-area">
     <a class="left-prev"
-       href="dispatch.html"
+       href="comparison.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Ways to Dispatch</p>
+        <p class="prev-next-title">Comparison with Other Multiple Dispatch Implementations</p>
       </div>
     </a>
     <a class="right-next"
-       href="classes.html"
+       href="advanced_usage.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Classes</p>
+        <p class="prev-next-title">Advanced Usage</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -525,6 +472,20 @@ dispatchers.</p>
             </div>
             
             
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overload-support">Overload Support</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
               
             
           </div>

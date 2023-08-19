@@ -161,6 +161,7 @@ const thebe_selector_output = ".output, .cell_output"
 <li class="toctree-l2"><a class="reference internal" href="../../classes.html">Classes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../keyword_arguments.html">Keyword Arguments</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../comparison.html">Comparison with Other Multiple Dispatch Implementations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../integration.html">Integration with Linters and <code class="docutils literal notranslate"><span class="pre">mypy</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../advanced_usage.html">Advanced Usage</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
@@ -449,7 +450,7 @@ document.write(`
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_pending_registrations</span><span class="p">()</span>
-        <span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>
+        <span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.7 3.8 3.9</span>
             <span class="c1"># When `staticmethod` is combined with</span>
             <span class="c1"># `from __future__ import annotations`, in Python 3.10 and higher</span>
             <span class="c1"># `staticmethod` will attempt to inherit `__doc__` (see</span>
