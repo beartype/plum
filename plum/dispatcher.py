@@ -1,10 +1,13 @@
-from typing import Callable, Dict, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Optional, Tuple, TypeVar, Union
 
 from .function import Function
+from .overload import get_overloads
 from .signature import Signature
-from .util import TypeHint, get_class, is_in_class
+from .util import Callable, TypeHint, get_class, is_in_class
 
 __all__ = ["Dispatcher", "dispatch", "clear_all_cache"]
+
+T = TypeVar("T", bound=Callable[..., Any])
 
 
 class Dispatcher:
@@ -20,11 +23,7 @@ class Dispatcher:
         self.functions: Dict[str, Function] = {}
         self.classes: Dict[str, Dict[str, Function]] = {}
 
-    def __call__(
-        self,
-        method: Optional[Callable] = None,
-        precedence: int = 0,
-    ) -> Callable:
+    def __call__(self, method: Optional[T] = None, precedence: int = 0) -> T:
         """Decorator to register for a particular signature.
 
         Args:
@@ -35,6 +34,16 @@ class Dispatcher:
         """
         if method is None:
             return lambda m: self(m, precedence=precedence)
+
+        # If `method` has overloads, assume that those overloads need to be registered
+        # and that `method` is not an implementation.
+        overloads = get_overloads(method)
+        if overloads:
+            for overload_method in overloads:
+                # All `f` returned by `self._add_method` are the same.
+                f = self._add_method(overload_method, None, precedence=precedence)
+            # We do not need to register `method`, because it is not an implementation.
+            return f
 
         # The signature will be automatically derived from `method`, so we can safely
         # set the signature argument to `None`.

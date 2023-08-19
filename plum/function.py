@@ -127,7 +127,7 @@ class Function(metaclass=_FunctionMeta):
         """
         try:
             self._resolve_pending_registrations()
-        except NameError:
+        except NameError:  # pragma: specific no cover 3.7 3.8 3.9
             # When `staticmethod` is combined with
             # `from __future__ import annotations`, in Python 3.10 and higher
             # `staticmethod` will attempt to inherit `__doc__` (see

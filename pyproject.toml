@@ -18,7 +18,10 @@ classifiers = [
 dynamic = ["version"]
 
 requires-python = ">=3.8"
-dependencies = ["beartype"]
+dependencies = [
+    "beartype",
+    "typing-extensions; python_version<='3.10'",
+]
 
 [project.optional-dependencies]
 dev = [
@@ -34,6 +37,8 @@ dev = [
     "build",
     "tox",
     "jupyter-book",
+    "mypy",
+    "pyright",
 ]
 
 [project.urls]
