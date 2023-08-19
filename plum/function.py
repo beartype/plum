@@ -129,7 +129,7 @@ class Function(metaclass=_FunctionMeta):
             # trigger the _resolver_pending_registration in a try-except
             # TODO: Find a way to remove this or make this simpler
             self._resolver
-        except NameError:
+        except NameError:  # pragma: specific no cover 3.7 3.8 3.9
             # When `staticmethod` is combined with
             # `from __future__ import annotations`, in Python 3.10 and higher
             # `staticmethod` will attempt to inherit `__doc__` (see
@@ -339,32 +339,6 @@ class Function(metaclass=_FunctionMeta):
         message = str(e)
         return type(e)(prefix + message[0].lower() + message[1:])
 
-    def _resolve_method_with_cache(
-        self,
-        args: Union[Tuple[object, ...], Signature, None] = None,
-        types: Optional[Tuple[TypeHint, ...]] = None,
-    ) -> Tuple[Callable, TypeHint]:
-        if args is None and types is None:
-            raise ValueError("args and types cannot be None, this should not happen")
-
-        if types is None:
-            # Attempt to use the cache based on the types of the arguments.
-            types = tuple(map(type, args))
-        try:
-            return self._cache[types]
-        except KeyError:
-            if args is None:
-                args = Signature(*(resolve_type_hint(t) for t in types))
-
-            # Cache miss. Run the resolver based on the arguments.
-            method, return_type = self.resolve_method(args)
-            # If the resolver is faithful,
-            # then we can perform caching using the types of
-            # the arguments. If the resolver is not faithful, then we cannot.
-            if self._resolver.is_faithful:
-                self._cache[types] = method, return_type
-            return method, return_type
-
     def resolve_method(
         self, target: Union[Tuple[object, ...], Signature]
     ) -> Tuple[Callable, TypeHint]:
@@ -399,26 +373,24 @@ class Function(metaclass=_FunctionMeta):
             # Not in a class. Nothing we can do.
             raise ex
 
-        # In a class. Walk through the classes in the class's MRO, except for
-        # this class, and try to get the method.
+        # In a class. Walk through the classes in the class's MRO, except for this
+        # class, and try to get the method.
         method = None
         return_type = object
 
         for c in self.owner.__mro__[1:]:
-            # Skip the top of the type hierarchy given by `object` and `type`.
-            # We do not suddenly want to fall back to any unexpected default
-            # behaviour.
+            # Skip the top of the type hierarchy given by `object` and `type`. We do
+            # not suddenly want to fall back to any unexpected default behaviour.
             if c in {object, type}:
                 continue
 
-            # We need to check `c.__dict__` here instead of using `hasattr`
-            # since e.g. `c.__le__` will return  even if `c` does not implement
-            # `__le__`!
+            # We need to check `c.__dict__` here instead of using `hasattr` since e.g.
+            # `c.__le__` will return  even if `c` does not implement `__le__`!
             if self._f.__name__ in c.__dict__:
                 method = getattr(c, self._f.__name__)
             else:
-                # For some reason, coverage fails to catch the `continue`
-                # below. Add the do-nothing `_ = None` fixes this.
+                # For some reason, coverage fails to catch the `continue` below. Add
+                # the do-nothing `_ = None` fixes this.
                 # TODO: Remove this once coverage properly catches this.
                 _ = None
                 continue
@@ -432,14 +404,42 @@ class Function(metaclass=_FunctionMeta):
             break
 
         if not method:
-            # If no method has been found after walking through the MRO, raise
-            # the original exception.
+            # If no method has been found after walking through the MRO, raise the
+            # original exception.
             raise ex
         return method, return_type
 
     def __call__(self, *args, **kw_args):
         method, return_type = self._resolve_method_with_cache(args=args)
         return _convert(method(*args, **kw_args), return_type)
+
+    def _resolve_method_with_cache(
+        self,
+        args: Union[Tuple[object, ...], Signature, None] = None,
+        types: Optional[Tuple[TypeHint, ...]] = None,
+    ) -> Tuple[Callable, TypeHint]:
+        if args is None and types is None:
+            raise ValueError(
+                "Arguments `args` and `types` cannot both be `None`. "
+                "This should never happen!"
+            )
+
+        if types is None:
+            # Attempt to use the cache based on the types of the arguments.
+            types = tuple(map(type, args))
+        try:
+            return self._cache[types]
+        except KeyError:
+            if args is None:
+                args = Signature(*(resolve_type_hint(t) for t in types))
+
+            # Cache miss. Run the resolver based on the arguments.
+            method, return_type = self.resolve_method(args)
+            # If the resolver is faithful, then we can perform caching using the types
+            # of the arguments. If the resolver is not faithful, then we cannot.
+            if self._resolver.is_faithful:
+                self._cache[types] = method, return_type
+            return method, return_type
 
     def invoke(self, *types: TypeHint) -> Callable:
         """Invoke a particular method.

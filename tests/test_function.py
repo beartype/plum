@@ -81,10 +81,8 @@ def test_resolve_method_with_cache_no_arguments():
     def f(x):
         pass
 
-    with pytest.raises(ValueError) as err:
+    with pytest.raises(ValueError, match="`args` and `types` cannot both be `None`"):
         Function(f)._resolve_method_with_cache()
-
-    assert "args and types cannot be None" in str(err)
 
 
 @pytest.fixture()
