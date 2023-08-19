@@ -316,39 +316,6 @@ class Function(metaclass=_FunctionMeta):
         message = str(e)
         return type(e)(prefix + message[0].lower() + message[1:])
 
-    def _resolve_method_with_cache(
-        self,
-        args: Union[Tuple[object, ...], Signature, None] = None,
-        types: Optional[Tuple[TypeHint, ...]] = None,
-    ) -> Tuple[Callable, TypeHint]:
-        if args is None and types is None:
-            raise ValueError(
-                "Arguments `args` and `types` cannot both be `None`. "
-                "This should never happen!"
-            )
-
-        # Before attempting to use the cache, resolve any unresolved registrations. Use
-        # an `if`-statement to speed up the common case.
-        if self._pending:
-            self._resolve_pending_registrations()
-
-        if types is None:
-            # Attempt to use the cache based on the types of the arguments.
-            types = tuple(map(type, args))
-        try:
-            return self._cache[types]
-        except KeyError:
-            if args is None:
-                args = Signature(*(resolve_type_hint(t) for t in types))
-
-            # Cache miss. Run the resolver based on the arguments.
-            method, return_type = self.resolve_method(args)
-            # If the resolver is faithful, then we can perform caching using the types
-            # of the arguments. If the resolver is not faithful, then we cannot.
-            if self._resolver.is_faithful:
-                self._cache[types] = method, return_type
-            return method, return_type
-
     def resolve_method(
         self, target: Union[Tuple[object, ...], Signature]
     ) -> Tuple[Callable, TypeHint]:
@@ -424,6 +391,39 @@ class Function(metaclass=_FunctionMeta):
     def __call__(self, *args, **kw_args):
         method, return_type = self._resolve_method_with_cache(args=args)
         return _convert(method(*args, **kw_args), return_type)
+
+    def _resolve_method_with_cache(
+        self,
+        args: Union[Tuple[object, ...], Signature, None] = None,
+        types: Optional[Tuple[TypeHint, ...]] = None,
+    ) -> Tuple[Callable, TypeHint]:
+        if args is None and types is None:
+            raise ValueError(
+                "Arguments `args` and `types` cannot both be `None`. "
+                "This should never happen!"
+            )
+
+        # Before attempting to use the cache, resolve any unresolved registrations. Use
+        # an `if`-statement to speed up the common case.
+        if self._pending:
+            self._resolve_pending_registrations()
+
+        if types is None:
+            # Attempt to use the cache based on the types of the arguments.
+            types = tuple(map(type, args))
+        try:
+            return self._cache[types]
+        except KeyError:
+            if args is None:
+                args = Signature(*(resolve_type_hint(t) for t in types))
+
+            # Cache miss. Run the resolver based on the arguments.
+            method, return_type = self.resolve_method(args)
+            # If the resolver is faithful, then we can perform caching using the types
+            # of the arguments. If the resolver is not faithful, then we cannot.
+            if self._resolver.is_faithful:
+                self._cache[types] = method, return_type
+            return method, return_type
 
     def invoke(self, *types: TypeHint) -> Callable:
         """Invoke a particular method.
