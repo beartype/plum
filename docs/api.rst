@@ -43,10 +43,6 @@ iPython AutoReload
 .. automodule:: plum.autoreload
     :members:
 
-Overload Support
-----------------
-.. autofunction:: plum.overload.dispatch
-
 Other Utilities
 ---------------
 .. automodule:: plum.util
