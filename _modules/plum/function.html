@@ -638,14 +638,44 @@ document.write(`
         <span class="n">message</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)(</span><span class="n">prefix</span> <span class="o">+</span> <span class="n">message</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">+</span> <span class="n">message</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
 
+    <span class="k">def</span> <span class="nf">_resolve_method_with_cache</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">args</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">Signature</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">types</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">TypeHint</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">TypeHint</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">args</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">types</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;args and types cannot be None, this should not happen&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Before attempting to use the cache, resolve any unresolved registrations. Use</span>
+        <span class="c1"># an `if`-statement to speed up the common case.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pending</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_pending_registrations</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">types</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Attempt to use the cache based on the types of the arguments.</span>
+            <span class="n">types</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">args</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">types</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">args</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">args</span> <span class="o">=</span> <span class="n">Signature</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">types</span><span class="p">))</span>
+
+            <span class="c1"># Cache miss. Run the resolver based on the arguments.</span>
+            <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve_method</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+            <span class="c1"># If the resolver is faithful,</span>
+            <span class="c1"># then we can perform caching using the types of</span>
+            <span class="c1"># the arguments. If the resolver is not faithful, then we cannot.</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="o">.</span><span class="n">is_faithful</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">types</span><span class="p">]</span> <span class="o">=</span> <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span>
+            <span class="k">return</span> <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span>
+
 <div class="viewcode-block" id="Function.resolve_method"><a class="viewcode-back" href="../../api.html#plum.function.Function.resolve_method">[docs]</a>    <span class="k">def</span> <span class="nf">resolve_method</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">Signature</span><span class="p">],</span> <span class="n">types</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">TypeHint</span><span class="p">]</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">Signature</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">TypeHint</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Find the method and return type for arguments.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            target (object): Target.</span>
-<span class="sd">            types (tuple[type, ...]): Types of the arguments.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            function: Method.</span>
@@ -664,69 +694,57 @@ document.write(`
 
         <span class="k">except</span> <span class="n">NotFoundLookupError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">e</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_enhance_exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>  <span class="c1"># Specify this function.</span>
-
-            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">owner</span><span class="p">:</span>
-                <span class="c1"># Not in a class. Nothing we can do.</span>
-                <span class="k">raise</span> <span class="n">e</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># In a class. Walk through the classes in the class&#39;s MRO, except for</span>
-                <span class="c1"># this class, and try to get the method.</span>
-                <span class="n">method</span> <span class="o">=</span> <span class="kc">None</span>
-                <span class="n">return_type</span> <span class="o">=</span> <span class="nb">object</span>
-
-                <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">owner</span><span class="o">.</span><span class="vm">__mro__</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
-                    <span class="c1"># Skip the top of the type hierarchy given by `object` and `type`.</span>
-                    <span class="c1"># We do not suddenly want to fall back to any unexpected default</span>
-                    <span class="c1"># behaviour.</span>
-                    <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="p">{</span><span class="nb">object</span><span class="p">,</span> <span class="nb">type</span><span class="p">}:</span>
-                        <span class="k">continue</span>
-
-                    <span class="c1"># We need to check `c.__dict__` here instead of using `hasattr`</span>
-                    <span class="c1"># since e.g. `c.__le__` will return  even if `c` does not implement</span>
-                    <span class="c1"># `__le__`!</span>
-                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_f</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">:</span>
-                        <span class="n">method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_f</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="c1"># For some reason, coverage fails to catch the `continue`</span>
-                        <span class="c1"># below. Add the do-nothing `_ = None` fixes this.</span>
-                        <span class="c1"># TODO: Remove this once coverage properly catches this.</span>
-                        <span class="n">_</span> <span class="o">=</span> <span class="kc">None</span>
-                        <span class="k">continue</span>
-
-                    <span class="c1"># Ignore abstract methods.</span>
-                    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="s2">&quot;__isabstractmethod__&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
-                        <span class="n">method</span> <span class="o">=</span> <span class="kc">None</span>
-                        <span class="k">continue</span>
-
-                    <span class="c1"># We found a good candidate. Break.</span>
-                    <span class="k">break</span>
-
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">method</span><span class="p">:</span>
-                    <span class="c1"># If no method has been found after walking through the MRO, raise</span>
-                    <span class="c1"># the original exception.</span>
-                    <span class="k">raise</span> <span class="n">e</span>
-
-        <span class="c1"># If the resolver is faithful, then we can perform caching using the types of</span>
-        <span class="c1"># the arguments. If the resolver is not faithful, then we cannot.</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="o">.</span><span class="n">is_faithful</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">types</span><span class="p">]</span> <span class="o">=</span> <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span>
+            <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handle_not_found_lookup_error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span></div>
 
+    <span class="k">def</span> <span class="nf">_handle_not_found_lookup_error</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">ex</span><span class="p">:</span> <span class="n">NotFoundLookupError</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">TypeHint</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">owner</span><span class="p">:</span>
+            <span class="c1"># Not in a class. Nothing we can do.</span>
+            <span class="k">raise</span> <span class="n">ex</span>
+
+        <span class="c1"># In a class. Walk through the classes in the class&#39;s MRO, except for</span>
+        <span class="c1"># this class, and try to get the method.</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">return_type</span> <span class="o">=</span> <span class="nb">object</span>
+
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">owner</span><span class="o">.</span><span class="vm">__mro__</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+            <span class="c1"># Skip the top of the type hierarchy given by `object` and `type`.</span>
+            <span class="c1"># We do not suddenly want to fall back to any unexpected default</span>
+            <span class="c1"># behaviour.</span>
+            <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="p">{</span><span class="nb">object</span><span class="p">,</span> <span class="nb">type</span><span class="p">}:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># We need to check `c.__dict__` here instead of using `hasattr`</span>
+            <span class="c1"># since e.g. `c.__le__` will return  even if `c` does not implement</span>
+            <span class="c1"># `__le__`!</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_f</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">:</span>
+                <span class="n">method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_f</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># For some reason, coverage fails to catch the `continue`</span>
+                <span class="c1"># below. Add the do-nothing `_ = None` fixes this.</span>
+                <span class="c1"># TODO: Remove this once coverage properly catches this.</span>
+                <span class="n">_</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Ignore abstract methods.</span>
+            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="s2">&quot;__isabstractmethod__&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+                <span class="n">method</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># We found a good candidate. Break.</span>
+            <span class="k">break</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">method</span><span class="p">:</span>
+            <span class="c1"># If no method has been found after walking through the MRO, raise</span>
+            <span class="c1"># the original exception.</span>
+            <span class="k">raise</span> <span class="n">ex</span>
+        <span class="k">return</span> <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span>
+
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
-        <span class="c1"># Before attempting to use the cache, resolve any unresolved registrations. Use</span>
-        <span class="c1"># an `if`-statement to speed up the common case.</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pending</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_pending_registrations</span><span class="p">()</span>
-
-        <span class="c1"># Attempt to use the cache based on the types of the arguments.</span>
-        <span class="n">types</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">args</span><span class="p">))</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">types</span><span class="p">]</span>
-        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-            <span class="c1"># Cache miss. Run the resolver based on the arguments.</span>
-            <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve_method</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">types</span><span class="p">)</span>
-
+        <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_method_with_cache</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">_convert</span><span class="p">(</span><span class="n">method</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">),</span> <span class="n">return_type</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Function.invoke"><a class="viewcode-back" href="../../api.html#plum.function.Function.invoke">[docs]</a>    <span class="k">def</span> <span class="nf">invoke</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">types</span><span class="p">:</span> <span class="n">TypeHint</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
@@ -738,17 +756,7 @@ document.write(`
 <span class="sd">        Returns:</span>
 <span class="sd">            function: Method.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Do this before attempting to cache. See above.</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pending</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_pending_registrations</span><span class="p">()</span>
-
-        <span class="c1"># Attempt to use the cache based on the types.</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">types</span><span class="p">]</span>
-        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-            <span class="c1"># Cache miss. Run the resolver based on the types.</span>
-            <span class="n">sig_types</span> <span class="o">=</span> <span class="n">Signature</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">types</span><span class="p">))</span>
-            <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve_method</span><span class="p">(</span><span class="n">sig_types</span><span class="p">,</span> <span class="n">types</span><span class="p">)</span>
+        <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_method_with_cache</span><span class="p">(</span><span class="n">types</span><span class="o">=</span><span class="n">types</span><span class="p">)</span>
 
         <span class="nd">@wraps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_f</span><span class="p">)</span>
         <span class="k">def</span> <span class="nf">wrapped_method</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
