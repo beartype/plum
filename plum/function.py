@@ -128,7 +128,7 @@ class Function(metaclass=_FunctionMeta):
         try:
             # trigger the _resolver_pending_registration in a try-except
             # TODO: Find a way to remove this or make this simpler
-            self._resolver
+            self._resolve_pending_registration_if_necessary()
         except NameError:  # pragma: specific no cover 3.7 3.8 3.9
             # When `staticmethod` is combined with
             # `from __future__ import annotations`, in Python 3.10 and higher
@@ -155,7 +155,7 @@ class Function(metaclass=_FunctionMeta):
 
         # Append the docstrings of all other implementations to it. Exclude the
         # docstring from `self._f`, because that one forms the basis (see boave).
-        resolver_doc = self._resolver.doc(exclude=self._f)
+        resolver_doc = self._raw_resolver.doc(exclude=self._f)
         if resolver_doc:
             # Add a newline if the documentation is non-empty.
             if doc:
@@ -193,9 +193,8 @@ class Function(metaclass=_FunctionMeta):
         self._resolve_pending_registration_if_necessary()
         return self._raw_cache
 
-    @_cache.setter
-    def _cache(self, new_cache: dict):
-        self._raw_cache = new_cache
+    def _clear_cache_dict(self):
+        self._raw_cache.clear()
 
     def _resolve_pending_registration_if_necessary(self):
         if self._pending != []:
@@ -257,7 +256,7 @@ class Function(metaclass=_FunctionMeta):
             reregister (bool, optional): Also reregister all methods. Defaults to
                 `True`.
         """
-        self._cache.clear()
+        self._clear_cache_dict()
 
         if reregister:
             # Add all resolved to pending.
