@@ -24,12 +24,12 @@ class Dispatcher:
         self.classes: Dict[str, Dict[str, Function]] = {}
 
     @overload
-    def __call__(self, method: Callable[[Any], Any], precedence: int) -> Function:
+    def __call__(self, method: Callable[[Any], Any], precedence: int = 0) -> Function:
         ...
 
     @overload
     def __call__(
-        self, method: None, precedence: int
+        self, method: None, precedence: int = 0
     ) -> Callable[[Callable[[Any], Any]], Function]:
         ...
 
