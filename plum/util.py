@@ -3,9 +3,13 @@ import sys
 import typing
 from typing import Callable, List
 
+if sys.version_info.minor <= 8:  # pragma: specific no cover 3.9 3.10 3.11
+    from typing import Callable
+else:  # pragma: specific no cover 3.8
+    from collections.abc import Callable
+
 __all__ = [
-    "get_origin",
-    "get_args",
+    "Callable",
     "TypeHint",
     "repr_short",
     "Missing",
@@ -16,65 +20,6 @@ __all__ = [
     "get_class",
     "get_context",
 ]
-
-try:  # pragma: specific no cover 3.7
-    from typing import get_args as _get_args
-    from typing import get_origin as _get_origin
-
-    # Wrap the functions, because we'll adjust their docstrings below.
-
-    def get_args(x):
-        return _get_args(x)
-
-    def get_origin(x):
-        return _get_origin(x)
-
-except ImportError:  # pragma: no cover
-    import collections.abc
-
-    # The functions :func:`typing.get_origin` and :func:`typing.get_args` were only
-    # introduced in Python 3.8, but we need them already in Python 3.7. The below is
-    # a copy of their source in `typing.py` from Python 3.8. Since we copied from
-    # the source, we also do not check for coverage.
-
-    def get_origin(x):
-        if isinstance(x, typing._GenericAlias):
-            return x.__origin__
-        if x is typing.Generic:
-            return typing.Generic
-        return None
-
-    def get_args(x):
-        if isinstance(x, typing._GenericAlias) and not x._special:
-            args = x.__args__
-            if get_origin(x) is collections.abc.Callable and args[0] is not Ellipsis:
-                args = (list(args[:-1]), args[-1])
-            return args
-        return ()
-
-
-# If we were to add docstrings directly to the manual definitions of `get_origin` above,
-# then the docstrings would be different depending on whether an `ImportError` happened
-# or not. We don't want that. Hence, we set the docstrings below, regardless of which
-# case happened.
-
-get_origin.__doc__ = """Get the unsubscripted version of a type hint.
-
-Args:
-    x (type hint): Type hint.
-
-Returns:
-    type hint: Unsubcripted version of `x`.
-"""
-
-get_args.__doc__ = """Get the arguments of a subscripted type hint.
-
-Args:
-    x (type hint): Type hint.
-
-Returns:
-    tuple: Arguments of `x`.
-"""
 
 # We use this to indicate a reader that we expect a type hint. Using just `object` as a
 # type hint is technically correct for `int | None` for example, but does not convey the
@@ -94,7 +39,7 @@ def repr_short(x):
         str: Shorter representation of `x`.
     """
     # :func:`typing._type_repr` is an internal function, but it should be available in
-    # Python versions 3.7 through 3.11.
+    # Python versions 3.8 through 3.11.
     return typing._type_repr(x)
 
 

@@ -1,10 +1,13 @@
-from typing import Callable, Dict, Optional, Tuple, Union, overload
+from typing import Any, Callable, Dict, Optional, Tuple, TypeVar, Union, overload
 
 from .function import Function
+from .overload import get_overloads
 from .signature import Signature
-from .util import TypeHint, get_class, is_in_class
+from .util import Callable, TypeHint, get_class, is_in_class
 
 __all__ = ["Dispatcher", "dispatch", "clear_all_cache"]
+
+T = TypeVar("T", bound=Callable[..., Any])
 
 
 class Dispatcher:
@@ -21,18 +24,20 @@ class Dispatcher:
         self.classes: Dict[str, Dict[str, Function]] = {}
 
     @overload
-    def __call__(self, method: Callable, precedence: int) -> Function:
+    def __call__(self, method: Callable[[Any], Any], precedence: int) -> Function:
         ...
 
     @overload
-    def __call__(self, method: None, precedence: int) -> Callable[[Callable], Function]:
+    def __call__(
+        self, method: None, precedence: int
+    ) -> Callable[[Callable[[Any], Any]], Function]:
         ...
 
     def __call__(
         self,
-        method: Optional[Callable] = None,
+        method: Optional[Callable[[Any], Any]] = None,
         precedence: int = 0,
-    ) -> Union[Function, Callable[[Callable], Function]]:
+    ) -> Union[Function, Callable[[Callable[[Any], Any]], Function]]:
         """Decorator to register for a particular signature.
 
         Args:
@@ -43,6 +48,16 @@ class Dispatcher:
         """
         if method is None:
             return lambda m: self(m, precedence=precedence)
+
+        # If `method` has overloads, assume that those overloads need to be registered
+        # and that `method` is not an implementation.
+        overloads = get_overloads(method)
+        if overloads:
+            for overload_method in overloads:
+                # All `f` returned by `self._add_method` are the same.
+                f = self._add_method(overload_method, None, precedence=precedence)
+            # We do not need to register `method`, because it is not an implementation.
+            return f
 
         # The signature will be automatically derived from `method`, so we can safely
         # set the signature argument to `None`.

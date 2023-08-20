@@ -87,6 +87,14 @@ def test_owner():
     assert Function(f, owner="A").owner is A
 
 
+def test_resolve_method_with_cache_no_arguments():
+    def f(x):
+        pass
+
+    with pytest.raises(ValueError, match="`args` and `types` cannot both be `None`"):
+        Function(f)._resolve_method_with_cache()
+
+
 @pytest.fixture()
 def owner_transfer():
     # Save and clear.

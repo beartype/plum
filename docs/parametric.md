@@ -268,7 +268,9 @@ def algorithm(setting: Val["slow"], x):
 ```
 
 `typing.Literal` fills a very similar purpose.
-You can use `Val` if `typing.Literal` is not available, e.g. on Python 3.7.
+We recommend using `typing.Literal` instead.
+`Val` is only useful for Python versions that do not have `typing.Literal`.
+Those are Python 3.7 and below, but Plum does not support those versions.
 
 
 ## Example: `NDArray`
