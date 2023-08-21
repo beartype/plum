@@ -53,23 +53,13 @@ def test_repr():
     def f(x: str):
         return "str"
 
-    assert repr(f) == f"<function {f._f} with 0 registered and 2 pending method(s)>"
-
-    # Register all methods.
-    assert f(1) == "int"
-
-    assert repr(f) == f"<function {f._f} with 2 registered and 0 pending method(s)>"
+    assert repr(f) == f"<function {f._f} with 2 method(s)>"
 
     @dispatch
     def f(x: float):
         return "float"
 
-    assert repr(f) == f"<function {f._f} with 2 registered and 1 pending method(s)>"
-
-    # Again register all methods.
-    assert f(1) == "int"
-
-    assert repr(f) == f"<function {f._f} with 3 registered and 0 pending method(s)>"
+    assert repr(f) == f"<function {f._f} with 3 method(s)>"
 
 
 # `A` needs to be in the global scope for owner resolution to work.
@@ -286,7 +276,7 @@ def test_register():
 
     assert g._pending == [(f, None, 0)]
     assert g._resolved == []
-    assert len(g._resolver) == 0
+    assert len(g._raw_resolver) == 0
 
 
 def test_resolve_pending_registrations():

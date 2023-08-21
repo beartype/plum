@@ -92,7 +92,7 @@ class Function(metaclass=_FunctionMeta):
         Function._instances.append(self)
 
         self._f: Callable = f
-        self._cache = {}
+        self._raw_cache = {}
         wraps(f)(self)  # Sets `self._doc`.
 
         # `owner` is the name of the owner. We will later attempt to resolve to
@@ -102,8 +102,8 @@ class Function(metaclass=_FunctionMeta):
 
         # Initialise pending and resolved methods.
         self._pending: List[Tuple[Callable, Optional[Signature], int]] = []
-        self._resolver = Resolver()
         self._resolved: List[Tuple[Callable, Signature, int]] = []
+        self._raw_resolver = Resolver()
 
     @property
     def owner(self):
@@ -126,7 +126,9 @@ class Function(metaclass=_FunctionMeta):
         Upon instantiation, this property is available through `obj.__doc__`.
         """
         try:
-            self._resolve_pending_registrations()
+            # trigger the _resolver_pending_registration in a try-except
+            # TODO: Find a way to remove this or make this simpler
+            self._resolve_pending_registration_if_necessary()
         except NameError:  # pragma: specific no cover 3.7 3.8 3.9
             # When `staticmethod` is combined with
             # `from __future__ import annotations`, in Python 3.10 and higher
@@ -153,7 +155,7 @@ class Function(metaclass=_FunctionMeta):
 
         # Append the docstrings of all other implementations to it. Exclude the
         # docstring from `self._f`, because that one forms the basis (see boave).
-        resolver_doc = self._resolver.doc(exclude=self._f)
+        resolver_doc = self._raw_resolver.doc(exclude=self._f)
         if resolver_doc:
             # Add a newline if the documentation is non-empty.
             if doc:
@@ -175,8 +177,28 @@ class Function(metaclass=_FunctionMeta):
     @property
     def methods(self) -> List[Signature]:
         """list[:class:`.signature.Signature`]: All available methods."""
-        self._resolve_pending_registrations()
         return self._resolver.signatures
+
+    @property
+    def _resolver(self) -> Resolver:
+        self._resolve_pending_registration_if_necessary()
+        return self._raw_resolver
+
+    @_resolver.setter
+    def _resolver(self, new_resolver: Resolver):
+        self._raw_resolver = new_resolver
+
+    @property
+    def _cache(self) -> dict:
+        self._resolve_pending_registration_if_necessary()
+        return self._raw_cache
+
+    def _clear_cache_dict(self):
+        self._raw_cache.clear()
+
+    def _resolve_pending_registration_if_necessary(self):
+        if self._pending != []:
+            self._resolve_pending_registrations()
 
     def dispatch(
         self: Self, method: Optional[Callable] = None, precedence=0
@@ -234,7 +256,7 @@ class Function(metaclass=_FunctionMeta):
             reregister (bool, optional): Also reregister all methods. Defaults to
                 `True`.
         """
-        self._cache.clear()
+        self._clear_cache_dict()
 
         if reregister:
             # Add all resolved to pending.
@@ -288,7 +310,7 @@ class Function(metaclass=_FunctionMeta):
 
             # Process default values.
             for subsignature in append_default_args(signature, f):
-                self._resolver.register(subsignature)
+                self._raw_resolver.register(subsignature)
                 registered = True
 
         if registered:
@@ -328,8 +350,6 @@ class Function(metaclass=_FunctionMeta):
             function: Method.
             type: Return type.
         """
-        self._resolve_pending_registrations()
-
         try:
             # Attempt to find the method using the resolver.
             signature = self._resolver.resolve(target)
@@ -403,11 +423,6 @@ class Function(metaclass=_FunctionMeta):
                 "This should never happen!"
             )
 
-        # Before attempting to use the cache, resolve any unresolved registrations. Use
-        # an `if`-statement to speed up the common case.
-        if self._pending:
-            self._resolve_pending_registrations()
-
         if types is None:
             # Attempt to use the cache based on the types of the arguments.
             types = tuple(map(type, args))
@@ -449,10 +464,7 @@ class Function(metaclass=_FunctionMeta):
             return self
 
     def __repr__(self) -> str:
-        return (
-            f"<function {self._f} with {len(self._resolver)} registered and"
-            f" {len(self._pending)} pending method(s)>"
-        )
+        return f"<function {self._f} with {len(self._resolver)} method(s)>"
 
 
 class _BoundFunction:

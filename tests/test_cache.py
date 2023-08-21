@@ -136,33 +136,33 @@ def test_cache_clearing():
     def f(x: float):
         return 2
 
-    assert len(f._cache) == 0
-    assert len(f._resolver) == 0
+    assert len(f._raw_cache) == 0
+    assert len(f._raw_resolver) == 0
 
     assert f(1) == 1
     # Check that cache is used.
-    assert len(f._cache) == 1
-    assert len(f._resolver) == 2
+    assert len(f._raw_cache) == 1
+    assert len(f._raw_resolver) == 2
 
     # Clear via the dispatcher.
     dispatch.clear_cache()
-    assert len(f._cache) == 0
-    assert len(f._resolver) == 0
+    assert len(f._raw_cache) == 0
+    assert len(f._raw_resolver) == 0
 
     # Run the function again.
     assert f(1) == 1
-    assert len(f._cache) == 1
-    assert len(f._resolver) == 2
+    assert len(f._raw_cache) == 1
+    assert len(f._raw_resolver) == 2
 
     # Clear via `clear_all_cache`.
     clear_all_cache()
-    assert len(f._cache) == 0
-    assert len(f._resolver) == 0
+    assert len(f._raw_cache) == 0
+    assert len(f._raw_resolver) == 0
 
     # Run the function one last time.
     assert f(1) == 1
-    assert len(f._cache) == 1
-    assert len(f._resolver) == 2
+    assert len(f._raw_cache) == 1
+    assert len(f._raw_resolver) == 2
 
 
 def test_cache_unfaithful():
@@ -179,4 +179,4 @@ def test_cache_unfaithful():
     # Since `f` is not faithful, no cache should be accumulated.
     assert f(1) == 1
     assert f([1]) == 2
-    assert len(f._cache) == 0
+    assert len(f._raw_cache) == 0
