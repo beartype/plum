@@ -24,7 +24,7 @@ class Dispatcher:
         self.classes: Dict[str, Dict[str, Function]] = {}
 
     @overload
-    def __call__(self, method: Callable[[Any], Any], precedence: int = 0) -> Function:
+    def __call__(self, method: Callable[…, Any], precedence: int = 0) -> Function:
         ...
 
     @overload
