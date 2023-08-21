@@ -24,20 +24,20 @@ class Dispatcher:
         self.classes: Dict[str, Dict[str, Function]] = {}
 
     @overload
-    def __call__(self, method: Callable[…, Any], precedence: int = 0) -> Function:
+    def __call__(self, method: Callable[..., Any], precedence: int = 0) -> Function:
         ...
 
     @overload
     def __call__(
         self, method: None, precedence: int = 0
-    ) -> Callable[[Callable[…, Any]], Function]:
+    ) -> Callable[[Callable[..., Any]], Function]:
         ...
 
     def __call__(
         self,
-        method: Optional[Callable[…, Any]] = None,
+        method: Optional[Callable[..., Any]] = None,
         precedence: int = 0,
-    ) -> Union[Function, Callable[[Callable[…, Any]], Function]]:
+    ) -> Union[Function, Callable[[Callable[..., Any]], Function]]:
         """Decorator to register for a particular signature.
 
         Args:
