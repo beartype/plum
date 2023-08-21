@@ -30,7 +30,7 @@ class Dispatcher:
     @overload
     def __call__(
         self, method: None, precedence: int = 0
-    ) -> Callable[[Callable[[Any], Any]], Function]:
+    ) -> Callable[[Callable[…, Any]], Function]:
         ...
 
     def __call__(
