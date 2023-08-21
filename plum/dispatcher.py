@@ -37,7 +37,7 @@ class Dispatcher:
         self,
         method: Optional[Callable[[Any], Any]] = None,
         precedence: int = 0,
-    ) -> Union[Function, Callable[[Callable[[Any], Any]], Function]]:
+    ) -> Union[Function, Callable[[Callable[…, Any]], Function]]:
         """Decorator to register for a particular signature.
 
         Args:
