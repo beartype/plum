@@ -6,24 +6,24 @@ dispatch = Dispatcher()
 
 
 @overload
-def f(x: int) -> int:  # E: pyright(marked as overload)
+def f(x: int, y: int) -> int:  # E: pyright(marked as overload)
     return x
 
 
 @overload
-def f(x: str) -> str:  # E: pyright(marked as overload)
+def f(x: str, y: str) -> str:  # E: pyright(marked as overload)
     return x
 
 
 @dispatch
-def f(x):  # E: pyright(overloaded implementation is not consistent)
+def f(x, y):  # E: pyright(overloaded implementation is not consistent)
     pass
 
 
 def test_overload() -> None:
-    assert f(1) == 1
-    assert f("1") == "1"
+    assert f(1, 2) == 1
+    assert f("1", "2") == "1"
     with pytest.raises(NotFoundLookupError):
         # E: pyright(argument of type "float" cannot be assigned to parameter "x")
         # E: mypy(no overload variant of "f" matches argument type "float")
-        f(1.0)
+        f(1.0, 2.0)

@@ -388,7 +388,7 @@ class Function(metaclass=_FunctionMeta):
             raise ex
         return method, return_type
 
-    def __call__(self, *args, **kw_args):
+    def __call__(self, *args: object, **kw_args: object) -> object:
         method, return_type = self._resolve_method_with_cache(args=args)
         return _convert(method(*args, **kw_args), return_type)
 
