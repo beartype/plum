@@ -158,7 +158,7 @@ def run_linter(linter: str) -> str:
         str: `stdout`.
     """
     p = subprocess.Popen(
-        [linter, source_dir],
+        [sys.executable, "-m", linter, source_dir],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
