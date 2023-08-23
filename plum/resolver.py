@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union
+from typing import Iterable, List, Tuple, Union
 
 from plum.signature import Signature
 
@@ -21,29 +21,10 @@ class Resolver:
         is_faithful (bool): Whether all signatures are faithful or not.
     """
 
-    def __init__(self):
-        self.signatures: List[Signature] = []
-        self.is_faithful: bool = True
-
-    def register(self, signature: Signature) -> None:
-        """Register a new signature.
-
-        Args:
-            signature (:class:`.signature.Signature`): Signature to add.
-        """
-        existing = [s == signature for s in self.signatures]
-        if any(existing):
-            if sum(existing) != 1:
-                raise AssertionError(
-                    f"The added signature `{signature}` is equal to {sum(existing)} "
-                    f"existing signatures. This should never happen."
-                )
-            self.signatures[existing.index(True)] = signature
-        else:
-            self.signatures.append(signature)
-
-        # Use a double negation for slightly better performance.
-        self.is_faithful = not any(not s.is_faithful for s in self.signatures)
+    def __init__(self, signatures: Iterable[Signature]):
+        signatures_dict = {hash(s): s for s in signatures}
+        self.signatures: List[Signature] = list(signatures_dict.values())
+        self.is_faithful: bool = all(s.is_faithful for s in self.signatures)
 
     def __len__(self) -> int:
         return len(self.signatures)

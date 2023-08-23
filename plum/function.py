@@ -134,8 +134,7 @@ class MethodsRegistry:
     @property
     def resolver(self) -> Resolver:
         if self._resolver is None:
-            self._resolver = Resolver()
-            self._resolve_pending_registrations()
+            self._resolver = Resolver(self.get_all_subsignatures())
         return self._resolver
 
     @property
@@ -143,10 +142,6 @@ class MethodsRegistry:
         if self._cache is None:
             self._cache = {}
         return self._cache
-
-    def _resolve_pending_registrations(self) -> None:
-        for subsignature in self.get_all_subsignatures():
-            self._resolver.register(subsignature)
 
     def get_all_subsignatures(self, strict: bool = True) -> Iterator[Signature]:
         # Perform any pending registrations.

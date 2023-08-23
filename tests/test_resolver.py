@@ -7,46 +7,35 @@ from plum.signature import Signature
 
 
 def test_initialisation():
-    r = Resolver()
+    r = Resolver([])
     # Without any registered signatures, the resolver should be faithful.
     assert r.is_faithful
 
 
 def test_register():
-    r = Resolver()
-
     # Test that faithfulness is tracked correctly.
-    r.register(Signature(int))
-    r.register(Signature(float))
+    r = Resolver([Signature(int), Signature(float)])
     assert r.is_faithful
-    r.register(Signature(Tuple[int]))
+    r = Resolver([Signature(int), Signature(float), Signature(Tuple[int])])
     assert not r.is_faithful
 
     # Test that signatures can be replaced.
-    new_s = Signature(float)
     assert len(r) == 3
+    new_s = Signature(float)
     assert r.signatures[1] is not new_s
-    r.register(new_s)
+    r = Resolver([Signature(int), Signature(float), Signature(Tuple[int]), new_s])
     assert len(r) == 3
     assert r.signatures[1] is new_s
 
-    # Test the edge case that should never happen.
-    r.signatures[2] = Signature(float)
-    with pytest.raises(
-        AssertionError,
-        match=r"(?i)the added signature `(.*)` is equal to 2 existing signatures",
-    ):
-        r.register(Signature(float))
-
 
 def test_len():
-    r = Resolver()
+    r = Resolver([])
     assert len(r) == 0
-    r.register(Signature(int))
+    r = Resolver([Signature(int)])
     assert len(r) == 1
-    r.register(Signature(float))
+    r = Resolver([Signature(int), Signature(float)])
     assert len(r) == 2
-    r.register(Signature(float))
+    r = Resolver([Signature(int), Signature(float), Signature(float)])
     assert len(r) == 2
 
 
@@ -80,16 +69,18 @@ def test_resolve():
     s_u = Signature(Unrelated)
     s_m = Signature(Missing)
 
-    r = Resolver()
-    r.register(s_b1)
-    # Import this after `s_b1` to test all branches.
-    r.register(s_a)
-    r.register(s_b2)
-    # Do not register `s_c1`.
-    r.register(s_c2)
-    r.register(s_u)
-    # Also do not register `s_m`.
-
+    r = Resolver(
+        [
+            s_b1,
+            # Import this after `s_b1` to test all branches.
+            s_a,
+            s_b2,
+            # Do not register `s_c1`.
+            s_c2,
+            s_u,
+            # Also do not register `s_m`.
+        ]
+    )
     # Resolve by signature.
     assert r.resolve(s_a) == s_a
     assert r.resolve(s_b1) == s_b1
