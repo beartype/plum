@@ -1,11 +1,8 @@
-import sys
-import textwrap
-import typing
+from typing import Tuple
 
 import pytest
 
-import plum.resolver
-from plum.resolver import AmbiguousLookupError, NotFoundLookupError, Resolver, _document
+from plum.resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
 from plum.signature import Signature
 
 
@@ -15,105 +12,6 @@ def test_initialisation():
     assert r.is_faithful
 
 
-def test_document_nosphinx():
-    """Test the following:
-    (1) remove trailing newlines,
-    (2) appropriately remove trailing newlines,
-    (3) appropriately remove indentation, ignoring the first line,
-    (4) separate the title from the body.
-    """
-
-    def f(x):
-        """Title.
-
-        Hello.
-
-        Args:
-            x (object): Input.
-
-        """
-
-    expected_doc = """
-    <separator>
-
-    f(x)
-
-    Title.
-
-    Hello.
-
-    Args:
-        x (object): Input.
-    """
-    assert _document(f) == textwrap.dedent(expected_doc).strip()
-
-
-def test_document_sphinx(monkeypatch):
-    """Like :func:`test_document_nosphinx`, but when :mod:`sphinx`
-    is imported."""
-    # Fake import :mod:`sphinx`.
-    monkeypatch.setitem(sys.modules, "sphinx", None)
-
-    def f(x):
-        """Title.
-
-        Hello.
-
-        Args:
-            x (object): Input.
-
-        """
-
-    expected_doc = """
-    .. py:function:: f(x)
-       :noindex:
-
-    Title.
-
-    Hello.
-
-    Args:
-        x (object): Input.
-    """
-    assert _document(f) == textwrap.dedent(expected_doc).strip()
-
-
-def test_doc(monkeypatch):
-    # Let the `pydoc` documenter simply return the docstring. This makes testing
-    # simpler.
-    monkeypatch.setattr(plum.resolver, "_document", lambda x: x.__doc__)
-
-    r = Resolver()
-
-    class _MockFunction:
-        def __init__(self, doc):
-            self.__doc__ = doc
-
-    class _MockSignature:
-        def __init__(self, doc):
-            self.implementation = _MockFunction(doc)
-
-    # Circumvent the use of :meth:`.resolver.Resolver.register`.
-    r.signatures = [
-        _MockSignature("first"),
-        _MockSignature("second"),
-        _MockSignature("third"),
-    ]
-    assert r.doc() == "first\n\nsecond\n\nthird"
-
-    # Test that duplicates are excluded.
-    r.signatures = [
-        _MockSignature("first"),
-        _MockSignature("second"),
-        _MockSignature("second"),
-        _MockSignature("third"),
-    ]
-    assert r.doc() == "first\n\nsecond\n\nthird"
-
-    # Test that the explicit exclusion mechanism also works.
-    assert r.doc(exclude=r.signatures[3].implementation) == "first\n\nsecond"
-
-
 def test_register():
     r = Resolver()
 
@@ -121,7 +19,7 @@ def test_register():
     r.register(Signature(int))
     r.register(Signature(float))
     assert r.is_faithful
-    r.register(Signature(typing.Tuple[int]))
+    r.register(Signature(Tuple[int]))
     assert not r.is_faithful
 
     # Test that signatures can be replaced.

@@ -1,11 +1,21 @@
 import abc
+import sys
 import textwrap
 import typing
+from unittest.mock import MagicMock
 
 import pytest
 
+import plum.resolver
 from plum import Dispatcher
-from plum.function import Function, _change_function_name, _convert, _owner_transfer
+from plum.function import (
+    Function,
+    MethodsRegistry,
+    _change_function_name,
+    _convert,
+    _document,
+    _owner_transfer,
+)
 from plum.resolver import AmbiguousLookupError, NotFoundLookupError
 from plum.signature import Signature
 
@@ -274,9 +284,8 @@ def test_register():
     g = Function(f)
     g.register(f)
 
-    assert g._pending == [(f, None, 0)]
-    assert g._resolved == []
-    assert len(g._raw_resolver) == 0
+    assert len(g.methods) == 1
+    assert g.methods[0].implementation == f
 
 
 def test_resolve_pending_registrations():
@@ -291,8 +300,7 @@ def test_resolve_pending_registrations():
 
     # At this point, there should be nothing to register, so a call should not clear
     # the cache.
-    assert f._pending == []
-    f._resolve_pending_registrations()
+    assert f._resolver
     assert len(f._cache) == 1
 
     @f.dispatch
@@ -300,10 +308,8 @@ def test_resolve_pending_registrations():
         pass
 
     # Now there is something to register. A call should clear the cache.
-    assert len(f._pending) == 1
-    f._resolve_pending_registrations()
-    assert len(f._pending) == 0
-    assert len(f._cache) == 0
+    f._resolver
+    assert f._methods_registry._cache is None
 
     # Register in two ways using multi and the wrong name.
     @f.dispatch_multi((float,), Signature(complex))
@@ -567,3 +573,105 @@ def test_bound():
     # Also test that `invoke` is wrapped, like above.
     assert A().do.invoke(int).__doc__ == "Docs"
     assert A.do.invoke(A, int).__doc__ == "Docs"
+
+
+def test_document_nosphinx():
+    """Test the following:
+    (1) remove trailing newlines,
+    (2) appropriately remove trailing newlines,
+    (3) appropriately remove indentation, ignoring the first line,
+    (4) separate the title from the body.
+    """
+
+    def f(x):
+        """Title.
+
+        Hello.
+
+        Args:
+            x (object): Input.
+
+        """
+
+    expected_doc = """
+    <separator>
+
+    f(x)
+
+    Title.
+
+    Hello.
+
+    Args:
+        x (object): Input.
+    """
+    assert _document(f) == textwrap.dedent(expected_doc).strip()
+
+
+def test_document_sphinx(monkeypatch):
+    """Like :func:`test_document_nosphinx`, but when :mod:`sphinx`
+    is imported."""
+    # Fake import :mod:`sphinx`.
+    monkeypatch.setitem(sys.modules, "sphinx", None)
+
+    def f(x):
+        """Title.
+
+        Hello.
+
+        Args:
+            x (object): Input.
+
+        """
+
+    expected_doc = """
+    .. py:function:: f(x)
+       :noindex:
+
+    Title.
+
+    Hello.
+
+    Args:
+        x (object): Input.
+    """
+    assert _document(f) == textwrap.dedent(expected_doc).strip()
+
+
+def test_doc_in_resolver(monkeypatch):
+    # Let the `pydoc` documenter simply return the docstring. This makes testing
+    # simpler.
+    monkeypatch.setattr(plum.function, "_document", lambda x: x.__doc__)
+
+    r = MethodsRegistry(function_name="something")
+
+    class _MockFunction:
+        def __init__(self, doc):
+            self.__doc__ = doc
+
+    class _MockSignature:
+        def __init__(self, doc):
+            self.implementation = _MockFunction(doc)
+
+    # Circumvent the use of :meth:`.resolver.Resolver.register`.
+    r.get_all_subsignatures = MagicMock(
+        return_value=[
+            _MockSignature("first"),
+            _MockSignature("second"),
+            _MockSignature("third"),
+        ]
+    )
+    assert r.doc() == "first\n\nsecond\n\nthird"
+
+    # Test that duplicates are excluded.
+    all_subsignatures = [
+        _MockSignature("first"),
+        _MockSignature("second"),
+        _MockSignature("second"),
+        _MockSignature("third"),
+    ]
+    r.get_all_subsignatures = MagicMock(return_value=all_subsignatures)
+    assert r.doc() == "first\n\nsecond\n\nthird"
+
+    # Test that the explicit exclusion mechanism also works.
+    assert r.doc(exclude=all_subsignatures[3].implementation) == "first\n\nsecond"

@@ -151,7 +151,6 @@ def promote(obj1, obj2, *objs):
         return resolve_type_hint(_promotion_rule.invoke(t0, t1)(t0, t1))
 
     # Find the common type.
-    _promotion_rule._resolve_pending_registrations()
     common_type = _promote_types(types[0], types[1])
     for t in types[2:]:
         common_type = _promote_types(common_type, t)

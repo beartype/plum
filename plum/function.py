@@ -1,7 +1,9 @@
+import pydoc
+import sys
 import textwrap
 from functools import wraps
 from types import MethodType
-from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union
+from typing import Any, Callable, Iterator, List, Optional, Tuple, TypeVar, Union
 
 from .resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
 from .signature import Signature, append_default_args, extract_signature
@@ -21,6 +23,49 @@ except ImportError:  # pragma: specific no cover 3.8 3.9 3.10
     Self = TypeVar("Self", bound="Function")
 
 SomeExceptionType = TypeVar("SomeExceptionType", bound=Exception)
+
+
+def _document(f: Callable) -> str:
+    """Generate documentation for a function `f`.
+
+    The generated documentation contains both the function definition and the
+    docstring. The docstring is on the same level of indentation of the function
+    definition. There will be no trailing newlines.
+
+    If the package :mod:`sphinx` is not imported, then the function definition will
+    be preceded by the string `<separator>`.
+
+    If the package :mod:`sphinx` is imported, then the function definition will include
+    a Sphinx directive to displays the function definition in a nice way.
+
+    Args:
+        f (function): Function.
+
+    Returns:
+        str: Documentation for `f`.
+    """
+    # :class:`pydoc._PlainTextDoc` removes styling. This styling will display
+    # erroneously in Sphinx.
+    parts = pydoc._PlainTextDoc().document(f).rstrip().split("\n")
+
+    # Separate out the function definition and the lines corresponding to the body.
+    title = parts[0]
+    body = parts[1:]
+
+    # Remove indentation from every line of the body. This indentation defaults to
+    # four spaces.
+    body = [line[4:] for line in body]
+
+    # If `sphinx` is imported, assume that we're building the documentation. In that
+    # case, display the function definition in a nice way.
+    if "sphinx" in sys.modules:
+        title = ".. py:function:: " + title + "\n   :noindex:"
+    else:
+        title = "<separator>\n\n" + title
+    title += "\n"  # Add a newline to separate the title from the body.
+
+    # Ensure that there are no trailing newlines. This can happen if the body is empty.
+    return "\n".join([title] + body).rstrip()
 
 
 def _convert(obj: Any, target_type: TypeHint) -> Any:
@@ -64,6 +109,112 @@ _owner_transfer = {}
 a function (see :meth:`Function.owner`), make the corresponding value the owner."""
 
 
+class MethodsRegistry:
+    def __init__(self, function_name: str):
+        self._all_methods: List[Tuple[Callable, Optional[Signature], int]] = []
+        self._resolver = None
+        self._cache = None
+        self._function_name = function_name
+
+    def add_method(
+        self, method: Callable, signature: Optional[Signature], precedence: int
+    ):
+        self._all_methods.append((method, signature, precedence))
+        # since the list of methods has changed, the resolver and cache are invalidated
+        self.invalidate_resolver_and_cache()
+
+    @property
+    def methods(self) -> List[Tuple[Callable, Optional[Signature], int]]:
+        return self._all_methods
+
+    def invalidate_resolver_and_cache(self):
+        self._resolver = None
+        self._cache = None
+
+    @property
+    def resolver(self) -> Resolver:
+        if self._resolver is None:
+            self._resolver = Resolver()
+            self._resolve_pending_registrations()
+        return self._resolver
+
+    @property
+    def cache(self) -> dict:
+        if self._cache is None:
+            self._cache = {}
+        return self._cache
+
+    def _resolve_pending_registrations(self) -> None:
+        for subsignature in self.get_all_subsignatures():
+            self._resolver.register(subsignature)
+
+    def get_all_subsignatures(self, strict: bool = True) -> Iterator[Signature]:
+        # Perform any pending registrations.
+        for f, signature, precedence in self._all_methods:
+
+            # Obtain the signature if it is not available.
+            if signature is None:
+                try:
+                    signature = extract_signature(f, precedence=precedence)
+                except NameError:
+                    if strict:
+                        raise
+                    else:  # pragma: specific no cover 3.8 3.9
+                        # in case we are using from __future__ import annotations
+                        continue
+            else:
+                # Ensure that the implementation is `f`, but make a copy before
+                # mutating.
+                signature = signature.__copy__()
+                signature.implementation = f
+
+            # Ensure that the implementation has the right name, because this name
+            # will show up in the docstring.
+            if (
+                getattr(signature.implementation, "__name__", None)
+                != self._function_name
+            ):
+                signature.implementation = _change_function_name(
+                    signature.implementation,
+                    self._function_name,
+                )
+
+            # Process default values.
+            yield from append_default_args(signature, f)
+
+    def doc(self, exclude: Union[Callable, None] = None) -> str:
+        """Concatenate the docstrings of all methods of this function. Remove duplicate
+        docstrings before concatenating.
+
+        Args:
+            exclude (function, optional): Exclude this implementation from the
+                concatenation.
+
+        Returns:
+            str: Concatenation of all docstrings.
+        """
+        # Generate all docstrings, possibly excluding `exclude`.
+        if sys.version_info < (3, 10):
+            strict = True
+        else:
+            strict = False
+        docs = [
+            _document(sig.implementation)
+            for sig in self.get_all_subsignatures(strict=strict)
+            if not (exclude and sig.implementation == exclude)
+        ]
+        # This can yield duplicates, because of extra methods automatically generated by
+        # :func:`.signature.append_default_args`. We remove these by simply only
+        # keeping unique docstrings.
+        unique_docs = []
+        for d in docs:
+            if d not in unique_docs:
+                unique_docs.append(d)
+        # The unique documentations have no trailing newlines, so separate them with
+        # a newline.
+        return "\n\n".join(unique_docs)
+
+
 class _FunctionMeta(type):
     """:class:`Function` implements `__doc__`, which overrides the docstring of the
     class. This simple metaclass ensures that `Function.__doc__` still prints as the
@@ -92,7 +243,6 @@ class Function(metaclass=_FunctionMeta):
         Function._instances.append(self)
 
         self._f: Callable = f
-        self._raw_cache = {}
         wraps(f)(self)  # Sets `self._doc`.
 
         # `owner` is the name of the owner. We will later attempt to resolve to
@@ -101,9 +251,7 @@ class Function(metaclass=_FunctionMeta):
         self._owner: Optional[type] = None
 
         # Initialise pending and resolved methods.
-        self._pending: List[Tuple[Callable, Optional[Signature], int]] = []
-        self._resolved: List[Tuple[Callable, Signature, int]] = []
-        self._raw_resolver = Resolver()
+        self._methods_registry: MethodsRegistry = MethodsRegistry(self.__name__)
 
     @property
     def owner(self):
@@ -125,23 +273,6 @@ class Function(metaclass=_FunctionMeta):
 
         Upon instantiation, this property is available through `obj.__doc__`.
         """
-        try:
-            # trigger the _resolver_pending_registration in a try-except
-            # TODO: Find a way to remove this or make this simpler
-            self._resolve_pending_registration_if_necessary()
-        except NameError:  # pragma: specific no cover 3.7 3.8 3.9
-            # When `staticmethod` is combined with
-            # `from __future__ import annotations`, in Python 3.10 and higher
-            # `staticmethod` will attempt to inherit `__doc__` (see
-            # https://docs.python.org/3/library/functions.html#staticmethod). Since
-            # we are still in class construction, forward references are not yet
-            # defined, so attempting to resolve all pending methods might fail with a
-            # `NameError`. This is fine, because later calling `__doc__` on the
-            # `staticmethod` will again call this `__doc__`, at which point all methods
-            # will resolve properly. For now, we just ignore the error and undo the
-            # partially completed :meth:`Function._resolve_pending_registrations` by
-            # clearing the cache.
-            self.clear_cache(reregister=False)
 
         # Derive the basis of the docstring from `self._f`, removing any indentation.
         doc = self._doc.strip()
@@ -155,7 +286,7 @@ class Function(metaclass=_FunctionMeta):
 
         # Append the docstrings of all other implementations to it. Exclude the
         # docstring from `self._f`, because that one forms the basis (see boave).
-        resolver_doc = self._raw_resolver.doc(exclude=self._f)
+        resolver_doc = self._methods_registry.doc(exclude=self._f)
         if resolver_doc:
             # Add a newline if the documentation is non-empty.
             if doc:
@@ -177,28 +308,18 @@ class Function(metaclass=_FunctionMeta):
     @property
     def methods(self) -> List[Signature]:
         """list[:class:`.signature.Signature`]: All available methods."""
-        return self._resolver.signatures
+        return self._methods_registry.resolver.signatures
 
     @property
     def _resolver(self) -> Resolver:
-        self._resolve_pending_registration_if_necessary()
-        return self._raw_resolver
-
-    @_resolver.setter
-    def _resolver(self, new_resolver: Resolver):
-        self._raw_resolver = new_resolver
+        return self._methods_registry.resolver
 
     @property
     def _cache(self) -> dict:
-        self._resolve_pending_registration_if_necessary()
-        return self._raw_cache
+        return self._methods_registry.cache
 
     def _clear_cache_dict(self):
-        self._raw_cache.clear()
-
-    def _resolve_pending_registration_if_necessary(self):
-        if self._pending != []:
-            self._resolve_pending_registrations()
+        self._methods_registry.invalidate_resolver_and_cache()
 
     def dispatch(
         self: Self, method: Optional[Callable] = None, precedence=0
@@ -249,22 +370,9 @@ class Function(metaclass=_FunctionMeta):
 
         return decorator
 
-    def clear_cache(self, reregister: bool = True) -> None:
-        """Clear cache.
-
-        Args:
-            reregister (bool, optional): Also reregister all methods. Defaults to
-                `True`.
-        """
-        self._clear_cache_dict()
-
-        if reregister:
-            # Add all resolved to pending.
-            self._pending.extend(self._resolved)
-
-            # Clear resolved.
-            self._resolved = []
-            self._resolver = Resolver()
+    def clear_cache(self) -> None:
+        """Clear cache."""
+        self._methods_registry.invalidate_resolver_and_cache()
 
     def register(
         self, f: Callable, signature: Optional[Signature] = None, precedence=0
@@ -280,44 +388,7 @@ class Function(metaclass=_FunctionMeta):
             precedence (int, optional): Precedence of the function. If `signature` is
                 given, then this argument will not be used. Defaults to `0`.
         """
-        self._pending.append((f, signature, precedence))
-
-    def _resolve_pending_registrations(self) -> None:
-        # Keep track of whether anything registered.
-        registered = False
-
-        # Perform any pending registrations.
-        for f, signature, precedence in self._pending:
-            # Add to resolved registrations.
-            self._resolved.append((f, signature, precedence))
-
-            # Obtain the signature if it is not available.
-            if signature is None:
-                signature = extract_signature(f, precedence=precedence)
-            else:
-                # Ensure that the implementation is `f`, but make a copy before
-                # mutating.
-                signature = signature.__copy__()
-                signature.implementation = f
-
-            # Ensure that the implementation has the right name, because this name
-            # will show up in the docstring.
-            if getattr(signature.implementation, "__name__", None) != self.__name__:
-                signature.implementation = _change_function_name(
-                    signature.implementation,
-                    self.__name__,
-                )
-
-            # Process default values.
-            for subsignature in append_default_args(signature, f):
-                self._raw_resolver.register(subsignature)
-                registered = True
-
-        if registered:
-            self._pending = []
-
-            # Clear cache.
-            self.clear_cache(reregister=False)
+        self._methods_registry.add_method(f, signature, precedence)
 
     def _enhance_exception(self, e: SomeExceptionType) -> SomeExceptionType:
         """Enchance an exception by prepending a prefix to the message of the exception
@@ -352,7 +423,7 @@ class Function(metaclass=_FunctionMeta):
         """
         try:
             # Attempt to find the method using the resolver.
-            signature = self._resolver.resolve(target)
+            signature = self._methods_registry.resolver.resolve(target)
             method = signature.implementation
             return_type = signature.return_type
 
@@ -464,7 +535,9 @@ class Function(metaclass=_FunctionMeta):
             return self
 
     def __repr__(self) -> str:
-        return f"<function {self._f} with {len(self._resolver)} method(s)>"
+        return (
+            f"<function {self._f} with {len(self._methods_registry.methods)} method(s)>"
+        )
 
 
 class _BoundFunction:

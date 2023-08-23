@@ -7,27 +7,22 @@ from plum.promotion import _convert, _promotion_rule
 @pytest.fixture
 def convert():
     # Save methods.
-    _convert._resolve_pending_registrations()
-    resolved = list(_convert._resolved)
+    all_methods = _convert._methods_registry._all_methods.copy()
 
     yield plum.convert
 
     # Clear methods after use.
-    _convert._resolve_pending_registrations()
-    _convert._pending = []
-    _convert._resolved = resolved
-    _convert.clear_cache(reregister=True)
+    _convert._methods_registry._all_methods = all_methods
+    _convert.clear_cache()
 
 
 @pytest.fixture
 def promote():
     # Save methods.
-    _promotion_rule._resolve_pending_registrations()
-    resolved = list(_promotion_rule._resolved)
+    all_methods = _promotion_rule._methods_registry._all_methods.copy()
 
     yield plum.promote
 
     # Clear methods after use.
-    _promotion_rule._pending = []
-    _promotion_rule._resolved = resolved
-    _promotion_rule.clear_cache(reregister=True)
+    _promotion_rule._methods_registry._all_methods = all_methods
+    _promotion_rule.clear_cache()
