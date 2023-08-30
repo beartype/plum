@@ -1,6 +1,8 @@
-from typing import Iterable, List, Tuple, Union
+from typing import Callable, Iterable, List, Optional, Tuple, Union
 
 from plum.signature import Signature
+from plum.type import resolve_type_hint
+from plum.util import TypeHint
 
 __all__ = ["AmbiguousLookupError", "NotFoundLookupError"]
 
@@ -25,11 +27,58 @@ class Resolver:
         signatures_dict = {hash(s): s for s in signatures}
         self.signatures: List[Signature] = list(signatures_dict.values())
         self.is_faithful: bool = all(s.is_faithful for s in self.signatures)
+        self._cache = {}
 
     def __len__(self) -> int:
         return len(self.signatures)
 
-    def resolve(self, target: Union[Tuple[object, ...], Signature]) -> Signature:
+    def clear_cache(self):
+        self._cache = {}
+
+    def resolve_method_with_cache(
+        self,
+        args: Union[Tuple[object, ...], Signature, None] = None,
+        types: Optional[Tuple[TypeHint, ...]] = None,
+    ) -> Tuple[Callable, TypeHint]:
+        if args is None and types is None:
+            raise ValueError(
+                "Arguments `args` and `types` cannot both be `None`. "
+                "This should never happen!"
+            )
+
+        if types is None:
+            # Attempt to use the cache based on the types of the arguments.
+            types = tuple(map(type, args))
+        try:
+            return self._cache[types]
+        except KeyError:
+            if args is None:
+                args = Signature(*(resolve_type_hint(t) for t in types))
+
+            # Cache miss. Run the resolver based on the arguments.
+            method, return_type = self._resolve_method(args)
+            # If the resolver is faithful, then we can perform caching using the types
+            # of the arguments. If the resolver is not faithful, then we cannot.
+            if self.is_faithful:
+                self._cache[types] = method, return_type
+            return method, return_type
+
+    def _resolve_method(
+        self, target: Union[Tuple[object, ...], Signature]
+    ) -> Tuple[Callable, TypeHint]:
+        """Find the method and return type for arguments.
+
+        Args:
+            target (object): Target.
+
+        Returns:
+            function: Method.
+            type: Return type.
+        """
+        signature = self._resolve(target)
+        return signature.implementation, signature.return_type
+
+    def _resolve(self, target: Union[Tuple[object, ...], Signature]) -> Signature:
         """Find the most specific signature that satisfies a target.
 
         Args:

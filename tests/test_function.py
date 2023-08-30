@@ -253,7 +253,7 @@ def test_function_dispatch():
     assert f(1) == "int"
     assert f(1.0) == "float"
     assert f("1") == "str"
-    assert f._resolver.resolve(("1",)).precedence == 1
+    assert f._resolver._resolve(("1",)).precedence == 1
 
 
 def test_function_multi_dispatch():
@@ -270,7 +270,7 @@ def test_function_multi_dispatch():
     assert f(1) == "int"
     assert f(1.0) == "float or str"
     assert f("1") == "float or str"
-    assert f._resolver.resolve(("1",)).precedence == 1
+    assert f._resolver._resolve(("1",)).precedence == 1
 
     # Check that arguments to `f.dispatch_multi` must be tuples or signatures.
     with pytest.raises(ValueError):
@@ -301,7 +301,7 @@ def test_resolve_pending_registrations():
     # At this point, there should be nothing to register, so a call should not clear
     # the cache.
     assert f._resolver
-    assert len(f._cache) == 1
+    assert len(f._methods_registry._resolver._cache) == 1
 
     @f.dispatch
     def f(x: str):
@@ -309,7 +309,7 @@ def test_resolve_pending_registrations():
 
     # Now there is something to register. A call should clear the cache.
     f._resolver
-    assert f._methods_registry._cache is None
+    assert f._methods_registry._resolver._cache == {}
 
     # Register in two ways using multi and the wrong name.
     @f.dispatch_multi((float,), Signature(complex))

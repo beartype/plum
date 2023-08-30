@@ -7,7 +7,6 @@ from typing import Any, Callable, Iterator, List, Optional, Tuple, TypeVar, Unio
 
 from .resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
 from .signature import Signature, append_default_args, extract_signature
-from .type import resolve_type_hint
 from .util import TypeHint, repr_short
 
 __all__ = ["Function"]
@@ -112,9 +111,8 @@ a function (see :meth:`Function.owner`), make the corresponding value the owner.
 class MethodsRegistry:
     def __init__(self, function_name: str):
         self._all_methods: List[Tuple[Callable, Optional[Signature], int]] = []
-        self._resolver = None
-        self._cache = None
-        self._function_name = function_name
+        self._resolver: Optional[Resolver] = None
+        self._function_name: str = function_name
 
     def add_method(
         self, method: Callable, signature: Optional[Signature], precedence: int
@@ -129,19 +127,12 @@ class MethodsRegistry:
 
     def invalidate_resolver_and_cache(self):
         self._resolver = None
-        self._cache = None
 
     @property
     def resolver(self) -> Resolver:
         if self._resolver is None:
             self._resolver = Resolver(self.get_all_subsignatures())
         return self._resolver
-
-    @property
-    def cache(self) -> dict:
-        if self._cache is None:
-            self._cache = {}
-        return self._cache
 
     def get_all_subsignatures(self, strict: bool = True) -> Iterator[Signature]:
         # Perform any pending registrations.
@@ -309,10 +300,6 @@ class Function(metaclass=_FunctionMeta):
     def _resolver(self) -> Resolver:
         return self._methods_registry.resolver
 
-    @property
-    def _cache(self) -> dict:
-        return self._methods_registry.cache
-
     def _clear_cache_dict(self):
         self._methods_registry.invalidate_resolver_and_cache()
 
@@ -404,33 +391,6 @@ class Function(metaclass=_FunctionMeta):
         message = str(e)
         return type(e)(prefix + message[0].lower() + message[1:])
 
-    def resolve_method(
-        self, target: Union[Tuple[object, ...], Signature]
-    ) -> Tuple[Callable, TypeHint]:
-        """Find the method and return type for arguments.
-
-        Args:
-            target (object): Target.
-
-        Returns:
-            function: Method.
-            type: Return type.
-        """
-        try:
-            # Attempt to find the method using the resolver.
-            signature = self._methods_registry.resolver.resolve(target)
-            method = signature.implementation
-            return_type = signature.return_type
-
-        except AmbiguousLookupError as e:
-            raise self._enhance_exception(e)  # Specify this function.
-
-        except NotFoundLookupError as e:
-            e = self._enhance_exception(e)  # Specify this function.
-            method, return_type = self._handle_not_found_lookup_error(e)
-
-        return method, return_type
-
     def _handle_not_found_lookup_error(
         self, ex: NotFoundLookupError
     ) -> Tuple[Callable, TypeHint]:
@@ -483,28 +443,14 @@ class Function(metaclass=_FunctionMeta):
         args: Union[Tuple[object, ...], Signature, None] = None,
         types: Optional[Tuple[TypeHint, ...]] = None,
     ) -> Tuple[Callable, TypeHint]:
-        if args is None and types is None:
-            raise ValueError(
-                "Arguments `args` and `types` cannot both be `None`. "
-                "This should never happen!"
-            )
-
-        if types is None:
-            # Attempt to use the cache based on the types of the arguments.
-            types = tuple(map(type, args))
         try:
-            return self._cache[types]
-        except KeyError:
-            if args is None:
-                args = Signature(*(resolve_type_hint(t) for t in types))
+            return self._resolver.resolve_method_with_cache(args=args, types=types)
+        except AmbiguousLookupError as e:
+            raise self._enhance_exception(e)  # Specify this function.
 
-            # Cache miss. Run the resolver based on the arguments.
-            method, return_type = self.resolve_method(args)
-            # If the resolver is faithful, then we can perform caching using the types
-            # of the arguments. If the resolver is not faithful, then we cannot.
-            if self._resolver.is_faithful:
-                self._cache[types] = method, return_type
-            return method, return_type
+        except NotFoundLookupError as e:
+            e = self._enhance_exception(e)  # Specify this function.
+            return self._handle_not_found_lookup_error(e)
 
     def invoke(self, *types: TypeHint) -> Callable:
         """Invoke a particular method.

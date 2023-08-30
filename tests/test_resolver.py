@@ -82,29 +82,29 @@ def test_resolve():
         ]
     )
     # Resolve by signature.
-    assert r.resolve(s_a) == s_a
-    assert r.resolve(s_b1) == s_b1
-    assert r.resolve(s_b2) == s_b2
+    assert r._resolve(s_a) == s_a
+    assert r._resolve(s_b1) == s_b1
+    assert r._resolve(s_b2) == s_b2
     with pytest.raises(AmbiguousLookupError):
-        r.resolve(s_c1)
-    assert r.resolve(s_c2) == s_c2
-    assert r.resolve(s_u) == s_u
+        r._resolve(s_c1)
+    assert r._resolve(s_c2) == s_c2
+    assert r._resolve(s_u) == s_u
     with pytest.raises(NotFoundLookupError):
-        r.resolve(s_m)
+        r._resolve(s_m)
 
     # Resolve by type.
-    assert r.resolve((A(),)) == s_a
-    assert r.resolve((B1(),)) == s_b1
-    assert r.resolve((B2(),)) == s_b2
+    assert r._resolve((A(),)) == s_a
+    assert r._resolve((B1(),)) == s_b1
+    assert r._resolve((B2(),)) == s_b2
     with pytest.raises(AmbiguousLookupError):
-        r.resolve((C1(),))
-    assert r.resolve((C2(),)) == s_c2
-    assert r.resolve((Unrelated(),)) == s_u
+        r._resolve((C1(),))
+    assert r._resolve((C2(),)) == s_c2
+    assert r._resolve((Unrelated(),)) == s_u
     with pytest.raises(NotFoundLookupError):
-        r.resolve((Missing(),))
+        r._resolve((Missing(),))
 
     # Test that precedence can correctly break the ambiguity.
     s_b1.precedence = 1
-    assert r.resolve(s_c1) == s_b1
+    assert r._resolve(s_c1) == s_b1
     s_b2.precedence = 2
-    assert r.resolve(s_c1) == s_b2
+    assert r._resolve(s_c1) == s_b2

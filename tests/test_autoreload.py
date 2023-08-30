@@ -1,3 +1,5 @@
+import contextlib
+
 import pytest
 
 from plum import Dispatcher
@@ -30,6 +32,15 @@ def test_autoreload_activate_deactivate():
     assert iar.update_instances == ar._update_instances_original
 
 
+@contextlib.contextmanager
+def autoreload_context_manager():
+    ar.activate_autoreload()
+    try:
+        yield
+    finally:
+        ar.deactivate_autoreload()
+
+
 def test_autoreload_correctness():
     dispatch = Dispatcher()
 
@@ -57,24 +68,25 @@ def test_autoreload_correctness():
     with pytest.raises(NotFoundLookupError):
         test(A3())
 
-    ar._update_instances(A1, A2)
+    with autoreload_context_manager():
+        ar._update_instances(A1, A2)
 
-    assert isinstance(a, A2)
-    assert test(a) == 1
+        assert isinstance(a, A2)
+        assert test(a) == 1
 
-    with pytest.raises(NotFoundLookupError):
-        test(A1())
-    assert test(A2()) == 1
-    with pytest.raises(NotFoundLookupError):
-        test(A3())
+        with pytest.raises(NotFoundLookupError):
+            test(A1())
+        assert test(A2()) == 1
+        with pytest.raises(NotFoundLookupError):
+            test(A3())
 
-    ar._update_instances(A2, A3)
+        ar._update_instances(A2, A3)
 
-    assert isinstance(a, A3)
-    assert test(a) == 1
+        assert isinstance(a, A3)
+        assert test(a) == 1
 
-    with pytest.raises(NotFoundLookupError):
-        test(A1())
-    with pytest.raises(NotFoundLookupError):
-        test(A2())
-    assert test(A3()) == 1
+        with pytest.raises(NotFoundLookupError):
+            test(A1())
+        with pytest.raises(NotFoundLookupError):
+            test(A2())
+        assert test(A3()) == 1

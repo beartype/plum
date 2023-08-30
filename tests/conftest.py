@@ -13,7 +13,7 @@ def convert():
 
     # Clear methods after use.
     _convert._methods_registry._all_methods = all_methods
-    _convert.clear_cache()
+    _convert._methods_registry.invalidate_resolver_and_cache()
 
 
 @pytest.fixture
@@ -25,4 +25,4 @@ def promote():
 
     # Clear methods after use.
     _promotion_rule._methods_registry._all_methods = all_methods
-    _promotion_rule.clear_cache()
+    _promotion_rule._methods_registry.invalidate_resolver_and_cache()
