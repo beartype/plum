@@ -321,8 +321,7 @@ document.write(`
                 <article class="bd-article" role="main">
                   
   <h1>Source code for plum.parametric</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">beartype.door</span>
 <span class="kn">from</span> <span class="nn">beartype.roar</span> <span class="kn">import</span> <span class="n">BeartypeDoorNonpepException</span>
@@ -694,11 +693,12 @@ document.write(`
 <span class="sd">        Args:</span>
 <span class="sd">            val (object): The value to be moved to the type domain.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-            <span class="s2">&quot;`plum.Val` is deprecated and will be removed in a future version. &quot;</span>
-            <span class="s2">&quot;Please use `typing.Literal` instead.&quot;</span><span class="p">,</span>
-            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="c1"># Do not deprecate until beartype#276 is solved</span>
+        <span class="c1"># warnings.warn(</span>
+        <span class="c1">#     &quot;`plum.Val` is deprecated and will be removed in a future version. &quot;</span>
+        <span class="c1">#     &quot;Please use `typing.Literal` instead.&quot;,</span>
+        <span class="c1">#     stacklevel=2,</span>
+        <span class="c1"># )</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">concrete</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">type_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">!=</span> <span class="n">val</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The value must be equal to the type parameter.&quot;</span><span class="p">)</span>
