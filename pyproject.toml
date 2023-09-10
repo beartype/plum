@@ -31,7 +31,7 @@ dev = [
     "coveralls",
     "pre-commit",
     "IPython",
-    "black==22.10.0",
+    "black==23.9.0",
     "ghp-import",
     "wheel",
     "build",

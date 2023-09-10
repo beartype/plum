@@ -1,5 +1,7 @@
 name: Check Formatting
-on: pull_request
+on:
+  - push
+  - pull_request
 
 jobs:
   check:
@@ -8,15 +10,16 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Set up Python 3.8
+      - name: Set up Python 3.9
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.9
 
-      - name: Install Black formatter
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -v black==22.3.0
+          python -m pip install --upgrade --no-cache-dir -e '.[dev]'
+          pre-commit install
 
       - name: Check formatting
-        run: black --check --diff --color .
+        run: pre-commit run --all-files
