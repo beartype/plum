@@ -58,7 +58,7 @@ def test_defaults():
         def f_wrong_default(x: int, y: float = y_default):
             return y
 
-        f_wrong_default._resolve_pending_registrations()
+        f_wrong_default._resolver()
 
     # Remove this function from global tracking. Otherwise, it might interfere with
     # other tests.
