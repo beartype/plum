@@ -388,29 +388,90 @@ Properly supporting multiple dispatch in these tools is challenging for a <a cla
 In this section, we collect various patterns in which Plum plays nicely with type checking.</p>
 <section id="overload-support">
 <h2>Overload Support<a class="headerlink" href="#overload-support" title="Permalink to this heading">#</a></h2>
-<p>At the moment, the only know pattern in which Plum produces <code class="docutils literal notranslate"><span class="pre">mypy</span></code>-compliant code uses <code class="docutils literal notranslate"><span class="pre">typing.overload</span></code>.</p>
+<p>At the moment, the only known pattern in which Plum produces <code class="docutils literal notranslate"><span class="pre">mypy</span></code>-compliant code uses <code class="docutils literal notranslate"><span class="pre">typing.overload</span></code>.
+The idea is to implement and decorate your methods with <code class="docutils literal notranslate"><span class="pre">typing.overload</span></code> instead of <code class="docutils literal notranslate"><span class="pre">plum.dispatch</span></code>.
+After all <code class="docutils literal notranslate"><span class="pre">typing.overload</span></code>-decorated methods, add one more method decorated with <code class="docutils literal notranslate"><span class="pre">plum.dispatch</span></code> <em>without</em> an implementation.
+This call to <code class="docutils literal notranslate"><span class="pre">plum.dispatch</span></code> will scan for all <code class="docutils literal notranslate"><span class="pre">typing.overload</span></code>-decorated methods and properly add them as Plum methods.</p>
 <p>An example is as follows:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span><span class="p">,</span> <span class="n">overload</span>
 
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;do&quot;</span><span class="p">,</span> <span class="s2">&quot;add&quot;</span><span class="p">]</span>
+
 
 <span class="nd">@overload</span>
-<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">do</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Do something to an integer.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x (int): An integer.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        int: Another integer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">x</span>
 
 
 <span class="nd">@overload</span>
-<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">do</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Do something to a string.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x (str): A string.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        str: Another string.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">x</span>
 
 
 <span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">do</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="c1"># Final method without an implementation. This scans for all `overload`-decorated</span>
+    <span class="c1"># methods and properly adds them as Plum methods.</span>
+    <span class="k">pass</span>  
+
+
+<span class="nd">@overload</span>
+<span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add two integers.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x (int): First integer.</span>
+<span class="sd">        y (int): Second integer.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        int: Sum of `x` and `y`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span>
+
+
+<span class="nd">@overload</span>
+<span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add two floats.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x (float): First float.</span>
+<span class="sd">        y (float): Second float.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: Sum of `x` and `y`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span>
+
+
+<span class="nd">@dispatch</span>
+<span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="k">pass</span>
 </pre></div>
 </div>
 <p>In the above, for Python versions prior to 3.11, <code class="docutils literal notranslate"><span class="pre">plum.overload</span></code> is <code class="docutils literal notranslate"><span class="pre">typing_extensions.overload</span></code>.
 For this pattern to work in Python versions prior to 3.11, you must use <code class="docutils literal notranslate"><span class="pre">typing_extensions.overload</span></code>, not <code class="docutils literal notranslate"><span class="pre">typing.overload</span></code>.
 By importing <code class="docutils literal notranslate"><span class="pre">overload</span></code> from <code class="docutils literal notranslate"><span class="pre">plum</span></code>, you will always use the correct <code class="docutils literal notranslate"><span class="pre">overload</span></code>.</p>
+<p>This pattern diverges from the normal use of <code class="docutils literal notranslate"><span class="pre">typing.overload</span></code> in two ways.
+First, usually <code class="docutils literal notranslate"><span class="pre">typing.overload</span></code> is used to specify additional type signatures that do not contain an implementation.
+In the above pattern, the <code class="docutils literal notranslate"><span class="pre">typing.overload</span></code>-decorated methods <em>do</em> have implementations.
+Second, after all <code class="docutils literal notranslate"><span class="pre">typing.overload</span></code>, usually one implements a normal Python function that implements all overloaded type signatures.
+In the above pattern, this final method uses <code class="docutils literal notranslate"><span class="pre">plum.dispatch</span></code> and does <em>not</em> contain an implementation.</p>
 </section>
 </section>
 
