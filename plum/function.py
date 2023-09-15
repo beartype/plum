@@ -1,3 +1,4 @@
+import os
 import textwrap
 from functools import wraps
 from types import MethodType
@@ -140,6 +141,11 @@ class Function(metaclass=_FunctionMeta):
             # partially completed :meth:`Function._resolve_pending_registrations` by
             # clearing the cache.
             self.clear_cache(reregister=False)
+
+        # Don't do any fancy appending of docstrings when the environment variable
+        # `PLUM_SIMPLE_DOC` is set to `1`.
+        if "PLUM_SIMPLE_DOC" in os.environ and os.environ["PLUM_SIMPLE_DOC"] == "1":
+            return self._doc
 
         # Derive the basis of the docstring from `self._f`, removing any indentation.
         doc = self._doc.strip()

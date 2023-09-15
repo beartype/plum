@@ -1,4 +1,5 @@
 import abc
+import os
 import textwrap
 import typing
 
@@ -219,6 +220,31 @@ def test_doc(monkeypatch):
         x (float): Argument.
     """
     assert g.__doc__ == textwrap.dedent(expected_doc).strip()
+
+
+def test_simple_doc(monkeypatch):
+    @dispatch
+    def f(x: int):
+        """First."""
+
+    @dispatch
+    def f(x: str):
+        """Second."""
+
+    monkeypatch.setitem(os.environ, "PLUM_SIMPLE_DOC", "1")
+    assert f.__doc__ == "First."
+
+    monkeypatch.setitem(os.environ, "PLUM_SIMPLE_DOC", "0")
+    expected_doc = """
+    First.
+
+    -----------
+
+    f(x: str)
+
+    Second.
+    """
+    assert f.__doc__ == textwrap.dedent(expected_doc).strip()
 
 
 def test_methods():
