@@ -507,3 +507,25 @@ def test_val():
         Val[1].__init__(MockVal())
 
     assert repr(Val[1]()) == "plum.parametric.Val[1]()"
+
+
+def test_init_subclass_correct_args():
+    # See issue https://github.com/beartype/plum/issues/105
+
+    from plum import parametric
+
+    register = set()
+
+    class Pytree:
+        def __init_subclass__(cls, **kwargs):
+            if cls in register:
+                raise ValueError("duplicate")
+            else:
+                register.add(cls)
+
+    @parametric
+    class Wrapper(Pytree):
+        pass
+
+    Wrapper[int]
+    assert Wrapper[int] in register
