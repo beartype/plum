@@ -163,7 +163,7 @@ def run_linter(linter: str) -> str:
         stderr=subprocess.PIPE,
     )
     stdout, stderr = p.communicate()
-    assert stderr == b"", "`stderr` must be empty."
+    assert not stderr, f"`stderr` must be empty, but is not:\n{stderr.decode()}"
     return stdout.decode()
 
 
@@ -243,14 +243,14 @@ def check_linter(source_dir: Path, linter: str) -> bool:
                     f"Missed assertion: {assertion.strip()}"
                 )
 
-    return not (missed_errors or missed_assertions)
+    return not missed_errors and not missed_assertions
 
 
 if __name__ == "__main__":
     source_dir = Path(sys.argv[1])  # Files that must be validated
     status = True
-    status |= check_linter(source_dir, "mypy")
-    status |= check_linter(source_dir, "pyright")
+    status &= check_linter(source_dir, "mypy")
+    status &= check_linter(source_dir, "pyright")
     if status:
         print("All OK!")
     exit(0 if status else 1)
