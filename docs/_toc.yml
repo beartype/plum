@@ -20,4 +20,5 @@ chapters:
   - file: parametric
   - file: union_aliases
   - file: autoreload
+  - file: command_line
 - file: api
