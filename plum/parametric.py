@@ -144,6 +144,17 @@ class CovariantMeta(ParametricTypeMeta):
         # Default behaviour to `type`s subclass check.
         return type.__subclasscheck__(cls, subclass)
 
+    def __instancecheck__(cls, instance):
+        # If `A` is a parametric type, then `A[T1]` and `A[T2]` are subclasses of
+        # `A`. With the implementation of `__subclasscheck__` above, we have that
+        # `issubclass(A[T1], A[T2])` whenever `issubclass(T1, T2)`. _However_,
+        # `isinstance(A[T1](), A[T2])` will fall back to `type.__ininstance__`, which
+        # will conclude that `A[T1]` is not a subclass of `A[T2]` because it bypasses
+        # the above implementation of `__subclasscheck__`. We therefore implement
+        # `__instancecheck__` to ensure that `isinstance(A[T1](), A[T2])` whenever
+        # `issubclass(T1, T2)`.
+        return issubclass(type(instance), cls)
+
     def __le_type_parameter__(cls, p_left, p_right):
         # Check that there are an equal number of parameters.
         if len(p_left) != len(p_right):
@@ -196,7 +207,26 @@ def parametric(original_class=None):
         cls = cls.__concrete_class__(*args, **kw_args)
         return original_meta.__call__(cls, *args, **kw_args)
 
-    meta = type(name, bases, {"__call__": __call__})
+    def __instancecheck__(cls, instance):
+        # An implementation of `__instancecheck__` is necessary to ensure that
+        # `isinstance(A[SubType](), A[Type])`. `CovariantMeta` comes first in the MRO,
+        # but the implementation of `__instancecheck__` should be taken from
+        # `original_meta` if it exists. The implementation of `CovariantMeta` should be
+        # used as a fallback. Note that `original_meta.__instancecheck__` always exists.
+        # We check that it is not equal to the default `type.__instancecheck__`.
+        if original_meta.__instancecheck__ != type.__instancecheck__:
+            return original_meta.__instancecheck__(cls, instance)
+        else:
+            return CovariantMeta.__instancecheck__(cls, instance)
+
+    meta = type(
+        name,
+        bases,
+        {
+            "__call__": __call__,
+            "__instancecheck__": __instancecheck__,
+        },
+    )
 
     subclasses = {}
 
