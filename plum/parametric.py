@@ -240,7 +240,7 @@ def parametric(original_class=None):
                 return original_class.__new__(cls)
 
             cls.__new__ = class_new
-        original_class.__init_subclass__(**kw_args)
+        super(original_class, cls).__init_subclass__(**kw_args)
 
     # Create parametric class.
     parametric_class = meta(
