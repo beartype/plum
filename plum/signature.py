@@ -20,7 +20,7 @@ class Signature(Comparable):
         *types (tuple[type, ...]): Types of the arguments.
         varargs (type, optional): Type of the variable arguments.
         return_type (type, optional): Type of the return value. Defaults to `Any`.
-        precedence (int, optional): Precedence. Default to `0`.
+        precedence (int, optional): Precedence. Defaults to `0`.
         implementation (function, optional): Implementation.
 
     Attributes:
