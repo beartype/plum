@@ -19,7 +19,7 @@ dynamic = ["version"]
 
 requires-python = ">=3.8"
 dependencies = [
-    "beartype >= 0.16",
+    "beartype>=0.16.2",
     "typing-extensions; python_version<='3.10'",
 ]
 

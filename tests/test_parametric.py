@@ -521,7 +521,9 @@ def test_val():
 
 
 def test_init_subclass_correct_args():
-    # See issue https://github.com/beartype/plum/issues/105
+    # See the following issue:
+    #
+    #   https://github.com/beartype/plum/issues/105
 
     from plum import parametric
 
@@ -529,10 +531,8 @@ def test_init_subclass_correct_args():
 
     class Pytree:
         def __init_subclass__(cls, **kwargs):
-            if cls in register:
-                raise ValueError("duplicate")
-            else:
-                register.add(cls)
+            assert cls not in register, "Duplicate!"
+            register.add(cls)
 
     @parametric
     class Wrapper(Pytree):
