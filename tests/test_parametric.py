@@ -188,6 +188,41 @@ def test_parametric_covariance():
     assert not isinstance(A[2, int](), A[1, Number])
 
 
+def test_parametric_covariance_test_case():
+    @parametric
+    class A:
+        def __init__(self, x):
+            self.x = x
+
+    dispatch = Dispatcher()
+
+    @dispatch
+    def f(a: object):
+        return "fallback"
+
+    @dispatch
+    def f(a: A):
+        return "A"
+
+    @dispatch
+    def f(a: A[Number]):
+        return "Number"
+
+    @dispatch
+    def f(a: A[int]):
+        return "int"
+
+    @dispatch
+    def f(a: A[float]):
+        return "int"
+
+    assert f(1j) == "fallback"
+    assert f(A(object())) == "A"
+    assert f(A(1j)) == "Number"
+    assert f(A(1)) == "int"
+    assert f(A(1.0)) == "int"
+
+
 def test_parametric_constructor():
     @parametric
     class A:
