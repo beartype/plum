@@ -152,8 +152,9 @@ class CovariantMeta(ParametricTypeMeta):
         # will conclude that `A[T1]` is not a subclass of `A[T2]` because it bypasses
         # the above implementation of `__subclasscheck__`. We therefore implement
         # `__instancecheck__` to ensure that `isinstance(A[T1](), A[T2])` whenever
-        # `issubclass(T1, T2)`.
-        return issubclass(type(instance), cls)
+        # `issubclass(T1, T2)`. In any case, we do first try `type.__instancecheck__`,
+        # since it is fast and only gives true positives.
+        return type.__instancecheck__(cls, instance) or issubclass(type(instance), cls)
 
     def __le_type_parameter__(cls, p_left, p_right):
         # Check that there are an equal number of parameters.
