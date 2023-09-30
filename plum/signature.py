@@ -1,9 +1,8 @@
-from typing import Callable, List, Tuple, Optional
-
-import typing
 import inspect
 import operator
+import typing
 from copy import copy
+from typing import Callable, List, Optional, Tuple
 
 import beartype.door
 from beartype.peps import resolve_pep563
