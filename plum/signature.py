@@ -1,6 +1,5 @@
 import inspect
 import operator
-import typing
 from copy import copy
 from typing import Callable, List, Tuple, Union
 
@@ -195,6 +194,40 @@ class Signature(Comparable):
         else:
             types = self.expand_varargs(len(values))
             return all(_is_bearable(v, t) for v, t in zip(values, types))
+
+    def compute_distance(self, values: Tuple[object, ...]) -> int:
+        """Computes the edit distance between this
+        Signature and the
+        """
+        types = self.expand_varargs(len(values))
+        # vararg_types = types[len(self.types):]
+
+        distance = 0
+
+        # count 1 for every extra or missingargument
+        distance += abs(len(types) - len(values))
+
+        # count 1 for every mismatching arg type
+        for v, t in zip(values, types):
+            if not _is_bearable(v, t):
+                distance += 1
+
+        return distance
+
+    def compute_args_ok(self, values) -> List[bool]:
+        types = self.expand_varargs(len(values))
+
+        args_ok = []
+
+        # count 1 for every mismatching arg type
+        for v, t in zip(values, types):
+            args_ok.append(_is_bearable(v, t))
+
+        # all extra args are not ok
+        for _ in range(len(args_ok), len(values)):
+            args_ok.append(False)
+
+        return args_ok
 
 
 def inspect_signature(f) -> inspect.Signature:
