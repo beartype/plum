@@ -5,6 +5,7 @@ import typing
 import pytest
 
 import plum.resolver
+from plum.method import Method
 from plum.resolver import AmbiguousLookupError, NotFoundLookupError, Resolver, _document
 from plum.signature import Signature
 
@@ -89,66 +90,69 @@ def test_doc(monkeypatch):
         def __init__(self, doc):
             self.__doc__ = doc
 
-    class _MockSignature:
+    class _MockMethod:
         def __init__(self, doc):
             self.implementation = _MockFunction(doc)
 
     # Circumvent the use of :meth:`.resolver.Resolver.register`.
-    r.signatures = [
-        _MockSignature("first"),
-        _MockSignature("second"),
-        _MockSignature("third"),
+    r.methods = [
+        _MockMethod("first"),
+        _MockMethod("second"),
+        _MockMethod("third"),
     ]
     assert r.doc() == "first\n\nsecond\n\nthird"
 
     # Test that duplicates are excluded.
-    r.signatures = [
-        _MockSignature("first"),
-        _MockSignature("second"),
-        _MockSignature("second"),
-        _MockSignature("third"),
+    r.methods = [
+        _MockMethod("first"),
+        _MockMethod("second"),
+        _MockMethod("second"),
+        _MockMethod("third"),
     ]
     assert r.doc() == "first\n\nsecond\n\nthird"
 
     # Test that the explicit exclusion mechanism also works.
-    assert r.doc(exclude=r.signatures[3].implementation) == "first\n\nsecond"
+    assert r.doc(exclude=r.methods[3].implementation) == "first\n\nsecond"
 
 
 def test_register():
     r = Resolver()
 
     # Test that faithfulness is tracked correctly.
-    r.register(Signature(int))
-    r.register(Signature(float))
+    r.register(Method(lambda _: x, Signature(int)))
+    r.register(Method(lambda _: x, Signature(float)))
     assert r.is_faithful
-    r.register(Signature(typing.Tuple[int]))
+    r.register(Method(lambda _: x, Signature(typing.Tuple[int])))
     assert not r.is_faithful
 
     # Test that signatures can be replaced.
-    new_s = Signature(float)
+    new_m = Method(lambda _: x, Signature(float))
     assert len(r) == 3
-    assert r.signatures[1] is not new_s
-    r.register(new_s)
+    assert r.methods[1] is not new_m
+    r.register(new_m)
     assert len(r) == 3
-    assert r.signatures[1] is new_s
+    assert r.methods[1] is new_m
 
     # Test the edge case that should never happen.
-    r.signatures[2] = Signature(float)
+    r.methods[2] = Method(lambda _: x, Signature(float))
     with pytest.raises(
         AssertionError,
-        match=r"(?i)the added signature `(.*)` is equal to 2 existing signatures",
+        match=r"(?i)the added method `(.*)` is equal to 2 existing methods",
     ):
-        r.register(Signature(float))
+        r.register(Method(lambda _: x, Signature(float)))
 
 
 def test_len():
+    def f(x):
+        x
+
     r = Resolver()
     assert len(r) == 0
-    r.register(Signature(int))
+    r.register(Method(f, Signature(int)))
     assert len(r) == 1
-    r.register(Signature(float))
+    r.register(Method(f, Signature(float)))
     assert len(r) == 2
-    r.register(Signature(float))
+    r.register(Method(f, Signature(float)))
     assert len(r) == 2
 
 
@@ -174,48 +178,50 @@ def test_resolve():
     class Missing:
         pass
 
-    s_a = Signature(A)
-    s_b1 = Signature(B1)
-    s_b2 = Signature(B2)
-    s_c1 = Signature(C1)
-    s_c2 = Signature(C2)
-    s_u = Signature(Unrelated)
-    s_m = Signature(Missing)
+    def f(x): x
+
+    m_a = Method(f, Signature(A))
+    m_b1 = Method(f, Signature(B1))
+    m_b2 = Method(f, Signature(B2))
+    m_c1 = Method(f, Signature(C1))
+    m_c2 = Method(f, Signature(C2))
+    m_u = Method(f, Signature(Unrelated))
+    m_m = Method(f, Signature(Missing))
 
     r = Resolver()
-    r.register(s_b1)
-    # Import this after `s_b1` to test all branches.
-    r.register(s_a)
-    r.register(s_b2)
-    # Do not register `s_c1`.
-    r.register(s_c2)
-    r.register(s_u)
-    # Also do not register `s_m`.
+    r.register(m_b1)
+    # Import this after `m_b1` to test all branches.
+    r.register(m_a)
+    r.register(m_b2)
+    # Do not register `m_c1`.
+    r.register(m_c2)
+    r.register(m_u)
+    # Also do not register `m_m`.
 
     # Resolve by signature.
-    assert r.resolve(s_a) == s_a
-    assert r.resolve(s_b1) == s_b1
-    assert r.resolve(s_b2) == s_b2
+    assert r.resolve(m_a.signature) == m_a
+    assert r.resolve(m_b1.signature) == m_b1
+    assert r.resolve(m_b2.signature) == m_b2
     with pytest.raises(AmbiguousLookupError):
-        r.resolve(s_c1)
-    assert r.resolve(s_c2) == s_c2
-    assert r.resolve(s_u) == s_u
+        r.resolve(m_c1.signature)
+    assert r.resolve(m_c2.signature) == m_c2
+    assert r.resolve(m_u.signature) == m_u
     with pytest.raises(NotFoundLookupError):
-        r.resolve(s_m)
+        r.resolve(m_m.signature)
 
     # Resolve by type.
-    assert r.resolve((A(),)) == s_a
-    assert r.resolve((B1(),)) == s_b1
-    assert r.resolve((B2(),)) == s_b2
+    assert r.resolve((A(),)) == m_a
+    assert r.resolve((B1(),)) == m_b1
+    assert r.resolve((B2(),)) == m_b2
     with pytest.raises(AmbiguousLookupError):
         r.resolve((C1(),))
-    assert r.resolve((C2(),)) == s_c2
-    assert r.resolve((Unrelated(),)) == s_u
+    assert r.resolve((C2(),)) == m_c2
+    assert r.resolve((Unrelated(),)) == m_u
     with pytest.raises(NotFoundLookupError):
         r.resolve((Missing(),))
 
     # Test that precedence can correctly break the ambiguity.
-    s_b1.precedence = 1
-    assert r.resolve(s_c1) == s_b1
-    s_b2.precedence = 2
-    assert r.resolve(s_c1) == s_b2
+    m_b1.signature.precedence = 1
+    assert r.resolve(m_c1.signature) == m_b1
+    m_b2.signature.precedence = 2
+    assert r.resolve(m_c1.signature) == m_b2

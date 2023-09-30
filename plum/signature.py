@@ -1,74 +1,107 @@
+from typing import Callable, List, Tuple, Union
+import typing
 import inspect
 import operator
 import typing
 from copy import copy
 from typing import Callable, List, Optional, Tuple
 
+
 import beartype.door
-from beartype.peps import resolve_pep563
+from beartype.peps import resolve_pep563 as beartype_resolve_pep563
 
 from . import _is_bearable
 from .type import is_faithful, resolve_type_hint
-from .util import Comparable, Missing, TypeHint, multihash, repr_short, wrap_lambda
+from .util import (
+    Comparable,
+    Missing,
+    TypeHint,
+    multihash,
+    repr_short,
+    wrap_lambda,
+)
 
-__all__ = ["Signature", "extract_signature", "append_default_args"]
+__all__ = ["Signature", "append_default_args"]
+
+OptionalType = Union[TypeHint, type(Missing)]
 
 
 class Signature(Comparable):
-    """Signature.
+    """Object representing a call signature that may be used to
+    dispatch a function call.
 
-    Args:
-        *types (tuple[type, ...]): Types of the arguments.
-        varargs (type, optional): Type of the variable arguments.
-        return_type (type, optional): Type of the return value. Defaults to `Any`.
-        precedence (int, optional): Precedence. Defaults to `0`.
-        implementation (function, optional): Implementation.
+    This object differs structurally from `inspect.signature` as
+    it only contains information necessary for performing dispatch.
+
+    For example, for the current implementation of plum, which
+    does not dispatch on keyword arguments, those are left out
+    of this signature object. Similarly, return type information
+    and argument names are not present.
 
     Attributes:
         types (tuple[type, ...]): Types of the arguments.
         varargs (type or :class:`.util.Missing`): Type of the variable number of
             arguments.
         has_varargs (bool): Whether `varargs` is not :class:`.util.Missing`.
-        return_type (type): Return type.
         precedence (int): Precedence.
-        implementation (function or None): Implementation.
         is_faithful (bool): Whether this signature only uses faithful types.
     """
 
     _default_varargs = Missing
-    _default_return_type = typing.Any
     _default_precedence = 0
+
+    __slots__ = ("types", "varargs", "precedence", "is_faithful")
 
     def __init__(
         self,
-        *types: TypeHint,
-        varargs=_default_varargs,
-        return_type: TypeHint = _default_return_type,
+        *types: tuple[TypeHint, ...],
+        varargs: OptionalType = _default_varargs,
         precedence: int = _default_precedence,
-        implementation: Optional[Callable] = None,
     ):
+        """
+        Construct a `Signature` object.
+
+        Args:
+            *types (tuple[type, ...]): Types of the arguments.
+            varargs (type, optional): Type of the variable arguments.
+            precedence (int, optional): Precedence. Defaults to `0`.
+        """
         self.types: Tuple[TypeHint] = types
-        self.varargs = varargs
-        self.return_type = return_type
-        self.precedence = precedence
-        self.implementation = implementation
+        """Types of the call signature."""
+        self.varargs: OptionalType = varargs
+        """Type of the vararg at the end of the signature."""
+        self.precedence: int = precedence
+        """Precedence of this signature."""
 
         types_are_faithful = all(is_faithful(t) for t in types)
         varargs_are_faithful = self.varargs is Missing or is_faithful(self.varargs)
         self.is_faithful = types_are_faithful and varargs_are_faithful
+
+    @staticmethod
+    def from_callable(f: Callable, precedence: int = 0) -> "Signature":
+        """
+        Construct a
+        """
+        types, varargs = _extract_signature(f)
+        return Signature(
+            *types,
+            varargs=varargs,
+            precedence=precedence,
+        )
 
     @property
     def has_varargs(self) -> bool:
         return self.varargs is not Missing
 
     def __copy__(self):
-        return Signature(
-            *self.types,
-            varargs=self.varargs,
-            return_type=self.return_type,
-            precedence=self.precedence,
-            implementation=self.implementation,
-        )
+        cls = type(self)
+        cpy = cls.__new__(cls)
+
+        cpy.types = self.types
+        cpy.varargs = self.varargs
+        cpy.precedence = self.precedence
+        cpy.is_faithful = self.is_faithful
+        return cpy
 
     def __repr__(self) -> str:
         parts = []
@@ -76,13 +109,16 @@ class Signature(Comparable):
             parts.append(", ".join(map(repr_short, self.types)))
         if self.varargs != Signature._default_varargs:
             parts.append("varargs=" + repr_short(self.varargs))
-        if self.return_type != Signature._default_return_type:
-            parts.append("return_type=" + repr_short(self.return_type))
         if self.precedence != Signature._default_precedence:
             parts.append("precedence=" + repr(self.precedence))
-        if self.implementation:
-            parts.append("implementation=" + repr(self.implementation))
         return "Signature(" + ", ".join(parts) + ")"
+
+    def __eq__(self, othr):
+        if isinstance(othr, Signature):
+            s = (self.types, self.varargs, self.precedence, self.is_faithful)
+            o = (othr.types, othr.varargs, othr.precedence, othr.is_faithful)
+            return s == o
+        return False
 
     def __hash__(self):
         return multihash(Signature, *self.types, self.varargs)
@@ -161,7 +197,7 @@ class Signature(Comparable):
             return all(_is_bearable(v, t) for v, t in zip(values, types))
 
 
-def _inspect_signature(f) -> inspect.Signature:
+def inspect_signature(f) -> inspect.Signature:
     """Wrapper of :func:`inspect.signature` which adds support for certain non-function
     objects.
 
@@ -178,7 +214,22 @@ def _inspect_signature(f) -> inspect.Signature:
     return inspect.signature(f)
 
 
-def extract_signature(f: Callable, precedence: int = 0) -> Signature:
+def resolve_pep563(f: Callable):
+    """
+    Utility to fix annotations and make them editable.
+
+    Args:
+        A Callable that will be modified inplace
+    """
+    if hasattr(f, "__annotations__"):
+        beartype_resolve_pep563(f)  # This mutates `f`.
+        # Override the `__annotations__` attribute, since `resolve_pep563` modifies
+        # `f` too.
+        for k, v in typing.get_type_hints(f).items():
+            f.__annotations__[k] = v
+
+
+def _extract_signature(f: Callable, precedence: int = 0) -> Signature:
     """Extract the signature from a function.
 
     Args:
@@ -188,15 +239,10 @@ def extract_signature(f: Callable, precedence: int = 0) -> Signature:
     Returns:
         :class:`.Signature`: Signature.
     """
-    if hasattr(f, "__annotations__"):
-        resolve_pep563(f)  # This mutates `f`.
-        # Override the `__annotations__` attribute, since `resolve_pep563` modifies
-        # `f` too.
-        for k, v in typing.get_type_hints(f).items():
-            f.__annotations__[k] = v
+    resolve_pep563(f)
 
     # Extract specification.
-    sig = _inspect_signature(f)
+    sig = inspect_signature(f)
 
     # Get types of arguments.
     types = []
@@ -229,22 +275,7 @@ def extract_signature(f: Callable, precedence: int = 0) -> Signature:
                     f"of the annotated type `{repr_short(annotation)}`."
                 )
 
-    # Get possible return type.
-    if sig.return_annotation is inspect.Parameter.empty:
-        return_type = typing.Any
-    else:
-        return_type = resolve_type_hint(sig.return_annotation)
-
-    # Assemble signature.
-    signature = Signature(
-        *types,
-        varargs=varargs,
-        return_type=return_type,
-        precedence=precedence,
-        implementation=f,
-    )
-
-    return signature
+    return types, varargs
 
 
 def append_default_args(signature: Signature, f: Callable) -> List[Signature]:
@@ -262,7 +293,7 @@ def append_default_args(signature: Signature, f: Callable) -> List[Signature]:
         default arguments.
     """
     # Extract specification.
-    f_signature = _inspect_signature(f)
+    f_signature = inspect_signature(f)
 
     signatures = [signature]
 

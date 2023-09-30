@@ -7,7 +7,7 @@ from typing import Any, Tuple
 import pytest
 
 from plum.signature import Signature as Sig
-from plum.signature import _inspect_signature, append_default_args, extract_signature
+from plum.signature import append_default_args, inspect_signature
 from plum.util import Missing
 
 
@@ -16,17 +16,13 @@ def test_instantiation_copy():
         int,
         int,
         varargs=float,
-        return_type=complex,
         precedence=1,
-        implementation=lambda *xs: complex(sum(xs)),
     )
     for _ in range(2):
         assert s.types == (int, int)
         assert s.has_varargs
         assert s.varargs == float
-        assert s.return_type == complex
         assert s.precedence == 1
-        assert s.implementation(1, 2, 3.0) == 6 + 0j
         assert s.is_faithful
 
         # Test copying.
@@ -36,8 +32,6 @@ def test_instantiation_copy():
     s = Sig(int, int)
     assert not s.has_varargs
     assert s.varargs == Missing
-    assert s.return_type == Any
-    assert s.implementation is None
 
     # Test faithfulness check.
     assert Sig(int, int).is_faithful
@@ -71,24 +65,21 @@ def _impl(x, y, *z):
             "Signature(int, float, varargs=complex)",
         ),
         (
-            Sig(int, float, varargs=complex, return_type=str),
-            "Signature(int, float, varargs=complex, return_type=str)",
+            Sig(int, float, varargs=complex),
+            "Signature(int, float, varargs=complex)",
         ),
         (
-            Sig(int, float, varargs=complex, return_type=str, precedence=1),
-            "Signature(int, float, varargs=complex, return_type=str, precedence=1)",
+            Sig(int, float, varargs=complex, precedence=1),
+            "Signature(int, float, varargs=complex, precedence=1)",
         ),
         (
             Sig(
                 int,
                 float,
                 varargs=complex,
-                return_type=str,
                 precedence=1,
-                implementation=_impl,
             ),
-            f"Signature(int, float, varargs=complex, return_type=str, precedence=1,"
-            f" implementation={_impl!r})",
+            f"Signature(int, float, varargs=complex, precedence=1)",
         ),
     ],
 )
@@ -158,27 +149,25 @@ def test_match():
 
 
 def test_inspect_signature():
-    assert isinstance(_inspect_signature(lambda x: x), inspect.Signature)
-    assert len(_inspect_signature(lambda x: x).parameters) == 1
-    assert len(_inspect_signature(operator.itemgetter(1)).parameters) == 1
-    assert len(_inspect_signature(operator.attrgetter("x")).parameters) == 1
+    assert isinstance(inspect_signature(lambda x: x), inspect.Signature)
+    assert len(inspect_signature(lambda x: x).parameters) == 1
+    assert len(inspect_signature(operator.itemgetter(1)).parameters) == 1
+    assert len(inspect_signature(operator.attrgetter("x")).parameters) == 1
 
 
-def assert_signature(f, *types, varargs=Missing, return_type=Any):
-    sig = extract_signature(f)
+def assert_signature(f, *types, varargs=Missing):
+    sig = Sig.from_callable(f)
     assert sig.types == types
     assert sig.varargs == varargs
-    assert sig.return_type == return_type
 
 
-def test_extract_signature():
+def test_signature_from_callable():
     def f():
         pass
 
-    # Check implementation and precedence.
-    assert extract_signature(f).implementation == f
-    assert extract_signature(f).precedence == 0
-    assert extract_signature(f, precedence=1).precedence == 1
+    # Check precedence.
+    assert Sig.from_callable(f).precedence == 0
+    assert Sig.from_callable(f, precedence=1).precedence == 1
 
     # Check defaults.
     assert_signature(f)
@@ -188,7 +177,7 @@ def test_extract_signature():
     def f(a: int, b, *c: float, **kw_args: Num) -> Re:
         pass
 
-    assert_signature(f, int, Any, varargs=float, return_type=Re)
+    assert_signature(f, int, Any, varargs=float)
 
     # Check that default values must be right.
 
@@ -203,14 +192,14 @@ def test_extract_signature():
         TypeError,
         match=r"Default value `1.0` is not an instance of the annotated type `int`.",
     ):
-        extract_signature(f_bad)
+        Sig.from_callable(f_bad)
 
 
 def test_append_default_args():
     def f(a: int, b=1, c: float = 1.0, *d: complex, option=None, **other_options):
         pass
 
-    sigs = append_default_args(extract_signature(f), f)
+    sigs = append_default_args(Sig.from_callable(f), f)
     assert len(sigs) == 3
     assert (sigs[0].types, sigs[0].varargs) == ((int, Any, float), complex)
     assert (sigs[1].types, sigs[1].varargs) == ((int, Any), Missing)
@@ -218,4 +207,4 @@ def test_append_default_args():
 
     # Test that `itemgetter` is supported.
     f = operator.itemgetter(0)
-    assert len(append_default_args(extract_signature(f), f)) == 1
+    assert len(append_default_args(Sig.from_callable(f), f)) == 1
