@@ -2,6 +2,7 @@ import inspect
 import typing
 from typing import Callable, Optional
 
+from .repr import color, colored, link, repr_type
 from .signature import Signature, inspect_signature
 from .type import resolve_type_hint
 from .util import TypeHint

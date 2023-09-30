@@ -1,6 +1,5 @@
 import abc
 import sys
-import typing
 from typing import List
 
 if sys.version_info.minor <= 8:  # pragma: specific no cover 3.9 3.10 3.11
@@ -11,7 +10,6 @@ else:  # pragma: specific no cover 3.8
 __all__ = [
     "Callable",
     "TypeHint",
-    "repr_short",
     "Missing",
     "multihash",
     "Comparable",
@@ -19,6 +17,7 @@ __all__ = [
     "is_in_class",
     "get_class",
     "get_context",
+    "argsort",
 ]
 
 # We use this to indicate a reader that we expect a type hint. Using just `object` as a
@@ -26,21 +25,6 @@ __all__ = [
 # intention to a reader. Furthermore, if later on, Python has a proper type for type
 # hints, we can just replace it here.
 TypeHint = object
-
-
-def repr_short(x):
-    """Representation as a string, but in shorter form. This just calls
-    :func:`typing._type_repr`.
-
-    Args:
-        x (object): Object.
-
-    Returns:
-        str: Shorter representation of `x`.
-    """
-    # :func:`typing._type_repr` is an internal function, but it should be available in
-    # Python versions 3.8 through 3.11.
-    return typing._type_repr(x)
 
 
 class _MissingType(type):
@@ -176,3 +160,11 @@ def get_context(f) -> str:
     else:
         # Split off function name only.
         return ".".join(parts[:-1])
+
+
+def argsort(indexable):
+    """
+    Returns the indices used to index into a list in order
+    to return the sorted list.
+    """
+    return sorted(range(len(indexable)), key=indexable.__getitem__)

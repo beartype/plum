@@ -11,9 +11,9 @@ from plum.util import (
     get_context,
     is_in_class,
     multihash,
-    repr_short,
     wrap_lambda,
 )
+from plum.repr import repr_short
 
 
 def test_repr_short():

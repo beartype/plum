@@ -1,11 +1,10 @@
 import pydoc
 import sys
 from functools import wraps
-from typing import Callable, List, Optional, Tuple, Union
+from typing import Callable, Optional, Tuple, Union
 
-from plum.method import Method
-from plum.signature import Signature
 from plum.method import Method, MethodList
+from plum.signature import Signature
 
 __all__ = ["AmbiguousLookupError", "NotFoundLookupError"]
 

@@ -1,5 +1,6 @@
 import inspect
 import operator
+import typing
 from copy import copy
 from typing import Callable, List, Tuple, Union
 
@@ -7,8 +8,9 @@ import beartype.door
 from beartype.peps import resolve_pep563 as beartype_resolve_pep563
 
 from . import _is_bearable
+from .repr import repr_short
 from .type import is_faithful, resolve_type_hint
-from .util import Comparable, Missing, TypeHint, multihash, repr_short, wrap_lambda
+from .util import Comparable, Missing, TypeHint, multihash, wrap_lambda
 
 __all__ = ["Signature", "append_default_args"]
 

@@ -5,8 +5,9 @@ from beartype.roar import BeartypeDoorNonpepException
 
 from .dispatcher import Dispatcher
 from .function import _owner_transfer
+from .repr import repr_short
 from .type import resolve_type_hint
-from .util import TypeHint, repr_short
+from .util import TypeHint
 
 __all__ = [
     "CovariantMeta",

@@ -4,8 +4,8 @@ import plum.function
 
 from . import _is_bearable
 from .dispatcher import Dispatcher
+from .repr import repr_short
 from .type import resolve_type_hint
-from .util import repr_short
 
 __all__ = [
     "convert",

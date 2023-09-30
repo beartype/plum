@@ -6,10 +6,11 @@ from types import MethodType
 from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union
 
 from .method import Method
+from .repr import repr_short
 from .resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
 from .signature import Signature, append_default_args
 from .type import resolve_type_hint
-from .util import TypeHint, repr_short
+from .util import TypeHint
 
 __all__ = ["Function"]
 
