@@ -1,7 +1,7 @@
 import abc
 import sys
 import typing
-from typing import Callable, List
+from typing import List
 
 if sys.version_info.minor <= 8:  # pragma: specific no cover 3.9 3.10 3.11
     from typing import Callable

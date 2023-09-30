@@ -3,6 +3,7 @@ import textwrap
 from functools import wraps
 from types import MethodType
 from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union
+from copy import copy
 
 from .resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
 from .signature import Signature, append_default_args, extract_signature
@@ -281,7 +282,7 @@ class Function(metaclass=_FunctionMeta):
             else:
                 # Ensure that the implementation is `f`, but make a copy before
                 # mutating.
-                signature = signature.__copy__()
+                signature = copy(signature)
                 signature.implementation = f
 
             # Ensure that the implementation has the right name, because this name
