@@ -4,6 +4,7 @@ import typing
 import numpy as np
 import pytest
 
+from plum.repr import repr_short
 from plum.util import (
     Comparable,
     Missing,
@@ -13,7 +14,6 @@ from plum.util import (
     multihash,
     wrap_lambda,
 )
-from plum.repr import repr_short
 
 
 def test_repr_short():
