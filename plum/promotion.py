@@ -126,7 +126,7 @@ def add_promotion_rule(type1, type2, type_to):
     # If the types are the same, the method will get overwritten.
 
     @_promotion_rule.dispatch
-    def rule(t1: type2, t2: type1):
+    def rule(t1: type2, t2: type1):  # noqa F811
         return type_to
 
 
@@ -161,11 +161,11 @@ def promote(obj1, obj2, *objs):
 
 
 @_dispatch
-def promote(obj: object):
+def promote(obj: object):  # noqa F811
     # Promote should always return a tuple to avoid edge cases.
     return (obj,)
 
 
 @_dispatch
-def promote():
+def promote():  # noqa F811
     return ()

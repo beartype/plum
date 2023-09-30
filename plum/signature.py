@@ -1,7 +1,9 @@
+from typing import Callable, List, Tuple, Optional
+
+import typing
 import inspect
 import operator
-import typing
-from typing import Callable, List, Optional, Tuple
+from copy import copy
 
 import beartype.door
 from beartype.peps import resolve_pep563
@@ -286,15 +288,15 @@ def append_default_args(signature: Signature, f: Callable) -> List[Signature]:
         if p.kind == p.VAR_POSITIONAL:
             continue
 
-        copy = signatures[-1].__copy__()
+        signature_copy = copy(signatures[-1])
 
         # As specified over, these additional signatures should never have variable
         # arguments.
-        copy.varargs = Missing
+        signature_copy.varargs = Missing
 
         # Remove the last positional argument.
-        copy.types = copy.types[:-1]
+        signature_copy.types = signature_copy.types[:-1]
 
-        signatures.append(copy)
+        signatures.append(signature_copy)
 
     return signatures
