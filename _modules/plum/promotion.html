@@ -460,7 +460,7 @@ document.write(`
     <span class="c1"># If the types are the same, the method will get overwritten.</span>
 
     <span class="nd">@_promotion_rule</span><span class="o">.</span><span class="n">dispatch</span>
-    <span class="k">def</span> <span class="nf">rule</span><span class="p">(</span><span class="n">t1</span><span class="p">:</span> <span class="n">type2</span><span class="p">,</span> <span class="n">t2</span><span class="p">:</span> <span class="n">type1</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">rule</span><span class="p">(</span><span class="n">t1</span><span class="p">:</span> <span class="n">type2</span><span class="p">,</span> <span class="n">t2</span><span class="p">:</span> <span class="n">type1</span><span class="p">):</span>  <span class="c1"># noqa F811</span>
         <span class="k">return</span> <span class="n">type_to</span></div>
 
 
@@ -495,13 +495,13 @@ document.write(`
 
 
 <span class="nd">@_dispatch</span>
-<span class="k">def</span> <span class="nf">promote</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="nb">object</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">promote</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="nb">object</span><span class="p">):</span>  <span class="c1"># noqa F811</span>
     <span class="c1"># Promote should always return a tuple to avoid edge cases.</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">obj</span><span class="p">,)</span>
 
 
 <div class="viewcode-block" id="promote"><a class="viewcode-back" href="../../api.html#plum.promotion.promote">[docs]</a><span class="nd">@_dispatch</span>
-<span class="k">def</span> <span class="nf">promote</span><span class="p">():</span>
+<span class="k">def</span> <span class="nf">promote</span><span class="p">():</span>  <span class="c1"># noqa F811</span>
     <span class="k">return</span> <span class="p">()</span></div>
 </pre></div>
 
