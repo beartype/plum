@@ -5,8 +5,9 @@ from functools import wraps
 from types import MethodType
 from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union
 
+from .method import Method
 from .resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
-from .signature import Signature, append_default_args, extract_signature
+from .signature import Signature, append_default_args
 from .type import resolve_type_hint
 from .util import TypeHint, repr_short
 
@@ -183,7 +184,7 @@ class Function(metaclass=_FunctionMeta):
     def methods(self) -> List[Signature]:
         """list[:class:`.signature.Signature`]: All available methods."""
         self._resolve_pending_registrations()
-        return self._resolver.signatures
+        return self._resolver.methods
 
     def dispatch(
         self: Self, method: Optional[Callable] = None, precedence=0
@@ -278,24 +279,23 @@ class Function(metaclass=_FunctionMeta):
 
             # Obtain the signature if it is not available.
             if signature is None:
-                signature = extract_signature(f, precedence=precedence)
+                signature = Signature.from_callable(f, precedence=precedence)
             else:
                 # Ensure that the implementation is `f`, but make a copy before
                 # mutating.
                 signature = copy(signature)
-                signature.implementation = f
 
             # Ensure that the implementation has the right name, because this name
             # will show up in the docstring.
-            if getattr(signature.implementation, "__name__", None) != self.__name__:
-                signature.implementation = _change_function_name(
-                    signature.implementation,
-                    self.__name__,
-                )
+            if getattr(f, "__name__", None) != self.__name__:
+                f_renamed = _change_function_name(f, self.__name__)
+            else:
+                f_renamed = f
 
             # Process default values.
             for subsignature in append_default_args(signature, f):
-                self._resolver.register(subsignature)
+                submethod = Method(f_renamed, subsignature, function_name=self.__name__)
+                self._resolver.register(submethod)
                 registered = True
 
         if registered:
@@ -339,9 +339,9 @@ class Function(metaclass=_FunctionMeta):
 
         try:
             # Attempt to find the method using the resolver.
-            signature = self._resolver.resolve(target)
-            method = signature.implementation
-            return_type = signature.return_type
+            method = self._resolver.resolve(target)
+            impl = method.implementation
+            return_type = method.return_type
 
         except AmbiguousLookupError as e:
             __tracebackhide__ = True
@@ -351,9 +351,9 @@ class Function(metaclass=_FunctionMeta):
             __tracebackhide__ = True
 
             e = self._enhance_exception(e)  # Specify this function.
-            method, return_type = self._handle_not_found_lookup_error(e)
+            impl, return_type = self._handle_not_found_lookup_error(e)
 
-        return method, return_type
+        return impl, return_type
 
     def _handle_not_found_lookup_error(
         self, ex: NotFoundLookupError
