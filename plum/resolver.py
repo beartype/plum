@@ -5,6 +5,7 @@ from typing import Callable, List, Optional, Tuple, Union
 
 from plum.method import Method
 from plum.signature import Signature
+from plum.method import Method, MethodList
 
 __all__ = ["AmbiguousLookupError", "NotFoundLookupError"]
 
@@ -101,6 +102,7 @@ class Resolver:
     def __init__(self, function_name: Optional[str] = None):
         self.function_name = function_name
         self.methods: List[Method] = []
+        self.methods: MethodList = MethodList()
         self.is_faithful: bool = True
 
     def doc(self, exclude: Union[Callable, None] = None) -> str:

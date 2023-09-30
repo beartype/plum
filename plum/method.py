@@ -84,6 +84,13 @@ class Method:
         impl = self.implementation
         return f"Method({function_name=}, {signature=}, {return_type=}, {impl=})"
 
+class MethodList(list):
+    def __repr__(self):
+        res = f"Method List with # {len(self)} methods:"
+        for i, method in enumerate(self):
+            res += f"\n [{i}] {method}"
+        return res
+
 
 def extract_return_type(f: Callable) -> TypeHint:
     """Extract the return type from a function.
