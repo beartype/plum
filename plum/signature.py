@@ -54,7 +54,7 @@ class Signature(Comparable):
 
     def __init__(
         self,
-        *types: tuple[TypeHint, ...],
+        *types: Tuple[TypeHint, ...],
         varargs: OptionalType = _default_varargs,
         precedence: int = _default_precedence,
     ):
