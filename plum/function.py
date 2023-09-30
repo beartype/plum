@@ -344,7 +344,7 @@ class Function(metaclass=_FunctionMeta):
             return_type = signature.return_type
 
         except AmbiguousLookupError as e:
-            raise self._enhance_exception(e) from None # Specify this function.
+            raise self._enhance_exception(e) from None  # Specify this function.
 
         except NotFoundLookupError as e:
             e = self._enhance_exception(e)  # Specify this function.
