@@ -344,7 +344,7 @@ class Function(metaclass=_FunctionMeta):
             return_type = signature.return_type
 
         except AmbiguousLookupError as e:
-            raise self._enhance_exception(e)  # Specify this function.
+            raise self._enhance_exception(e) from None # Specify this function.
 
         except NotFoundLookupError as e:
             e = self._enhance_exception(e)  # Specify this function.
@@ -357,7 +357,7 @@ class Function(metaclass=_FunctionMeta):
     ) -> Tuple[Callable, TypeHint]:
         if not self.owner:
             # Not in a class. Nothing we can do.
-            raise ex
+            raise ex from None
 
         # In a class. Walk through the classes in the class's MRO, except for this
         # class, and try to get the method.
@@ -392,7 +392,7 @@ class Function(metaclass=_FunctionMeta):
         if not method:
             # If no method has been found after walking through the MRO, raise the
             # original exception.
-            raise ex
+            raise ex from None
         return method, return_type
 
     def __call__(self, *args, **kw_args):
