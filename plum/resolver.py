@@ -6,6 +6,8 @@ from typing import Callable, Optional, Tuple, Union
 from plum.method import Method, MethodList
 from plum.signature import Signature
 
+from .util import argsort
+
 __all__ = ["AmbiguousLookupError", "NotFoundLookupError"]
 
 
@@ -202,7 +204,13 @@ class Resolver:
 
         if len(candidates) == 0:
             # There is no matching signature.
-            raise NotFoundLookupError(f"`{target}` could not be resolved.")
+            if not isinstance(target, Signature):
+                msg = self._resolution_error_hint(target)
+            else:
+                # TODO: Implement the hint also for signature resolutions.
+                # But those should not happen in normal usage.
+                msg = ""
+            raise NotFoundLookupError(f"`{target}` could not be resolved.\n" + msg)
         elif len(candidates) == 1:
             # There is exactly one matching signature. Success!
             return candidates[0]
@@ -216,10 +224,37 @@ class Resolver:
             else:
                 # Could not resolve the ambiguity, so error. First, make a nice list
                 # of the candidates and their precedences.
-                listed_candidates = "\n  ".join(
-                    [f"{c} (precedence: {c.signature.precedence})" for c in candidates]
-                )
-                raise AmbiguousLookupError(
-                    f"`{target}` is ambiguous among the following:\n"
-                    f"  {listed_candidates}"
-                )
+                msg = f"`msg{target}` is ambiguous among the following:\n"
+                for i, c in enumerate(candidates):
+                    msg += f"\n [{i}] {c}"
+
+                raise AmbiguousLookupError(msg)
+
+    def _resolution_error_hint(
+        self, target: Tuple[object, ...], *, max_suggestions: int = 3
+    ) -> str:
+        """
+        Generate a string of the top `max_suggestions` methods
+        and signatures that are closest to the given one.
+        """
+        distances = []
+        for method in self.methods:
+            dist = method.signature.compute_distance(target)
+            distances.append(dist)
+
+        sort_method_ids = argsort(distances)
+
+        # Take at most 3 hints
+        sort_method_ids = sort_method_ids[:max_suggestions]
+
+        distances = [distances[i] for i in sort_method_ids]
+        methods = [self.methods[i] for i in sort_method_ids]
+
+        # create the error message
+        fname = self.methods[0].function_name if len(self.methods) > 0 else "???"
+        msg = f"No method matching {fname}({target})\n\nClosest candidates are:\n"
+        for m in methods:
+            args_ok = m.signature.compute_args_ok(target)
+            msg += m._repr_signature_mismatch(args_ok) + "\n"
+
+        return msg

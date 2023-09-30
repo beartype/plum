@@ -59,23 +59,35 @@ def test_repr():
     def f(x: str):
         return "str"
 
-    assert repr(f) == f"<function {f._f} with 0 registered and 2 pending method(s)>"
+    assert repr(f) == (
+        f"<multiple-dispatch function {f.__qualname__} "
+        "(with 0 registered and 2 pending method(s))>"
+    )
 
     # Register all methods.
     assert f(1) == "int"
 
-    assert repr(f) == f"<function {f._f} with 2 registered and 0 pending method(s)>"
+    assert repr(f) == (
+        f"<multiple-dispatch function {f.__qualname__} "
+        "(with 2 registered and 0 pending method(s))>"
+    )
 
     @dispatch
     def f(x: float):
         return "float"
 
-    assert repr(f) == f"<function {f._f} with 2 registered and 1 pending method(s)>"
+    assert repr(f) == (
+        f"<multiple-dispatch function {f.__qualname__} "
+        "(with 2 registered and 1 pending method(s))>"
+    )
 
     # Again register all methods.
     assert f(1) == "int"
 
-    assert repr(f) == f"<function {f._f} with 3 registered and 0 pending method(s)>"
+    assert repr(f) == (
+        f"<multiple-dispatch function {f.__qualname__} "
+        "(with 3 registered and 0 pending method(s))>"
+    )
 
 
 # `A` needs to be in the global scope for owner resolution to work.

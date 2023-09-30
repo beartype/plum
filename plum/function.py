@@ -79,6 +79,9 @@ class Function(metaclass=_FunctionMeta):
         self._cache = {}
         wraps(f)(self)  # Sets `self._doc`.
 
+        # set __name__ and __qualname__
+        self.__name__, self.__qualname__ = _generate_qualname(f)
+
         # `owner` is the name of the owner. We will later attempt to resolve to
         # which class it actually points.
         self._owner_name: Optional[str] = owner
@@ -437,8 +440,9 @@ class Function(metaclass=_FunctionMeta):
 
     def __repr__(self) -> str:
         return (
-            f"<function {self._f} with {len(self._resolver)} registered and"
-            f" {len(self._pending)} pending method(s)>"
+            f"<multiple-dispatch function {self.__qualname__} (with "
+            f"{len(self._resolver)} registered and {len(self._pending)} "
+            "pending method(s))>"
         )
 
 
