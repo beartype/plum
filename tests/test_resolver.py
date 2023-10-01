@@ -119,14 +119,14 @@ def test_register():
     r = Resolver()
 
     # Test that faithfulness is tracked correctly.
-    r.register(Method(lambda _: x, Signature(int)))
-    r.register(Method(lambda _: x, Signature(float)))
+    r.register(Method(lambda _: _, Signature(int)))
+    r.register(Method(lambda _: _, Signature(float)))
     assert r.is_faithful
-    r.register(Method(lambda _: x, Signature(typing.Tuple[int])))
+    r.register(Method(lambda _: _, Signature(typing.Tuple[int])))
     assert not r.is_faithful
 
     # Test that signatures can be replaced.
-    new_m = Method(lambda _: x, Signature(float))
+    new_m = Method(lambda _: _, Signature(float))
     assert len(r) == 3
     assert r.methods[1] is not new_m
     r.register(new_m)
@@ -134,12 +134,12 @@ def test_register():
     assert r.methods[1] is new_m
 
     # Test the edge case that should never happen.
-    r.methods[2] = Method(lambda _: x, Signature(float))
+    r.methods[2] = Method(lambda _: _, Signature(float))
     with pytest.raises(
         AssertionError,
         match=r"(?i)the added method `(.*)` is equal to 2 existing methods",
     ):
-        r.register(Method(lambda _: x, Signature(float)))
+        r.register(Method(lambda _: _, Signature(float)))
 
 
 def test_len():
@@ -178,7 +178,8 @@ def test_resolve():
     class Missing:
         pass
 
-    def f(x): x
+    def f(x):
+        x
 
     m_a = Method(f, Signature(A))
     m_b1 = Method(f, Signature(B1))

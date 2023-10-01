@@ -2,8 +2,8 @@ import pydoc
 import sys
 from typing import Callable, List, Tuple, Union
 
-from plum.signature import Signature
 from plum.method import Method
+from plum.signature import Signature
 
 __all__ = ["AmbiguousLookupError", "NotFoundLookupError"]
 

@@ -79,7 +79,7 @@ def _impl(x, y, *z):
                 varargs=complex,
                 precedence=1,
             ),
-            f"Signature(int, float, varargs=complex, precedence=1)",
+            "Signature(int, float, varargs=complex, precedence=1)",
         ),
     ],
 )

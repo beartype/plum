@@ -2,13 +2,9 @@ import inspect
 import typing
 from typing import Callable, Optional
 
-
-from .signature import inspect_signature
+from .signature import Signature, inspect_signature
 from .type import resolve_type_hint
-from .util import (
-    TypeHint,
-)
-from .signature import Signature
+from .util import TypeHint
 
 
 class Method:

@@ -6,8 +6,8 @@ import typing
 import pytest
 
 from plum import Dispatcher
-from plum.method import Method
 from plum.function import Function, _change_function_name, _convert, _owner_transfer
+from plum.method import Method
 from plum.resolver import AmbiguousLookupError, NotFoundLookupError
 from plum.signature import Signature
 
