@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, Optional, Tuple, TypeVar, Union, overload
+from typing import Any, Dict, Optional, Tuple, TypeVar, Union, overload
 
 from .function import Function
 from .overload import get_overloads
