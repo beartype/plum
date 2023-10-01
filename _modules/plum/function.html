@@ -678,9 +678,12 @@ document.write(`
             <span class="n">return_type</span> <span class="o">=</span> <span class="n">signature</span><span class="o">.</span><span class="n">return_type</span>
 
         <span class="k">except</span> <span class="n">AmbiguousLookupError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">__tracebackhide__</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">_enhance_exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="kn">from</span> <span class="kc">None</span>  <span class="c1"># Specify this function.</span>
 
         <span class="k">except</span> <span class="n">NotFoundLookupError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">__tracebackhide__</span> <span class="o">=</span> <span class="kc">True</span>
+
             <span class="n">e</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_enhance_exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>  <span class="c1"># Specify this function.</span>
             <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handle_not_found_lookup_error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
 
@@ -730,6 +733,7 @@ document.write(`
         <span class="k">return</span> <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span>
 
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
+        <span class="n">__tracebackhide__</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_method_with_cache</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">_convert</span><span class="p">(</span><span class="n">method</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">),</span> <span class="n">return_type</span><span class="p">)</span>
 
@@ -755,6 +759,8 @@ document.write(`
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">types</span><span class="p">]</span>
         <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="n">__tracebackhide__</span> <span class="o">=</span> <span class="kc">True</span>
+
             <span class="k">if</span> <span class="n">args</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">args</span> <span class="o">=</span> <span class="n">Signature</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">types</span><span class="p">))</span>
 
