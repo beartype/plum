@@ -344,9 +344,12 @@ class Function(metaclass=_FunctionMeta):
             return_type = signature.return_type
 
         except AmbiguousLookupError as e:
+            __tracebackhide__ = True
             raise self._enhance_exception(e) from None  # Specify this function.
 
         except NotFoundLookupError as e:
+            __tracebackhide__ = True
+
             e = self._enhance_exception(e)  # Specify this function.
             method, return_type = self._handle_not_found_lookup_error(e)
 
@@ -396,6 +399,7 @@ class Function(metaclass=_FunctionMeta):
         return method, return_type
 
     def __call__(self, *args, **kw_args):
+        __tracebackhide__ = True
         method, return_type = self._resolve_method_with_cache(args=args)
         return _convert(method(*args, **kw_args), return_type)
 
@@ -421,6 +425,8 @@ class Function(metaclass=_FunctionMeta):
         try:
             return self._cache[types]
         except KeyError:
+            __tracebackhide__ = True
+
             if args is None:
                 args = Signature(*(resolve_type_hint(t) for t in types))
 
