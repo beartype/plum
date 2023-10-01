@@ -678,7 +678,7 @@ document.write(`
             <span class="n">return_type</span> <span class="o">=</span> <span class="n">signature</span><span class="o">.</span><span class="n">return_type</span>
 
         <span class="k">except</span> <span class="n">AmbiguousLookupError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">_enhance_exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>  <span class="c1"># Specify this function.</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">_enhance_exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="kn">from</span> <span class="kc">None</span>  <span class="c1"># Specify this function.</span>
 
         <span class="k">except</span> <span class="n">NotFoundLookupError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">e</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_enhance_exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>  <span class="c1"># Specify this function.</span>
@@ -691,7 +691,7 @@ document.write(`
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">TypeHint</span><span class="p">]:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">owner</span><span class="p">:</span>
             <span class="c1"># Not in a class. Nothing we can do.</span>
-            <span class="k">raise</span> <span class="n">ex</span>
+            <span class="k">raise</span> <span class="n">ex</span> <span class="kn">from</span> <span class="kc">None</span>
 
         <span class="c1"># In a class. Walk through the classes in the class&#39;s MRO, except for this</span>
         <span class="c1"># class, and try to get the method.</span>
@@ -726,7 +726,7 @@ document.write(`
         <span class="k">if</span> <span class="ow">not</span> <span class="n">method</span><span class="p">:</span>
             <span class="c1"># If no method has been found after walking through the MRO, raise the</span>
             <span class="c1"># original exception.</span>
-            <span class="k">raise</span> <span class="n">ex</span>
+            <span class="k">raise</span> <span class="n">ex</span> <span class="kn">from</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span>
 
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
