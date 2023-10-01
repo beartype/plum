@@ -1,11 +1,15 @@
 import re
+import sys
 import types
 import typing
 
 __all__ = [
     "repr_short",
+    "repr_type",
     "formatannotation",
 ]
+
+py_version = sys.version_info.minor
 
 
 class color:
@@ -17,6 +21,7 @@ class color:
     YELLOW = "\033[93m"
     RED = "\033[91m"
     GRAY = "\033[90m"
+    LIGHT = "\033[2m"
     BOLD = "\033[1m"
     UNDERLINE = "\033[4m"
     END = "\033[0m"
@@ -55,7 +60,20 @@ def repr_short(x):
 
 
 def repr_type(typ, *clrs):
-    return colored(repr_short(typ), color.BOLD, *clrs)
+    if py_version > 8 and isinstance(typ, types.GenericAlias):
+        return colored(repr(typ), color.BOLD, *clrs)
+
+    if isinstance(typ, type):
+        if typ.__module__ in ["builtins", "typing"]:
+            return colored(typ.__qualname__, color.BOLD, *clrs)
+        else:
+            return colored(f"{typ.__module__}.", color.LIGHT, *clrs) + colored(
+                typ.__qualname__, color.BOLD, *clrs
+            )
+    if isinstance(typ, types.FunctionType):
+        return colored(typ.__name__, color.LIGHT, *clrs)
+
+    return colored(repr(typ), color.BOLD, *clrs)
 
 
 def formatannotation(annotation, base_module=None):
