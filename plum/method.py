@@ -159,7 +159,8 @@ class Method:
 
         parts = []
         if sig.types:
-            for nm, t, is_ok in zip(argnames, sig.types, args_ok):
+            for i, (nm, t) in enumerate(zip(argnames, sig.types)):
+                is_ok = args_ok[i] if i < len(args_ok) else False
                 clr = (color.RED,) if not is_ok else tuple()
                 parts.append(f"{nm}: {repr_type(t, *clr)}")
         if sig.varargs != Signature._default_varargs:
