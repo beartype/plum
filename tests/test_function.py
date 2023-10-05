@@ -6,9 +6,13 @@ import typing
 import pytest
 
 from plum import Dispatcher
-from plum.function import Function, _change_function_name, _convert, _owner_transfer
+from plum.function import Function, _convert, _owner_transfer
 from plum.method import Method
-from plum.resolver import AmbiguousLookupError, NotFoundLookupError
+from plum.resolver import (
+    AmbiguousLookupError,
+    NotFoundLookupError,
+    _change_function_name,
+)
 from plum.signature import Signature
 
 

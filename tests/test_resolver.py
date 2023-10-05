@@ -46,7 +46,7 @@ def test_document_nosphinx():
     Args:
         x (object): Input.
     """
-    assert _document(f) == textwrap.dedent(expected_doc).strip()
+    assert _document(f, "f") == textwrap.dedent(expected_doc).strip()
 
 
 def test_document_sphinx(monkeypatch):
@@ -76,13 +76,13 @@ def test_document_sphinx(monkeypatch):
     Args:
         x (object): Input.
     """
-    assert _document(f) == textwrap.dedent(expected_doc).strip()
+    assert _document(f, "f") == textwrap.dedent(expected_doc).strip()
 
 
 def test_doc(monkeypatch):
     # Let the `pydoc` documenter simply return the docstring. This makes testing
     # simpler.
-    monkeypatch.setattr(plum.resolver, "_document", lambda x: x.__doc__)
+    monkeypatch.setattr(plum.resolver, "_document", lambda x, _: x.__doc__)
 
     r = Resolver()
 
@@ -118,15 +118,18 @@ def test_doc(monkeypatch):
 def test_register():
     r = Resolver()
 
+    def _f(*x):
+        x
+
     # Test that faithfulness is tracked correctly.
-    r.register(Method(lambda _: _, Signature(int)))
-    r.register(Method(lambda _: _, Signature(float)))
+    r.register(Method(_f, Signature(int)))
+    r.register(Method(_f, Signature(float)))
     assert r.is_faithful
-    r.register(Method(lambda _: _, Signature(typing.Tuple[int])))
+    r.register(Method(_f, Signature(typing.Tuple[int])))
     assert not r.is_faithful
 
     # Test that signatures can be replaced.
-    new_m = Method(lambda _: _, Signature(float))
+    new_m = Method(_f, Signature(float))
     assert len(r) == 3
     assert r.methods[1] is not new_m
     r.register(new_m)
@@ -134,12 +137,12 @@ def test_register():
     assert r.methods[1] is new_m
 
     # Test the edge case that should never happen.
-    r.methods[2] = Method(lambda _: _, Signature(float))
+    r.methods[2] = Method(_f, Signature(float))
     with pytest.raises(
         AssertionError,
         match=r"(?i)the added method `(.*)` is equal to 2 existing methods",
     ):
-        r.register(Method(lambda _: _, Signature(float)))
+        r.register(Method(_f, Signature(float)))
 
 
 def test_len():
