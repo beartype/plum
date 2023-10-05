@@ -35,6 +35,15 @@ def test_instantiation_copy():
     assert m2 == m
     assert hash(m2) == hash(m)
 
+    m3 = Method(
+        _f,
+        Signature(float),
+        return_type=complex,
+        function_name="prova",
+    )
+    assert m2 != m3
+    assert hash(m2) != hash(m3)
+
 
 def test_autodetect_name_return():
     def _f(arg1) -> float:
