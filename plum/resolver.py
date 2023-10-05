@@ -30,8 +30,8 @@ def _change_function_name(f: Callable, name: str) -> Callable:
     """
 
     @wraps(f)
-    def f_renamed(*args, **kw_args):  # pragma: no cover
-        return f(*args, **kw_args)
+    def f_renamed(*args, **kw_args):
+        return f(*args, **kw_args)  # pragma: no cover
 
     f_renamed.__name__ = name
     return f_renamed
