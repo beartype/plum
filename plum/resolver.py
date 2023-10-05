@@ -1,6 +1,7 @@
 import pydoc
 import sys
-from typing import Callable, List, Tuple, Union
+from functools import wraps
+from typing import Callable, List, Optional, Tuple, Union
 
 from plum.method import Method
 from plum.signature import Signature
@@ -16,7 +17,27 @@ class NotFoundLookupError(LookupError):
     """A signature cannot be resolved because no applicable method can be found."""
 
 
-def _document(f: Callable) -> str:
+def _change_function_name(f: Callable, name: str) -> Callable:
+    """It is not always the case that `f.__name__` is writable. To solve this, first
+    create a temporary function that wraps `f` and then change the name.
+
+    Args:
+        f (function): Function to change the name of.
+        name (str): New name.
+
+    Returns:
+        function: Function that wraps `f` and has name `name`.
+    """
+
+    @wraps(f)
+    def f_renamed(*args, **kw_args):
+        return f(*args, **kw_args)
+
+    f_renamed.__name__ = name
+    return f_renamed
+
+
+def _document(f: Callable, fname: Optional[str] = None) -> str:
     """Generate documentation for a function `f`.
 
     The generated documentation contains both the function definition and the
@@ -31,10 +52,22 @@ def _document(f: Callable) -> str:
 
     Args:
         f (function): Function.
+        fname (str): An optional string representing the function name,
+            which will be overridden from implementation's docstring
+            which might have different names. If this is not specified
+            the name is not overriden.
 
     Returns:
         str: Documentation for `f`.
     """
+    # Ensure that the implementation has the right name, because this name
+    # will show up in the docstring.
+    if fname is not None and getattr(f, "__name__", None) != fname:
+        f = _change_function_name(
+            f,
+            fname,
+        )
+
     # :class:`pydoc._PlainTextDoc` removes styling. This styling will display
     # erroneously in Sphinx.
     parts = pydoc._PlainTextDoc().document(f).rstrip().split("\n")
@@ -67,9 +100,10 @@ class Resolver:
         is_faithful (bool): Whether all methods are faithful or not.
     """
 
-    __slots__ = ("methods", "is_faithful")
+    __slots__ = ("methods", "is_faithful", "function_name")
 
-    def __init__(self):
+    def __init__(self, function_name="__noname__"):
+        self.function_name = function_name
         self.methods: List[Method] = []
         self.is_faithful: bool = True
 
@@ -86,7 +120,7 @@ class Resolver:
         """
         # Generate all docstrings, possibly excluding `exclude`.
         docs = [
-            _document(m.implementation)
+            _document(m.implementation, self.function_name)
             for m in self.methods
             if not (exclude and m.implementation == exclude)
         ]

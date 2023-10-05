@@ -42,26 +42,6 @@ def _convert(obj: Any, target_type: TypeHint) -> Any:
         return _promised_convert(obj, target_type)
 
 
-def _change_function_name(f: Callable, name: str) -> Callable:
-    """It is not always the case that `f.__name__` is writable. To solve this, first
-    create a temporary function that wraps `f` and then change the name.
-
-    Args:
-        f (function): Function to change the name of.
-        name (str): New name.
-
-    Returns:
-        function: Function that wraps `f` and has name `name`.
-    """
-
-    @wraps(f)
-    def f_renamed(*args, **kw_args):
-        return f(*args, **kw_args)
-
-    f_renamed.__name__ = name
-    return f_renamed
-
-
 _owner_transfer = {}
 """dict[type, type]: When the keys of this dictionary are detected as the owner of
 a function (see :meth:`Function.owner`), make the corresponding value the owner."""
@@ -105,7 +85,7 @@ class Function(metaclass=_FunctionMeta):
 
         # Initialise pending and resolved methods.
         self._pending: List[Tuple[Callable, Optional[Signature], int]] = []
-        self._resolver = Resolver()
+        self._resolver = Resolver(function_name=self.__name__)
         self._resolved: List[Tuple[Callable, Signature, int]] = []
 
     @property
@@ -285,16 +265,9 @@ class Function(metaclass=_FunctionMeta):
                 # mutating.
                 signature = copy(signature)
 
-            # Ensure that the implementation has the right name, because this name
-            # will show up in the docstring.
-            if getattr(f, "__name__", None) != self.__name__:
-                f_renamed = _change_function_name(f, self.__name__)
-            else:
-                f_renamed = f
-
             # Process default values.
             for subsignature in append_default_args(signature, f):
-                submethod = Method(f_renamed, subsignature, function_name=self.__name__)
+                submethod = Method(f, subsignature, function_name=self.__name__)
                 self._resolver.register(submethod)
                 registered = True
 
@@ -466,6 +439,23 @@ class Function(metaclass=_FunctionMeta):
             f"<function {self._f} with {len(self._resolver)} registered and"
             f" {len(self._pending)} pending method(s)>"
         )
+
+
+def _generate_qualname(f: Callable) -> str:
+    # modname = getattr(f, "__module__", "")
+    # if modname is not None and len(modname) > 0:
+    #     modname = f"{modname}."
+    # Todo: if we ever want to scope functions, we can
+    # just uncomment the code above.
+    modname = ""
+
+    qualname = getattr(f, "__qualname__", None)
+    if qualname is not None and len(modname) > 0:
+        qualname = f"{modname}{qualname}"
+    qualname = qualname.replace("__main__.", "")
+
+    name = getattr(f, "__name__", "")
+    return name, qualname
 
 
 class _BoundFunction:
