@@ -28,24 +28,23 @@ jobs:
       - name: Test linter assertions
         run: |
           python check_linter_assertions.py tests/typechecked
-      - name: Test
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
-          COVERALLS_PARALLEL: true
+      - name: Test py${{ matrix.python-version }}
         run: |
           PRAGMA_VERSION=`python -c "import sys; print('.'.join(map(str, sys.version_info[:2])))"` \
             pytest -v --cov=plum --cov-report term-missing
-          coveralls --service=github
-  coveralls:
+      - name: Coveralls Parallel
+        uses: coverallsapp/github-action@v2
+        with:
+          flag-name: run-${{ join(matrix.*, '-') }}
+          parallel: true
+
+  finish:
     name: Finish coverage
     needs: test
+    if: ${{ always() }}
     runs-on: ubuntu-latest
-    container: python:3-slim
     steps:
-    - name: Finished
-      run: |
-        pip3 install --upgrade coveralls
-        coveralls --finish
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Coveralls Finished
+      uses: coverallsapp/github-action@v2
+      with:
+        parallel-finished: true
