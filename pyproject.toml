@@ -38,7 +38,7 @@ dev = [
     "tox",
     "jupyter-book",
     "mypy",
-    "pyright",
+    "pyright>=1.1.323",
 ]
 
 [project.urls]

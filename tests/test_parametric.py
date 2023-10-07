@@ -159,22 +159,68 @@ def test_parametric_covariance():
 
     # Test covariance.
     assert issubclass(A[int], A[Number])
+    assert isinstance(A[int](), A[Number])
     assert not issubclass(A[int], A[float])
+    assert not isinstance(A[int](), A[float])
 
     # Check that the number of arguments must be right.
     assert not issubclass(A[int], A[Number, Number])
+    assert not isinstance(A[int](), A[Number, Number])
     assert issubclass(A[int, int], A[Number, Number])
+    assert isinstance(A[int, int](), A[Number, Number])
     assert not issubclass(A[int, int, int], A[Number, Number])
+    assert not isinstance(A[int, int, int](), A[Number, Number])
 
     # Test that type parameters are resolved.
     assert issubclass(
         A[ModuleType("builtins", "int")],
         A[ModuleType("numbers", "Number")],
     )
+    assert isinstance(
+        A[ModuleType("builtins", "int")](),
+        A[ModuleType("numbers", "Number")],
+    )
 
     # Check a mix between equatable objects and types.
     assert issubclass(A[1, int], A[1, Number])
+    assert isinstance(A[1, int](), A[1, Number])
     assert not issubclass(A[2, int], A[1, Number])
+    assert not isinstance(A[2, int](), A[1, Number])
+
+
+def test_parametric_covariance_test_case():
+    @parametric
+    class A:
+        def __init__(self, x):
+            self.x = x
+
+    dispatch = Dispatcher()
+
+    @dispatch
+    def f(a: object):
+        return "fallback"
+
+    @dispatch
+    def f(a: A):
+        return "A"
+
+    @dispatch
+    def f(a: A[Number]):
+        return "Number"
+
+    @dispatch
+    def f(a: A[int]):
+        return "int"
+
+    @dispatch
+    def f(a: A[float]):
+        return "int"
+
+    assert f(1j) == "fallback"
+    assert f(A(object())) == "A"
+    assert f(A(1j)) == "Number"
+    assert f(A(1)) == "int"
+    assert f(A(1.0)) == "int"
 
 
 def test_parametric_constructor():
