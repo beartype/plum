@@ -478,6 +478,18 @@ document.write(`
         <span class="c1"># Default behaviour to `type`s subclass check.</span>
         <span class="k">return</span> <span class="nb">type</span><span class="o">.</span><span class="fm">__subclasscheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="fm">__instancecheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
+        <span class="c1"># If `A` is a parametric type, then `A[T1]` and `A[T2]` are subclasses of</span>
+        <span class="c1"># `A`. With the implementation of `__subclasscheck__` above, we have that</span>
+        <span class="c1"># `issubclass(A[T1], A[T2])` whenever `issubclass(T1, T2)`. _However_,</span>
+        <span class="c1"># `isinstance(A[T1](), A[T2])` will fall back to `type.__ininstance__`, which</span>
+        <span class="c1"># will conclude that `A[T1]` is not a subclass of `A[T2]` because it bypasses</span>
+        <span class="c1"># the above implementation of `__subclasscheck__`. We therefore implement</span>
+        <span class="c1"># `__instancecheck__` to ensure that `isinstance(A[T1](), A[T2])` whenever</span>
+        <span class="c1"># `issubclass(T1, T2)`. In any case, we do first try `type.__instancecheck__`,</span>
+        <span class="c1"># since it is fast and only gives true positives.</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="o">.</span><span class="fm">__instancecheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">issubclass</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">instance</span><span class="p">),</span> <span class="bp">cls</span><span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">__le_type_parameter__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">p_left</span><span class="p">,</span> <span class="n">p_right</span><span class="p">):</span>
         <span class="c1"># Check that there are an equal number of parameters.</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_left</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_right</span><span class="p">):</span>
@@ -530,7 +542,26 @@ document.write(`
         <span class="bp">cls</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__concrete_class__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">original_meta</span><span class="o">.</span><span class="fm">__call__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">)</span>
 
-    <span class="n">meta</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;__call__&quot;</span><span class="p">:</span> <span class="fm">__call__</span><span class="p">})</span>
+    <span class="k">def</span> <span class="fm">__instancecheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
+        <span class="c1"># An implementation of `__instancecheck__` is necessary to ensure that</span>
+        <span class="c1"># `isinstance(A[SubType](), A[Type])`. `CovariantMeta` comes first in the MRO,</span>
+        <span class="c1"># but the implementation of `__instancecheck__` should be taken from</span>
+        <span class="c1"># `original_meta` if it exists. The implementation of `CovariantMeta` should be</span>
+        <span class="c1"># used as a fallback. Note that `original_meta.__instancecheck__` always exists.</span>
+        <span class="c1"># We check that it is not equal to the default `type.__instancecheck__`.</span>
+        <span class="k">if</span> <span class="n">original_meta</span><span class="o">.</span><span class="fm">__instancecheck__</span> <span class="o">!=</span> <span class="nb">type</span><span class="o">.</span><span class="fm">__instancecheck__</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">original_meta</span><span class="o">.</span><span class="fm">__instancecheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">CovariantMeta</span><span class="o">.</span><span class="fm">__instancecheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">)</span>
+
+    <span class="n">meta</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span>
+        <span class="n">name</span><span class="p">,</span>
+        <span class="n">bases</span><span class="p">,</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;__call__&quot;</span><span class="p">:</span> <span class="fm">__call__</span><span class="p">,</span>
+            <span class="s2">&quot;__instancecheck__&quot;</span><span class="p">:</span> <span class="fm">__instancecheck__</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
 
     <span class="n">subclasses</span> <span class="o">=</span> <span class="p">{}</span>
 
