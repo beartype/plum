@@ -25,5 +25,6 @@ def test_overload() -> None:
     assert f("1") == "1"
     with pytest.raises(NotFoundLookupError):
         # E: pyright(argument of type "float" cannot be assigned to parameter "x")
+        # E: pyright(no overloads for "f" match the provided arguments)
         # E: mypy(no overload variant of "f" matches argument type "float")
         f(1.0)
