@@ -104,6 +104,12 @@ def test_expand_varargs():
     assert s.expand_varargs(4) == (int, int, float, float)
 
 
+def test_varargs_order():
+    # Bug #117
+    assert Sig(int) < Sig(int, varargs=int)
+    assert Sig(int, int, varargs=int) < Sig(int, Num)
+
+
 def test_comparison():
     # Variable arguments shortcuts:
     assert not Sig(varargs=int) <= Sig()
