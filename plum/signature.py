@@ -147,11 +147,6 @@ class Signature(Comparable):
             return self.types
 
     def __le__(self, other) -> bool:
-        # If this signature has variable arguments, but the other does not, then this
-        # signature cannot be possibly smaller.
-        if self.has_varargs and not other.has_varargs:
-            return False
-
         # If this signature and the other signature both have variable arguments, then
         # the variable type of this signature must be less than the variable type of the
         # other signature.
@@ -177,12 +172,39 @@ class Signature(Comparable):
         # Finally, expand the types and compare.
         self_types = self.expand_varargs(len(other.types))
         other_types = other.expand_varargs(len(self.types))
-        return all(
+        res = all(
             [
                 beartype.door.TypeHint(x) <= beartype.door.TypeHint(y)
                 for x, y in zip(self_types, other_types)
             ]
         )
+
+        # This once was just `return res`, but to correctly handle
+        # bug #117 we require to carefully treat varargs
+        if res:
+            # We are less/equal, but equality might mean that one of the two
+            # is a vararg, therefore smaller
+            if self.has_varargs ^ other.has_varargs:
+                # If only one signature has a vararg, check if the two signatures
+                # are really equivalent
+                equivalent = all(
+                    [
+                        beartype.door.TypeHint(x) == beartype.door.TypeHint(y)
+                        for x, y in zip(self_types, other_types)
+                    ]
+                )
+                # the smallest is the one without varargs
+                if equivalent and self.has_varargs:
+                    return False
+                else:
+                    return True
+            else:
+                # If both or none have vararg, we trust the result computed
+                return True
+        else:
+            # if we are not less/equal, we are greater, so no problems
+            # with varargs.
+            return False
 
     def match(self, values) -> bool:
         """Check whether values match the signature.
