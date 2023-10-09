@@ -224,11 +224,9 @@ class Resolver:
             else:
                 # Could not resolve the ambiguity, so error. First, make a nice list
                 # of the candidates and their precedences.
-                msg = f"`msg{target}` is ambiguous among the following:\n"
-                for i, c in enumerate(candidates):
-                    msg += f"\n [{i}] {c}"
+                msg = self._ambigous_resolution_error_hint(target, candidates)
 
-                raise AmbiguousLookupError(msg)
+                raise AmbiguousLookupError(f"`{target}` is ambiguous. \n" + msg)
 
     def _resolution_error_hint(
         self, target: Tuple[object, ...], *, max_suggestions: int = 3
@@ -253,6 +251,23 @@ class Resolver:
         # create the error message
         fname = self.methods[0].function_name if len(self.methods) > 0 else "???"
         msg = f"No method matching {fname}({target})\n\nClosest candidates are:\n"
+        for m in methods:
+            args_ok = m.signature.compute_args_ok(target)
+            msg += m._repr_signature_mismatch(args_ok) + "\n"
+
+        return msg
+
+
+    def _ambigous_resolution_error_hint(
+        self, target: Tuple[object, ...], methods
+    ) -> str:
+        """
+        Generate a string of the top `max_suggestions` methods
+        and signatures that are closest to the given one.
+        """
+        # create the error message
+        fname = self.methods[0].function_name if len(self.methods) > 0 else "???"
+        msg = f"All the following methods match {fname}({target})\n\nCandidates are:\n"
         for m in methods:
             args_ok = m.signature.compute_args_ok(target)
             msg += m._repr_signature_mismatch(args_ok) + "\n"
