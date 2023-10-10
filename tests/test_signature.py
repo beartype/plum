@@ -107,7 +107,12 @@ def test_expand_varargs():
 def test_varargs_order():
     # Bug #117
     assert Sig(int) < Sig(int, varargs=int)
+    assert Sig(int, varargs=int) < Sig(int, Num)
     assert Sig(int, int, varargs=int) < Sig(int, Num)
+
+    assert not (Sig(int, Num) < Sig(int, varargs=int))
+    assert not (Sig(int, varargs=Num) < Sig(int, varargs=int))
+    assert not (Sig(int, varargs=Num) <= Sig(int, varargs=int))
 
 
 def test_comparison():
