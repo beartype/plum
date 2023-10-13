@@ -23,15 +23,17 @@ This is not necessarily the case for other packages.
 For example,
 
 ```python
+from numbers import Number
+
 from multipledispatch import dispatch
 
 
-@dispatch((object, int), int)
+@dispatch((int, Number), int)
 def f(x, y):
     return "first"
     
 
-@dispatch(int, object)
+@dispatch(int, Number)
 def f(x, y):
     return "second"
 ```
@@ -46,41 +48,44 @@ ambiguity error!
 For example, compare with Julia:
 
 ```julia
-julia> f(x::Union{Any, Int}, y::Int) = "first"
+julia> f(x::Union{Int, Real}, y::Int) = "first"
 f (generic function with 1 method)
 
-julia> f(x::Int, y::Any) = "second"
+julia> f(x::Int, y::Real) = "second"
 f (generic function with 2 methods)
 
 julia> f(3, 3)
 ERROR: MethodError: f(::Int64, ::Int64) is ambiguous. Candidates:
-  f(x, y::Int64) in Main at REPL[1]:1
-  f(x::Int64, y) in Main at REPL[2]:1
+  f(x::Real, y::Int64) in Main at REPL[2]:1
+  f(x::Int64, y::Real) in Main at REPL[3]:1
+Possible fix, define
+  f(::Int64, ::Int64)
 ```
 
 Plum handles this correctly.
 
 ```python
+from numbers import Number
 from typing import Union
 
 from plum import dispatch
 
 
 @dispatch
-def f(x: Union[object, int], y: int):
+def f(x: Union[int, Number], y: int):
     return "first"
 
 
 @dispatch
-def f(x: int, y: object):
+def f(x: int, y: Number):
     return "second"
 ```
 
 ```python
 >>> f(1, 1)
-AmbiguousLookupError: For function "f", signature Signature(builtins.int, builtins.int) is ambiguous among the following:
-  Signature(builtins.object, builtins.int) (precedence: 0)
-  Signature(builtins.int, builtins.object) (precedence: 0)
+AmbiguousLookupError: For function `f`, `(1, 1)` is ambiguous among the following:
+  Signature(typing.Union[int, numbers.Number], int, implementation=<function f at 0x7fbbe8e3cdc0>) (precedence: 0)
+  Signature(int, numbers.Number, implementation=<function f at 0x7fbbc81813a0>) (precedence: 0)
 ```
 
 Just to sanity check that things are indeed working correctly:
@@ -92,49 +97,6 @@ Just to sanity check that things are indeed working correctly:
 >>> f(1, 1.0)
 'second'
 ```
-
-## Correct Handling of Default Values
-
-Plum correctly handles default values.
-
-For example,
-
-```python
-from multimethod import multimethod
-
-
-@multimethod
-def f(x: int, y: int = 1):
-    return y
-```
-
-```python
->>> f(1, 1)  # OK
-1
-
->>> f(1, 1.0)  # Not OK: no error is raised!
-1.0
-```
-
-In comparison,
-
-```python
-from plum import dispatch
-
-
-@dispatch
-def f(x: int, y: int = 1):
-    return y
-```
-
-```python
->>> f(1, 1)  # OK
-1
-
->>> f(1, 1.0)  # OK: error is raised!
-NotFoundLookupError: For function `f`, `(1, 1.0)` could not be resolved.
-```
-
 
 ## Careful Synergy With OOP
 

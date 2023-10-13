@@ -382,7 +382,6 @@ document.write(`
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#powered-by-beartype">Powered by Beartype</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#design-goal-mimic-julia-s-type-system">Design Goal: Mimic Julia’s Type System</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#correct-handling-of-default-values">Correct Handling of Default Values</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#careful-synergy-with-oop">Careful Synergy With OOP</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parametric-classes">Parametric Classes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#feature-rich">Feature Rich</a></li>
@@ -418,15 +417,17 @@ Plum very gladly lets Beartype handle the difficult stuff.</p>
 <p>A central goal of Plum is to stay close to Julia’s type system.
 This is not necessarily the case for other packages.</p>
 <p>For example,</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">multipledispatch</span> <span class="kn">import</span> <span class="n">dispatch</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">numbers</span> <span class="kn">import</span> <span class="n">Number</span>
+
+<span class="kn">from</span> <span class="nn">multipledispatch</span> <span class="kn">import</span> <span class="n">dispatch</span>
 
 
-<span class="nd">@dispatch</span><span class="p">((</span><span class="nb">object</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span> <span class="nb">int</span><span class="p">)</span>
+<span class="nd">@dispatch</span><span class="p">((</span><span class="nb">int</span><span class="p">,</span> <span class="n">Number</span><span class="p">),</span> <span class="nb">int</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
     <span class="k">return</span> <span class="s2">&quot;first&quot;</span>
     
 
-<span class="nd">@dispatch</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">object</span><span class="p">)</span>
+<span class="nd">@dispatch</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">Number</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
     <span class="k">return</span> <span class="s2">&quot;second&quot;</span>
 </pre></div>
@@ -438,38 +439,41 @@ This is not necessarily the case for other packages.</p>
 <p>Because the union of <code class="docutils literal notranslate"><span class="pre">object</span></code> and <code class="docutils literal notranslate"><span class="pre">int</span></code> is <code class="docutils literal notranslate"><span class="pre">object</span></code>, <code class="docutils literal notranslate"><span class="pre">f(1,</span> <span class="pre">1)</span></code> should raise an
 ambiguity error!
 For example, compare with Julia:</p>
-<div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="n">julia</span><span class="o">&gt;</span><span class="w"> </span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="o">::</span><span class="kt">Union</span><span class="p">{</span><span class="kt">Any</span><span class="p">,</span><span class="w"> </span><span class="kt">Int</span><span class="p">},</span><span class="w"> </span><span class="n">y</span><span class="o">::</span><span class="kt">Int</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;first&quot;</span>
+<div class="highlight-julia notranslate"><div class="highlight"><pre><span></span><span class="n">julia</span><span class="o">&gt;</span><span class="w"> </span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="o">::</span><span class="kt">Union</span><span class="p">{</span><span class="kt">Int</span><span class="p">,</span><span class="w"> </span><span class="kt">Real</span><span class="p">},</span><span class="w"> </span><span class="n">y</span><span class="o">::</span><span class="kt">Int</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;first&quot;</span>
 <span class="n">f</span><span class="w"> </span><span class="p">(</span><span class="n">generic</span><span class="w"> </span><span class="k">function</span><span class="w"> </span><span class="n">with</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="n">method</span><span class="p">)</span>
 
-<span class="n">julia</span><span class="o">&gt;</span><span class="w"> </span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="o">::</span><span class="kt">Int</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="o">::</span><span class="kt">Any</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;second&quot;</span>
+<span class="n">julia</span><span class="o">&gt;</span><span class="w"> </span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="o">::</span><span class="kt">Int</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="o">::</span><span class="kt">Real</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;second&quot;</span>
 <span class="n">f</span><span class="w"> </span><span class="p">(</span><span class="n">generic</span><span class="w"> </span><span class="k">function</span><span class="w"> </span><span class="n">with</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="n">methods</span><span class="p">)</span>
 
 <span class="n">julia</span><span class="o">&gt;</span><span class="w"> </span><span class="n">f</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span>
 <span class="n">ERROR</span><span class="o">:</span><span class="w"> </span><span class="kt">MethodError</span><span class="o">:</span><span class="w"> </span><span class="n">f</span><span class="p">(</span><span class="o">::</span><span class="kt">Int64</span><span class="p">,</span><span class="w"> </span><span class="o">::</span><span class="kt">Int64</span><span class="p">)</span><span class="w"> </span><span class="n">is</span><span class="w"> </span><span class="n">ambiguous</span><span class="o">.</span><span class="w"> </span><span class="n">Candidates</span><span class="o">:</span>
-<span class="w">  </span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="o">::</span><span class="kt">Int64</span><span class="p">)</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">Main</span><span class="w"> </span><span class="n">at</span><span class="w"> </span><span class="n">REPL</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">:</span><span class="mi">1</span>
-<span class="w">  </span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="o">::</span><span class="kt">Int64</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">)</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">Main</span><span class="w"> </span><span class="n">at</span><span class="w"> </span><span class="n">REPL</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">:</span><span class="mi">1</span>
+<span class="w">  </span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="o">::</span><span class="kt">Real</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="o">::</span><span class="kt">Int64</span><span class="p">)</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">Main</span><span class="w"> </span><span class="n">at</span><span class="w"> </span><span class="n">REPL</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">:</span><span class="mi">1</span>
+<span class="w">  </span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="o">::</span><span class="kt">Int64</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="o">::</span><span class="kt">Real</span><span class="p">)</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">Main</span><span class="w"> </span><span class="n">at</span><span class="w"> </span><span class="n">REPL</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">:</span><span class="mi">1</span>
+<span class="n">Possible</span><span class="w"> </span><span class="n">fix</span><span class="p">,</span><span class="w"> </span><span class="n">define</span>
+<span class="w">  </span><span class="n">f</span><span class="p">(</span><span class="o">::</span><span class="kt">Int64</span><span class="p">,</span><span class="w"> </span><span class="o">::</span><span class="kt">Int64</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Plum handles this correctly.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">numbers</span> <span class="kn">import</span> <span class="n">Number</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
 
 <span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span>
 
 
 <span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">y</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Number</span><span class="p">],</span> <span class="n">y</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
     <span class="k">return</span> <span class="s2">&quot;first&quot;</span>
 
 
 <span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">object</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">Number</span><span class="p">):</span>
     <span class="k">return</span> <span class="s2">&quot;second&quot;</span>
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="go">AmbiguousLookupError: For function &quot;f&quot;, signature Signature(builtins.int, builtins.int) is ambiguous among the following:</span>
-<span class="go">  Signature(builtins.object, builtins.int) (precedence: 0)</span>
-<span class="go">  Signature(builtins.int, builtins.object) (precedence: 0)</span>
+<span class="go">AmbiguousLookupError: For function `f`, `(1, 1)` is ambiguous among the following:</span>
+<span class="go">  Signature(typing.Union[int, numbers.Number], int, implementation=&lt;function f at 0x7fbbe8e3cdc0&gt;) (precedence: 0)</span>
+<span class="go">  Signature(int, numbers.Number, implementation=&lt;function f at 0x7fbbc81813a0&gt;) (precedence: 0)</span>
 </pre></div>
 </div>
 <p>Just to sanity check that things are indeed working correctly:</p>
@@ -478,42 +482,6 @@ For example, compare with Julia:</p>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
 <span class="go">&#39;second&#39;</span>
-</pre></div>
-</div>
-</section>
-<section id="correct-handling-of-default-values">
-<h2>Correct Handling of Default Values<a class="headerlink" href="#correct-handling-of-default-values" title="Permalink to this heading">#</a></h2>
-<p>Plum correctly handles default values.</p>
-<p>For example,</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">multimethod</span> <span class="kn">import</span> <span class="n">multimethod</span>
-
-
-<span class="nd">@multimethod</span>
-<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">y</span>
-</pre></div>
-</div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># OK</span>
-<span class="go">1</span>
-
-<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>  <span class="c1"># Not OK: no error is raised!</span>
-<span class="go">1.0</span>
-</pre></div>
-</div>
-<p>In comparison,</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span>
-
-
-<span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">y</span>
-</pre></div>
-</div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># OK</span>
-<span class="go">1</span>
-
-<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>  <span class="c1"># OK: error is raised!</span>
-<span class="go">NotFoundLookupError: For function `f`, `(1, 1.0)` could not be resolved.</span>
 </pre></div>
 </div>
 </section>
@@ -755,7 +723,6 @@ a powerful tool to simplify more complicated designs;</p></li>
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#powered-by-beartype">Powered by Beartype</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#design-goal-mimic-julia-s-type-system">Design Goal: Mimic Julia’s Type System</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#correct-handling-of-default-values">Correct Handling of Default Values</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#careful-synergy-with-oop">Careful Synergy With OOP</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parametric-classes">Parametric Classes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#feature-rich">Feature Rich</a></li>
