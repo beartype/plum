@@ -98,7 +98,7 @@ class Resolver:
 
     __slots__ = ("methods", "is_faithful", "function_name")
 
-    def __init__(self, function_name="__noname__"):
+    def __init__(self, function_name: Optional[str] = None):
         self.function_name = function_name
         self.methods: List[Method] = []
         self.is_faithful: bool = True
