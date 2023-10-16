@@ -6,8 +6,13 @@ import typing
 import pytest
 
 from plum import Dispatcher
-from plum.function import Function, _change_function_name, _convert, _owner_transfer
-from plum.resolver import AmbiguousLookupError, NotFoundLookupError
+from plum.function import Function, _convert, _owner_transfer
+from plum.method import Method
+from plum.resolver import (
+    AmbiguousLookupError,
+    NotFoundLookupError,
+    _change_function_name,
+)
 from plum.signature import Signature
 
 
@@ -250,15 +255,21 @@ def test_simple_doc(monkeypatch):
 def test_methods():
     dispatch = Dispatcher()
 
-    @dispatch
     def f(x: int):
         pass
 
-    @dispatch
+    method1 = Method(f, Signature(int), function_name="f")
+    f_dispatch = dispatch(f)
+
     def f(x: float):
         pass
 
-    assert f.methods == [Signature(int), Signature(float)]
+    method2 = Method(f, Signature(float), function_name="f")
+    dispatch(f)
+
+    methods = [method1, method2]
+
+    assert f_dispatch.methods == methods
 
 
 def test_function_dispatch():
@@ -279,7 +290,7 @@ def test_function_dispatch():
     assert f(1) == "int"
     assert f(1.0) == "float"
     assert f("1") == "str"
-    assert f._resolver.resolve(("1",)).precedence == 1
+    assert f._resolver.resolve(("1",)).signature.precedence == 1
 
 
 def test_function_multi_dispatch():
@@ -296,7 +307,7 @@ def test_function_multi_dispatch():
     assert f(1) == "int"
     assert f(1.0) == "float or str"
     assert f("1") == "float or str"
-    assert f._resolver.resolve(("1",)).precedence == 1
+    assert f._resolver.resolve(("1",)).signature.precedence == 1
 
     # Check that arguments to `f.dispatch_multi` must be tuples or signatures.
     with pytest.raises(ValueError):
