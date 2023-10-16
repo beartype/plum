@@ -162,7 +162,6 @@ class Signature(Comparable):
         # in the set of B is more specific than the set of A.
         #
         # This implements Rule #3 for variadic elements of Sec 4.3.2
-        print(f"Comparing {self} <= {other}")
         if self.has_varargs and other.has_varargs:
             if len(self.types) == len(other.types):
                 _self = Signature(*self.types)
