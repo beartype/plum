@@ -144,20 +144,18 @@ class Signature(Comparable):
         The logic of this method is based upon the PhD thesis of Jeff Bezanson.
         https://github.com/JeffBezanson/phdthesis/blob/master/main.pdf
 
-        The relevant section is chapter 4.3, and the list of rules are found at 
+        The relevant section is chapter 4.3, and the list of rules are found at
         Sec 4.3.2
         """
-        
-        # If both signatures have varargs, we interpret both varargs as set of signatures, and
-        # We verify that at least 1 element in the set of A is more specific than an element in the set of B,
-        # but that no element in the set of B is more specific than the set of A.
-        # 
+
+        # If both signatures have varargs, we interpret both varargs as set of
+        # signatures, and we verify that at least 1 element in the set of A is
+        # more specific than an element in the set of B, but that no element
+        # in the set of B is more specific than the set of A.
+        #
         # This implements Rule #3 for variadic elements of Sec 4.3.2
         print(f"Comparing {self} <= {other}")
-        if (
-            self.has_varargs
-            and other.has_varargs
-        ):
+        if self.has_varargs and other.has_varargs:
             if len(self.types) == len(other.types):
                 _self = Signature(*self.types)
                 _other = Signature(*other.types)
@@ -166,16 +164,19 @@ class Signature(Comparable):
                 _self = Signature(*self.expand_varargs(max_len))
                 _other = Signature(*other.expand_varargs(max_len))
 
-            # If an element in set [[self]] is more specific than the smallest element in set [[other]]                        
+            # If an element in set [[self]] is more specific than the smallest
+            # element in set [[other]]
             if _self <= _other:
-                # Check that no element of set [[other]] is more specific than an element of set [[self]]
-                varargs_comparison = beartype.door.TypeHint(other.varargs) <  beartype.door.TypeHint(self.varargs)
+                # Check that no element of set [[other]] is more specific than
+                # an element of set [[self]]
+                varargs_comparison = beartype.door.TypeHint(
+                    other.varargs
+                ) < beartype.door.TypeHint(self.varargs)
                 return not varargs_comparison
             else:
-                # if no element in set [[self]] is more specific than set [[other]], then self is not more specific than other
+                # if no element in set [[self]] is more specific than set [[other]],
+                # then self is not more specific than other
                 return False
-                
-                    
 
         # If the number of types of the signatures are unequal, then the signature
         # with the fewer number of types must be expanded using variable arguments.
@@ -197,7 +198,8 @@ class Signature(Comparable):
         )
 
         # If there are no varargs, we could just return res, but if there are varargs,
-        # the rules are more complex. In particular, this must implement Rule #4 of Sec 4.3.2
+        # the rules are more complex. In particular, this must implement Rule #4 of
+        # Sec 4.3.2
         # (A vararg type is less speciﬁc than an otherwise equal non-vararg type.)
         if is_more_specific:
             # We are more specific, but equality might mean that one of the two
