@@ -204,9 +204,9 @@ class Signature(Comparable):
             ]
         )
 
-        # If there are no varargs, we could just return res, but if there are varargs,
-        # the rules are more complex. In particular, this must implement Rule #4 of
-        # Sec 4.3.2
+        # If there are no varargs, we could just return `is_more_specific`, but if
+        # there are varargs, the rules are more complex. In particular, this must
+        # implement Rule #4 of Sec 4.3.2
         # (A vararg type is less speciﬁc than an otherwise equal non-vararg type.)
         if is_more_specific:
             # We are more specific, but equality might mean that one of the two
