@@ -119,7 +119,7 @@ def test_register():
     r = Resolver()
 
     def f(*xs):
-        return x
+        return xs
 
     # Test that faithfulness is tracked correctly.
     r.register(Method(f, Signature(int)))
