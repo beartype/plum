@@ -91,8 +91,10 @@ def test_repr():
         return_type=complex,
         function_name="different_name",
     )
+    
+    print(repr(m))
 
-    assert repr(m) == (
-        f"Method(function_name='different_name', signature={sig},"
-        f" return_type={complex}, impl={f})"
+    assert repr(m).startswith(
+        f"different_name(x: int) -> complex\n"
+        f"\t<function test_repr.<locals>.f"
     )

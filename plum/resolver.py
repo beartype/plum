@@ -257,7 +257,6 @@ class Resolver:
 
         return msg
 
-
     def _ambigous_resolution_error_hint(
         self, target: Tuple[object, ...], methods
     ) -> str:
