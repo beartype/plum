@@ -1,6 +1,6 @@
 import inspect
 import typing
-from typing import Any, Callable, Optional
+from typing import Callable, Optional
 
 from .signature import Signature, inspect_signature
 from .type import resolve_type_hint
@@ -35,7 +35,8 @@ class Method:
             return_type (type, optional): Return type of the method. Can be left
                 unspecified, in which case the correct type will be deduced from the
                 signature.
-            return_type (type, optional): Type of the return value. Defaults to :obj:`Any`.
+            return_type (type, optional): Type of the return value. Defaults to
+                :obj:`Any`.
         """
         if return_type is None:
             return_type = extract_return_type(implementation)

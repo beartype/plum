@@ -17,7 +17,8 @@ OptionalType = Union[TypeHint, type(Missing)]
 
 
 class Signature(Comparable):
-    """Object representing a call signature that may be used to dispatch a function call.
+    """Object representing a call signature that may be used to dispatch a function
+    call.
 
     This object differs structurally from the return value of :func:`inspect.signature`
     as it only contains information necessary for performing dispatch.
@@ -46,7 +47,8 @@ class Signature(Comparable):
         varargs: OptionalType = _default_varargs,
         precedence: int = _default_precedence,
     ):
-        """Instantiate a signature, which contains exactly the information necessary for dispatch.
+        """Instantiate a signature, which contains exactly the information necessary for
+        dispatch.
 
         Args:
             *types (:obj:`TypeHint`): Types of the arguments.
