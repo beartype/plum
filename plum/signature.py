@@ -147,18 +147,43 @@ class Signature(Comparable):
             return self.types
 
     def __le__(self, other) -> bool:
-        # If this signature and the other signature both have variable arguments, then
-        # the variable type of this signature must be less than the variable type of the
-        # other signature.
+        """Checks if signature self is more specific of signature other.
+
+        The logic of this method is based upon the PhD thesis of Jeff Bezanson.
+        https://github.com/JeffBezanson/phdthesis/blob/master/main.pdf
+
+        The relevant section is chapter 4.3, and the list of rules are found at 
+        Sec 4.3.2
+        """
+        
+        # If both signatures have varargs, we interpret both varargs as set of signatures, and
+        # We verify that at least 1 element in the set of A is more specific than an element in the set of B,
+        # but that no element in the set of B is more specific than the set of A.
+        # 
+        # This implements Rule #3 for variadic elements of Sec 4.3.2
+        print(f"Comparing {self} <= {other}")
         if (
             self.has_varargs
             and other.has_varargs
-            and not (
-                beartype.door.TypeHint(self.varargs)
-                <= beartype.door.TypeHint(other.varargs)
-            )
         ):
-            return False
+            if len(self.types) == len(other.types):
+                _self = Signature(*self.types)
+                _other = Signature(*other.types)
+            else:
+                max_len = max(len(self.types), len(other.types))
+                _self = Signature(*self.expand_varargs(max_len))
+                _other = Signature(*other.expand_varargs(max_len))
+
+            # If an element in set [[self]] is more specific than the smallest element in set [[other]]                        
+            if _self <= _other:
+                # Check that no element of set [[other]] is more specific than an element of set [[self]]
+                varargs_comparison = beartype.door.TypeHint(other.varargs) <  beartype.door.TypeHint(self.varargs)
+                return not varargs_comparison
+            else:
+                # if no element in set [[self]] is more specific than set [[other]], then self is not more specific than other
+                return False
+                
+                    
 
         # If the number of types of the signatures are unequal, then the signature
         # with the fewer number of types must be expanded using variable arguments.
@@ -172,17 +197,18 @@ class Signature(Comparable):
         # Finally, expand the types and compare.
         self_types = self.expand_varargs(len(other.types))
         other_types = other.expand_varargs(len(self.types))
-        res = all(
+        is_more_specific = all(
             [
                 beartype.door.TypeHint(x) <= beartype.door.TypeHint(y)
                 for x, y in zip(self_types, other_types)
             ]
         )
 
-        # This once was just `return res`, but to correctly handle
-        # bug #117 we require to carefully treat varargs
-        if res:
-            # We are less/equal, but equality might mean that one of the two
+        # If there are no varargs, we could just return res, but if there are varargs,
+        # the rules are more complex. In particular, this must implement Rule #4 of Sec 4.3.2
+        # (A vararg type is less speciﬁc than an otherwise equal non-vararg type.)
+        if is_more_specific:
+            # We are more specific, but equality might mean that one of the two
             # is a vararg, therefore smaller
             if self.has_varargs ^ other.has_varargs:
                 # If only one signature has a vararg, check if the two signatures
@@ -193,17 +219,17 @@ class Signature(Comparable):
                         for x, y in zip(self_types, other_types)
                     ]
                 )
-                # the smallest is the one without varargs
                 if equivalent and self.has_varargs:
+                    # Rule #4: the smallest is the one without varargs
                     return False
                 else:
                     return True
             else:
-                # If both or none have vararg, we trust the result computed
+                # None has varargs (both vararg case was already handled above) so
+                # just return True
                 return True
         else:
-            # if we are not less/equal, we are greater, so no problems
-            # with varargs.
+            # if we are not more specific, varargs don't matter
             return False
 
     def match(self, values) -> bool:
