@@ -129,6 +129,7 @@ def _is_hint(x):
             "types",  # E.g., `tuple[int]`
             "typing",
             "collections.abc",  # E.g., `Callable`
+            "typing_extensions"
         }
     except AttributeError:
         return False
