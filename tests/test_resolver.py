@@ -129,7 +129,7 @@ def test_register():
     assert not r.is_faithful
 
     # Test that signatures can be replaced.
-    new_m = Method(_f, Signature(float))
+    new_m = Method(f, Signature(float))
     assert len(r) == 3
     assert r.methods[1] is not new_m
     r.register(new_m)

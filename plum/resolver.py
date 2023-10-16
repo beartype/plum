@@ -37,7 +37,7 @@ def _change_function_name(f: Callable, name: str) -> Callable:
     return f_renamed
 
 
-def _document(f: Callable, fname: Optional[str] = None) -> str:
+def _document(f: Callable, f_name: Optional[str] = None) -> str:
     """Generate documentation for a function `f`.
 
     The generated documentation contains both the function definition and the

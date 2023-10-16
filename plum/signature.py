@@ -64,11 +64,11 @@ class Signature(Comparable):
     @staticmethod
     def from_callable(f: Callable, precedence: int = 0) -> "Signature":
         """Construct a signature from a callable.
-        
+
         Args:
             f (Callable): Callable.
             precedence (int, optional): Precedence. Defaults to 0.
-            
+
         Returns:
             :class:`Signature`: Signature for `f`.
         """
@@ -214,7 +214,7 @@ def inspect_signature(f) -> inspect.Signature:
 
 def resolve_pep563(f: Callable):
     """Utility function to resolve PEP563-style annotations and make editable.
-    
+
     This function mutates `f`.
 
     Args:

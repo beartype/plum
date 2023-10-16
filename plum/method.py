@@ -27,16 +27,16 @@ class Method:
         function_name: Optional[str] = None,
         return_type: Optional[TypeHint] = None,
     ):
-    """Instantiate a method.
-    
-    Args:
-        implementation (function): Callable implementing the function.
-        signature (Signature): Signature of the callable implementation.
-        return_type (type, optional): Return type of the method. Can be left
-            unspecified, in which case the correct type will be deduced from the
-            signature.
-        return_type (type, optional): Type of the return value. Defaults to :obj:`Any`.
-    """
+        """Instantiate a method.
+
+        Args:
+            implementation (function): Callable implementing the function.
+            signature (Signature): Signature of the callable implementation.
+            return_type (type, optional): Return type of the method. Can be left
+                unspecified, in which case the correct type will be deduced from the
+                signature.
+            return_type (type, optional): Type of the return value. Defaults to :obj:`Any`.
+        """
         if return_type is None:
             return_type = extract_return_type(implementation)
         if function_name is None:
@@ -85,7 +85,7 @@ class Method:
 
 def extract_return_type(f: Callable) -> TypeHint:
     """Extract the return type from a function.
-    
+
     Assumes that PEP563-style already have been resolved.
 
     Args:

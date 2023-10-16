@@ -1,7 +1,7 @@
 import pytest
 
 from plum import Dispatcher
-from plum.signature import Signature
+from plum.signature import Signature as Sig
 
 
 def test_dispatch_function():
@@ -47,7 +47,7 @@ def test_dispatch_multi():
     def f(x: int):
         return "int"
 
-    @dispatch.multi((float,), Signature(str, precedence=1))
+    @dispatch.multi((float,), Sig(str, precedence=1))
     def f(x):
         return "float or str"
 

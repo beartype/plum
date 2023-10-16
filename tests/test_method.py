@@ -36,12 +36,12 @@ def test_instantiation_copy():
         function_name="different_name",
     )
     assert m == m_equal
-    assert hash(m2) == hash(m_equal)
+    assert hash(m) == hash(m_equal)
 
     for m_unequal in [
         Method(
             f2,
-            sig
+            sig,
             return_type=complex,
             function_name="different_name",
         ),
@@ -53,13 +53,13 @@ def test_instantiation_copy():
         ),
         Method(
             f,
-            sig
+            sig,
             return_type=int,
             function_name="different_name",
         ),
         Method(
             f,
-            sig
+            sig,
             return_type=int,
             function_name="another_name",
         ),
@@ -94,5 +94,5 @@ def test_repr():
 
     assert repr(m) == (
         f"Method(function_name='different_name', signature={sig},"
-        f" return_type={complex}, impl={_f})"
+        f" return_type={complex}, impl={f})"
     )
