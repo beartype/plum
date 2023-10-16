@@ -5,74 +5,94 @@ from plum.signature import Signature
 
 
 def test_instantiation_copy():
-    def _f(arg1) -> float:
-        return arg1
+    def f(x) -> float:
+        return x
+
+    def f2(x) -> float:
+        return x
 
     sig = Signature(int)
 
     m = Method(
-        _f,
+        f,
         sig,
         return_type=complex,
-        function_name="prova",
+        function_name="different_name",
     )
     for _ in range(2):
-        assert m.function_name == "prova"
+        assert m.function_name == "different_name"
         assert m.signature == sig
         assert m.return_type == complex
-        assert m.implementation == _f
+        assert m.implementation == f
 
         # Test copying.
         assert m == copy(m)
         m = copy(m)
 
-    m2 = Method(
-        _f,
+    m_equal = Method(
+        f,
         sig,
         return_type=complex,
-        function_name="prova",
+        function_name="different_name",
     )
-    assert m2 == m
-    assert hash(m2) == hash(m)
+    assert m == m_equal
+    assert hash(m2) == hash(m_equal)
 
-    m3 = Method(
-        _f,
-        Signature(float),
-        return_type=complex,
-        function_name="prova",
-    )
-    assert m2 != m3
-    assert hash(m2) != hash(m3)
+    for m_unequal in [
+        Method(
+            f2,
+            sig
+            return_type=complex,
+            function_name="different_name",
+        ),
+        Method(
+            f,
+            Signature(float),
+            return_type=complex,
+            function_name="different_name",
+        ),
+        Method(
+            f,
+            sig
+            return_type=int,
+            function_name="different_name",
+        ),
+        Method(
+            f,
+            sig
+            return_type=int,
+            function_name="another_name",
+        ),
+    ]:
+        assert m != m_unequal
+        assert hash(m) != hash(m_unequal)
 
 
 def test_autodetect_name_return():
-    def _f(arg1) -> float:
-        return arg1
+    def f(x) -> float:
+        return x
 
     sig = Signature(int)
 
-    m = Method(
-        _f,
-        sig,
-    )
-    assert m.function_name == "_f"
+    m = Method(f, sig)
+    assert m.function_name == "f"
     assert m.return_type == float
 
 
 def test_repr():
-    def _f(arg1) -> float:
-        return arg1
+    def f(x) -> float:
+        return x
 
     sig = Signature(int)
 
     m = Method(
-        _f,
+        f,
         Signature(int),
         return_type=complex,
-        function_name="prova",
+        function_name="different_name",
     )
 
     assert repr(m) == (
-        f"Method(function_name='prova', signature={sig},"
+        f"Method(function_name='different_name', signature={sig},"
         f" return_type={complex}, impl={_f})"
     )

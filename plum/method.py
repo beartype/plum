@@ -1,6 +1,6 @@
 import inspect
 import typing
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 from .signature import Signature, inspect_signature
 from .type import resolve_type_hint
@@ -9,13 +9,6 @@ from .util import TypeHint
 
 class Method:
     """Method.
-
-    Args:
-        implementation (function): Callable implementing the function
-        signature (Signature): Signature of the callable implementation.
-        return_type (type, optional): Return type of the method. Can be left
-            specified and the correct type will be deduced from the signature.
-        return_type (type, optional): Type of the return value. Defaults to `Any`.
 
     Attributes:
         return_type (type): Return type.
@@ -34,6 +27,16 @@ class Method:
         function_name: Optional[str] = None,
         return_type: Optional[TypeHint] = None,
     ):
+    """Instantiate a method.
+    
+    Args:
+        implementation (function): Callable implementing the function.
+        signature (Signature): Signature of the callable implementation.
+        return_type (type, optional): Return type of the method. Can be left
+            unspecified, in which case the correct type will be deduced from the
+            signature.
+        return_type (type, optional): Type of the return value. Defaults to :obj:`Any`.
+    """
         if return_type is None:
             return_type = extract_return_type(implementation)
         if function_name is None:
@@ -53,21 +56,19 @@ class Method:
             return_type=self.return_type,
         )
 
-    def __eq__(self, othr):
-        if isinstance(othr, Method):
-            s = (
+    def __eq__(self, other):
+        if isinstance(other, Method):
+            return (
                 self.function_name,
                 self.implementation,
                 self.signature,
                 self.return_type,
+            ) == (
+                other.function_name,
+                other.implementation,
+                other.signature,
+                other.return_type,
             )
-            o = (
-                othr.function_name,
-                othr.implementation,
-                othr.signature,
-                othr.return_type,
-            )
-            return s == o
         return False
 
     def __hash__(self):
@@ -84,6 +85,8 @@ class Method:
 
 def extract_return_type(f: Callable) -> TypeHint:
     """Extract the return type from a function.
+    
+    Assumes that PEP563-style already have been resolved.
 
     Args:
         f (function): Function to extract return type from.
@@ -91,9 +94,6 @@ def extract_return_type(f: Callable) -> TypeHint:
     Returns:
         :class:`.TypeHint`: Return type annotation
     """
-    # For all uses within plum right now, we are guaranteed to have already
-    # resolved pep563 before in register.
-    # signature.resolve_pep563(f)
 
     # Extract specification.
     sig = inspect_signature(f)

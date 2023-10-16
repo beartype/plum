@@ -118,14 +118,14 @@ def test_doc(monkeypatch):
 def test_register():
     r = Resolver()
 
-    def _f(*x):
-        x
+    def f(*xs):
+        return x
 
     # Test that faithfulness is tracked correctly.
-    r.register(Method(_f, Signature(int)))
-    r.register(Method(_f, Signature(float)))
+    r.register(Method(f, Signature(int)))
+    r.register(Method(f, Signature(float)))
     assert r.is_faithful
-    r.register(Method(_f, Signature(typing.Tuple[int])))
+    r.register(Method(f, Signature(typing.Tuple[int])))
     assert not r.is_faithful
 
     # Test that signatures can be replaced.
@@ -137,17 +137,17 @@ def test_register():
     assert r.methods[1] is new_m
 
     # Test the edge case that should never happen.
-    r.methods[2] = Method(_f, Signature(float))
+    r.methods[2] = Method(f, Signature(float))
     with pytest.raises(
         AssertionError,
         match=r"(?i)the added method `(.*)` is equal to 2 existing methods",
     ):
-        r.register(Method(_f, Signature(float)))
+        r.register(Method(f, Signature(float)))
 
 
 def test_len():
     def f(x):
-        x
+        return x
 
     r = Resolver()
     assert len(r) == 0

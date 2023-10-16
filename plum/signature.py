@@ -17,19 +17,17 @@ OptionalType = Union[TypeHint, type(Missing)]
 
 
 class Signature(Comparable):
-    """Object representing a call signature that may be used to
-    dispatch a function call.
+    """Object representing a call signature that may be used to dispatch a function call.
 
-    This object differs structurally from `inspect.signature` as
-    it only contains information necessary for performing dispatch.
+    This object differs structurally from the return value of :func:`inspect.signature`
+    as it only contains information necessary for performing dispatch.
 
-    For example, for the current implementation of plum, which
-    does not dispatch on keyword arguments, those are left out
-    of this signature object. Similarly, return type information
-    and argument names are not present.
+    For example, for the current implementation of Plum, which does not dispatch on
+    keyword arguments, those are left out of this signature object. Similarly, return
+    type information and argument names are not present.
 
     Attributes:
-        types (tuple[type, ...]): Types of the arguments.
+        types (tuple[:obj:`TypeHint`, ...]): Types of the call signature.
         varargs (type or :class:`.util.Missing`): Type of the variable number of
             arguments.
         has_varargs (bool): Whether `varargs` is not :class:`.util.Missing`.
@@ -48,20 +46,16 @@ class Signature(Comparable):
         varargs: OptionalType = _default_varargs,
         precedence: int = _default_precedence,
     ):
-        """
-        Construct a `Signature` object.
+        """Instantiate a signature, which contains exactly the information necessary for dispatch.
 
         Args:
-            *types (tuple[type, ...]): Types of the arguments.
-            varargs (type, optional): Type of the variable arguments.
+            *types (:obj:`TypeHint`): Types of the arguments.
+            varargs (:obj:`TypeHint`, optional): Type of the variable arguments.
             precedence (int, optional): Precedence. Defaults to `0`.
         """
         self.types: Tuple[TypeHint] = types
-        """Types of the call signature."""
         self.varargs: OptionalType = varargs
-        """Type of the vararg at the end of the signature."""
         self.precedence: int = precedence
-        """Precedence of this signature."""
 
         types_are_faithful = all(is_faithful(t) for t in types)
         varargs_are_faithful = self.varargs is Missing or is_faithful(self.varargs)
@@ -69,8 +63,14 @@ class Signature(Comparable):
 
     @staticmethod
     def from_callable(f: Callable, precedence: int = 0) -> "Signature":
-        """
-        Construct a
+        """Construct a signature from a callable.
+        
+        Args:
+            f (Callable): Callable.
+            precedence (int, optional): Precedence. Defaults to 0.
+            
+        Returns:
+            :class:`Signature`: Signature for `f`.
         """
         types, varargs = _extract_signature(f)
         return Signature(
@@ -85,13 +85,13 @@ class Signature(Comparable):
 
     def __copy__(self):
         cls = type(self)
-        cpy = cls.__new__(cls)
+        copy = cls.__new__(cls)
 
-        cpy.types = self.types
-        cpy.varargs = self.varargs
-        cpy.precedence = self.precedence
-        cpy.is_faithful = self.is_faithful
-        return cpy
+        copy.types = self.types
+        copy.varargs = self.varargs
+        copy.precedence = self.precedence
+        copy.is_faithful = self.is_faithful
+        return copy
 
     def __repr__(self) -> str:
         parts = []
@@ -103,11 +103,19 @@ class Signature(Comparable):
             parts.append("precedence=" + repr(self.precedence))
         return "Signature(" + ", ".join(parts) + ")"
 
-    def __eq__(self, othr):
-        if isinstance(othr, Signature):
-            s = (self.types, self.varargs, self.precedence, self.is_faithful)
-            o = (othr.types, othr.varargs, othr.precedence, othr.is_faithful)
-            return s == o
+    def __eq__(self, other):
+        if isinstance(other, Signature):
+            return (
+                self.types,
+                self.varargs,
+                self.precedence,
+                self.is_faithful,
+            ) == (
+                other.types,
+                other.varargs,
+                other.precedence,
+                other.is_faithful,
+            )
         return False
 
     def __hash__(self):
@@ -205,11 +213,12 @@ def inspect_signature(f) -> inspect.Signature:
 
 
 def resolve_pep563(f: Callable):
-    """
-    Utility to fix annotations and make them editable.
+    """Utility function to resolve PEP563-style annotations and make editable.
+    
+    This function mutates `f`.
 
     Args:
-        A Callable that will be modified inplace
+        f (Callable): Function whose annotations should be resolved.
     """
     if hasattr(f, "__annotations__"):
         beartype_resolve_pep563(f)  # This mutates `f`.

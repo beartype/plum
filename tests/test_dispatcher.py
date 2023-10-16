@@ -16,10 +16,8 @@ def test_dispatch_function():
         pass
 
     assert set(dispatch.functions.keys()) == {"f", "g"}
-    assert dispatch.functions["f"].methods[0].signature == Signature(int)
-    assert dispatch.functions["g"].methods[0].signature == Signature(
-        float, precedence=1
-    )
+    assert dispatch.functions["f"].methods[0].signature == Sig(int)
+    assert dispatch.functions["g"].methods[0].signature == Sig(float, precedence=1)
 
 
 def test_dispatch_class():
@@ -38,10 +36,8 @@ def test_dispatch_class():
     a = "tests.test_dispatcher.test_dispatch_class.<locals>.A"
     b = "tests.test_dispatcher.test_dispatch_class.<locals>.B"
     assert set(dispatch.classes.keys()) == {a, b}
-    assert dispatch.classes[a]["f"].methods[0].signature == Signature(int)
-    assert dispatch.classes[b]["g"].methods[0].signature == Signature(
-        float, precedence=1
-    )
+    assert dispatch.classes[a]["f"].methods[0].signature == Sig(int)
+    assert dispatch.classes[b]["g"].methods[0].signature == Sig(float, precedence=1)
 
 
 def test_dispatch_multi():

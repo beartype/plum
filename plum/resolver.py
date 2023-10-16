@@ -52,21 +52,17 @@ def _document(f: Callable, fname: Optional[str] = None) -> str:
 
     Args:
         f (function): Function.
-        fname (str): An optional string representing the function name,
-            which will be overridden from implementation's docstring
-            which might have different names. If this is not specified
-            the name is not overriden.
+        f_name (str): An optional string representing the function name, which will be
+            overridden from implementation's docstring which might have a different
+            name. If this is not specified, the name is not overriden.
 
     Returns:
         str: Documentation for `f`.
     """
     # Ensure that the implementation has the right name, because this name
     # will show up in the docstring.
-    if fname is not None and getattr(f, "__name__", None) != fname:
-        f = _change_function_name(
-            f,
-            fname,
-        )
+    if f_name is not None and getattr(f, "__name__", None) != f_name:
+        f = _change_function_name(f, f_name)
 
     # :class:`pydoc._PlainTextDoc` removes styling. This styling will display
     # erroneously in Sphinx.
