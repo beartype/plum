@@ -339,8 +339,9 @@ document.write(`
 <span class="kn">from</span> <span class="nn">types</span> <span class="kn">import</span> <span class="n">MethodType</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
 
+<span class="kn">from</span> <span class="nn">.method</span> <span class="kn">import</span> <span class="n">Method</span>
 <span class="kn">from</span> <span class="nn">.resolver</span> <span class="kn">import</span> <span class="n">AmbiguousLookupError</span><span class="p">,</span> <span class="n">NotFoundLookupError</span><span class="p">,</span> <span class="n">Resolver</span>
-<span class="kn">from</span> <span class="nn">.signature</span> <span class="kn">import</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">append_default_args</span><span class="p">,</span> <span class="n">extract_signature</span>
+<span class="kn">from</span> <span class="nn">.signature</span> <span class="kn">import</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">append_default_args</span>
 <span class="kn">from</span> <span class="nn">.type</span> <span class="kn">import</span> <span class="n">resolve_type_hint</span>
 <span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="n">TypeHint</span><span class="p">,</span> <span class="n">repr_short</span>
 
@@ -373,26 +374,6 @@ document.write(`
         <span class="k">return</span> <span class="n">obj</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_promised_convert</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">target_type</span><span class="p">)</span>
-
-
-<span class="k">def</span> <span class="nf">_change_function_name</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;It is not always the case that `f.__name__` is writable. To solve this, first</span>
-<span class="sd">    create a temporary function that wraps `f` and then change the name.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        f (function): Function to change the name of.</span>
-<span class="sd">        name (str): New name.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        function: Function that wraps `f` and has name `name`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="nd">@wraps</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">f_renamed</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">)</span>
-
-    <span class="n">f_renamed</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">=</span> <span class="n">name</span>
-    <span class="k">return</span> <span class="n">f_renamed</span>
 
 
 <span class="n">_owner_transfer</span> <span class="o">=</span> <span class="p">{}</span>
@@ -438,7 +419,7 @@ document.write(`
 
         <span class="c1"># Initialise pending and resolved methods.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_pending</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Signature</span><span class="p">],</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span> <span class="o">=</span> <span class="n">Resolver</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span> <span class="o">=</span> <span class="n">Resolver</span><span class="p">(</span><span class="n">function_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_resolved</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Signature</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="nd">@property</span>
@@ -517,7 +498,7 @@ document.write(`
     <span class="k">def</span> <span class="nf">methods</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Signature</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;list[:class:`.signature.Signature`]: All available methods.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_pending_registrations</span><span class="p">()</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="o">.</span><span class="n">signatures</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="o">.</span><span class="n">methods</span>
 
 <div class="viewcode-block" id="Function.dispatch"><a class="viewcode-back" href="../../api.html#plum.function.Function.dispatch">[docs]</a>    <span class="k">def</span> <span class="nf">dispatch</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">:</span> <span class="n">Self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">precedence</span><span class="o">=</span><span class="mi">0</span>
@@ -612,24 +593,16 @@ document.write(`
 
             <span class="c1"># Obtain the signature if it is not available.</span>
             <span class="k">if</span> <span class="n">signature</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">signature</span> <span class="o">=</span> <span class="n">extract_signature</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">precedence</span><span class="o">=</span><span class="n">precedence</span><span class="p">)</span>
+                <span class="n">signature</span> <span class="o">=</span> <span class="n">Signature</span><span class="o">.</span><span class="n">from_callable</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">precedence</span><span class="o">=</span><span class="n">precedence</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># Ensure that the implementation is `f`, but make a copy before</span>
                 <span class="c1"># mutating.</span>
                 <span class="n">signature</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="n">signature</span><span class="p">)</span>
-                <span class="n">signature</span><span class="o">.</span><span class="n">implementation</span> <span class="o">=</span> <span class="n">f</span>
-
-            <span class="c1"># Ensure that the implementation has the right name, because this name</span>
-            <span class="c1"># will show up in the docstring.</span>
-            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">signature</span><span class="o">.</span><span class="n">implementation</span><span class="p">,</span> <span class="s2">&quot;__name__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__name__</span><span class="p">:</span>
-                <span class="n">signature</span><span class="o">.</span><span class="n">implementation</span> <span class="o">=</span> <span class="n">_change_function_name</span><span class="p">(</span>
-                    <span class="n">signature</span><span class="o">.</span><span class="n">implementation</span><span class="p">,</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
-                <span class="p">)</span>
 
             <span class="c1"># Process default values.</span>
             <span class="k">for</span> <span class="n">subsignature</span> <span class="ow">in</span> <span class="n">append_default_args</span><span class="p">(</span><span class="n">signature</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">subsignature</span><span class="p">)</span>
+                <span class="n">submethod</span> <span class="o">=</span> <span class="n">Method</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">subsignature</span><span class="p">,</span> <span class="n">function_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">submethod</span><span class="p">)</span>
                 <span class="n">registered</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="k">if</span> <span class="n">registered</span><span class="p">:</span>
@@ -673,9 +646,9 @@ document.write(`
 
         <span class="k">try</span><span class="p">:</span>
             <span class="c1"># Attempt to find the method using the resolver.</span>
-            <span class="n">signature</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
-            <span class="n">method</span> <span class="o">=</span> <span class="n">signature</span><span class="o">.</span><span class="n">implementation</span>
-            <span class="n">return_type</span> <span class="o">=</span> <span class="n">signature</span><span class="o">.</span><span class="n">return_type</span>
+            <span class="n">method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+            <span class="n">impl</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">implementation</span>
+            <span class="n">return_type</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">return_type</span>
 
         <span class="k">except</span> <span class="n">AmbiguousLookupError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">__tracebackhide__</span> <span class="o">=</span> <span class="kc">True</span>
@@ -685,9 +658,9 @@ document.write(`
             <span class="n">__tracebackhide__</span> <span class="o">=</span> <span class="kc">True</span>
 
             <span class="n">e</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_enhance_exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>  <span class="c1"># Specify this function.</span>
-            <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handle_not_found_lookup_error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="n">impl</span><span class="p">,</span> <span class="n">return_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handle_not_found_lookup_error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span></div>
+        <span class="k">return</span> <span class="n">impl</span><span class="p">,</span> <span class="n">return_type</span></div>
 
     <span class="k">def</span> <span class="nf">_handle_not_found_lookup_error</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">ex</span><span class="p">:</span> <span class="n">NotFoundLookupError</span>

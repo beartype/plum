@@ -334,8 +334,10 @@ document.write(`
   <h1>Source code for plum.resolver</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">pydoc</span>
 <span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
+<span class="kn">from</span> <span class="nn">plum.method</span> <span class="kn">import</span> <span class="n">Method</span>
 <span class="kn">from</span> <span class="nn">plum.signature</span> <span class="kn">import</span> <span class="n">Signature</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;AmbiguousLookupError&quot;</span><span class="p">,</span> <span class="s2">&quot;NotFoundLookupError&quot;</span><span class="p">]</span>
@@ -349,7 +351,27 @@ document.write(`
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A signature cannot be resolved because no applicable method can be found.&quot;&quot;&quot;</span></div>
 
 
-<span class="k">def</span> <span class="nf">_document</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">_change_function_name</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;It is not always the case that `f.__name__` is writable. To solve this, first</span>
+<span class="sd">    create a temporary function that wraps `f` and then change the name.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        f (function): Function to change the name of.</span>
+<span class="sd">        name (str): New name.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        function: Function that wraps `f` and has name `name`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">f_renamed</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">)</span>  <span class="c1"># pragma: no cover</span>
+
+    <span class="n">f_renamed</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">=</span> <span class="n">name</span>
+    <span class="k">return</span> <span class="n">f_renamed</span>
+
+
+<span class="k">def</span> <span class="nf">_document</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">f_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate documentation for a function `f`.</span>
 
 <span class="sd">    The generated documentation contains both the function definition and the</span>
@@ -364,10 +386,18 @@ document.write(`
 
 <span class="sd">    Args:</span>
 <span class="sd">        f (function): Function.</span>
+<span class="sd">        f_name (str): An optional string representing the function name, which will be</span>
+<span class="sd">            overridden from implementation&#39;s docstring which might have a different</span>
+<span class="sd">            name. If this is not specified, the name is not overriden.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        str: Documentation for `f`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Ensure that the implementation has the right name, because this name</span>
+    <span class="c1"># will show up in the docstring.</span>
+    <span class="k">if</span> <span class="n">f_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s2">&quot;__name__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">!=</span> <span class="n">f_name</span><span class="p">:</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">_change_function_name</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">f_name</span><span class="p">)</span>
+
     <span class="c1"># :class:`pydoc._PlainTextDoc` removes styling. This styling will display</span>
     <span class="c1"># erroneously in Sphinx.</span>
     <span class="n">parts</span> <span class="o">=</span> <span class="n">pydoc</span><span class="o">.</span><span class="n">_PlainTextDoc</span><span class="p">()</span><span class="o">.</span><span class="n">document</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -396,12 +426,15 @@ document.write(`
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Method resolver.</span>
 
 <span class="sd">    Attributes:</span>
-<span class="sd">        signatures (list[:class:`.signature.Signature`]): Registered signatures.</span>
-<span class="sd">        is_faithful (bool): Whether all signatures are faithful or not.</span>
+<span class="sd">        methods (list[:class:`.method.Method`]): Registered methods.</span>
+<span class="sd">        is_faithful (bool): Whether all methods are faithful or not.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">signatures</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Signature</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;methods&quot;</span><span class="p">,</span> <span class="s2">&quot;is_faithful&quot;</span><span class="p">,</span> <span class="s2">&quot;function_name&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">function_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">function_name</span> <span class="o">=</span> <span class="n">function_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Method</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">is_faithful</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="k">def</span> <span class="nf">doc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exclude</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -417,9 +450,9 @@ document.write(`
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Generate all docstrings, possibly excluding `exclude`.</span>
         <span class="n">docs</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">_document</span><span class="p">(</span><span class="n">sig</span><span class="o">.</span><span class="n">implementation</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">sig</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">signatures</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">exclude</span> <span class="ow">and</span> <span class="n">sig</span><span class="o">.</span><span class="n">implementation</span> <span class="o">==</span> <span class="n">exclude</span><span class="p">)</span>
+            <span class="n">_document</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">implementation</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_name</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">methods</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">exclude</span> <span class="ow">and</span> <span class="n">m</span><span class="o">.</span><span class="n">implementation</span> <span class="o">==</span> <span class="n">exclude</span><span class="p">)</span>
         <span class="p">]</span>
         <span class="c1"># This can yield duplicates, because of extra methods automatically generated by</span>
         <span class="c1"># :func:`.signature.append_default_args`. We remove these by simply only</span>
@@ -432,30 +465,32 @@ document.write(`
         <span class="c1"># a newline.</span>
         <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">unique_docs</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signature</span><span class="p">:</span> <span class="n">Signature</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Register a new signature.</span>
+    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="n">Method</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Register a new method.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            signature (:class:`.signature.Signature`): Signature to add.</span>
+<span class="sd">            method (:class:`.method.Method`): Method to add.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">existing</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="o">==</span> <span class="n">signature</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">signatures</span><span class="p">]</span>
+        <span class="n">signature</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">signature</span>
+
+        <span class="n">existing</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">signature</span> <span class="o">==</span> <span class="n">signature</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="p">]</span>
         <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">existing</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">existing</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;The added signature `</span><span class="si">{</span><span class="n">signature</span><span class="si">}</span><span class="s2">` is equal to </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">existing</span><span class="p">)</span><span class="si">}</span><span class="s2"> &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;existing signatures. This should never happen.&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;The added method `</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">` is equal to </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">existing</span><span class="p">)</span><span class="si">}</span><span class="s2"> &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;existing methods. This should never happen.&quot;</span>
                 <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">signatures</span><span class="p">[</span><span class="n">existing</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="kc">True</span><span class="p">)]</span> <span class="o">=</span> <span class="n">signature</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="p">[</span><span class="n">existing</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="kc">True</span><span class="p">)]</span> <span class="o">=</span> <span class="n">method</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">signatures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">signature</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
 
         <span class="c1"># Use a double negation for slightly better performance.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">is_faithful</span> <span class="o">=</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="ow">not</span> <span class="n">s</span><span class="o">.</span><span class="n">is_faithful</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">signatures</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_faithful</span> <span class="o">=</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="ow">not</span> <span class="n">s</span><span class="o">.</span><span class="n">signature</span><span class="o">.</span><span class="n">is_faithful</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">signatures</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">Signature</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Signature</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">Signature</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Method</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Find the most specific signature that satisfies a target.</span>
 
 <span class="sd">        Args:</span>
@@ -468,32 +503,34 @@ document.write(`
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
 
-            <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+            <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
                 <span class="c1"># `target` are concrete arguments.</span>
-                <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">signature</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
 
         <span class="k">else</span><span class="p">:</span>
 
-            <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+            <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
                 <span class="c1"># `target` is a signature that must be encompassed.</span>
-                <span class="k">return</span> <span class="n">target</span> <span class="o">&lt;=</span> <span class="n">s</span>
+                <span class="k">return</span> <span class="n">target</span> <span class="o">&lt;=</span> <span class="n">m</span><span class="o">.</span><span class="n">signature</span>
 
         <span class="n">candidates</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">signature</span> <span class="ow">in</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">signatures</span> <span class="k">if</span> <span class="n">check</span><span class="p">(</span><span class="n">s</span><span class="p">)]:</span>
+        <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="p">[</span><span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">methods</span> <span class="k">if</span> <span class="n">check</span><span class="p">(</span><span class="n">m</span><span class="p">)]:</span>
             <span class="c1"># If none of the candidates are comparable, then add the method as</span>
             <span class="c1"># a new candidate and continue.</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">is_comparable</span><span class="p">(</span><span class="n">signature</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">):</span>
-                <span class="n">candidates</span> <span class="o">+=</span> <span class="p">[</span><span class="n">signature</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">signature</span><span class="o">.</span><span class="n">is_comparable</span><span class="p">(</span><span class="n">method</span><span class="o">.</span><span class="n">signature</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">):</span>
+                <span class="n">candidates</span> <span class="o">+=</span> <span class="p">[</span><span class="n">method</span><span class="p">]</span>
                 <span class="k">continue</span>
 
             <span class="c1"># The signature under consideration is comparable with at least one</span>
             <span class="c1"># of the candidates. First, filter any strictly more general candidates.</span>
-            <span class="n">new_candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">signature</span> <span class="o">&lt;</span> <span class="n">c</span><span class="p">]</span>
+            <span class="n">new_candidates</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">method</span><span class="o">.</span><span class="n">signature</span> <span class="o">&lt;</span> <span class="n">c</span><span class="o">.</span><span class="n">signature</span>
+            <span class="p">]</span>
 
             <span class="c1"># If the signature under consideration is as specific as at least</span>
             <span class="c1"># one candidate, then and only then add it as a candidate.</span>
-            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">signature</span> <span class="o">&lt;=</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">):</span>
-                <span class="n">candidates</span> <span class="o">=</span> <span class="n">new_candidates</span> <span class="o">+</span> <span class="p">[</span><span class="n">signature</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">method</span><span class="o">.</span><span class="n">signature</span> <span class="o">&lt;=</span> <span class="n">c</span><span class="o">.</span><span class="n">signature</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">):</span>
+                <span class="n">candidates</span> <span class="o">=</span> <span class="n">new_candidates</span> <span class="o">+</span> <span class="p">[</span><span class="n">method</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">candidates</span> <span class="o">=</span> <span class="n">new_candidates</span>
 
@@ -506,7 +543,7 @@ document.write(`
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># There are multiple matching signatures. Before raising an exception,</span>
             <span class="c1"># attempt to resolve the ambiguity using the precedence of the signatures.</span>
-            <span class="n">precedences</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">precedence</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">]</span>
+            <span class="n">precedences</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">signature</span><span class="o">.</span><span class="n">precedence</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">]</span>
             <span class="n">max_precendence</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">precedences</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">sum</span><span class="p">([</span><span class="n">p</span> <span class="o">==</span> <span class="n">max_precendence</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">precedences</span><span class="p">])</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">candidates</span><span class="p">[</span><span class="n">precedences</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">max_precendence</span><span class="p">)]</span>
@@ -514,7 +551,7 @@ document.write(`
                 <span class="c1"># Could not resolve the ambiguity, so error. First, make a nice list</span>
                 <span class="c1"># of the candidates and their precedences.</span>
                 <span class="n">listed_candidates</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">  &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                    <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2"> (precedence: </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">precedence</span><span class="si">}</span><span class="s2">)&quot;</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">]</span>
+                    <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2"> (precedence: </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">signature</span><span class="o">.</span><span class="n">precedence</span><span class="si">}</span><span class="s2">)&quot;</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">]</span>
                 <span class="p">)</span>
                 <span class="k">raise</span> <span class="n">AmbiguousLookupError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2">` is ambiguous among the following:</span><span class="se">\n</span><span class="s2">&quot;</span>

@@ -336,73 +336,98 @@ document.write(`
 <span class="kn">import</span> <span class="nn">operator</span>
 <span class="kn">import</span> <span class="nn">typing</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">copy</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">beartype.door</span>
-<span class="kn">from</span> <span class="nn">beartype.peps</span> <span class="kn">import</span> <span class="n">resolve_pep563</span>
+<span class="kn">from</span> <span class="nn">beartype.peps</span> <span class="kn">import</span> <span class="n">resolve_pep563</span> <span class="k">as</span> <span class="n">beartype_resolve_pep563</span>
 
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">_is_bearable</span>
 <span class="kn">from</span> <span class="nn">.type</span> <span class="kn">import</span> <span class="n">is_faithful</span><span class="p">,</span> <span class="n">resolve_type_hint</span>
 <span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="n">Comparable</span><span class="p">,</span> <span class="n">Missing</span><span class="p">,</span> <span class="n">TypeHint</span><span class="p">,</span> <span class="n">multihash</span><span class="p">,</span> <span class="n">repr_short</span><span class="p">,</span> <span class="n">wrap_lambda</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Signature&quot;</span><span class="p">,</span> <span class="s2">&quot;extract_signature&quot;</span><span class="p">,</span> <span class="s2">&quot;append_default_args&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Signature&quot;</span><span class="p">,</span> <span class="s2">&quot;append_default_args&quot;</span><span class="p">]</span>
+
+<span class="n">OptionalType</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">TypeHint</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">Missing</span><span class="p">)]</span>
 
 
 <div class="viewcode-block" id="Signature"><a class="viewcode-back" href="../../api.html#plum.signature.Signature">[docs]</a><span class="k">class</span> <span class="nc">Signature</span><span class="p">(</span><span class="n">Comparable</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Signature.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Object representing a call signature that may be used to dispatch a function</span>
+<span class="sd">    call.</span>
 
-<span class="sd">    Args:</span>
-<span class="sd">        *types (tuple[type, ...]): Types of the arguments.</span>
-<span class="sd">        varargs (type, optional): Type of the variable arguments.</span>
-<span class="sd">        return_type (type, optional): Type of the return value. Defaults to `Any`.</span>
-<span class="sd">        precedence (int, optional): Precedence. Defaults to `0`.</span>
-<span class="sd">        implementation (function, optional): Implementation.</span>
+<span class="sd">    This object differs structurally from the return value of :func:`inspect.signature`</span>
+<span class="sd">    as it only contains information necessary for performing dispatch.</span>
+
+<span class="sd">    For example, for the current implementation of Plum, which does not dispatch on</span>
+<span class="sd">    keyword arguments, those are left out of this signature object. Similarly, return</span>
+<span class="sd">    type information and argument names are not present.</span>
 
 <span class="sd">    Attributes:</span>
-<span class="sd">        types (tuple[type, ...]): Types of the arguments.</span>
+<span class="sd">        types (tuple[:obj:`TypeHint`, ...]): Types of the call signature.</span>
 <span class="sd">        varargs (type or :class:`.util.Missing`): Type of the variable number of</span>
 <span class="sd">            arguments.</span>
 <span class="sd">        has_varargs (bool): Whether `varargs` is not :class:`.util.Missing`.</span>
-<span class="sd">        return_type (type): Return type.</span>
 <span class="sd">        precedence (int): Precedence.</span>
-<span class="sd">        implementation (function or None): Implementation.</span>
 <span class="sd">        is_faithful (bool): Whether this signature only uses faithful types.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_default_varargs</span> <span class="o">=</span> <span class="n">Missing</span>
-    <span class="n">_default_return_type</span> <span class="o">=</span> <span class="n">typing</span><span class="o">.</span><span class="n">Any</span>
     <span class="n">_default_precedence</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;types&quot;</span><span class="p">,</span> <span class="s2">&quot;varargs&quot;</span><span class="p">,</span> <span class="s2">&quot;precedence&quot;</span><span class="p">,</span> <span class="s2">&quot;is_faithful&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="o">*</span><span class="n">types</span><span class="p">:</span> <span class="n">TypeHint</span><span class="p">,</span>
-        <span class="n">varargs</span><span class="o">=</span><span class="n">_default_varargs</span><span class="p">,</span>
-        <span class="n">return_type</span><span class="p">:</span> <span class="n">TypeHint</span> <span class="o">=</span> <span class="n">_default_return_type</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">types</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">TypeHint</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+        <span class="n">varargs</span><span class="p">:</span> <span class="n">OptionalType</span> <span class="o">=</span> <span class="n">_default_varargs</span><span class="p">,</span>
         <span class="n">precedence</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">_default_precedence</span><span class="p">,</span>
-        <span class="n">implementation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Instantiate a signature, which contains exactly the information necessary for</span>
+<span class="sd">        dispatch.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            *types (:obj:`TypeHint`): Types of the arguments.</span>
+<span class="sd">            varargs (:obj:`TypeHint`, optional): Type of the variable arguments.</span>
+<span class="sd">            precedence (int, optional): Precedence. Defaults to `0`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">types</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">TypeHint</span><span class="p">]</span> <span class="o">=</span> <span class="n">types</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">varargs</span> <span class="o">=</span> <span class="n">varargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span> <span class="o">=</span> <span class="n">return_type</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">precedence</span> <span class="o">=</span> <span class="n">precedence</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">implementation</span> <span class="o">=</span> <span class="n">implementation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">varargs</span><span class="p">:</span> <span class="n">OptionalType</span> <span class="o">=</span> <span class="n">varargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">precedence</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">precedence</span>
 
         <span class="n">types_are_faithful</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span><span class="n">is_faithful</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">types</span><span class="p">)</span>
         <span class="n">varargs_are_faithful</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">varargs</span> <span class="ow">is</span> <span class="n">Missing</span> <span class="ow">or</span> <span class="n">is_faithful</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">varargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">is_faithful</span> <span class="o">=</span> <span class="n">types_are_faithful</span> <span class="ow">and</span> <span class="n">varargs_are_faithful</span>
+
+<div class="viewcode-block" id="Signature.from_callable"><a class="viewcode-back" href="../../api.html#plum.signature.Signature.from_callable">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">from_callable</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">precedence</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Signature&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct a signature from a callable.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            f (Callable): Callable.</span>
+<span class="sd">            precedence (int, optional): Precedence. Defaults to 0.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            :class:`Signature`: Signature for `f`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">types</span><span class="p">,</span> <span class="n">varargs</span> <span class="o">=</span> <span class="n">_extract_signature</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Signature</span><span class="p">(</span>
+            <span class="o">*</span><span class="n">types</span><span class="p">,</span>
+            <span class="n">varargs</span><span class="o">=</span><span class="n">varargs</span><span class="p">,</span>
+            <span class="n">precedence</span><span class="o">=</span><span class="n">precedence</span><span class="p">,</span>
+        <span class="p">)</span></div>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">has_varargs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">varargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Missing</span>
 
     <span class="k">def</span> <span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">Signature</span><span class="p">(</span>
-            <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">types</span><span class="p">,</span>
-            <span class="n">varargs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">varargs</span><span class="p">,</span>
-            <span class="n">return_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">return_type</span><span class="p">,</span>
-            <span class="n">precedence</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">precedence</span><span class="p">,</span>
-            <span class="n">implementation</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">implementation</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">copy</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+
+        <span class="n">copy</span><span class="o">.</span><span class="n">types</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">types</span>
+        <span class="n">copy</span><span class="o">.</span><span class="n">varargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">varargs</span>
+        <span class="n">copy</span><span class="o">.</span><span class="n">precedence</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">precedence</span>
+        <span class="n">copy</span><span class="o">.</span><span class="n">is_faithful</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_faithful</span>
+        <span class="k">return</span> <span class="n">copy</span>
 
     <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">parts</span> <span class="o">=</span> <span class="p">[]</span>
@@ -410,13 +435,24 @@ document.write(`
             <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">repr_short</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">types</span><span class="p">)))</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">varargs</span> <span class="o">!=</span> <span class="n">Signature</span><span class="o">.</span><span class="n">_default_varargs</span><span class="p">:</span>
             <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;varargs=&quot;</span> <span class="o">+</span> <span class="n">repr_short</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">varargs</span><span class="p">))</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span> <span class="o">!=</span> <span class="n">Signature</span><span class="o">.</span><span class="n">_default_return_type</span><span class="p">:</span>
-            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;return_type=&quot;</span> <span class="o">+</span> <span class="n">repr_short</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">return_type</span><span class="p">))</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">precedence</span> <span class="o">!=</span> <span class="n">Signature</span><span class="o">.</span><span class="n">_default_precedence</span><span class="p">:</span>
             <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;precedence=&quot;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">precedence</span><span class="p">))</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">implementation</span><span class="p">:</span>
-            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;implementation=&quot;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">implementation</span><span class="p">))</span>
         <span class="k">return</span> <span class="s2">&quot;Signature(&quot;</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Signature</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">types</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">varargs</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">precedence</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">is_faithful</span><span class="p">,</span>
+            <span class="p">)</span> <span class="o">==</span> <span class="p">(</span>
+                <span class="n">other</span><span class="o">.</span><span class="n">types</span><span class="p">,</span>
+                <span class="n">other</span><span class="o">.</span><span class="n">varargs</span><span class="p">,</span>
+                <span class="n">other</span><span class="o">.</span><span class="n">precedence</span><span class="p">,</span>
+                <span class="n">other</span><span class="o">.</span><span class="n">is_faithful</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
 
     <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">multihash</span><span class="p">(</span><span class="n">Signature</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">types</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">varargs</span><span class="p">)</span>
@@ -495,7 +531,7 @@ document.write(`
             <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">_is_bearable</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">types</span><span class="p">))</span></div></div>
 
 
-<span class="k">def</span> <span class="nf">_inspect_signature</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Signature</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">inspect_signature</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Signature</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrapper of :func:`inspect.signature` which adds support for certain non-function</span>
 <span class="sd">    objects.</span>
 
@@ -512,7 +548,23 @@ document.write(`
     <span class="k">return</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="extract_signature"><a class="viewcode-back" href="../../api.html#plum.signature.extract_signature">[docs]</a><span class="k">def</span> <span class="nf">extract_signature</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">precedence</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Signature</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">resolve_pep563</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Utility function to resolve PEP563-style annotations and make editable.</span>
+
+<span class="sd">    This function mutates `f`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        f (Callable): Function whose annotations should be resolved.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s2">&quot;__annotations__&quot;</span><span class="p">):</span>
+        <span class="n">beartype_resolve_pep563</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>  <span class="c1"># This mutates `f`.</span>
+        <span class="c1"># Override the `__annotations__` attribute, since `resolve_pep563` modifies</span>
+        <span class="c1"># `f` too.</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">typing</span><span class="o">.</span><span class="n">get_type_hints</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">f</span><span class="o">.</span><span class="vm">__annotations__</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+
+
+<span class="k">def</span> <span class="nf">_extract_signature</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">precedence</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Signature</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract the signature from a function.</span>
 
 <span class="sd">    Args:</span>
@@ -522,15 +574,10 @@ document.write(`
 <span class="sd">    Returns:</span>
 <span class="sd">        :class:`.Signature`: Signature.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s2">&quot;__annotations__&quot;</span><span class="p">):</span>
-        <span class="n">resolve_pep563</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>  <span class="c1"># This mutates `f`.</span>
-        <span class="c1"># Override the `__annotations__` attribute, since `resolve_pep563` modifies</span>
-        <span class="c1"># `f` too.</span>
-        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">typing</span><span class="o">.</span><span class="n">get_type_hints</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">f</span><span class="o">.</span><span class="vm">__annotations__</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+    <span class="n">resolve_pep563</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 
     <span class="c1"># Extract specification.</span>
-    <span class="n">sig</span> <span class="o">=</span> <span class="n">_inspect_signature</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="n">sig</span> <span class="o">=</span> <span class="n">inspect_signature</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 
     <span class="c1"># Get types of arguments.</span>
     <span class="n">types</span> <span class="o">=</span> <span class="p">[]</span>
@@ -563,22 +610,7 @@ document.write(`
                     <span class="sa">f</span><span class="s2">&quot;of the annotated type `</span><span class="si">{</span><span class="n">repr_short</span><span class="p">(</span><span class="n">annotation</span><span class="p">)</span><span class="si">}</span><span class="s2">`.&quot;</span>
                 <span class="p">)</span>
 
-    <span class="c1"># Get possible return type.</span>
-    <span class="k">if</span> <span class="n">sig</span><span class="o">.</span><span class="n">return_annotation</span> <span class="ow">is</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-        <span class="n">return_type</span> <span class="o">=</span> <span class="n">typing</span><span class="o">.</span><span class="n">Any</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">return_type</span> <span class="o">=</span> <span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">sig</span><span class="o">.</span><span class="n">return_annotation</span><span class="p">)</span>
-
-    <span class="c1"># Assemble signature.</span>
-    <span class="n">signature</span> <span class="o">=</span> <span class="n">Signature</span><span class="p">(</span>
-        <span class="o">*</span><span class="n">types</span><span class="p">,</span>
-        <span class="n">varargs</span><span class="o">=</span><span class="n">varargs</span><span class="p">,</span>
-        <span class="n">return_type</span><span class="o">=</span><span class="n">return_type</span><span class="p">,</span>
-        <span class="n">precedence</span><span class="o">=</span><span class="n">precedence</span><span class="p">,</span>
-        <span class="n">implementation</span><span class="o">=</span><span class="n">f</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">signature</span></div>
+    <span class="k">return</span> <span class="n">types</span><span class="p">,</span> <span class="n">varargs</span>
 
 
 <div class="viewcode-block" id="append_default_args"><a class="viewcode-back" href="../../api.html#plum.signature.append_default_args">[docs]</a><span class="k">def</span> <span class="nf">append_default_args</span><span class="p">(</span><span class="n">signature</span><span class="p">:</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Signature</span><span class="p">]:</span>
@@ -596,7 +628,7 @@ document.write(`
 <span class="sd">        default arguments.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Extract specification.</span>
-    <span class="n">f_signature</span> <span class="o">=</span> <span class="n">_inspect_signature</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="n">f_signature</span> <span class="o">=</span> <span class="n">inspect_signature</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 
     <span class="n">signatures</span> <span class="o">=</span> <span class="p">[</span><span class="n">signature</span><span class="p">]</span>
 

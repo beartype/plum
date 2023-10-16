@@ -505,26 +505,21 @@ values.</p>
 <span id="signatures"></span><h2>Signatures<a class="headerlink" href="#module-plum.signature" title="Permalink to this heading">#</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="plum.signature.Signature">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.signature.</span></span><span class="sig-name descname"><span class="pre">Signature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*types:</span> <span class="pre">object</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">varargs=&lt;class</span> <span class="pre">'plum.util.Missing'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_type:</span> <span class="pre">object</span> <span class="pre">=</span> <span class="pre">typing.Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precedence:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">implementation:</span> <span class="pre">~typing.Optional[~typing.Callable]</span> <span class="pre">=</span> <span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/signature.html#Signature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.signature.Signature" title="Permalink to this definition">#</a></dt>
-<dd><p>Signature.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>*types</strong> (<em>tuple</em><em>[</em><em>type</em><em>, </em><em>...</em><em>]</em>) – Types of the arguments.</p></li>
-<li><p><strong>varargs</strong> (<em>type</em><em>, </em><em>optional</em>) – Type of the variable arguments.</p></li>
-<li><p><strong>return_type</strong> (<em>type</em><em>, </em><em>optional</em>) – Type of the return value. Defaults to <cite>Any</cite>.</p></li>
-<li><p><strong>precedence</strong> (<em>int</em><em>, </em><em>optional</em>) – Precedence. Defaults to <cite>0</cite>.</p></li>
-<li><p><strong>implementation</strong> (<em>function</em><em>, </em><em>optional</em>) – Implementation.</p></li>
-</ul>
-</dd>
-</dl>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.signature.</span></span><span class="sig-name descname"><span class="pre">Signature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*types:</span> <span class="pre">~typing.Tuple[object,</span> <span class="pre">...],</span> <span class="pre">varargs:</span> <span class="pre">~typing.Union[object,</span> <span class="pre">~plum.util._MissingType]</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'plum.util.Missing'&gt;,</span> <span class="pre">precedence:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">0</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/signature.html#Signature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.signature.Signature" title="Permalink to this definition">#</a></dt>
+<dd><p>Object representing a call signature that may be used to dispatch a function
+call.</p>
+<p>This object differs structurally from the return value of <code class="xref py py-func docutils literal notranslate"><span class="pre">inspect.signature()</span></code>
+as it only contains information necessary for performing dispatch.</p>
+<p>For example, for the current implementation of Plum, which does not dispatch on
+keyword arguments, those are left out of this signature object. Similarly, return
+type information and argument names are not present.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="plum.signature.Signature.types">
 <span class="sig-name descname"><span class="pre">types</span></span><a class="headerlink" href="#plum.signature.Signature.types" title="Permalink to this definition">#</a></dt>
-<dd><p>Types of the arguments.</p>
+<dd><p>Types of the call signature.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple[type, …]</p>
+<dd class="field-odd"><p>tuple[<code class="xref py py-obj docutils literal notranslate"><span class="pre">TypeHint</span></code>, …]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -553,34 +548,12 @@ arguments.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="plum.signature.Signature.return_type">
-<span class="sig-name descname"><span class="pre">return_type</span></span><a class="headerlink" href="#plum.signature.Signature.return_type" title="Permalink to this definition">#</a></dt>
-<dd><p>Return type.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>type</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
 <dt class="sig sig-object py" id="plum.signature.Signature.precedence">
 <span class="sig-name descname"><span class="pre">precedence</span></span><a class="headerlink" href="#plum.signature.Signature.precedence" title="Permalink to this definition">#</a></dt>
 <dd><p>Precedence.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>int</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="plum.signature.Signature.implementation">
-<span class="sig-name descname"><span class="pre">implementation</span></span><a class="headerlink" href="#plum.signature.Signature.implementation" title="Permalink to this definition">#</a></dt>
-<dd><p>Implementation.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>function or None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -609,6 +582,26 @@ arguments.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>tuple[type, …]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="plum.signature.Signature.from_callable">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_callable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precedence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><span class="pre">Signature</span></a></span></span><a class="reference internal" href="_modules/plum/signature.html#Signature.from_callable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.signature.Signature.from_callable" title="Permalink to this definition">#</a></dt>
+<dd><p>Construct a signature from a callable.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>f</strong> (<em>Callable</em>) – Callable.</p></li>
+<li><p><strong>precedence</strong> (<em>int</em><em>, </em><em>optional</em>) – Precedence. Defaults to 0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Signature for <cite>f</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><code class="xref py py-class docutils literal notranslate"><span class="pre">Signature</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -652,26 +645,6 @@ default arguments.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>list[<a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><code class="xref py py-class docutils literal notranslate"><span class="pre">signature.Signature</span></code></a>]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="plum.signature.extract_signature">
-<span class="sig-prename descclassname"><span class="pre">plum.signature.</span></span><span class="sig-name descname"><span class="pre">extract_signature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">precedence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><span class="pre">Signature</span></a></span></span><a class="reference internal" href="_modules/plum/signature.html#extract_signature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.signature.extract_signature" title="Permalink to this definition">#</a></dt>
-<dd><p>Extract the signature from a function.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>f</strong> (<em>function</em>) – Function to extract signature from.</p></li>
-<li><p><strong>precedence</strong> (<em>int</em><em>, </em><em>optional</em>) – Precedence of the method.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Signature.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><code class="xref py py-class docutils literal notranslate"><span class="pre">Signature</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
