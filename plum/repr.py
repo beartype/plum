@@ -1,47 +1,50 @@
+from typing import Any, Dict, Iterable, Callable
+from functools import partial
+
 import re
 import sys
 import types
 import typing
+import inspect
+
+import rich
+from rich.color import Color
+from rich.text import Text
+from rich.style import Style
+
 
 __all__ = [
     "repr_short",
     "repr_type",
+    "repr_source_path",
     "formatannotation",
 ]
 
 py_version = sys.version_info.minor
 
 
-class color:
-    PURPLE = "\033[95m"
-    CYAN = "\033[96m"
-    DARKCYAN = "\033[36m"
-    BLUE = "\033[94m"
-    GREEN = "\033[92m"
-    YELLOW = "\033[93m"
-    RED = "\033[91m"
-    GRAY = "\033[90m"
-    LIGHT = "\033[2m"
-    BOLD = "\033[1m"
-    UNDERLINE = "\033[4m"
-    END = "\033[0m"
+path_style = Style(color=Color.from_ansi(7))
+file_style = Style(bold=True, underline=True)
+
+module_style = Style(color=Color.from_ansi(7))
+class_style = Style(bold=True)
 
 
-def colored(renderable, *clr):
-    if not isinstance(renderable, str):
-        renderable = repr(renderable)
-    return "".join(clr) + renderable + color.END
+def repr_type(typ):
+    if py_version > 8 and isinstance(typ, types.GenericAlias):
+        return Text(repr(typ), style=class_style)
 
+    if isinstance(typ, type):
+        if typ.__module__ in ["builtins", "typing"]:
+            return Text(typ.__qualname__, style=class_style)
+        else:
+            return Text(f"{typ.__module__}.", style=module_style) + Text(
+                typ.__qualname__, style=class_style
+            )
+    if isinstance(typ, types.FunctionType):
+        return Text(typ.__name__, style=module_style)
 
-def link(uri, label=None):
-    if label is None:
-        label = uri
-    parameters = ""
-
-    # OSC 8 ; params ; URI ST <name> OSC 8 ;; ST
-    escape_mask = "\033]8;{};{}\033\\{}\033]8;;\033\\"
-
-    return escape_mask.format(parameters, uri, label)
+    return Text(repr(typ), style=class_style)
 
 
 def repr_short(x):
@@ -59,23 +62,6 @@ def repr_short(x):
     return typing._type_repr(x)
 
 
-def repr_type(typ, *clrs):
-    if py_version > 8 and isinstance(typ, types.GenericAlias):
-        return colored(repr(typ), color.BOLD, *clrs)
-
-    if isinstance(typ, type):
-        if typ.__module__ in ["builtins", "typing"]:
-            return colored(typ.__qualname__, color.BOLD, *clrs)
-        else:
-            return colored(f"{typ.__module__}.", color.LIGHT, *clrs) + colored(
-                typ.__qualname__, color.BOLD, *clrs
-            )
-    if isinstance(typ, types.FunctionType):
-        return colored(typ.__name__, color.LIGHT, *clrs)
-
-    return colored(repr(typ), color.BOLD, *clrs)
-
-
 def formatannotation(annotation, base_module=None):
     if getattr(annotation, "__module__", None) == "typing":
 
@@ -91,3 +77,94 @@ def formatannotation(annotation, base_module=None):
             return annotation.__qualname__
         return annotation.__module__ + "." + annotation.__qualname__
     return repr(annotation)
+
+
+def repr_source_path(function: Callable) -> Text:
+    """Returns the string with the link to the
+    file and line where the method implementation
+    is defined.
+    """
+    try:
+        fpath = inspect.getfile(function)
+        fline = str(inspect.getsourcelines(function)[1])
+        "file://" + fpath + "#" + fline
+
+        import os
+
+        # compress the path
+        home_path = os.path.expanduser("~")
+        fpath = fpath.replace(home_path, "~")
+
+        # underline file name
+        fname = os.path.basename(fpath)
+        if fname.endswith(".py"):
+            fpath = (
+                Text(os.path.dirname(fpath), style=path_style)
+                + Text("/")
+                + Text(fname, style=file_style)
+            )
+        fpath = fpath + ":" + fline
+        fpath.stylize("link {uri}")
+    except OSError:
+        fpath = Text()
+    return fpath
+
+
+def repr_pyfunction(function: Callable) -> Text:
+    """Returns the string with the link to the
+    file and line where the method implementation
+    is defined.
+    """
+    res = Text(repr(function))
+    res.append(" @ ")
+    res.append_text(repr_source_path(function))
+    return res
+
+
+#####
+# new
+#####
+
+
+def __repr_from_rich__(self) -> str:
+    """
+    default __repr__ that calls __rich__
+    """
+    # print("calling __repr_from_rich__")
+    console = rich.get_console()
+    with console.capture() as capture:
+        console.print(self, end="")
+    res = capture.get()
+    # print("got ", res)
+    return res
+
+
+def _repr_mimebundle_from_rich_(
+    self, include: Iterable[str], exclude: Iterable[str], **kwargs: Any
+) -> Dict[str, str]:
+    from rich.jupyter import _render_segments
+
+    console = rich.get_console()
+    segments = list(console.render(self, console.options))  # type: ignore
+    html = _render_segments(segments)
+    text = console._render_buffer(segments)
+    data = {"text/plain": text, "text/html": html}
+    if include:
+        data = {k: v for (k, v) in data.items() if k in include}
+    if exclude:
+        data = {k: v for (k, v) in data.items() if k not in exclude}
+    return data
+
+
+def rich_repr(clz=None, str=False):
+    """
+    Class decorator setting the repr method to use
+    `rich`.
+    """
+    if clz is None:
+        return partial(rich_repr, str=str)
+    setattr(clz, "__repr__", __repr_from_rich__)
+    setattr(clz, "_repr_mimebundle_", _repr_mimebundle_from_rich_)
+    if str:
+        setattr(clz, "__str__", __repr_from_rich__)
+    return clz
