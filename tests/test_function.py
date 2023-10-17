@@ -400,13 +400,13 @@ def test_call_dispatch_error():
 
     with pytest.raises(
         NotFoundLookupError,
-        match="(?i)^f\('1', '1'\) could not be resolved\.\n\nClosest.*",
+        match="(?i)^f\\('1', '1'\\) could not be resolved\\.\n\nClosest.*",
     ):
         f("1", "1")
 
     with pytest.raises(
         AmbiguousLookupError,
-        match="(?i)^f\(1, 1\) is ambiguous\.\n\nValid.*",
+        match="(?i)^f\\(1, 1\\) is ambiguous\\.\n\nValid.*",
     ):
         f(1, 1)
 

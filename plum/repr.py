@@ -1,17 +1,15 @@
-from typing import Any, Dict, Iterable, Callable
-from functools import partial
-
+import inspect
 import re
 import sys
 import types
 import typing
-import inspect
+from functools import partial
+from typing import Any, Callable, Dict, Iterable
 
 import rich
 from rich.color import Color
-from rich.text import Text
 from rich.style import Style
-
+from rich.text import Text
 
 __all__ = [
     "repr_short",
@@ -163,8 +161,8 @@ def rich_repr(clz=None, str=False):
     """
     if clz is None:
         return partial(rich_repr, str=str)
-    setattr(clz, "__repr__", __repr_from_rich__)
-    setattr(clz, "_repr_mimebundle_", _repr_mimebundle_from_rich_)
+    clz.__repr__ = __repr_from_rich__
+    clz._repr_mimebundle_ = _repr_mimebundle_from_rich_
     if str:
-        setattr(clz, "__str__", __repr_from_rich__)
+        clz.__str__ = __repr_from_rich__
     return clz

@@ -6,8 +6,8 @@ from typing import Callable, Optional, Tuple, Union
 from rich.text import Text
 
 from plum.method import Method, MethodList
-from plum.signature import Signature
 from plum.repr import rich_repr
+from plum.signature import Signature
 
 from .util import argsort
 

@@ -90,7 +90,10 @@ def test_repr():
         function_name="different_name",
     )
 
-    str2 = f"different_name(x: int) -> complex\n    <function test_repr.<locals>.f at {hex(id(f))}> @"
+    str2 = (
+        "different_name(x: int) -> complex\n"
+        f"    <function test_repr.<locals>.f at {hex(id(f))}> @"
+    )
 
     for a, b in zip(repr(m), str2):
         print(a, "|", b, "|", a == b)

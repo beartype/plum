@@ -6,7 +6,6 @@ from typing import Callable, List, Tuple, Union
 
 import beartype.door
 from beartype.peps import resolve_pep563 as beartype_resolve_pep563
-
 from rich.segment import Segment
 
 from . import _is_bearable

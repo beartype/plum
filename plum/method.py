@@ -2,10 +2,10 @@ import inspect
 import typing
 from typing import Callable, List, Optional
 
-from rich.text import Text
 from rich.segment import Segment
+from rich.text import Text
 
-from .repr import repr_type, rich_repr, repr_pyfunction
+from .repr import repr_pyfunction, repr_type, rich_repr
 from .signature import Signature, inspect_signature
 from .type import resolve_type_hint
 from .util import TypeHint
