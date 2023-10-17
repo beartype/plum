@@ -6,7 +6,6 @@ from types import MethodType
 from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union
 
 from .method import Method
-from .repr import repr_short
 from .resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
 from .signature import Signature, append_default_args
 from .type import resolve_type_hint
@@ -79,7 +78,6 @@ class Function(metaclass=_FunctionMeta):
         self._cache = {}
         wraps(f)(self)  # Sets `self._doc`.
 
-        # set __name__ and __qualname__
         self.__name__, self.__qualname__ = _generate_qualname(f)
 
         # `owner` is the name of the owner. We will later attempt to resolve to
@@ -281,25 +279,6 @@ class Function(metaclass=_FunctionMeta):
             # Clear cache.
             self.clear_cache(reregister=False)
 
-    def _enhance_exception(self, e: SomeExceptionType) -> SomeExceptionType:
-        """Enchance an exception by prepending a prefix to the message of the exception
-        which specifies that the message is for this function.
-
-        Args:
-            e (:class:`Exception`): Exception.
-
-        Returns:
-            :class:`Exception`: `e`, but with a prefix appended to the message.
-        """
-        # Specify to which function the message pertains.
-        prefix = f"For function `{self.__name__}`"
-        if self.owner:
-            prefix += f" of `{repr_short(self.owner)}`"
-        prefix = prefix + ", "
-        # Return a new exception of the same type which incorporates the prefix.
-        message = str(e)
-        return type(e)(prefix + message[0].lower() + message[1:])
-
     def resolve_method(
         self, target: Union[Tuple[object, ...], Signature]
     ) -> Tuple[Callable, TypeHint]:
@@ -322,12 +301,18 @@ class Function(metaclass=_FunctionMeta):
 
         except AmbiguousLookupError as e:
             __tracebackhide__ = True
-            raise e from None  # self._enhance_exception(e) # Specify this function.
+
+            # change the function name if this is a method.
+            if self.owner:
+                e.fname = self.__qualname__
+            raise e from None
 
         except NotFoundLookupError as e:
             __tracebackhide__ = True
 
-            # e = self._enhance_exception(e)  # Specify this function.
+            # change the function name if this is a method.
+            if self.owner:
+                e.fname = self.__qualname__
             impl, return_type = self._handle_not_found_lookup_error(e)
 
         return impl, return_type
