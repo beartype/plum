@@ -2,7 +2,10 @@ import inspect
 import typing
 from typing import Callable, List, Optional
 
-from .repr import color, colored, link, repr_type
+from rich.text import Text
+from rich.segment import Segment
+
+from .repr import repr_type, rich_repr, repr_pyfunction
 from .signature import Signature, inspect_signature
 from .type import resolve_type_hint
 from .util import TypeHint
@@ -10,6 +13,7 @@ from .util import TypeHint
 __all__ = ["Method", "extract_return_type"]
 
 
+@rich_repr
 class Method:
     """Method.
 
@@ -85,63 +89,34 @@ class Method:
         impl = self.implementation
         return f"Method({function_name=}, {signature=}, {return_type=}, {impl=})"
 
-    def __repr__(self):
+    def __rich_console__(self, console, options):
         argnames, kwnames, kwvar_name = extract_argnames(self.implementation)
 
         sig = self.signature
         parts = []
         if sig.types:
             for nm, t in zip(argnames, sig.types):
-                parts.append(f"{nm}: {repr_type(t)}")
+                parts.append(Text(f"{nm}: ") + repr_type(t))
         if sig.varargs != Signature._default_varargs:
-            parts.append(f"*{argnames[-1]}: {repr_type(sig.varargs)}")
+            parts.append(Text(f"*{argnames[-1]}: ") + repr_type(sig.varargs))
 
         if len(kwnames) > 0 or kwvar_name is not None:
-            parts.append("*")
+            parts.append(Text("*"))
         for kwnm in kwnames:
-            parts.append(f"{kwnm}")
+            parts.append(Text(f"{kwnm}"))
         if kwvar_name is not None:
-            parts.append(f"**{kwvar_name}")
+            parts.append(Text(f"**{kwvar_name}"))
 
-        res = f"{self.function_name}(" + ", ".join(parts) + ")"
+        res = Text(self.function_name) + Text("(") + Text(", ").join(parts) + Text(")")
         if self.return_type != Method._default_return_type:
-            res += f" -> {repr_type(self.return_type)}"
+            res.append(" -> ")
+            res.append(repr_type(self.return_type))
         if sig.precedence != Signature._default_precedence:
-            res += "\n\tprecedence=" + repr(sig.precedence)
+            res.append(f"\n    precedence={sig.precedence}")
 
-        res += "\n\t" + self._repr_method_namepath()
-
-        return res
-
-    def _repr_method_namepath(self) -> str:
-        """Returns the string with the link to the
-        file and line where the method implementation
-        is defined.
-        """
-        res = repr(self.implementation)
-        try:
-            fpath = inspect.getfile(self.implementation)
-            fline = str(inspect.getsourcelines(self.implementation)[1])
-            uri = "file://" + fpath + "#" + fline
-
-            import os
-
-            # compress the path
-            home_path = os.path.expanduser("~")
-            fpath = fpath.replace(home_path, "~")
-
-            # underline file name
-            fname = os.path.basename(fpath)
-            if fname.endswith(".py"):
-                fpath = fpath.replace(
-                    fname, colored(colored(fname, color.BOLD), color.UNDERLINE)
-                )
-            fpath = fpath + ":" + fline
-
-            res += " @ " + link(uri, fpath)
-        except OSError:
-            res = ""
-        return res
+        yield res
+        yield Segment("    ")
+        yield repr_pyfunction(self.implementation)
 
     def _repr_signature_mismatch(self, args_ok: List[bool]) -> str:
         """Special version of __repr__ but used when
@@ -161,36 +136,46 @@ class Method:
         if sig.types:
             for i, (nm, t) in enumerate(zip(argnames, sig.types)):
                 is_ok = args_ok[i] if i < len(args_ok) else False
-                clr = (color.RED,) if not is_ok else tuple()
-                parts.append(f"{nm}: {repr_type(t, *clr)}")
+                arg_txt = Text(f"{nm}: ")
+                type_txt = repr_type(t)
+                if not is_ok:
+                    type_txt.stylize("red")
+                arg_txt.append(type_txt)
+                parts.append(arg_txt)
         if sig.varargs != Signature._default_varargs:
-            clr = (color.RED,) if not varargs_ok else tuple()
-            parts.append(f"*{argnames[-1]}: {repr_type(sig.varargs, *clr)}")
+            arg_txt = Text(f"*{argnames[-1]}: ")
+            type_txt = repr_type(sig.varargs)
+            if not varargs_ok:
+                type_txt.stylize("red")
+            arg_txt.append(type_txt)
+            parts.append(arg_txt)
 
         if len(kwnames) > 0 or kwvar_name is not None:
-            parts.append("*")
+            parts.append(Text("*"))
         for kwnm in kwnames:
-            parts.append(f"{kwnm}")
+            parts.append(Text(f"{kwnm}"))
         if kwvar_name is not None:
-            parts.append(f"**{kwvar_name}")
+            parts.append(Text(f"**{kwvar_name}"))
 
-        res = f"{self.function_name}(" + ", ".join(parts) + ")"
+        res = Text(self.function_name) + Text("(") + Text(", ").join(parts) + Text(")")
         if self.return_type != Method._default_return_type:
-            res += f" -> {repr_type(self.return_type)}"
+            res.append(" -> ")
+            res.append(repr_type(self.return_type))
         if sig.precedence != Signature._default_precedence:
-            res += "\n\tprecedence=" + repr(sig.precedence)
+            res.append(f"\n    precedence={sig.precedence}")
 
-        res += "\n\t" + self._repr_method_namepath()
-
+        res.append("\n    ")
+        res.append_text(repr_pyfunction(self.implementation))
         return res
 
 
+@rich_repr
 class MethodList(list):
-    def __repr__(self):
-        res = f"Method List with # {len(self)} methods:"
+    def __rich_console__(self, console, options):
+        yield f"Method List with # {len(self)} methods:"
         for i, method in enumerate(self):
-            res += f"\n [{i}] " + repr(method)
-        return res
+            yield Segment(f" [{i}] ")
+            yield method
 
 
 def extract_argnames(f: Callable, precedence: int = 0) -> Signature:
