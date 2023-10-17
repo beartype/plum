@@ -1,10 +1,10 @@
 import inspect
-import re
+import os
 import sys
 import types
 import typing
 from functools import partial
-from typing import Any, Callable, Dict, Iterable
+from typing import Any, Callable, Dict, Iterable, Optional
 
 import rich
 from rich.color import Color
@@ -15,25 +15,32 @@ __all__ = [
     "repr_short",
     "repr_type",
     "repr_source_path",
-    "formatannotation",
+    "repr_pyfunction",
+    "rich_repr",
 ]
-
-py_version = sys.version_info.minor
-
 
 path_style = Style(color=Color.from_ansi(7))
 file_style = Style(bold=True, underline=True)
 
-module_style = Style(color=Color.from_ansi(7))
+module_style = Style(color="grey66")
 class_style = Style(bold=True)
 
 
-def repr_type(typ):
-    if py_version > 8 and isinstance(typ, types.GenericAlias):
+def repr_type(typ) -> Text:
+    """Returns a {class}`rich.Text` representation of a type.
+
+    Does some light syntax highlighting mimicking Julia, boldening
+    class names and coloring module names with a lighter color.
+
+    Args:
+        typ: A type or arbitrary object.
+    """
+    # TODO: remove version check when dropping support for Python 3.8
+    if sys.version_info.minor > 8 and isinstance(typ, types.GenericAlias):
         return Text(repr(typ), style=class_style)
 
     if isinstance(typ, type):
-        if typ.__module__ in ["builtins", "typing"]:
+        if typ.__module__ in ["builtins", "typing", "typing_extensions"]:
             return Text(typ.__qualname__, style=class_style)
         else:
             return Text(f"{typ.__module__}.", style=module_style) + Text(
@@ -45,7 +52,7 @@ def repr_type(typ):
     return Text(repr(typ), style=class_style)
 
 
-def repr_short(x):
+def repr_short(x) -> str:
     """Representation as a string, but in shorter form. This just calls
     :func:`typing._type_repr`.
 
@@ -60,34 +67,21 @@ def repr_short(x):
     return typing._type_repr(x)
 
 
-def formatannotation(annotation, base_module=None):
-    if getattr(annotation, "__module__", None) == "typing":
-
-        def repl(match):
-            text = match.group()
-            return text.removeprefix("typing.")
-
-        return re.sub(r"[\w\.]+", repl, repr(annotation))
-    if isinstance(annotation, types.GenericAlias):
-        return str(annotation)
-    if isinstance(annotation, type):
-        if annotation.__module__ in ("builtins", base_module):
-            return annotation.__qualname__
-        return annotation.__module__ + "." + annotation.__qualname__
-    return repr(annotation)
-
-
 def repr_source_path(function: Callable) -> Text:
-    """Returns the string with the link to the
-    file and line where the method implementation
-    is defined.
+    """Returns a {class}`rich.Text` object with an hyperlink
+    to the function definition.
+
+    Args:
+        function: A callable
+
+    Returns:
+        A {class}`rich.Text` object with an hyperlink. If
+        it fails to introspect returns an empty string.
     """
     try:
         fpath = inspect.getfile(function)
-        fline = str(inspect.getsourcelines(function)[1])
-        "file://" + fpath + "#" + fline
-
-        import os
+        fline = inspect.getsourcelines(function)[1]
+        uri = f"file://{fpath}#{fline}"
 
         # compress the path
         home_path = os.path.expanduser("~")
@@ -101,17 +95,25 @@ def repr_source_path(function: Callable) -> Text:
                 + Text("/")
                 + Text(fname, style=file_style)
             )
-        fpath = fpath + ":" + fline
-        fpath.stylize("link {uri}")
-    except OSError:
+        else:
+            fpath = Text(fpath, style=path_style)
+        fpath.append_text(Text(f":{fline}"))
+        fpath.stylize(f"link {uri}")
+    except OSError:  # pragma: no cover
         fpath = Text()
     return fpath
 
 
 def repr_pyfunction(function: Callable) -> Text:
-    """Returns the string with the link to the
-    file and line where the method implementation
-    is defined.
+    """Returns a {class}`rich.Text` object representing
+    a function.
+
+    Args:
+        function: A callable
+
+    Returns:
+        A {class}`rich.Text` object with an hyperlink. If
+        it fails to introspect returns an empty string.
     """
     res = Text(repr(function))
     res.append(" @ ")
@@ -119,9 +121,9 @@ def repr_pyfunction(function: Callable) -> Text:
     return res
 
 
-#####
-# new
-#####
+########################
+# Rich class decorator #
+########################
 
 
 def __repr_from_rich__(self) -> str:
@@ -154,10 +156,19 @@ def _repr_mimebundle_from_rich_(
     return data
 
 
-def rich_repr(clz=None, str=False):
+def rich_repr(clz: Optional[type] = None, str: bool = False):
     """
-    Class decorator setting the repr method to use
-    `rich`.
+    Class decorator defining a __repr__ method that calls __rich__.
+
+    This also sets `_repr_mimebundle_` for better rendering in
+    jupyter.
+
+    Args:
+        clz: Class to decorate. If None, returns a decorator.
+        str: If True, also defines __str__.
+
+    Returns:
+        The decorated class. If clz is None, returns a decorator.
     """
     if clz is None:
         return partial(rich_repr, str=str)

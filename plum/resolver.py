@@ -21,15 +21,21 @@ class AmbiguousLookupError(LookupError):
     def __init__(
         self,
         fname: Optional[str],
-        target,
-        methods,
+        target: Union[Tuple[object, ...], Signature],
+        methods: "MethodList",
     ):
+        """Create a new NotFoundLookupError.
+
+        Args:
+            fname (Optional[str]): name (or qualified name) of the function
+                that could not be resolved.
+            target (Union[Tuple[object, ...], Signature]): target signature
+                or arguments that could not be resolved.
+            methods (MethodList): list of ambiguous methods.
+        """
         self.fname = fname if fname is not None else "<function>"
         self.target = target
         self.methods = methods
-
-    def __str__(self):
-        return "hellohello"
 
     def __rich_console__(self, console, options):
         yield Text(f"{self.fname}{self.target} is ambiguous.")
@@ -42,16 +48,30 @@ class AmbiguousLookupError(LookupError):
 
 @rich_repr(str=True)
 class NotFoundLookupError(LookupError):
-    """A signature cannot be resolved because no applicable method can be found."""
+    """A signature cannot be resolved because no applicable method can be found.
+
+    This error object is used to display the closest methods to the target signature.
+    """
 
     def __init__(
         self,
         fname: Optional[str],
-        target,
-        methods,
+        target: Union[Tuple[object, ...], Signature],
+        methods: "MethodList",
         *,
         max_suggestions: int = 3,
     ):
+        """Create a new NotFoundLookupError.
+
+        Args:
+            fname (Optional[str]): name (or qualified name) of the function
+                that could not be resolved.
+            target (Union[Tuple[object, ...], Signature]): target signature
+                or arguments that could not be resolved.
+            methods (MethodList): list of methods that were considered.
+            max_suggestions (int, optional): Maximum number of displayed signatures.
+                Defaults to 3.
+        """
         self.fname = fname if fname is not None else "<function>"
         self.target = target
         self.methods = methods
