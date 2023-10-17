@@ -322,12 +322,12 @@ class Function(metaclass=_FunctionMeta):
 
         except AmbiguousLookupError as e:
             __tracebackhide__ = True
-            raise self._enhance_exception(e) from None  # Specify this function.
+            raise e from None  # self._enhance_exception(e) # Specify this function.
 
         except NotFoundLookupError as e:
             __tracebackhide__ = True
 
-            e = self._enhance_exception(e)  # Specify this function.
+            # e = self._enhance_exception(e)  # Specify this function.
             impl, return_type = self._handle_not_found_lookup_error(e)
 
         return impl, return_type
