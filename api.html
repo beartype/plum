@@ -381,6 +381,7 @@ document.write(`
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-plum.type">Types</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-plum.signature">Signatures</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-plum.method">Methods</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-plum.function">Functions</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-plum.dispatcher">Dispatchers</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-plum.parametric">Parametric Classes</a></li>
@@ -519,7 +520,7 @@ type information and argument names are not present.</p>
 <dd><p>Types of the call signature.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple[<code class="xref py py-obj docutils literal notranslate"><span class="pre">TypeHint</span></code>, …]</p>
+<dd class="field-odd"><p>tuple[<a class="reference internal" href="#plum.util.TypeHint" title="plum.util.TypeHint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TypeHint</span></code></a>, …]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -645,6 +646,55 @@ default arguments.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>list[<a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><code class="xref py py-class docutils literal notranslate"><span class="pre">signature.Signature</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-plum.method">
+<span id="methods"></span><h2>Methods<a class="headerlink" href="#module-plum.method" title="Permalink to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="plum.method.Method">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.method.</span></span><span class="sig-name descname"><span class="pre">Method</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">implementation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signature</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><span class="pre">Signature</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">object</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/method.html#Method"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.method.Method" title="Permalink to this definition">#</a></dt>
+<dd><p>Method.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="plum.method.Method.return_type">
+<span class="sig-name descname"><span class="pre">return_type</span></span><a class="headerlink" href="#plum.method.Method.return_type" title="Permalink to this definition">#</a></dt>
+<dd><p>Return type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>type</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="plum.method.Method.implementation">
+<span class="sig-name descname"><span class="pre">implementation</span></span><a class="headerlink" href="#plum.method.Method.implementation" title="Permalink to this definition">#</a></dt>
+<dd><p>Implementation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>function or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="plum.method.extract_return_type">
+<span class="sig-prename descclassname"><span class="pre">plum.method.</span></span><span class="sig-name descname"><span class="pre">extract_return_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">object</span></span></span><a class="reference internal" href="_modules/plum/method.html#extract_return_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.method.extract_return_type" title="Permalink to this definition">#</a></dt>
+<dd><p>Extract the return type from a function.</p>
+<p>Assumes that PEP563-style already have been resolved.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>f</strong> (<em>function</em>) – Function to extract return type from.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Return type annotation</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">TypeHint</span></code></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1340,6 +1390,7 @@ function.</p>
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-plum.type">Types</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-plum.signature">Signatures</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-plum.method">Methods</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-plum.function">Functions</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-plum.dispatcher">Dispatchers</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-plum.parametric">Parametric Classes</a></li>

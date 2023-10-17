@@ -11,6 +11,11 @@ Signatures
 .. automodule:: plum.signature
     :members:
 
+Methods
+-------
+.. automodule:: plum.method
+    :members:
+
 Functions
 ---------
 .. automodule:: plum.function

@@ -362,7 +362,7 @@ document.write(`
 <span class="sd">    type information and argument names are not present.</span>
 
 <span class="sd">    Attributes:</span>
-<span class="sd">        types (tuple[:obj:`TypeHint`, ...]): Types of the call signature.</span>
+<span class="sd">        types (tuple[:obj:`.TypeHint`, ...]): Types of the call signature.</span>
 <span class="sd">        varargs (type or :class:`.util.Missing`): Type of the variable number of</span>
 <span class="sd">            arguments.</span>
 <span class="sd">        has_varargs (bool): Whether `varargs` is not :class:`.util.Missing`.</span>
@@ -385,13 +385,13 @@ document.write(`
 <span class="sd">        dispatch.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            *types (:obj:`TypeHint`): Types of the arguments.</span>
-<span class="sd">            varargs (:obj:`TypeHint`, optional): Type of the variable arguments.</span>
+<span class="sd">            *types (:obj:`.TypeHint`): Types of the arguments.</span>
+<span class="sd">            varargs (:obj:`.TypeHint`, optional): Type of the variable arguments.</span>
 <span class="sd">            precedence (int, optional): Precedence. Defaults to `0`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">types</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">TypeHint</span><span class="p">]</span> <span class="o">=</span> <span class="n">types</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">varargs</span><span class="p">:</span> <span class="n">OptionalType</span> <span class="o">=</span> <span class="n">varargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">precedence</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">precedence</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">types</span> <span class="o">=</span> <span class="n">types</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">varargs</span> <span class="o">=</span> <span class="n">varargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">precedence</span> <span class="o">=</span> <span class="n">precedence</span>
 
         <span class="n">types_are_faithful</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span><span class="n">is_faithful</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">types</span><span class="p">)</span>
         <span class="n">varargs_are_faithful</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">varargs</span> <span class="ow">is</span> <span class="n">Missing</span> <span class="ow">or</span> <span class="n">is_faithful</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">varargs</span><span class="p">)</span>
