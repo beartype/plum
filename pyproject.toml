@@ -38,7 +38,8 @@ dev = [
     "tox",
     "jupyter-book",
     "mypy",
-    "pyright>=1.1.323",
+    "pyright>=1.1.331",
+    "ruff==0.1.0"
 ]
 
 [project.urls]
@@ -87,3 +88,11 @@ exclude = '''
 [tool.isort]
 profile = "black"
 src_paths = ["plum", "tests"]
+
+
+[tool.ruff]
+target-version = "py39"
+select = ["B", "E", "F", "W", "D410"]
+fixable = ["E", "F", "W"]
+ignore = ["F811", "B018"]
+line-length = 88

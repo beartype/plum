@@ -429,7 +429,7 @@ def test_parametric_custom_metaclass_name_metaclass():
     """Test that the name of the new metaclass is right."""
 
     @parametric
-    class A(metaclass=abc.ABCMeta):
+    class A(metaclass=abc.ABCMeta):  # noqa: B024
         pass
 
     class B(A):

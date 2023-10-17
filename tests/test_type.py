@@ -208,7 +208,7 @@ def test_is_faithful_custom_metaclass():
 
 
 def test_is_faithful_abcmeta():
-    class A(metaclass=abc.ABCMeta):
+    class A(metaclass=abc.ABCMeta):  # noqa: B024
         pass
 
     assert is_faithful(A)
