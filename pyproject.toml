@@ -93,6 +93,6 @@ src_paths = ["plum", "tests"]
 [tool.ruff]
 target-version = "py39"
 select = ["B", "E", "F", "W", "D410"]
-fixable = ["E", "F", "W"]
+fixable = ["B", "E", "F", "W", "D"]
 ignore = ["F811", "B018"]
 line-length = 88
