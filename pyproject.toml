@@ -38,7 +38,8 @@ dev = [
     "tox",
     "jupyter-book",
     "mypy",
-    "pyright>=1.1.323",
+    "pyright>=1.1.331",
+    "ruff==0.1.0"
 ]
 
 [project.urls]
@@ -67,7 +68,7 @@ testpaths = [
 # Formatting tools
 [tool.black]
 line-length = 88
-target-version = ['py38', 'py39']
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
 include = '\.pyi?$'
 exclude = '''
 /(
@@ -87,3 +88,11 @@ exclude = '''
 [tool.isort]
 profile = "black"
 src_paths = ["plum", "tests"]
+
+
+[tool.ruff]
+target-version = "py38"
+select = ["B", "E", "F", "W", "D410"]
+fixable = ["B", "E", "F", "W", "D"]
+ignore = ["F811", "B018"]
+line-length = 88

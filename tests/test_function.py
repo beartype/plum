@@ -421,8 +421,8 @@ dispatch = Dispatcher()
 
 
 class B(metaclass=abc.ABCMeta):
-    @dispatch
-    def __init__(self):  # noqa: B027
+    @dispatch  # noqa: B027
+    def __init__(self):
         pass
 
     def do(self, x):

@@ -182,7 +182,7 @@ def test_resolve():
         pass
 
     def f(x):
-        x
+        return x
 
     m_a = Method(f, Signature(A))
     m_b1 = Method(f, Signature(B1))
