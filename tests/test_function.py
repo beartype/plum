@@ -268,7 +268,6 @@ def test_methods():
     dispatch(f)
 
     methods = [method1, method2]
-
     assert f_dispatch.methods == methods
 
 

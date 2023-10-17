@@ -6,6 +6,8 @@ from .signature import Signature, inspect_signature
 from .type import resolve_type_hint
 from .util import TypeHint
 
+__all__ = ["Method", "extract_return_type"]
+
 
 class Method:
     """Method.
@@ -30,8 +32,8 @@ class Method:
         """Instantiate a method.
 
         Args:
-            implementation (function): Callable implementing the function.
-            signature (Signature): Signature of the callable implementation.
+            implementation (function): Callable implementing the method.
+            signature (:class:`Signature`): Signature of the method.
             return_type (type, optional): Return type of the method. Can be left
                 unspecified, in which case the correct type will be deduced from the
                 signature.
@@ -43,11 +45,10 @@ class Method:
         if function_name is None:
             function_name = implementation.__name__
 
-        self.implementation: Callable = implementation
-        self.signature: Signature = signature
-
-        self.function_name: str = function_name
-        self.return_type: TypeHint = return_type
+        self.implementation = implementation
+        self.signature = signature
+        self.function_name = function_name
+        self.return_type = return_type
 
     def __copy__(self):
         return Method(
@@ -93,7 +94,7 @@ def extract_return_type(f: Callable) -> TypeHint:
         f (function): Function to extract return type from.
 
     Returns:
-        :class:`.TypeHint`: Return type annotation
+        :class:`TypeHint`: Return type annotation
     """
 
     # Extract specification.

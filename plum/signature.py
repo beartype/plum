@@ -28,7 +28,7 @@ class Signature(Comparable):
     type information and argument names are not present.
 
     Attributes:
-        types (tuple[:obj:`TypeHint`, ...]): Types of the call signature.
+        types (tuple[:obj:`.TypeHint`, ...]): Types of the call signature.
         varargs (type or :class:`.util.Missing`): Type of the variable number of
             arguments.
         has_varargs (bool): Whether `varargs` is not :class:`.util.Missing`.
@@ -51,13 +51,13 @@ class Signature(Comparable):
         dispatch.
 
         Args:
-            *types (:obj:`TypeHint`): Types of the arguments.
-            varargs (:obj:`TypeHint`, optional): Type of the variable arguments.
+            *types (:obj:`.TypeHint`): Types of the arguments.
+            varargs (:obj:`.TypeHint`, optional): Type of the variable arguments.
             precedence (int, optional): Precedence. Defaults to `0`.
         """
-        self.types: Tuple[TypeHint] = types
-        self.varargs: OptionalType = varargs
-        self.precedence: int = precedence
+        self.types = types
+        self.varargs = varargs
+        self.precedence = precedence
 
         types_are_faithful = all(is_faithful(t) for t in types)
         varargs_are_faithful = self.varargs is Missing or is_faithful(self.varargs)
