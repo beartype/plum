@@ -387,28 +387,7 @@ def test_resolve_pending_registrations():
     assert g(1, 1.0, z=1j) == "ok"
 
 
-def test_enhance_exception():
-    def f():
-        pass
-
-    f = Function(f).dispatch(f)
-
-    def g():
-        pass
-
-    g = Function(g, owner="A").dispatch(g)
-
-    e = ValueError("Go!")
-
-    assert isinstance(f._enhance_exception(e), ValueError)
-    assert str(f._enhance_exception(e)) == "For function `f`, go!"
-
-    assert isinstance(g._enhance_exception(e), ValueError)
-    expected = "For function `g` of `tests.test_function.A`, go!"
-    assert str(g._enhance_exception(e)) == expected
-
-
-def test_call_exception_enhancement():
+def test_call_dispatch_error():
     dispatch = Dispatcher()
 
     @dispatch
@@ -419,10 +398,16 @@ def test_call_exception_enhancement():
     def f(x, y: int):
         pass
 
-    with pytest.raises(NotFoundLookupError, match="(?i)^for function `f`, "):
+    with pytest.raises(
+        NotFoundLookupError,
+        match="(?i)^f\('1', '1'\) could not be resolved\.\n\nClosest.*",
+    ):
         f("1", "1")
 
-    with pytest.raises(AmbiguousLookupError, match="(?i)^for function `f`, "):
+    with pytest.raises(
+        AmbiguousLookupError,
+        match="(?i)^f\(1, 1\) is ambiguous\.\n\nValid.*",
+    ):
         f(1, 1)
 
 
@@ -485,7 +470,7 @@ def test_call_mro():
     assert (c <= 2) == 1
     with pytest.raises(
         NotFoundLookupError,
-        match=r"(?i)^for function `__le__` of `tests.test_function.C`",
+        match=r"(?i)^C.__le__\(.+? could not be.*",
     ):
         c <= "2"  # noqa
 
@@ -505,7 +490,7 @@ def test_call_abstract():
 def test_call_object():
     with pytest.raises(
         NotFoundLookupError,
-        match=r"(?i)^for function `__init__` of `tests.test_function.B`",
+        match=r"(?i)^B.__init__\(.+? could not be.*",
     ):
         # Construction requires no arguments. Giving an argument should propagate to
         # `B` and then error.
@@ -513,7 +498,7 @@ def test_call_object():
 
     with pytest.raises(
         NotFoundLookupError,
-        match=r"(?i)^for function `__call__` of `tests.test_function.C`",
+        match=r"(?i)^C.__call__\(.+? could not be.*",
     ):
         # Calling requires no arguments.
         C()(1)
@@ -545,13 +530,13 @@ def test_call_type():
     """Exactly like :func:`test_call_object`."""
     with pytest.raises(
         NotFoundLookupError,
-        match=r"(?i)^for function `__init__` of `tests.test_function.E`",
+        match=r"(?i)^E.__init__.*\(.+?",
     ):
         E("Test", (A, object), {})  # Must have exactly one base.
 
     with pytest.raises(
         NotFoundLookupError,
-        match=r"(?i)^for function `__call__` of `tests.test_function.D`",
+        match=r"(?i)^D.__call__\(.+? could not be resolved.*",
     ):
         # The call method will be tried at :class:`D` and only then error.
         E("Test", (object,), {})(1)
