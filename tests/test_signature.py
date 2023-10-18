@@ -121,6 +121,8 @@ def test_varargs_order():
         pass
 
     assert Sig(int, varargs=A) <= Sig(Num, varargs=B)
+    assert not Sig(int, varargs=A) < Sig(int, varargs=B)
+    assert not Sig(int, varargs=B) < Sig(int, varargs=A)
 
 
 def test_comparison():
