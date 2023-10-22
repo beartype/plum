@@ -124,6 +124,9 @@ def test_varargs_order():
     assert not Sig(int, varargs=A) < Sig(int, varargs=B)
     assert not Sig(int, varargs=B) < Sig(int, varargs=A)
 
+    assert not Sig(int, varargs=Num) < Sig(Num, varargs=int)
+    assert not Sig(Num, varargs=int) < Sig(int, varargs=Num)
+
 
 def test_comparison():
     # Variable arguments shortcuts:
