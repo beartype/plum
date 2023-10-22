@@ -8,7 +8,6 @@ from rich.text import Text
 from .method import Method, MethodList
 from .repr import rich_repr
 from .signature import Signature
-
 from .util import argsort
 
 __all__ = ["AmbiguousLookupError", "NotFoundLookupError"]

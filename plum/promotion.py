@@ -1,8 +1,6 @@
 from beartype.door import TypeHint
 
-from . import function
-
-from . import _is_bearable
+from . import _is_bearable, function
 from .dispatcher import Dispatcher
 from .repr import repr_short
 from .type import resolve_type_hint
