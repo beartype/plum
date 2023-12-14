@@ -268,7 +268,6 @@ def test_methods():
     dispatch(f)
 
     methods = [method1, method2]
-
     assert f_dispatch.methods == methods
 
 
@@ -421,8 +420,8 @@ dispatch = Dispatcher()
 
 
 class B(metaclass=abc.ABCMeta):
-    @dispatch
-    def __init__(self):  # noqa: B027
+    @dispatch  # noqa: B027
+    def __init__(self):
         pass
 
     def do(self, x):

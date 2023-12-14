@@ -2,7 +2,8 @@ import abc
 import sys
 import typing
 import warnings
-from typing import Literal, get_args, get_origin
+from .typing import get_args, get_origin, is_literal
+from beartype.vale._core._valecore import BeartypeValidator
 
 try:  # pragma: specific no cover 3.8 3.9
     from types import UnionType
@@ -128,7 +129,8 @@ def _is_hint(x):
         return x.__module__ in {
             "types",  # E.g., `tuple[int]`
             "typing",
-            "collections.abc",  # E.g., `Callable`
+            "collections.abc",  # E.g., `Callable`,
+            "typing_extensions"
         }
     except AttributeError:
         return False
@@ -183,7 +185,7 @@ def resolve_type_hint(x):
                 return y
             else:
                 # Do not resolve the arguments for `Literal`s.
-                if origin != Literal:
+                if not is_literal(origin):
                     args = resolve_type_hint(args)
                 try:
                     return origin[args]
@@ -218,7 +220,8 @@ def resolve_type_hint(x):
             return resolve_type_hint(x.resolve())
         else:
             return x
-
+    elif isinstance(x, BeartypeValidator):
+        return x
     else:
         warnings.warn(
             f"Could not resolve the type hint of `{x}`. "

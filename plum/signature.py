@@ -9,6 +9,7 @@ from beartype.peps import resolve_pep563 as beartype_resolve_pep563
 
 from . import _is_bearable
 from .type import is_faithful, resolve_type_hint
+from .typing import get_type_hints
 from .util import Comparable, Missing, TypeHint, multihash, repr_short, wrap_lambda
 
 __all__ = ["Signature", "append_default_args"]
@@ -28,7 +29,7 @@ class Signature(Comparable):
     type information and argument names are not present.
 
     Attributes:
-        types (tuple[:obj:`TypeHint`, ...]): Types of the call signature.
+        types (tuple[:obj:`.TypeHint`, ...]): Types of the call signature.
         varargs (type or :class:`.util.Missing`): Type of the variable number of
             arguments.
         has_varargs (bool): Whether `varargs` is not :class:`.util.Missing`.
@@ -51,13 +52,13 @@ class Signature(Comparable):
         dispatch.
 
         Args:
-            *types (:obj:`TypeHint`): Types of the arguments.
-            varargs (:obj:`TypeHint`, optional): Type of the variable arguments.
+            *types (:obj:`.TypeHint`): Types of the arguments.
+            varargs (:obj:`.TypeHint`, optional): Type of the variable arguments.
             precedence (int, optional): Precedence. Defaults to `0`.
         """
-        self.types: Tuple[TypeHint] = types
-        self.varargs: OptionalType = varargs
-        self.precedence: int = precedence
+        self.types = types
+        self.varargs = varargs
+        self.precedence = precedence
 
         types_are_faithful = all(is_faithful(t) for t in types)
         varargs_are_faithful = self.varargs is Missing or is_faithful(self.varargs)
@@ -226,7 +227,7 @@ def resolve_pep563(f: Callable):
         beartype_resolve_pep563(f)  # This mutates `f`.
         # Override the `__annotations__` attribute, since `resolve_pep563` modifies
         # `f` too.
-        for k, v in typing.get_type_hints(f).items():
+        for k, v in get_type_hints(f, include_extras=True).items():
             f.__annotations__[k] = v
 
 
