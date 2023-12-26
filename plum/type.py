@@ -2,8 +2,10 @@ import abc
 import sys
 import typing
 import warnings
-from .typing import get_args, get_origin, is_literal
+
 from beartype.vale._core._valecore import BeartypeValidator
+
+from .typing import get_args, get_origin, is_literal
 
 try:  # pragma: specific no cover 3.8 3.9
     from types import UnionType
@@ -130,7 +132,7 @@ def _is_hint(x):
             "types",  # E.g., `tuple[int]`
             "typing",
             "collections.abc",  # E.g., `Callable`,
-            "typing_extensions"
+            "typing_extensions",
         }
     except AttributeError:
         return False
