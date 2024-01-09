@@ -310,7 +310,7 @@ class Function(metaclass=_FunctionMeta):
         except NotFoundLookupError as e:
             __tracebackhide__ = True
 
-            # change the function name if this is a method.
+            # Change the function name if this is a method.
             if self.owner:
                 e.fname = self.__qualname__
             impl, return_type = self._handle_not_found_lookup_error(e)
