@@ -171,36 +171,39 @@ class Method:
 
 @rich_repr
 class MethodList(list):
+    "A list of :class:`Method`s which is nicely printed by :mod:`rich`.
     def __rich_console__(self, console, options):
-        yield f"Method List with # {len(self)} methods:"
+        yield f"List of {len(self)} method(s):"
         for i, method in enumerate(self):
             yield Segment(f" [{i}] ")
             yield method
 
 
-def extract_argnames(f: Callable, precedence: int = 0) -> Signature:
-    """Extract the signature from a function.
+def extract_arg_names(f: Callable) -> Tuple[List[str], List[str], Optional[str]]:
+    """Extract the argument names for a function.
 
     Args:
-        f (function): Function to extract signature from.
-        precedence (int, optional): Precedence of the method.
+        f (function): Function.
 
     Returns:
-        :class:`.Signature`: Signature.
+        list[str]: Regular arguments.
+        list[str]: Keyword-only arguments.
+        Optional[str]: The name of the splatted keyword argument, e.g.
+            `**kw_args`.
     """
     # Extract specification.
     sig = inspect_signature(f)
 
     # Get types of arguments.
-    argnames = []
-    kwnames = []
-    kwvar_name = None
+    regular_args = []
+    kw_only_args = []
+    var_kw_name = None
     for arg in sig.parameters:
         p = sig.parameters[arg]
 
-        if p.kind in {p.KEYWORD_ONLY}:
+        if p.kind == p.KEYWORD_ONLY:
             kwnames.append(p.name)
-        elif p.kind in {p.VAR_KEYWORD}:
+        elif p.kind  == p.VAR_KEYWORD:
             kwvar_name = p.name
         else:
             argnames.append(p.name)
