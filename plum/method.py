@@ -90,7 +90,7 @@ class Method:
         return f"Method({function_name=}, {signature=}, {return_type=}, {impl=})"
 
     def __rich_console__(self, console, options):
-        argnames, kwnames, kwvar_name = extract_argnames(self.implementation)
+        arg_names, kw_names, kw_var_name = extract_arg_names(self.implementation)
 
         sig = self.signature
         parts = []
