@@ -302,7 +302,7 @@ class Function(metaclass=_FunctionMeta):
         except AmbiguousLookupError as e:
             __tracebackhide__ = True
 
-            # change the function name if this is a method.
+            # Change the function name if this is a method.
             if self.owner:
                 e.fname = self.__qualname__
             raise e from None
