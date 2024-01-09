@@ -443,20 +443,15 @@ def _generate_qualname(f: Callable) -> str:
     Returns:
         str: Qualified name.
     """
-    # modname = getattr(f, "__module__", "")
-    # if modname is not None and len(modname) > 0:
-    #     modname = f"{modname}."
-    # Todo: if we ever want to scope functions, we can
-    # just uncomment the code above.
-    modname = ""
+    qualname = getattr(f, "__qualname__", f.__name__)
 
-    qualname = getattr(f, "__qualname__", None)
-    if qualname is not None and len(modname) > 0:
-        qualname = f"{modname}{qualname}"
-    qualname = qualname.replace("__main__.", "")
+    # TODO: If we ever want to scope functions, we can uncomment this.
+    # if hasattr(f, "__module__"):
+    #     qualname = f"{f.__module__}.{qualname}"
+    # `__main__` would be part of `f.__name__` in e.g. the REPL.
+    # qualname = qualname.replace("__main__.", """)
 
-    name = getattr(f, "__name__", "")
-    return name, qualname
+    return qualname
 
 
 class _BoundFunction:
