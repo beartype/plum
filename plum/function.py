@@ -432,6 +432,17 @@ class Function(metaclass=_FunctionMeta):
 
 
 def _generate_qualname(f: Callable) -> str:
+    """Generate a qualified name for a function.
+
+    This function can be interpreted as an improved version of `f.__qualname__`
+    and can be run regardless of whether `f.__qualname__` exists.
+
+    Args:
+        f (Callable): Function.
+
+    Returns:
+        str: Qualified name.
+    """
     # modname = getattr(f, "__module__", "")
     # if modname is not None and len(modname) > 0:
     #     modname = f"{modname}."
