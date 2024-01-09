@@ -425,9 +425,9 @@ class Function(metaclass=_FunctionMeta):
 
     def __repr__(self) -> str:
         return (
-            f"<multiple-dispatch function {self.__qualname__} (with "
-            f"{len(self._resolver)} registered and {len(self._pending)} "
-            "pending method(s))>"
+            f"<multiple-dispatch function {self.__qualname__} (with"
+            f" {len(self._resolver)} registered and {len(self._pending)}"
+            f" pending method(s))>"
         )
 
 
