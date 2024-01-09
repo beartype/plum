@@ -78,7 +78,8 @@ class Function(metaclass=_FunctionMeta):
         self._cache = {}
         wraps(f)(self)  # Sets `self._doc`.
 
-        self.__name__, self.__qualname__ = _generate_qualname(f)
+        self.__name__ = f.__name__
+        self.__qualname__ = _generate_qualname(f)
 
         # `owner` is the name of the owner. We will later attempt to resolve to
         # which class it actually points.
