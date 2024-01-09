@@ -1,6 +1,6 @@
 import inspect
 import typing
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Tuple
 
 from rich.segment import Segment
 from rich.text import Text
@@ -95,17 +95,17 @@ class Method:
         sig = self.signature
         parts = []
         if sig.types:
-            for nm, t in zip(argnames, sig.types):
+            for nm, t in zip(arg_names, sig.types):
                 parts.append(Text(f"{nm}: ") + repr_type(t))
         if sig.varargs != Signature._default_varargs:
-            parts.append(Text(f"*{argnames[-1]}: ") + repr_type(sig.varargs))
+            parts.append(Text(f"*{arg_names[-1]}: ") + repr_type(sig.varargs))
 
-        if len(kwnames) > 0 or kwvar_name is not None:
+        if len(kw_names) > 0 or kw_var_name is not None:
             parts.append(Text("*"))
-        for kwnm in kwnames:
+        for kwnm in kw_names:
             parts.append(Text(f"{kwnm}"))
-        if kwvar_name is not None:
-            parts.append(Text(f"**{kwvar_name}"))
+        if kw_var_name is not None:
+            parts.append(Text(f"**{kw_var_name}"))
 
         res = Text(self.function_name) + Text("(") + Text(", ").join(parts) + Text(")")
         if self.return_type != Method._default_return_type:
@@ -129,12 +129,12 @@ class Method:
         """
         sig = self.signature
 
-        argnames, kwnames, kwvar_name = extract_argnames(self.implementation)
+        arg_names, kw_names, kw_var_name = extract_arg_names(self.implementation)
         varargs_ok = all(args_ok[len(sig.types) :])
 
         parts = []
         if sig.types:
-            for i, (nm, t) in enumerate(zip(argnames, sig.types)):
+            for i, (nm, t) in enumerate(zip(arg_names, sig.types)):
                 is_ok = args_ok[i] if i < len(args_ok) else False
                 arg_txt = Text(f"{nm}: ")
                 type_txt = repr_type(t)
@@ -143,19 +143,19 @@ class Method:
                 arg_txt.append(type_txt)
                 parts.append(arg_txt)
         if sig.varargs != Signature._default_varargs:
-            arg_txt = Text(f"*{argnames[-1]}: ")
+            arg_txt = Text(f"*{arg_names[-1]}: ")
             type_txt = repr_type(sig.varargs)
             if not varargs_ok:
                 type_txt.stylize("red")
             arg_txt.append(type_txt)
             parts.append(arg_txt)
 
-        if len(kwnames) > 0 or kwvar_name is not None:
+        if len(kw_names) > 0 or kw_var_name is not None:
             parts.append(Text("*"))
-        for kwnm in kwnames:
+        for kwnm in kw_names:
             parts.append(Text(f"{kwnm}"))
-        if kwvar_name is not None:
-            parts.append(Text(f"**{kwvar_name}"))
+        if kw_var_name is not None:
+            parts.append(Text(f"**{kw_var_name}"))
 
         res = Text(self.function_name) + Text("(") + Text(", ").join(parts) + Text(")")
         if self.return_type != Method._default_return_type:
@@ -171,7 +171,8 @@ class Method:
 
 @rich_repr
 class MethodList(list):
-    "A list of :class:`Method`s which is nicely printed by :mod:`rich`.
+    "A list of :class:`Method`s which is nicely printed by :mod:`rich`."
+
     def __rich_console__(self, console, options):
         yield f"List of {len(self)} method(s):"
         for i, method in enumerate(self):
@@ -202,13 +203,13 @@ def extract_arg_names(f: Callable) -> Tuple[List[str], List[str], Optional[str]]
         p = sig.parameters[arg]
 
         if p.kind == p.KEYWORD_ONLY:
-            kwnames.append(p.name)
-        elif p.kind  == p.VAR_KEYWORD:
-            kwvar_name = p.name
+            kw_only_args.append(p.name)
+        elif p.kind == p.VAR_KEYWORD:
+            var_kw_name = p.name
         else:
-            argnames.append(p.name)
+            regular_args.append(p.name)
 
-    return argnames, kwnames, kwvar_name
+    return regular_args, kw_only_args, var_kw_name
 
 
 def extract_return_type(f: Callable) -> TypeHint:
