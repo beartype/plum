@@ -1,6 +1,6 @@
 import inspect
 import typing
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, List, Optional, Set, Tuple
 
 from rich.segment import Segment
 from rich.text import Text
@@ -90,70 +90,54 @@ class Method:
         return f"Method({function_name=}, {signature=}, {return_type=}, {impl=})"
 
     def __rich_console__(self, console, options):
-        arg_names, kw_names, kw_var_name = extract_arg_names(self.implementation)
+        yield self.repr_mismatch()
 
-        sig = self.signature
-        parts = []
-        if sig.types:
-            for nm, t in zip(arg_names, sig.types):
-                parts.append(Text(f"{nm}: ") + repr_type(t))
-        if sig.varargs != Signature._default_varargs:
-            parts.append(Text(f"*{arg_names[-1]}: ") + repr_type(sig.varargs))
-
-        if len(kw_names) > 0 or kw_var_name is not None:
-            parts.append(Text("*"))
-        for kwnm in kw_names:
-            parts.append(Text(f"{kwnm}"))
-        if kw_var_name is not None:
-            parts.append(Text(f"**{kw_var_name}"))
-
-        res = Text(self.function_name) + Text("(") + Text(", ").join(parts) + Text(")")
-        if self.return_type != Method._default_return_type:
-            res.append(" -> ")
-            res.append(repr_type(self.return_type))
-        if sig.precedence != Signature._default_precedence:
-            res.append(f"\n    precedence={sig.precedence}")
-
-        yield res
-        yield Segment("    ")
-        yield repr_pyfunction(self.implementation)
-
-    def _repr_signature_mismatch(self, args_ok: List[bool]) -> str:
-        """Special version of __repr__ but used when
-        printing args mismatch (mainly in hints to possible
-        similar signatures).
+    def repr_mismatch(
+        self,
+        mismatches: Set[int] = frozenset(),
+        varargs_matched: bool = True,
+    ) -> str:
+        """Version of `__repr__` that can print which arguments are mismatched. This
+        is mainly used in hints.
 
         Args:
-            args_ok: a list of which arguments match this signature
-                and which don't according to the resolver.
+            mismatches (set[int], optional): Indices of the positional arguments which
+                are mismatched. Defaults to no mismatched arguments.
+            varargs_matched (bool, optional): Whether the varargs are matched. Defaults
+                to `True`.
+
+        Returns:
+            list: :mod:`rich` representation of the method showing which arguments
+                are mismatched.
         """
         sig = self.signature
-
         arg_names, kw_names, kw_var_name = extract_arg_names(self.implementation)
-        varargs_ok = all(args_ok[len(sig.types) :])
 
         parts = []
+
+        # Walk through the positional arguments.
         if sig.types:
-            for i, (nm, t) in enumerate(zip(arg_names, sig.types)):
-                is_ok = args_ok[i] if i < len(args_ok) else False
-                arg_txt = Text(f"{nm}: ")
+            for i, (arg_name, t) in enumerate(zip(arg_names, sig.types)):
+                arg_txt = Text(f"{arg_name}: ")
                 type_txt = repr_type(t)
-                if not is_ok:
+                if i in mismatches:
                     type_txt.stylize("red")
                 arg_txt.append(type_txt)
                 parts.append(arg_txt)
+
+        # Print the varargs.
         if sig.varargs != Signature._default_varargs:
             arg_txt = Text(f"*{arg_names[-1]}: ")
             type_txt = repr_type(sig.varargs)
-            if not varargs_ok:
+            if not varargs_matched:
                 type_txt.stylize("red")
             arg_txt.append(type_txt)
             parts.append(arg_txt)
 
         if len(kw_names) > 0 or kw_var_name is not None:
             parts.append(Text("*"))
-        for kwnm in kw_names:
-            parts.append(Text(f"{kwnm}"))
+        for kw_name in kw_names:
+            parts.append(Text(f"{kw_name}"))
         if kw_var_name is not None:
             parts.append(Text(f"**{kw_var_name}"))
 
@@ -166,6 +150,7 @@ class Method:
 
         res.append("\n    ")
         res.append_text(repr_pyfunction(self.implementation))
+
         return res
 
 

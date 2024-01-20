@@ -42,8 +42,8 @@ class AmbiguousLookupError(LookupError):
         yield Text()
         yield Text("Valid matches are:")
         for m in self.methods:
-            args_ok = m.signature.compute_args_ok(self.target)
-            yield m._repr_signature_mismatch(args_ok)
+            mismatches, varargs_matched = m.signature.compute_mismatches(self.target)
+            yield m.repr_mismatch(mismatches, varargs_matched)
 
 
 @rich_repr(str=True)
@@ -99,11 +99,11 @@ class NotFoundLookupError(LookupError):
             distances = [distances[i] for i in sort_method_ids]
             methods = [self.methods[i] for i in sort_method_ids]
 
-            # create the error message
+            # Create the error message.
             yield Text("\nClosest candidates are:")
             for m in methods:
-                args_ok = m.signature.compute_args_ok(self.target)
-                yield m._repr_signature_mismatch(args_ok)
+                misses, varargs_matched = m.signature.compute_mismatches(self.target)
+                yield m.repr_mismatch(misses, varargs_matched)
 
 
 def _change_function_name(f: Callable, name: str) -> Callable:

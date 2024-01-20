@@ -2,7 +2,7 @@ import inspect
 import operator
 import typing
 from copy import copy
-from typing import Callable, List, Tuple, Union
+from typing import Callable, List, Set, Tuple, Union
 
 import beartype.door
 from beartype.peps import resolve_pep563 as beartype_resolve_pep563
@@ -223,20 +223,33 @@ class Signature(Comparable):
 
         return distance
 
-    def compute_args_ok(self, values) -> List[bool]:
+    def compute_mismatches(self, values: Tuple) -> Tuple[Set[int], bool]:
+        """For a tuple of values `values`, find the indices of the arguments that are
+        mismatched. Also return whether the varargs is matched.
+
+        Args:
+            values (tuple[object, ...]): Candidate values.
+
+        Returns:
+            set[int]: Indices of invalid values.
+            bool: Whether the varargs was matched or not.
+        """
         types = self.expand_varargs(len(values))
 
-        args_ok = []
+        mismatches = set()
+        # By default, the varargs are matched. Only return that it is mismatched if
+        # there is an explicit mismatch.
+        varargs_matched = True
 
         # count 1 for every mismatching arg type
-        for v, t in zip(values, types):
-            args_ok.append(_is_bearable(v, t))
+        for i, (v, t) in enumerate(zip(values, types)):
+            if not _is_bearable(v, t):
+                if i < len(self.types):
+                    mismatches.add(i)
+                else:
+                    varargs_matched = False
 
-        # all extra args are not ok
-        for _ in range(len(args_ok), len(values)):
-            args_ok.append(False)
-
-        return args_ok
+        return mismatches, varargs_matched
 
 
 def inspect_signature(f) -> inspect.Signature:
