@@ -134,7 +134,7 @@ class Method:
             arg_txt.append(type_txt)
             parts.append(arg_txt)
 
-        if len(kw_names) > 0 or kw_var_name is not None:
+        if kw_names or kw_var_name is not None:
             parts.append(Text("*"))
         for kw_name in kw_names:
             parts.append(Text(f"{kw_name}"))
