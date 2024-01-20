@@ -93,6 +93,14 @@ def test_hash():
     assert len(sigs) == 3
 
 
+def test_equality():
+    sig = Sig(int, float, varargs=complex, precedence=1)
+    assert sig == Sig(int, float, varargs=complex, precedence=1)
+    assert sig != Sig(int, int, varargs=complex, precedence=1)
+    assert sig != Sig(int, float, varargs=int, precedence=1)
+    assert sig != Sig(int, float, varargs=complex, precedence=2)
+
+
 def test_expand_varargs():
     # Case of no variable arguments:
     assert Sig(int, int).expand_varargs(3) == (int, int)
