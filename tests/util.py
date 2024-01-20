@@ -1,5 +1,9 @@
 from time import time
 
+import rich
+
+__all__ = ["benchmark", "rich_render"]
+
 
 def benchmark(f, args, n=1000, burn=0, setup=lambda: None):
     """Benchmark the performance of a function `f` called with arguments
@@ -27,3 +31,18 @@ def benchmark(f, args, n=1000, burn=0, setup=lambda: None):
         f(*args)
         durations.append(time() - start)
     return sum(durations) * 1e6 / n
+
+
+def rich_render(x: object) -> str:
+    """Render a :mod:`rich` object to text.
+
+    Args:
+        x (object): Object to render.
+
+    Returns:
+        str: Text representation of `x`.
+    """
+    console = rich.get_console()
+    with console.capture() as capture:
+        console.print(x)
+    return capture.get()

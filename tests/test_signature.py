@@ -93,6 +93,16 @@ def test_hash():
     assert len(sigs) == 3
 
 
+def test_equality():
+    sig = Sig(int, float, varargs=complex, precedence=1)
+    assert sig == Sig(int, float, varargs=complex, precedence=1)
+    assert sig != Sig(int, int, varargs=complex, precedence=1)
+    assert sig != Sig(int, float, varargs=int, precedence=1)
+    assert sig != Sig(int, float, varargs=complex, precedence=2)
+    # :class:`Signature` should allow comparison against other objects.
+    assert sig != 1
+
+
 def test_expand_varargs():
     # Case of no variable arguments:
     assert Sig(int, int).expand_varargs(3) == (int, int)
@@ -146,6 +156,41 @@ def test_match():
     assert not Sig(int).match((1, 2))
     assert not Sig(int, int).match((1,))
     assert not Sig(int, varargs=int).match(())
+
+
+def test_compute_distance():
+    assert Sig(int, int).compute_distance(()) == 2
+    assert Sig(int, int).compute_distance((1,)) == 1
+    assert Sig(int, int).compute_distance((1.0,)) == 2
+    assert Sig(int, int).compute_distance((1, 1)) == 0
+    assert Sig(int, int).compute_distance((1, 1, 1)) == 1
+    assert Sig(int, int).compute_distance((1, 1, 1, 1)) == 2
+    assert Sig(int, int).compute_distance((1, 1.0, 1, 1)) == 3
+    assert Sig(int, int).compute_distance((1, 1.0, 1.0, 1)) == 3
+
+    assert Sig(varargs=float).compute_distance((1, 1)) == 2
+    assert Sig(varargs=float).compute_distance((1,)) == 1
+    assert Sig(varargs=float).compute_distance(()) == 0
+    assert Sig(varargs=float).compute_distance((1.0,)) == 0
+    assert Sig(varargs=float).compute_distance((1.0, 1.0)) == 0
+
+
+def test_compute_mismatches():
+    # Test without varargs present:
+    assert Sig(int, int).compute_mismatches(()) == (set(), True)
+    assert Sig(int, int).compute_mismatches((1,)) == (set(), True)
+    assert Sig(int, int).compute_mismatches((1, 1)) == (set(), True)
+    assert Sig(int, int).compute_mismatches((1.0, 1)) == ({0}, True)
+    assert Sig(int, int).compute_mismatches((1, 1.0)) == ({1}, True)
+    assert Sig(int, int).compute_mismatches((1.0, 1.0)) == ({0, 1}, True)
+    # If more values are given, these are ignored if not varargs are present.
+    assert Sig(int, int).compute_mismatches((1.0, 1.0, 1)) == ({0, 1}, True)
+
+    # Test with varargs present:
+    sig = Sig(int, int, varargs=int)
+    assert sig.compute_mismatches((1.0, 1.0, 1.0)) == ({0, 1}, False)
+    assert sig.compute_mismatches((1.0, 1.0, 1)) == ({0, 1}, True)
+    assert sig.compute_mismatches((1.0, 1.0, 1, 1)) == ({0, 1}, True)
 
 
 def test_inspect_signature():

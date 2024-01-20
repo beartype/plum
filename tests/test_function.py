@@ -59,23 +59,35 @@ def test_repr():
     def f(x: str):
         return "str"
 
-    assert repr(f) == f"<function {f._f} with 0 registered and 2 pending method(s)>"
+    assert repr(f) == (
+        f"<multiple-dispatch function {f.__qualname__}"
+        f" (with 0 registered and 2 pending method(s))>"
+    )
 
     # Register all methods.
     assert f(1) == "int"
 
-    assert repr(f) == f"<function {f._f} with 2 registered and 0 pending method(s)>"
+    assert repr(f) == (
+        f"<multiple-dispatch function {f.__qualname__}"
+        f" (with 2 registered and 0 pending method(s))>"
+    )
 
     @dispatch
     def f(x: float):
         return "float"
 
-    assert repr(f) == f"<function {f._f} with 2 registered and 1 pending method(s)>"
+    assert repr(f) == (
+        f"<multiple-dispatch function {f.__qualname__}"
+        f" (with 2 registered and 1 pending method(s))>"
+    )
 
     # Again register all methods.
     assert f(1) == "int"
 
-    assert repr(f) == f"<function {f._f} with 3 registered and 0 pending method(s)>"
+    assert repr(f) == (
+        f"<multiple-dispatch function {f.__qualname__}"
+        " (with 3 registered and 0 pending method(s))>"
+    )
 
 
 # `A` needs to be in the global scope for owner resolution to work.
@@ -268,7 +280,8 @@ def test_methods():
     dispatch(f)
 
     methods = [method1, method2]
-    assert f_dispatch.methods == methods
+
+    assert list(f_dispatch.methods) == methods
 
 
 def test_function_dispatch():
@@ -374,28 +387,7 @@ def test_resolve_pending_registrations():
     assert g(1, 1.0, z=1j) == "ok"
 
 
-def test_enhance_exception():
-    def f():
-        pass
-
-    f = Function(f).dispatch(f)
-
-    def g():
-        pass
-
-    g = Function(g, owner="A").dispatch(g)
-
-    e = ValueError("Go!")
-
-    assert isinstance(f._enhance_exception(e), ValueError)
-    assert str(f._enhance_exception(e)) == "For function `f`, go!"
-
-    assert isinstance(g._enhance_exception(e), ValueError)
-    expected = "For function `g` of `tests.test_function.A`, go!"
-    assert str(g._enhance_exception(e)) == expected
-
-
-def test_call_exception_enhancement():
+def test_call_dispatch_error():
     dispatch = Dispatcher()
 
     @dispatch
@@ -406,10 +398,16 @@ def test_call_exception_enhancement():
     def f(x, y: int):
         pass
 
-    with pytest.raises(NotFoundLookupError, match="(?i)^for function `f`, "):
+    with pytest.raises(
+        NotFoundLookupError,
+        match="(?i)^f\\('1', '1'\\) could not be resolved\\.\n\nClosest.*",
+    ):
         f("1", "1")
 
-    with pytest.raises(AmbiguousLookupError, match="(?i)^for function `f`, "):
+    with pytest.raises(
+        AmbiguousLookupError,
+        match="(?i)^f\\(1, 1\\) is ambiguous\\.\n\nCandidates:.*",
+    ):
         f(1, 1)
 
 
@@ -472,7 +470,7 @@ def test_call_mro():
     assert (c <= 2) == 1
     with pytest.raises(
         NotFoundLookupError,
-        match=r"(?i)^for function `__le__` of `tests.test_function.C`",
+        match=r"(?i)^C.__le__\(.+\) could not be\s+resolved",
     ):
         c <= "2"  # noqa
 
@@ -492,7 +490,7 @@ def test_call_abstract():
 def test_call_object():
     with pytest.raises(
         NotFoundLookupError,
-        match=r"(?i)^for function `__init__` of `tests.test_function.B`",
+        match=r"(?i)^B.__init__\(.+\) could not be\s+resolved",
     ):
         # Construction requires no arguments. Giving an argument should propagate to
         # `B` and then error.
@@ -500,7 +498,7 @@ def test_call_object():
 
     with pytest.raises(
         NotFoundLookupError,
-        match=r"(?i)^for function `__call__` of `tests.test_function.C`",
+        match=r"(?i)^C.__call__\(.+\) could not be\s+resolved",
     ):
         # Calling requires no arguments.
         C()(1)
@@ -526,19 +524,20 @@ class E(D):
 
 
 def test_call_type():
+    """Exactly like :func:`test_call_object`."""
+
     class A:
         pass
 
-    """Exactly like :func:`test_call_object`."""
     with pytest.raises(
         NotFoundLookupError,
-        match=r"(?i)^for function `__init__` of `tests.test_function.E`",
+        match=r"(?is)^E\.__init__\(.+\) could\s+not be resolved",
     ):
         E("Test", (A, object), {})  # Must have exactly one base.
 
     with pytest.raises(
         NotFoundLookupError,
-        match=r"(?i)^for function `__call__` of `tests.test_function.D`",
+        match=r"(?is)^D\.__call__\(.+\) could\s+not be resolved",
     ):
         # The call method will be tried at :class:`D` and only then error.
         E("Test", (object,), {})(1)

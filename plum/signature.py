@@ -2,20 +2,23 @@ import inspect
 import operator
 import typing
 from copy import copy
-from typing import Callable, List, Tuple, Union
+from typing import Callable, List, Set, Tuple, Union
 
 import beartype.door
 from beartype.peps import resolve_pep563 as beartype_resolve_pep563
+from rich.segment import Segment
 
 from . import _is_bearable
+from .repr import repr_short, rich_repr
 from .type import is_faithful, resolve_type_hint
-from .util import Comparable, Missing, TypeHint, multihash, repr_short, wrap_lambda
+from .util import Comparable, Missing, TypeHint, multihash, wrap_lambda
 
 __all__ = ["Signature", "append_default_args"]
 
 OptionalType = Union[TypeHint, type(Missing)]
 
 
+@rich_repr
 class Signature(Comparable):
     """Object representing a call signature that may be used to dispatch a function
     call.
@@ -95,15 +98,20 @@ class Signature(Comparable):
         copy.is_faithful = self.is_faithful
         return copy
 
-    def __repr__(self) -> str:
-        parts = []
+    def __rich_console__(self, console, options):
+        yield Segment("Signature(")
+        show_comma = True
         if self.types:
-            parts.append(", ".join(map(repr_short, self.types)))
+            yield Segment(", ".join(map(repr_short, self.types)))
         if self.varargs != Signature._default_varargs:
-            parts.append("varargs=" + repr_short(self.varargs))
+            if show_comma:
+                yield Segment(", ")
+            yield Segment("varargs=" + repr_short(self.varargs))
         if self.precedence != Signature._default_precedence:
-            parts.append("precedence=" + repr(self.precedence))
-        return "Signature(" + ", ".join(parts) + ")"
+            if show_comma:
+                yield Segment(", ")
+            yield Segment("precedence=" + repr(self.precedence))
+        yield Segment(")")
 
     def __eq__(self, other):
         if isinstance(other, Signature):
@@ -195,6 +203,57 @@ class Signature(Comparable):
         else:
             types = self.expand_varargs(len(values))
             return all(_is_bearable(v, t) for v, t in zip(values, types))
+
+    def compute_distance(self, values: Tuple[object, ...]) -> int:
+        """For given values, computes the edit distance between these vales and this
+        signature.
+
+        Args:
+            values (tuple[object, ...]): Values.
+
+        Returns:
+            int: Edit distance.
+        """
+        types = self.expand_varargs(len(values))
+
+        distance = 0
+
+        # Count one for every extra or missing argument.
+        distance += abs(len(types) - len(values))
+
+        # Additionally count one for every mismatching value.
+        for v, t in zip(values, types):
+            if not _is_bearable(v, t):
+                distance += 1
+
+        return distance
+
+    def compute_mismatches(self, values: Tuple) -> Tuple[Set[int], bool]:
+        """For given `values`, find the indices of the arguments that are mismatched.
+        Also return whether the varargs is matched.
+
+        Args:
+            values (tuple[object, ...]): Values.
+
+        Returns:
+            set[int]: Indices of invalid values.
+            bool: Whether the varargs was matched or not.
+        """
+        types = self.expand_varargs(len(values))
+
+        mismatches = set()
+        # By default, the varargs are matched. Only return that it is mismatched if
+        # there is an explicit mismatch.
+        varargs_matched = True
+
+        for i, (v, t) in enumerate(zip(values, types)):
+            if not _is_bearable(v, t):
+                if i < len(self.types):
+                    mismatches.add(i)
+                else:
+                    varargs_matched = False
+
+        return mismatches, varargs_matched
 
 
 def inspect_signature(f) -> inspect.Signature:
