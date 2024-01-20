@@ -162,7 +162,8 @@ class MethodList(list):
     def __rich_console__(self, console, options):
         yield f"List of {len(self)} method(s):"
         for i, method in enumerate(self):
-            yield Padding(Text(f"[{i}] ") + method.repr_mismatch(), (0, 4))
+            method_repr = method.__rich_console__(console, options)
+            yield Padding(sum(method_repr, Text(f"[{i}] ")), (0, 4))
 
 
 def extract_arg_names(f: Callable) -> Tuple[List[str], List[str], Optional[str]]:
