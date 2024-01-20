@@ -20,25 +20,25 @@ class AmbiguousLookupError(LookupError):
 
     def __init__(
         self,
-        fname: Optional[str],
+        f_name: Optional[str],
         target: Union[Tuple[object, ...], Signature],
         methods: "MethodList",
     ):
         """Create a new NotFoundLookupError.
 
         Args:
-            fname (Optional[str]): name (or qualified name) of the function
+            f_name (Optional[str]): name (or qualified name) of the function
                 that could not be resolved.
             target (Union[Tuple[object, ...], Signature]): target signature
                 or arguments that could not be resolved.
             methods (MethodList): list of ambiguous methods.
         """
-        self.fname = fname if fname is not None else "<function>"
+        self.f_name = f_name if f_name is not None else "<function>"
         self.target = target
         self.methods = methods
 
     def __rich_console__(self, console, options):
-        yield Text(f"{self.fname}{self.target} is ambiguous.")
+        yield Text(f"{self.f_name}{self.target} is ambiguous.")
         yield Text()
         yield Text("Valid matches are:")
         for m in self.methods:
@@ -55,7 +55,7 @@ class NotFoundLookupError(LookupError):
 
     def __init__(
         self,
-        fname: Optional[str],
+        f_name: Optional[str],
         target: Union[Tuple[object, ...], Signature],
         methods: "MethodList",
         *,
@@ -64,7 +64,7 @@ class NotFoundLookupError(LookupError):
         """Create a new NotFoundLookupError.
 
         Args:
-            fname (Optional[str]): name (or qualified name) of the function
+            f_name (Optional[str]): name (or qualified name) of the function
                 that could not be resolved.
             target (Union[Tuple[object, ...], Signature]): target signature
                 or arguments that could not be resolved.
@@ -72,7 +72,7 @@ class NotFoundLookupError(LookupError):
             max_suggestions (int, optional): Maximum number of displayed signatures.
                 Defaults to 3.
         """
-        self.fname = fname if fname is not None else "<function>"
+        self.f_name = f_name if f_name is not None else "<function>"
         self.target = target
         self.methods = methods
 
@@ -83,7 +83,7 @@ class NotFoundLookupError(LookupError):
         Generate a string of the top `max_suggestions` methods
         and signatures that are closest to the given one.
         """
-        yield Text(f"{self.fname}{self.target} could not be resolved.")
+        yield Text(f"{self.f_name}{self.target} could not be resolved.")
 
         if not isinstance(self.target, Signature):
             distances = []

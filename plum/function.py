@@ -305,7 +305,7 @@ class Function(metaclass=_FunctionMeta):
 
             # Change the function name if this is a method.
             if self.owner:
-                e.fname = self.__qualname__
+                e.f_name = self.__qualname__
             raise e from None
 
         except NotFoundLookupError as e:
@@ -313,7 +313,7 @@ class Function(metaclass=_FunctionMeta):
 
             # Change the function name if this is a method.
             if self.owner:
-                e.fname = self.__qualname__
+                e.f_name = self.__qualname__
             impl, return_type = self._handle_not_found_lookup_error(e)
 
         return impl, return_type
