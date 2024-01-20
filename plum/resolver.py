@@ -20,30 +20,31 @@ class AmbiguousLookupError(LookupError):
 
     def __init__(
         self,
-        f_name: Optional[str],
+        f_name: Union[str, None],
         target: Union[Tuple[object, ...], Signature],
-        methods: "MethodList",
+        methods: MethodList,
     ):
-        """Create a new NotFoundLookupError.
+        """Create a new :class:`AmbiguousLookupError`.
 
         Args:
-            f_name (Optional[str]): name (or qualified name) of the function
-                that could not be resolved.
-            target (Union[Tuple[object, ...], Signature]): target signature
+            f_name (str or :obj:`None`): Name (or qualified name) of the function that
+                could not be resolved.
+            target (Union[Tuple[object, ...], :class:`.Signature`]): Target signature
                 or arguments that could not be resolved.
-            methods (MethodList): list of ambiguous methods.
+            methods (:class:`.MethodList`): List of ambiguous methods.
         """
         self.f_name = f_name if f_name is not None else "<function>"
         self.target = target
         self.methods = methods
 
     def __rich_console__(self, console, options):
-        yield Text(f"{self.f_name}{self.target} is ambiguous.")
-        yield Text()
-        yield Text("Valid matches are:")
+        yield Text(
+            f"{self.f_name}{self.target} is ambiguous between the following methods:"
+        )
         for m in self.methods:
-            mismatches, varargs_matched = m.signature.compute_mismatches(self.target)
-            yield m.repr_mismatch(mismatches, varargs_matched)
+            # All methods match, so we do not need to display any arguments as
+            # mismatched.
+            yield m.repr_mismatch()
 
 
 @rich_repr(str=True)
@@ -55,22 +56,22 @@ class NotFoundLookupError(LookupError):
 
     def __init__(
         self,
-        f_name: Optional[str],
+        f_name: Union[str, None],
         target: Union[Tuple[object, ...], Signature],
-        methods: "MethodList",
+        methods: MethodList,
         *,
         max_suggestions: int = 3,
     ):
-        """Create a new NotFoundLookupError.
+        """Create a new :class:`NotFoundLookupError`.
 
         Args:
-            f_name (Optional[str]): name (or qualified name) of the function
-                that could not be resolved.
-            target (Union[Tuple[object, ...], Signature]): target signature
+            f_name (str or :obj:`None`): Name (or qualified name) of the function that
+                could not be resolved.
+            target (Union[Tuple[object, ...], :class:`Signature`]): Target signature
                 or arguments that could not be resolved.
-            methods (MethodList): list of methods that were considered.
+            methods (:class:`MethodList`): Methods that were considered.
             max_suggestions (int, optional): Maximum number of displayed signatures.
-                Defaults to 3.
+                Defaults to three.
         """
         self.f_name = f_name if f_name is not None else "<function>"
         self.target = target
@@ -79,10 +80,8 @@ class NotFoundLookupError(LookupError):
         self.max_suggestions = max_suggestions
 
     def __rich_console__(self, console, options):
-        """
-        Generate a string of the top `max_suggestions` methods
-        and signatures that are closest to the given one.
-        """
+        """Generate a string of the top `self.max_suggestions` methods that are closest
+        to the given one."""
         yield Text(f"{self.f_name}{self.target} could not be resolved.")
 
         if not isinstance(self.target, Signature):
@@ -93,14 +92,14 @@ class NotFoundLookupError(LookupError):
 
             sort_method_ids = argsort(distances)
 
-            # Take at most 3 hints
+            # Take at most `self.max_suggestions` hints.
             sort_method_ids = sort_method_ids[: self.max_suggestions]
 
             distances = [distances[i] for i in sort_method_ids]
             methods = [self.methods[i] for i in sort_method_ids]
 
             # Create the error message.
-            yield Text("\nClosest candidates are:")
+            yield Text("\nClosest candidates are the following:")
             for m in methods:
                 misses, varargs_matched = m.signature.compute_mismatches(self.target)
                 yield m.repr_mismatch(misses, varargs_matched)
@@ -187,7 +186,12 @@ class Resolver:
 
     __slots__ = ("methods", "is_faithful", "function_name")
 
-    def __init__(self, function_name: Optional[str] = None):
+    def __init__(self, function_name: Optional[str] = None) -> None:
+        """Initialise the resolver.
+
+        Args:
+            function_name (str, optional): Name of the function.
+        """
         self.function_name = function_name
         self.methods: MethodList = MethodList()
         self.is_faithful: bool = True

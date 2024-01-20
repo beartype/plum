@@ -406,7 +406,7 @@ def test_call_dispatch_error():
 
     with pytest.raises(
         AmbiguousLookupError,
-        match="(?i)^f\\(1, 1\\) is ambiguous\\.\n\nValid.*",
+        match="(?i)^f\\(1, 1\\) is ambiguous between the following methods:.*",
     ):
         f(1, 1)
 
