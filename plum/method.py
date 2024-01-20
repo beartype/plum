@@ -2,7 +2,7 @@ import inspect
 import typing
 from typing import Callable, List, Optional, Set, Tuple
 
-from rich.segment import Segment
+from rich.padding import Padding
 from rich.text import Text
 
 from .repr import repr_pyfunction, repr_type, rich_repr
@@ -162,8 +162,7 @@ class MethodList(list):
     def __rich_console__(self, console, options):
         yield f"List of {len(self)} method(s):"
         for i, method in enumerate(self):
-            yield Segment(f" [{i}] ")
-            yield method
+            yield Padding(Text(f"[{i}] ") + method.repr_mismatch(), (0, 4))
 
 
 def extract_arg_names(f: Callable) -> Tuple[List[str], List[str], Optional[str]]:

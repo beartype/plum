@@ -3,6 +3,7 @@ import sys
 from functools import wraps
 from typing import Callable, Optional, Tuple, Union
 
+from rich.padding import Padding
 from rich.text import Text
 
 from plum.method import Method, MethodList
@@ -42,9 +43,7 @@ class AmbiguousLookupError(LookupError):
         yield Text()
         yield Text("Candidates:")
         for m in self.methods:
-            # All methods match, so we do not need to display any arguments as
-            # mismatched.
-            yield m.repr_mismatch()
+            yield Padding(m.repr_mismatch(), (0, 3))
 
 
 @rich_repr(str=True)
@@ -102,7 +101,7 @@ class NotFoundLookupError(LookupError):
             yield Text("\nClosest candidates are the following:")
             for m in methods:
                 misses, varargs_matched = m.signature.compute_mismatches(self.target)
-                yield m.repr_mismatch(misses, varargs_matched)
+                yield Padding(m.repr_mismatch(misses, varargs_matched), (0, 4))
 
 
 def _change_function_name(f: Callable, name: str) -> Callable:
