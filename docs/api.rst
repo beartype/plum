@@ -50,5 +50,7 @@ iPython AutoReload
 
 Other Utilities
 ---------------
+.. automodule:: plum.repr
+    :members:
 .. automodule:: plum.util
     :members:
