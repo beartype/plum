@@ -97,8 +97,9 @@ class NotFoundLookupError(LookupError):
             distances = [distances[i] for i in sort_method_ids]
             methods = [self.methods[i] for i in sort_method_ids]
 
-            # Create the error message.
-            yield Text("\nClosest candidates are the following:")
+            # Create the list of candidates.
+            yield Text()
+            yield Text("Closest candidates are the following:")
             for m in methods:
                 misses, varargs_matched = m.signature.compute_mismatches(self.target)
                 yield Padding(m.repr_mismatch(misses, varargs_matched), (0, 4))
