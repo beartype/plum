@@ -1,6 +1,5 @@
 import inspect
 import os
-import sys
 import types
 import typing
 from functools import partial
@@ -38,9 +37,6 @@ def repr_type(x) -> Text:
     Returns:
         :class:`rich.Text`: Representation.
     """
-    # TODO: Remove version check when dropping support for Python 3.8.
-    if sys.version_info.minor > 8 and isinstance(x, types.GenericAlias):
-        return Text(repr(x), style=class_style)
 
     if isinstance(x, type):
         if x.__module__ in ["builtins", "typing", "typing_extensions"]:
@@ -93,14 +89,11 @@ def repr_source_path(function: Callable) -> Text:
 
         # Underline file name.
         f_name = os.path.basename(f_path)
-        if f_name.endswith(".py"):
-            f_path = (
-                Text(os.path.dirname(f_path), style=path_style)
-                + Text("/")
-                + Text(f_name, style=file_style)
-            )
-        else:
-            f_path = Text(f_path, style=path_style)
+        f_path = (
+            Text(os.path.dirname(f_path), style=path_style)
+            + Text("/")
+            + Text(f_name, style=file_style)
+        )
         f_path.append_text(Text(f":{f_line}"))
         f_path.stylize(f"link {uri}")
     except OSError:  # pragma: no cover
