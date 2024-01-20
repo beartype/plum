@@ -99,6 +99,8 @@ def test_equality():
     assert sig != Sig(int, int, varargs=complex, precedence=1)
     assert sig != Sig(int, float, varargs=int, precedence=1)
     assert sig != Sig(int, float, varargs=complex, precedence=2)
+    # :class:`Signature` should allow comparison against other objects.
+    assert sig != 1
 
 
 def test_expand_varargs():
@@ -154,6 +156,23 @@ def test_match():
     assert not Sig(int).match((1, 2))
     assert not Sig(int, int).match((1,))
     assert not Sig(int, varargs=int).match(())
+
+
+def test_compute_distance():
+    assert Sig(int, int).compute_distance(()) == 2
+    assert Sig(int, int).compute_distance((1,)) == 1
+    assert Sig(int, int).compute_distance((1.0,)) == 2
+    assert Sig(int, int).compute_distance((1, 1)) == 0
+    assert Sig(int, int).compute_distance((1, 1, 1)) == 1
+    assert Sig(int, int).compute_distance((1, 1, 1, 1)) == 2
+    assert Sig(int, int).compute_distance((1, 1.0, 1, 1)) == 3
+    assert Sig(int, int).compute_distance((1, 1.0, 1.0, 1)) == 3
+
+    assert Sig(varargs=float).compute_distance((1, 1)) == 2
+    assert Sig(varargs=float).compute_distance((1,)) == 1
+    assert Sig(varargs=float).compute_distance(()) == 0
+    assert Sig(varargs=float).compute_distance((1.0,)) == 0
+    assert Sig(varargs=float).compute_distance((1.0, 1.0)) == 0
 
 
 def test_inspect_signature():
