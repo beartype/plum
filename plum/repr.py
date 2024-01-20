@@ -26,30 +26,34 @@ module_style = Style(color="grey66")
 class_style = Style(bold=True)
 
 
-def repr_type(typ) -> Text:
-    """Returns a {class}`rich.Text` representation of a type.
+def repr_type(x) -> Text:
+    """Returns a :class:`rich.Text` representation of a type or module.
 
-    Does some light syntax highlighting mimicking Julia, boldening
-    class names and coloring module names with a lighter color.
+    Does some light syntax highlighting mimicking Julia, boldening class names and
+    coloring module names with a lighter color.
 
     Args:
-        typ: A type or arbitrary object.
+        x (object): Type or module.
+
+    Returns:
+        :class:`rich.Text`: Representation.
     """
-    # TODO: remove version check when dropping support for Python 3.8
-    if sys.version_info.minor > 8 and isinstance(typ, types.GenericAlias):
-        return Text(repr(typ), style=class_style)
+    # TODO: Remove version check when dropping support for Python 3.8.
+    if sys.version_info.minor > 8 and isinstance(x, types.GenericAlias):
+        return Text(repr(x), style=class_style)
 
-    if isinstance(typ, type):
-        if typ.__module__ in ["builtins", "typing", "typing_extensions"]:
-            return Text(typ.__qualname__, style=class_style)
+    if isinstance(x, type):
+        if x.__module__ in ["builtins", "typing", "typing_extensions"]:
+            return Text(x.__qualname__, style=class_style)
         else:
-            return Text(f"{typ.__module__}.", style=module_style) + Text(
-                typ.__qualname__, style=class_style
-            )
-    if isinstance(typ, types.FunctionType):
-        return Text(typ.__name__, style=module_style)
+            res = Text(f"{x.__module__}.", style=module_style)
+            res += Text(x.__qualname__, style=class_style)
+            return res
 
-    return Text(repr(typ), style=class_style)
+    if isinstance(x, types.ModuleType):
+        return Text(x.__name__, style=module_style)
+
+    return Text(repr(x), style=class_style)
 
 
 def repr_short(x) -> str:
@@ -68,56 +72,56 @@ def repr_short(x) -> str:
 
 
 def repr_source_path(function: Callable) -> Text:
-    """Returns a {class}`rich.Text` object with an hyperlink
-    to the function definition.
+    """Create a :class:`rich.Text` object with an hyperlink to the function definition.
 
     Args:
-        function: A callable
+        function (Callable): A function.
 
     Returns:
-        A {class}`rich.Text` object with an hyperlink. If
-        it fails to introspect returns an empty string.
+        :class:`rich.Text` or None: Representation with a hyperlink to the source. If
+            the introspection failed, it returns :obj:`None`.
     """
     try:
-        fpath = inspect.getfile(function)
-        fline = inspect.getsourcelines(function)[1]
-        uri = f"file://{fpath}#{fline}"
+        f_path = inspect.getfile(function)
+        f_line = inspect.getsourcelines(function)[1]
+        uri = f"file://{f_path}#{f_line}"
 
-        # compress the path
+        # Compress the path.
         home_path = os.path.expanduser("~")
-        fpath = fpath.replace(home_path, "~")
+        f_path = f_path.replace(home_path, "~")
 
-        # underline file name
-        fname = os.path.basename(fpath)
-        if fname.endswith(".py"):
-            fpath = (
-                Text(os.path.dirname(fpath), style=path_style)
+        # Underline file name.
+        f_name = os.path.basename(f_path)
+        if f_name.endswith(".py"):
+            f_path = (
+                Text(os.path.dirname(f_path), style=path_style)
                 + Text("/")
-                + Text(fname, style=file_style)
+                + Text(f_name, style=file_style)
             )
         else:
-            fpath = Text(fpath, style=path_style)
-        fpath.append_text(Text(f":{fline}"))
-        fpath.stylize(f"link {uri}")
+            f_path = Text(f_path, style=path_style)
+        f_path.append_text(Text(f":{f_line}"))
+        f_path.stylize(f"link {uri}")
     except OSError:  # pragma: no cover
-        fpath = Text()
-    return fpath
+        f_path = Text()
+    return f_path
 
 
-def repr_pyfunction(function: Callable) -> Text:
-    """Returns a {class}`rich.Text` object representing
-    a function.
+def repr_pyfunction(f: Callable) -> Text:
+    """Create a :class:`rich.Text` object representation a function, including a link
+    to the source definition created with :func:`repr_source_path`.
 
     Args:
-        function: A callable
+        f (Callable): A function.
 
     Returns:
-        A {class}`rich.Text` object with an hyperlink. If
-        it fails to introspect returns an empty string.
+        :class:`rich.Text`: Representation of `f`.
     """
-    res = Text(repr(function))
-    res.append(" @ ")
-    res.append_text(repr_source_path(function))
+    res = Text(repr(f))
+    source = repr_source_path(f)
+    if source is not None:
+        res.append(" @ ")
+        res.append_text(source)
     return res
 
 
@@ -127,21 +131,34 @@ def repr_pyfunction(function: Callable) -> Text:
 
 
 def __repr_from_rich__(self) -> str:
+    """Default implementation of `__repr__` that calls :mod:`rich`.
+
+    Returns:
+        str: Representation of `self.`
     """
-    default __repr__ that calls __rich__
-    """
-    # print("calling __repr_from_rich__")
     console = rich.get_console()
     with console.capture() as capture:
         console.print(self, end="")
     res = capture.get()
-    # print("got ", res)
     return res
 
 
 def _repr_mimebundle_from_rich_(
-    self, include: Iterable[str], exclude: Iterable[str], **kwargs: Any
+    self,
+    include: Iterable[str],
+    exclude: Iterable[str],
+    **kw_args: Any,
 ) -> Dict[str, str]:
+    """Implementation of `_repr_mimebundle_` for better rendering in Jupyter.
+
+    Args:
+        include (Iterable[str]): Only these MIME types should be included.
+        exclude (Iterable[str]): These MIME types should be excluded.
+        **kw_args (object): Additional keyword arguments. These are ignored.
+
+    Returns:
+        dict[str, str]: Representation by MIME type.
+    """
     from rich.jupyter import _render_segments
 
     console = rich.get_console()
@@ -156,24 +173,24 @@ def _repr_mimebundle_from_rich_(
     return data
 
 
-def rich_repr(clz: Optional[type] = None, str: bool = False):
-    """
-    Class decorator defining a __repr__ method that calls __rich__.
+def rich_repr(cls: Optional[type] = None, str: bool = False):
+    """Class decorator defining a `__repr__` method that calls :mod:`rich.`
 
-    This also sets `_repr_mimebundle_` for better rendering in
-    jupyter.
+    This also sets `_repr_mimebundle_` for better rendering in Jupyter.
 
     Args:
-        clz: Class to decorate. If None, returns a decorator.
-        str: If True, also defines __str__.
+        cls (type, optional): Class to decorate. If `None`, this function returns a
+            decorator.
+        str (bool, optional): Also define `__str__`. Defaults to not defining
+            `__str__`
 
     Returns:
-        The decorated class. If clz is None, returns a decorator.
+        The decorated class. If cls is None, returns a decorator.
     """
-    if clz is None:
+    if cls is None:
         return partial(rich_repr, str=str)
-    clz.__repr__ = __repr_from_rich__
-    clz._repr_mimebundle_ = _repr_mimebundle_from_rich_
+    cls.__repr__ = __repr_from_rich__
+    cls._repr_mimebundle_ = _repr_mimebundle_from_rich_
     if str:
-        clz.__str__ = __repr_from_rich__
-    return clz
+        cls.__str__ = __repr_from_rich__
+    return cls
