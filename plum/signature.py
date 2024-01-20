@@ -246,7 +246,6 @@ class Signature(Comparable):
         # there is an explicit mismatch.
         varargs_matched = True
 
-        # count 1 for every mismatching arg type
         for i, (v, t) in enumerate(zip(values, types)):
             if not _is_bearable(v, t):
                 if i < len(self.types):
