@@ -107,7 +107,8 @@ class Method:
                 to `True`.
 
         Returns:
-            list: :mod:`rich` representation of the method showing which arguments
+            list:
+                :mod:`rich` representation of the method showing which arguments
                 are mismatched.
         """
         sig = self.signature

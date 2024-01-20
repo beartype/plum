@@ -78,8 +78,9 @@ def repr_source_path(function: Callable) -> Text:
         function (Callable): A function.
 
     Returns:
-        :class:`rich.Text` or None: Representation with a hyperlink to the source. If
-            the introspection failed, it returns :obj:`None`.
+        :class:`rich.Text` or None:
+            Representation with a hyperlink to the source. If the introspection failed,
+            it returns :obj:`None`.
     """
     try:
         f_path = inspect.getfile(function)

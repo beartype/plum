@@ -289,8 +289,9 @@ class Function(metaclass=_FunctionMeta):
             target (object): Target.
 
         Returns:
-            function: Method.
-            type: Return type.
+            `tuple[function, type]`:
+                * Method.
+                * Return type.
         """
         self._resolve_pending_registrations()
 
