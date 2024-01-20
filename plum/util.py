@@ -1,6 +1,6 @@
 import abc
 import sys
-from typing import List
+from typing import List, Sequence
 
 if sys.version_info.minor <= 8:  # pragma: specific no cover 3.9 3.10 3.11
     from typing import Callable
@@ -162,9 +162,13 @@ def get_context(f) -> str:
         return ".".join(parts[:-1])
 
 
-def argsort(indexable):
+def argsort(seq: Sequence) -> List[int]:
+    """Compute the indices that sort a sequence.
+
+    Args:
+        seq (Sequence): Sequence to sort.
+
+    Returns:
+        list[int]: Indices that sort `seq`.
     """
-    Returns the indices used to index into a list in order
-    to return the sorted list.
-    """
-    return sorted(range(len(indexable)), key=indexable.__getitem__)
+    return sorted(range(len(seq)), key=seq.__getitem__)
