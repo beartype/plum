@@ -175,6 +175,24 @@ def test_compute_distance():
     assert Sig(varargs=float).compute_distance((1.0, 1.0)) == 0
 
 
+def test_compute_mismatches():
+    # Test without varargs present:
+    assert Sig(int, int).compute_mismatches(()) == (set(), True)
+    assert Sig(int, int).compute_mismatches((1,)) == (set(), True)
+    assert Sig(int, int).compute_mismatches((1, 1)) == (set(), True)
+    assert Sig(int, int).compute_mismatches((1.0, 1)) == ({0}, True)
+    assert Sig(int, int).compute_mismatches((1, 1.0)) == ({1}, True)
+    assert Sig(int, int).compute_mismatches((1.0, 1.0)) == ({0, 1}, True)
+    # If more values are given, these are ignored if not varargs are present.
+    assert Sig(int, int).compute_mismatches((1.0, 1.0, 1)) == ({0, 1}, True)
+
+    # Test with varargs present:
+    sig = Sig(int, int, varargs=int)
+    assert sig.compute_mismatches((1.0, 1.0, 1.0)) == ({0, 1}, False)
+    assert sig.compute_mismatches((1.0, 1.0, 1)) == ({0, 1}, True)
+    assert sig.compute_mismatches((1.0, 1.0, 1, 1)) == ({0, 1}, True)
+
+
 def test_inspect_signature():
     assert isinstance(inspect_signature(lambda x: x), inspect.Signature)
     assert len(inspect_signature(lambda x: x).parameters) == 1
