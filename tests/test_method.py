@@ -1,11 +1,11 @@
 import textwrap
 from copy import copy
 
-import rich
-
 from plum import Dispatcher
 from plum.method import Method
 from plum.signature import Signature
+
+from .util import rich_render
 
 
 def test_instantiation_copy():
@@ -94,13 +94,6 @@ def test_equality():
     assert m != 1
 
 
-def _rich_render(x):
-    console = rich.get_console()
-    with console.capture() as capture:
-        console.print(x)
-    return capture.get()
-
-
 def test_repr_simple():
     def f(x, *args) -> float:
         return x
@@ -120,7 +113,7 @@ def test_repr_simple():
     assert repr(m).startswith(result)
     # Also render the fully mismatched version. When rendered to text, that should
     # give the same.
-    assert _rich_render(m.repr_mismatch({0}, False)).startswith(result)
+    assert rich_render(m.repr_mismatch({0}, False)).startswith(result)
 
 
 def test_repr_complex():
@@ -143,7 +136,7 @@ def test_repr_complex():
     assert repr(m).startswith(result)
     # Also render the fully mismatched version. When rendered to text, that should
     # give the same.
-    assert _rich_render(m.repr_mismatch({0}, False)).startswith(result)
+    assert rich_render(m.repr_mismatch({0}, False)).startswith(result)
 
 
 def test_methodlist_repr(monkeypatch):
