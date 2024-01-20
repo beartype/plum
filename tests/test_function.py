@@ -60,16 +60,16 @@ def test_repr():
         return "str"
 
     assert repr(f) == (
-        f"<multiple-dispatch function {f.__qualname__} "
-        "(with 0 registered and 2 pending method(s))>"
+        f"<multiple-dispatch function {f.__qualname__}"
+        f" (with 0 registered and 2 pending method(s))>"
     )
 
     # Register all methods.
     assert f(1) == "int"
 
     assert repr(f) == (
-        f"<multiple-dispatch function {f.__qualname__} "
-        "(with 2 registered and 0 pending method(s))>"
+        f"<multiple-dispatch function {f.__qualname__}"
+        f" (with 2 registered and 0 pending method(s))>"
     )
 
     @dispatch
@@ -77,16 +77,16 @@ def test_repr():
         return "float"
 
     assert repr(f) == (
-        f"<multiple-dispatch function {f.__qualname__} "
-        "(with 2 registered and 1 pending method(s))>"
+        f"<multiple-dispatch function {f.__qualname__}"
+        f" (with 2 registered and 1 pending method(s))>"
     )
 
     # Again register all methods.
     assert f(1) == "int"
 
     assert repr(f) == (
-        f"<multiple-dispatch function {f.__qualname__} "
-        "(with 3 registered and 0 pending method(s))>"
+        f"<multiple-dispatch function {f.__qualname__}"
+        " (with 3 registered and 0 pending method(s))>"
     )
 
 
@@ -470,7 +470,7 @@ def test_call_mro():
     assert (c <= 2) == 1
     with pytest.raises(
         NotFoundLookupError,
-        match=r"(?i)^C.__le__\(.+? could not be.*",
+        match=r"(?i)^C.__le__\(.+\) could not be\s+resolved",
     ):
         c <= "2"  # noqa
 
@@ -490,7 +490,7 @@ def test_call_abstract():
 def test_call_object():
     with pytest.raises(
         NotFoundLookupError,
-        match=r"(?i)^B.__init__\(.+? could not be.*",
+        match=r"(?i)^B.__init__\(.+\) could not be\s+resolved",
     ):
         # Construction requires no arguments. Giving an argument should propagate to
         # `B` and then error.
@@ -498,7 +498,7 @@ def test_call_object():
 
     with pytest.raises(
         NotFoundLookupError,
-        match=r"(?i)^C.__call__\(.+? could not be.*",
+        match=r"(?i)^C.__call__\(.+\) could not be\s+resolved",
     ):
         # Calling requires no arguments.
         C()(1)
@@ -524,19 +524,20 @@ class E(D):
 
 
 def test_call_type():
+    """Exactly like :func:`test_call_object`."""
+
     class A:
         pass
 
-    """Exactly like :func:`test_call_object`."""
     with pytest.raises(
         NotFoundLookupError,
-        match=r"(?i)^E.__init__.*\(.+?",
+        match=r"(?is)^E\.__init__\(.+\) could\s+not be resolved",
     ):
         E("Test", (A, object), {})  # Must have exactly one base.
 
     with pytest.raises(
         NotFoundLookupError,
-        match=r"(?i)^D.__call__\(.+? could not be resolved.*",
+        match=r"(?is)^D\.__call__\(.+\) could\s+not be resolved",
     ):
         # The call method will be tried at :class:`D` and only then error.
         E("Test", (object,), {})(1)
