@@ -38,9 +38,9 @@ class AmbiguousLookupError(LookupError):
         self.methods = methods
 
     def __rich_console__(self, console, options):
-        yield Text(
-            f"{self.f_name}{self.target} is ambiguous between the following methods:"
-        )
+        yield Text(f"{self.f_name}{self.target} is ambiguous.")
+        yield Text()
+        yield Text("Candidates:")
         for m in self.methods:
             # All methods match, so we do not need to display any arguments as
             # mismatched.
