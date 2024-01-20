@@ -205,18 +205,23 @@ class Signature(Comparable):
             return all(_is_bearable(v, t) for v, t in zip(values, types))
 
     def compute_distance(self, values: Tuple[object, ...]) -> int:
-        """Computes the edit distance between this
-        Signature and the
+        """For given values, computes the edit distance between these vales and this
+        signature.
+
+        Args:
+            values (tuple[object, ...]): Values.
+
+        Returns:
+            int: Edit distance.
         """
         types = self.expand_varargs(len(values))
-        # vararg_types = types[len(self.types):]
 
         distance = 0
 
-        # count 1 for every extra or missingargument
+        # Count one for every extra or missing argument.
         distance += abs(len(types) - len(values))
 
-        # count 1 for every mismatching arg type
+        # Additionally count one for every mismatching value.
         for v, t in zip(values, types):
             if not _is_bearable(v, t):
                 distance += 1
@@ -224,11 +229,11 @@ class Signature(Comparable):
         return distance
 
     def compute_mismatches(self, values: Tuple) -> Tuple[Set[int], bool]:
-        """For a tuple of values `values`, find the indices of the arguments that are
-        mismatched. Also return whether the varargs is matched.
+        """For given `values`, find the indices of the arguments that are mismatched.
+        Also return whether the varargs is matched.
 
         Args:
-            values (tuple[object, ...]): Candidate values.
+            values (tuple[object, ...]): Values.
 
         Returns:
             set[int]: Indices of invalid values.
