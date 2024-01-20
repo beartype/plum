@@ -79,6 +79,17 @@ def test_autodetect_name_return():
     assert m.return_type == float
 
 
+def test_equality():
+    m = Method(int, Signature(int), function_name="int", return_type=int)
+    assert m == Method(int, Signature(int), function_name="int", return_type=int)
+    assert m != Method(float, Signature(int), function_name="int", return_type=int)
+    assert m != Method(int, Signature(float), function_name="int", return_type=int)
+    assert m != Method(int, Signature(int), function_name="float", return_type=int)
+    assert m != Method(int, Signature(int), function_name="int", return_type=float)
+    # Methods can also be compared against other objects.
+    assert m != 1
+
+
 def test_repr():
     def f(x) -> float:
         return x
