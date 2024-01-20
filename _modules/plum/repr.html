@@ -1,0 +1,597 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>plum.repr &#8212; Plum</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=5b4479735964841361fd" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=5b4479735964841361fd" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=5b4479735964841361fd" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=5b4479735964841361fd" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-thebe.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=5b4479735964841361fd" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd" />
+  <script src="../../_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=5b4479735964841361fd"></script>
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/clipboard.min.js"></script>
+    <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../../_static/togglebutton.js"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../../_static/design-tabs.js"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"
+const thebe_selector = ".thebe,.cell"
+const thebe_selector_input = "pre"
+const thebe_selector_output = ".output, .cell_output"
+</script>
+    <script async="async" src="../../_static/sphinx-thebe.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/plum/repr';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+
+<a class="navbar-brand logo" href="../../intro.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/logo.png" class="logo__image only-light" alt="Plum - Home"/>
+    <script>document.write(`<img src="../../_static/logo.png" class="logo__image only-dark" alt="Plum - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../../intro.html">
+                    Plum
+                </a>
+            </li>
+        </ul>
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../basic_usage.html">Basic Usage</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../types.html">Types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../dispatch.html">Ways to Dispatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../scope.html">Scope of Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../classes.html">Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../keyword_arguments.html">Keyword Arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../comparison.html">Comparison with Other Multiple Dispatch Implementations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../integration.html">Integration with Linters and <code class="docutils literal notranslate"><span class="pre">mypy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../advanced_usage.html">Advanced Usage</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../conversion_promotion.html">Conversion and Promotion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../precedence.html">Method Precedence</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../parametric.html">Parametric Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../union_aliases.html">Union Aliases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../autoreload.html">Support for IPython Autoreload</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../command_line.html">Command Line Configuration Options</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">Application Programming Interface</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-source-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Source repositories">
+    <i class="fab fa-github"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="https://github.com/wesselb/plum" target="_blank"
+   class="btn btn-sm btn-source-repository-button dropdown-item"
+   title="Source repository"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+<span class="btn__text-container">Repository</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li><a href="https://github.com/wesselb/plum/issues/new?title=Issue%20on%20page%20%2F_modules/plum/repr.html&body=Your%20issue%20content%20here." target="_blank"
+   class="btn btn-sm btn-source-issues-button dropdown-item"
+   title="Open an issue"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-lightbulb"></i>
+  </span>
+<span class="btn__text-container">Open issue</span>
+</a>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <h1>Source code for plum.repr</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">types</span>
+<span class="kn">import</span> <span class="nn">typing</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span> <span class="nn">rich</span>
+<span class="kn">from</span> <span class="nn">rich.color</span> <span class="kn">import</span> <span class="n">Color</span>
+<span class="kn">from</span> <span class="nn">rich.style</span> <span class="kn">import</span> <span class="n">Style</span>
+<span class="kn">from</span> <span class="nn">rich.text</span> <span class="kn">import</span> <span class="n">Text</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;repr_short&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;repr_type&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;repr_source_path&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;repr_pyfunction&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;rich_repr&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">path_style</span> <span class="o">=</span> <span class="n">Style</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="n">Color</span><span class="o">.</span><span class="n">from_ansi</span><span class="p">(</span><span class="mi">7</span><span class="p">))</span>
+<span class="n">file_style</span> <span class="o">=</span> <span class="n">Style</span><span class="p">(</span><span class="n">bold</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">underline</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">module_style</span> <span class="o">=</span> <span class="n">Style</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;grey66&quot;</span><span class="p">)</span>
+<span class="n">class_style</span> <span class="o">=</span> <span class="n">Style</span><span class="p">(</span><span class="n">bold</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="repr_type"><a class="viewcode-back" href="../../api.html#plum.repr.repr_type">[docs]</a><span class="k">def</span> <span class="nf">repr_type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Text</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a :class:`rich.Text` representation of a type or module.</span>
+
+<span class="sd">    Does some light syntax highlighting mimicking Julia, boldening class names and</span>
+<span class="sd">    coloring module names with a lighter color.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x (object): Type or module.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        :class:`rich.Text`: Representation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="vm">__module__</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;builtins&quot;</span><span class="p">,</span> <span class="s2">&quot;typing&quot;</span><span class="p">,</span> <span class="s2">&quot;typing_extensions&quot;</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="n">Text</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="vm">__qualname__</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">class_style</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">Text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">module_style</span><span class="p">)</span>
+            <span class="n">res</span> <span class="o">+=</span> <span class="n">Text</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="vm">__qualname__</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">class_style</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">res</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">ModuleType</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Text</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">module_style</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Text</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">style</span><span class="o">=</span><span class="n">class_style</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="repr_short"><a class="viewcode-back" href="../../api.html#plum.repr.repr_short">[docs]</a><span class="k">def</span> <span class="nf">repr_short</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Representation as a string, but in shorter form. This just calls</span>
+<span class="sd">    :func:`typing._type_repr`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x (object): Object.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        str: Shorter representation of `x`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># :func:`typing._type_repr` is an internal function, but it should be available in</span>
+    <span class="c1"># Python versions 3.8 through 3.11.</span>
+    <span class="k">return</span> <span class="n">typing</span><span class="o">.</span><span class="n">_type_repr</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="repr_source_path"><a class="viewcode-back" href="../../api.html#plum.repr.repr_source_path">[docs]</a><span class="k">def</span> <span class="nf">repr_source_path</span><span class="p">(</span><span class="n">function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Text</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a :class:`rich.Text` object with an hyperlink to the function definition.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        function (Callable): A function.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        :class:`rich.Text` or None:</span>
+<span class="sd">            Representation with a hyperlink to the source. If the introspection failed,</span>
+<span class="sd">            it returns :obj:`None`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">f_path</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getfile</span><span class="p">(</span><span class="n">function</span><span class="p">)</span>
+        <span class="n">f_line</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getsourcelines</span><span class="p">(</span><span class="n">function</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">uri</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;file://</span><span class="si">{</span><span class="n">f_path</span><span class="si">}</span><span class="s2">#</span><span class="si">{</span><span class="n">f_line</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="c1"># Compress the path.</span>
+        <span class="n">home_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~&quot;</span><span class="p">)</span>
+        <span class="n">f_path</span> <span class="o">=</span> <span class="n">f_path</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">home_path</span><span class="p">,</span> <span class="s2">&quot;~&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Underline file name.</span>
+        <span class="n">f_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">f_path</span><span class="p">)</span>
+        <span class="n">f_path</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">Text</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">f_path</span><span class="p">),</span> <span class="n">style</span><span class="o">=</span><span class="n">path_style</span><span class="p">)</span>
+            <span class="o">+</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+            <span class="o">+</span> <span class="n">Text</span><span class="p">(</span><span class="n">f_name</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">file_style</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">f_path</span><span class="o">.</span><span class="n">append_text</span><span class="p">(</span><span class="n">Text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;:</span><span class="si">{</span><span class="n">f_line</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+        <span class="n">f_path</span><span class="o">.</span><span class="n">stylize</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;link </span><span class="si">{</span><span class="n">uri</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+        <span class="n">f_path</span> <span class="o">=</span> <span class="n">Text</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">f_path</span></div>
+
+
+<div class="viewcode-block" id="repr_pyfunction"><a class="viewcode-back" href="../../api.html#plum.repr.repr_pyfunction">[docs]</a><span class="k">def</span> <span class="nf">repr_pyfunction</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Text</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a :class:`rich.Text` object representation a function, including a link</span>
+<span class="sd">    to the source definition created with :func:`repr_source_path`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        f (Callable): A function.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        :class:`rich.Text`: Representation of `f`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">Text</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="n">repr_source_path</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">source</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot; @ &quot;</span><span class="p">)</span>
+        <span class="n">res</span><span class="o">.</span><span class="n">append_text</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">res</span></div>
+
+
+<span class="c1">########################</span>
+<span class="c1"># Rich class decorator #</span>
+<span class="c1">########################</span>
+
+
+<span class="k">def</span> <span class="nf">__repr_from_rich__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Default implementation of `__repr__` that calls :mod:`rich`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        str: Representation of `self.`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">console</span> <span class="o">=</span> <span class="n">rich</span><span class="o">.</span><span class="n">get_console</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">console</span><span class="o">.</span><span class="n">capture</span><span class="p">()</span> <span class="k">as</span> <span class="n">capture</span><span class="p">:</span>
+        <span class="n">console</span><span class="o">.</span><span class="n">print</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">capture</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">res</span>
+
+
+<span class="k">def</span> <span class="nf">_repr_mimebundle_from_rich_</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">include</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">exclude</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="o">**</span><span class="n">kw_args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Implementation of `_repr_mimebundle_` for better rendering in Jupyter.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        include (Iterable[str]): Only these MIME types should be included.</span>
+<span class="sd">        exclude (Iterable[str]): These MIME types should be excluded.</span>
+<span class="sd">        **kw_args (object): Additional keyword arguments. These are ignored.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict[str, str]: Representation by MIME type.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">rich.jupyter</span> <span class="kn">import</span> <span class="n">_render_segments</span>
+
+    <span class="n">console</span> <span class="o">=</span> <span class="n">rich</span><span class="o">.</span><span class="n">get_console</span><span class="p">()</span>
+    <span class="n">segments</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">console</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">console</span><span class="o">.</span><span class="n">options</span><span class="p">))</span>  <span class="c1"># type: ignore</span>
+    <span class="n">html</span> <span class="o">=</span> <span class="n">_render_segments</span><span class="p">(</span><span class="n">segments</span><span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">console</span><span class="o">.</span><span class="n">_render_buffer</span><span class="p">(</span><span class="n">segments</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;text/plain&quot;</span><span class="p">:</span> <span class="n">text</span><span class="p">,</span> <span class="s2">&quot;text/html&quot;</span><span class="p">:</span> <span class="n">html</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">include</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">include</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">exclude</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">exclude</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">data</span>
+
+
+<div class="viewcode-block" id="rich_repr"><a class="viewcode-back" href="../../api.html#plum.repr.rich_repr">[docs]</a><span class="k">def</span> <span class="nf">rich_repr</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">type</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class decorator defining a `__repr__` method that calls :mod:`rich.`</span>
+
+<span class="sd">    This also sets `_repr_mimebundle_` for better rendering in Jupyter.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        cls (type, optional): Class to decorate. If `None`, this function returns a</span>
+<span class="sd">            decorator.</span>
+<span class="sd">        str (bool, optional): Also define `__str__`. Defaults to not defining</span>
+<span class="sd">            `__str__`</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The decorated class. If cls is None, returns a decorator.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">partial</span><span class="p">(</span><span class="n">rich_repr</span><span class="p">,</span> <span class="nb">str</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+    <span class="bp">cls</span><span class="o">.</span><span class="fm">__repr__</span> <span class="o">=</span> <span class="n">__repr_from_rich__</span>
+    <span class="bp">cls</span><span class="o">.</span><span class="n">_repr_mimebundle_</span> <span class="o">=</span> <span class="n">_repr_mimebundle_from_rich_</span>
+    <span class="k">if</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="fm">__str__</span> <span class="o">=</span> <span class="n">__repr_from_rich__</span>
+    <span class="k">return</span> <span class="bp">cls</span></div>
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Wessel Bruinsma, Filippo Vicentini, and Ruan Comelli
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2022.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=5b4479735964841361fd"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=5b4479735964841361fd"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

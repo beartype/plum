@@ -338,8 +338,7 @@ document.write(`
   <h1>Source code for plum.util</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">abc</span>
 <span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">import</span> <span class="nn">typing</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Sequence</span>
 
 <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="o">.</span><span class="n">minor</span> <span class="o">&lt;=</span> <span class="mi">8</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.9 3.10 3.11</span>
     <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span>
@@ -349,7 +348,6 @@ document.write(`
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;Callable&quot;</span><span class="p">,</span>
     <span class="s2">&quot;TypeHint&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;repr_short&quot;</span><span class="p">,</span>
     <span class="s2">&quot;Missing&quot;</span><span class="p">,</span>
     <span class="s2">&quot;multihash&quot;</span><span class="p">,</span>
     <span class="s2">&quot;Comparable&quot;</span><span class="p">,</span>
@@ -357,6 +355,7 @@ document.write(`
     <span class="s2">&quot;is_in_class&quot;</span><span class="p">,</span>
     <span class="s2">&quot;get_class&quot;</span><span class="p">,</span>
     <span class="s2">&quot;get_context&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;argsort&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 <span class="c1"># We use this to indicate a reader that we expect a type hint. Using just `object` as a</span>
@@ -364,21 +363,6 @@ document.write(`
 <span class="c1"># intention to a reader. Furthermore, if later on, Python has a proper type for type</span>
 <span class="c1"># hints, we can just replace it here.</span>
 <span class="n">TypeHint</span> <span class="o">=</span> <span class="nb">object</span>
-
-
-<div class="viewcode-block" id="repr_short"><a class="viewcode-back" href="../../api.html#plum.util.repr_short">[docs]</a><span class="k">def</span> <span class="nf">repr_short</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Representation as a string, but in shorter form. This just calls</span>
-<span class="sd">    :func:`typing._type_repr`.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        x (object): Object.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        str: Shorter representation of `x`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># :func:`typing._type_repr` is an internal function, but it should be available in</span>
-    <span class="c1"># Python versions 3.8 through 3.11.</span>
-    <span class="k">return</span> <span class="n">typing</span><span class="o">.</span><span class="n">_type_repr</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
 
 
 <span class="k">class</span> <span class="nc">_MissingType</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
@@ -514,6 +498,18 @@ document.write(`
     <span class="k">else</span><span class="p">:</span>
         <span class="c1"># Split off function name only.</span>
         <span class="k">return</span> <span class="s2">&quot;.&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="argsort"><a class="viewcode-back" href="../../api.html#plum.util.argsort">[docs]</a><span class="k">def</span> <span class="nf">argsort</span><span class="p">(</span><span class="n">seq</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the indices that sort a sequence.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        seq (Sequence): Sequence to sort.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list[int]: Indices that sort `seq`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">seq</span><span class="p">)),</span> <span class="n">key</span><span class="o">=</span><span class="n">seq</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">)</span></div>
 </pre></div>
 
                 </article>
