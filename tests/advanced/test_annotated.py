@@ -1,14 +1,8 @@
-import sys
-
-if sys.version_info < (3, 9):
-    from typing_extensions import Annotated
-else:
-    from typing import Annotated
-
 import pytest
 from beartype.vale import Is
 
 from plum import Dispatcher, NotFoundLookupError
+from plum.typing import Annotated
 
 
 def test_simple_annotated():
