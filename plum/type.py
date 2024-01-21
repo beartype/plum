@@ -5,7 +5,7 @@ import warnings
 
 from beartype.vale._core._valecore import BeartypeValidator
 
-from .plum_typing import get_args, get_origin, is_literal
+from .typing import get_args, get_origin
 
 try:  # pragma: specific no cover 3.8 3.9
     from types import UnionType
@@ -187,7 +187,7 @@ def resolve_type_hint(x):
                 return y
             else:
                 # Do not resolve the arguments for `Literal`s.
-                if not is_literal(origin):
+                if origin != typing.Literal:
                     args = resolve_type_hint(args)
                 try:
                     return origin[args]
