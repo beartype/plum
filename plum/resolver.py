@@ -15,6 +15,25 @@ from .util import argsort
 __all__ = ["AmbiguousLookupError", "NotFoundLookupError"]
 
 
+def _render_function_call(f: str, target: Union[Tuple, Signature]) -> str:
+    """Render a function call.
+
+    Args:
+        f (str): Function name
+        target (tuple or :class:`.Signature`): Arguments or signature.
+
+    Returns:
+        str: Rendered call.
+    """
+    if isinstance(target, tuple):
+        target_rendered = "(" + ", ".join(repr(arg) for arg in target) + ")"
+    else:
+        target_rendered = str(target)
+        # Remove the prefix `Signature`.
+        target_rendered = target_rendered[len("Signature") :]
+    return f"{f}{target_rendered}"
+
+
 @rich_repr(str=True)
 class AmbiguousLookupError(LookupError):
     """A signature cannot be resolved due to ambiguity."""
@@ -22,7 +41,7 @@ class AmbiguousLookupError(LookupError):
     def __init__(
         self,
         f_name: Union[str, None],
-        target: Union[Tuple[object, ...], Signature],
+        target: Union[Tuple, Signature],
         methods: MethodList,
     ):
         """Create a new :class:`AmbiguousLookupError`.
@@ -30,8 +49,8 @@ class AmbiguousLookupError(LookupError):
         Args:
             f_name (str or :obj:`None`): Name (or qualified name) of the function that
                 could not be resolved.
-            target (Union[Tuple[object, ...], :class:`.Signature`]): Target signature
-                or arguments that could not be resolved.
+            target (Union[Tuple, :class:`.Signature`]): Target signature or arguments
+                that could not be resolved.
             methods (:class:`.MethodList`): List of ambiguous methods.
         """
         self.f_name = f_name if f_name is not None else "<function>"
@@ -39,7 +58,7 @@ class AmbiguousLookupError(LookupError):
         self.methods = methods
 
     def __rich_console__(self, console, options):
-        yield Text(f"{self.f_name}{self.target} is ambiguous.")
+        yield Text(f"`{_render_function_call(self.f_name, self.target)}` is ambiguous.")
         yield Text()
         yield Text("Candidates:")
         for m in self.methods:
@@ -56,7 +75,7 @@ class NotFoundLookupError(LookupError):
     def __init__(
         self,
         f_name: Union[str, None],
-        target: Union[Tuple[object, ...], Signature],
+        target: Union[Tuple, Signature],
         methods: MethodList,
         *,
         max_suggestions: int = 3,
@@ -66,8 +85,8 @@ class NotFoundLookupError(LookupError):
         Args:
             f_name (str or :obj:`None`): Name (or qualified name) of the function that
                 could not be resolved.
-            target (Union[Tuple[object, ...], :class:`Signature`]): Target signature
-                or arguments that could not be resolved.
+            target (Union[Tuple, :class:`Signature`]): Target signature or arguments
+                that could not be resolved.
             methods (:class:`MethodList`): Methods that were considered.
             max_suggestions (int, optional): Maximum number of displayed signatures.
                 Defaults to three.
@@ -81,7 +100,10 @@ class NotFoundLookupError(LookupError):
     def __rich_console__(self, console, options):
         """Generate a string of the top `self.max_suggestions` methods that are closest
         to the given one."""
-        yield Text(f"{self.f_name}{self.target} could not be resolved.")
+        yield Text(
+            f"`{_render_function_call(self.f_name, self.target)}` "
+            f"could not be resolved."
+        )
 
         if not isinstance(self.target, Signature):
             distances = []

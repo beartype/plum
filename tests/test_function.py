@@ -400,13 +400,13 @@ def test_call_dispatch_error():
 
     with pytest.raises(
         NotFoundLookupError,
-        match="(?i)^f\\('1', '1'\\) could not be resolved\\.\n\nClosest.*",
+        match="(?i)^`f\\('1', '1'\\)` could not be resolved\\.\n\nClosest",
     ):
         f("1", "1")
 
     with pytest.raises(
         AmbiguousLookupError,
-        match="(?i)^f\\(1, 1\\) is ambiguous\\.\n\nCandidates:.*",
+        match="(?i)^`f\\(1, 1\\)` is ambiguous\\.\n\nCandidates:",
     ):
         f(1, 1)
 
@@ -470,7 +470,7 @@ def test_call_mro():
     assert (c <= 2) == 1
     with pytest.raises(
         NotFoundLookupError,
-        match=r"(?i)^C.__le__\(.+\) could not be\s+resolved",
+        match=r"(?i)^`C.__le__\(.+\)` could not be\s+resolved",
     ):
         c <= "2"  # noqa
 
@@ -490,7 +490,7 @@ def test_call_abstract():
 def test_call_object():
     with pytest.raises(
         NotFoundLookupError,
-        match=r"(?i)^B.__init__\(.+\) could not be\s+resolved",
+        match=r"(?is)^`B.__init__\(.+\)` could not be\s+resolved",
     ):
         # Construction requires no arguments. Giving an argument should propagate to
         # `B` and then error.
@@ -498,7 +498,7 @@ def test_call_object():
 
     with pytest.raises(
         NotFoundLookupError,
-        match=r"(?i)^C.__call__\(.+\) could not be\s+resolved",
+        match=r"(?is)^`C.__call__\(.+\)` could not be\s+resolved",
     ):
         # Calling requires no arguments.
         C()(1)
@@ -531,13 +531,13 @@ def test_call_type():
 
     with pytest.raises(
         NotFoundLookupError,
-        match=r"(?is)^E\.__init__\(.+\) could\s+not be resolved",
+        match=r"(?is)^`E\.__init__\(.+\)` could\s+not be resolved",
     ):
         E("Test", (A, object), {})  # Must have exactly one base.
 
     with pytest.raises(
         NotFoundLookupError,
-        match=r"(?is)^D\.__call__\(.+\) could\s+not be resolved",
+        match=r"(?is)^`D\.__call__\(.+\)` could\s+not be resolved",
     ):
         # The call method will be tried at :class:`D` and only then error.
         E("Test", (object,), {})(1)

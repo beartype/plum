@@ -6,8 +6,21 @@ import pytest
 
 import plum.resolver
 from plum.method import Method
-from plum.resolver import AmbiguousLookupError, NotFoundLookupError, Resolver, _document
+from plum.resolver import (
+    AmbiguousLookupError,
+    NotFoundLookupError,
+    Resolver,
+    _document,
+    _render_function_call,
+)
 from plum.signature import Signature
+
+
+def test_render_function_call():
+    assert _render_function_call("f", (1,)) == "f(1)"
+    assert _render_function_call("f", (1, 1)) == "f(1, 1)"
+    assert _render_function_call("f", Signature(int)) == "f(int)"
+    assert _render_function_call("f", Signature(int, int)) == "f(int, int)"
 
 
 def test_initialisation():
