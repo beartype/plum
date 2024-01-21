@@ -96,9 +96,9 @@ def repr_source_path(function: Callable) -> Text:
         )
         f_path.append_text(Text(f":{f_line}"))
         f_path.stylize(f"link {uri}")
+        return f_path
     except OSError:  # pragma: no cover
-        f_path = Text()
-    return f_path
+        return None
 
 
 def repr_pyfunction(f: Callable) -> Text:
