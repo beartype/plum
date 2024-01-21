@@ -131,7 +131,7 @@ def _is_hint(x):
         return x.__module__ in {
             "types",  # E.g., `tuple[int]`
             "typing",
-            "collections.abc",  # E.g., `Callable`,
+            "collections.abc",  # E.g., `Callable`
             "typing_extensions",
         }
     except AttributeError:
@@ -222,8 +222,12 @@ def resolve_type_hint(x):
             return resolve_type_hint(x.resolve())
         else:
             return x
+
+    # For example, `Is[lambda x: x > 0]` is an example of a `BeartypeValidator`. We
+    # shouldn't resolve those.
     elif isinstance(x, BeartypeValidator):
         return x
+
     else:
         warnings.warn(
             f"Could not resolve the type hint of `{x}`. "
