@@ -9,7 +9,7 @@ from .method import Method
 from .resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
 from .signature import Signature, append_default_args
 from .type import resolve_type_hint
-from .util import TypeHint, repr_short
+from .util import TypeHint
 
 __all__ = ["Function"]
 
@@ -77,6 +77,9 @@ class Function(metaclass=_FunctionMeta):
         self._f: Callable = f
         self._cache = {}
         wraps(f)(self)  # Sets `self._doc`.
+
+        self.__name__ = f.__name__
+        self.__qualname__ = _generate_qualname(f)
 
         # `owner` is the name of the owner. We will later attempt to resolve to
         # which class it actually points.
@@ -277,25 +280,6 @@ class Function(metaclass=_FunctionMeta):
             # Clear cache.
             self.clear_cache(reregister=False)
 
-    def _enhance_exception(self, e: SomeExceptionType) -> SomeExceptionType:
-        """Enchance an exception by prepending a prefix to the message of the exception
-        which specifies that the message is for this function.
-
-        Args:
-            e (:class:`Exception`): Exception.
-
-        Returns:
-            :class:`Exception`: `e`, but with a prefix appended to the message.
-        """
-        # Specify to which function the message pertains.
-        prefix = f"For function `{self.__name__}`"
-        if self.owner:
-            prefix += f" of `{repr_short(self.owner)}`"
-        prefix = prefix + ", "
-        # Return a new exception of the same type which incorporates the prefix.
-        message = str(e)
-        return type(e)(prefix + message[0].lower() + message[1:])
-
     def resolve_method(
         self, target: Union[Tuple[object, ...], Signature]
     ) -> Tuple[Callable, TypeHint]:
@@ -305,8 +289,9 @@ class Function(metaclass=_FunctionMeta):
             target (object): Target.
 
         Returns:
-            function: Method.
-            type: Return type.
+            `tuple[function, type]`:
+                * Method.
+                * Return type.
         """
         self._resolve_pending_registrations()
 
@@ -318,12 +303,18 @@ class Function(metaclass=_FunctionMeta):
 
         except AmbiguousLookupError as e:
             __tracebackhide__ = True
-            raise self._enhance_exception(e) from None  # Specify this function.
+
+            # Change the function name if this is a method.
+            if self.owner:
+                e.f_name = self.__qualname__
+            raise e from None
 
         except NotFoundLookupError as e:
             __tracebackhide__ = True
 
-            e = self._enhance_exception(e)  # Specify this function.
+            # Change the function name if this is a method.
+            if self.owner:
+                e.f_name = self.__qualname__
             impl, return_type = self._handle_not_found_lookup_error(e)
 
         return impl, return_type
@@ -436,9 +427,33 @@ class Function(metaclass=_FunctionMeta):
 
     def __repr__(self) -> str:
         return (
-            f"<function {self._f} with {len(self._resolver)} registered and"
-            f" {len(self._pending)} pending method(s)>"
+            f"<multiple-dispatch function {self.__qualname__} (with"
+            f" {len(self._resolver)} registered and {len(self._pending)}"
+            f" pending method(s))>"
         )
+
+
+def _generate_qualname(f: Callable) -> str:
+    """Generate a qualified name for a function.
+
+    This function can be interpreted as an improved version of `f.__qualname__`
+    and can be run regardless of whether `f.__qualname__` exists.
+
+    Args:
+        f (Callable): Function.
+
+    Returns:
+        str: Qualified name.
+    """
+    qualname = getattr(f, "__qualname__", f.__name__)
+
+    # TODO: If we ever want to scope functions, we can uncomment this.
+    # if hasattr(f, "__module__"):
+    #     qualname = f"{f.__module__}.{qualname}"
+    # `__main__` would be part of `f.__name__` in e.g. the REPL.
+    # qualname = qualname.replace("__main__.", """)
+
+    return qualname
 
 
 class _BoundFunction:

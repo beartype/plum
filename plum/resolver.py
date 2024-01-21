@@ -1,20 +1,108 @@
 import pydoc
 import sys
 from functools import wraps
-from typing import Callable, List, Optional, Tuple, Union
+from typing import Callable, Optional, Tuple, Union
 
-from plum.method import Method
+from rich.padding import Padding
+from rich.text import Text
+
+from plum.method import Method, MethodList
+from plum.repr import rich_repr
 from plum.signature import Signature
+
+from .util import argsort
 
 __all__ = ["AmbiguousLookupError", "NotFoundLookupError"]
 
 
+@rich_repr(str=True)
 class AmbiguousLookupError(LookupError):
     """A signature cannot be resolved due to ambiguity."""
 
+    def __init__(
+        self,
+        f_name: Union[str, None],
+        target: Union[Tuple[object, ...], Signature],
+        methods: MethodList,
+    ):
+        """Create a new :class:`AmbiguousLookupError`.
 
+        Args:
+            f_name (str or :obj:`None`): Name (or qualified name) of the function that
+                could not be resolved.
+            target (Union[Tuple[object, ...], :class:`.Signature`]): Target signature
+                or arguments that could not be resolved.
+            methods (:class:`.MethodList`): List of ambiguous methods.
+        """
+        self.f_name = f_name if f_name is not None else "<function>"
+        self.target = target
+        self.methods = methods
+
+    def __rich_console__(self, console, options):
+        yield Text(f"{self.f_name}{self.target} is ambiguous.")
+        yield Text()
+        yield Text("Candidates:")
+        for m in self.methods:
+            yield Padding(m.repr_mismatch(), (0, 3))
+
+
+@rich_repr(str=True)
 class NotFoundLookupError(LookupError):
-    """A signature cannot be resolved because no applicable method can be found."""
+    """A signature cannot be resolved because no applicable method can be found.
+
+    This error object is used to display the closest methods to the target signature.
+    """
+
+    def __init__(
+        self,
+        f_name: Union[str, None],
+        target: Union[Tuple[object, ...], Signature],
+        methods: MethodList,
+        *,
+        max_suggestions: int = 3,
+    ):
+        """Create a new :class:`NotFoundLookupError`.
+
+        Args:
+            f_name (str or :obj:`None`): Name (or qualified name) of the function that
+                could not be resolved.
+            target (Union[Tuple[object, ...], :class:`Signature`]): Target signature
+                or arguments that could not be resolved.
+            methods (:class:`MethodList`): Methods that were considered.
+            max_suggestions (int, optional): Maximum number of displayed signatures.
+                Defaults to three.
+        """
+        self.f_name = f_name if f_name is not None else "<function>"
+        self.target = target
+        self.methods = methods
+
+        self.max_suggestions = max_suggestions
+
+    def __rich_console__(self, console, options):
+        """Generate a string of the top `self.max_suggestions` methods that are closest
+        to the given one."""
+        yield Text(f"{self.f_name}{self.target} could not be resolved.")
+
+        if not isinstance(self.target, Signature):
+            distances = []
+            for method in self.methods:
+                dist = method.signature.compute_distance(self.target)
+                distances.append(dist)
+
+            sort_method_ids = argsort(distances)
+
+            # Take at most `self.max_suggestions` hints.
+            sort_method_ids = sort_method_ids[: self.max_suggestions]
+
+            distances = [distances[i] for i in sort_method_ids]
+            methods = [self.methods[i] for i in sort_method_ids]
+
+            # Create the list of candidates.
+            yield Text()
+            yield Text("Closest candidates are the following:")
+            for m in methods:
+                misses, varargs_matched = m.signature.compute_mismatches(self.target)
+                yield Padding(m.repr_mismatch(misses, varargs_matched), (0, 4))
 
 
 def _change_function_name(f: Callable, name: str) -> Callable:
@@ -98,9 +186,14 @@ class Resolver:
 
     __slots__ = ("methods", "is_faithful", "function_name")
 
-    def __init__(self, function_name: Optional[str] = None):
+    def __init__(self, function_name: Optional[str] = None) -> None:
+        """Initialise the resolver.
+
+        Args:
+            function_name (str, optional): Name of the function.
+        """
         self.function_name = function_name
-        self.methods: List[Method] = []
+        self.methods: MethodList = MethodList()
         self.is_faithful: bool = True
 
     def doc(self, exclude: Union[Callable, None] = None) -> str:
@@ -202,7 +295,8 @@ class Resolver:
 
         if len(candidates) == 0:
             # There is no matching signature.
-            raise NotFoundLookupError(f"`{target}` could not be resolved.")
+            raise NotFoundLookupError(self.function_name, target, self.methods)
+
         elif len(candidates) == 1:
             # There is exactly one matching signature. Success!
             return candidates[0]
@@ -214,12 +308,5 @@ class Resolver:
             if sum([p == max_precendence for p in precedences]) == 1:
                 return candidates[precedences.index(max_precendence)]
             else:
-                # Could not resolve the ambiguity, so error. First, make a nice list
-                # of the candidates and their precedences.
-                listed_candidates = "\n  ".join(
-                    [f"{c} (precedence: {c.signature.precedence})" for c in candidates]
-                )
-                raise AmbiguousLookupError(
-                    f"`{target}` is ambiguous among the following:\n"
-                    f"  {listed_candidates}"
-                )
+                # Could not resolve the ambiguity, so error.
+                raise AmbiguousLookupError(self.function_name, target, candidates)

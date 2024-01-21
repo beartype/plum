@@ -8,7 +8,7 @@
 
 Everybody likes multiple dispatch, just like everybody likes plums.
 
-The design philosophy of Plum is to provide an implementation of multiple dispatch that is Pythonic, yet close to how [Julia](http://julia-lang.org/) does it.
+The design philosophy of Plum is to provide an implementation of multiple dispatch that is Pythonic, yet close to how [Julia](http://julialang.org/) does it.
 [See here for a comparison between Plum, `multipledispatch`, and `multimethod`.](https://beartype.github.io/plum/comparison.html)
 
 *Note:*

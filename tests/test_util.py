@@ -4,6 +4,7 @@ import typing
 import numpy as np
 import pytest
 
+from plum.repr import repr_short
 from plum.util import (
     Comparable,
     Missing,
@@ -11,7 +12,6 @@ from plum.util import (
     get_context,
     is_in_class,
     multihash,
-    repr_short,
     wrap_lambda,
 )
 
