@@ -63,7 +63,15 @@ def f(x: Number):
 'This is a number, but I don't know which type.'
 
 >>> f(object())
-NotFoundLookupError: For function `f`, `(<object object at 0x7fb528458190>,)` could not be resolved.
+NotFoundLookupError: f(<object object at 0x7fe4d0fea330>,) could not be resolved.
+
+Closest candidates are the following:
+    f(x: str)
+        <function f at 0x7fe4d0f10430> @ /<ipython-input-1-c9f6cdbea9f3>:6
+    f(x: int)
+        <function f at 0x7fe47021dd30> @ /<ipython-input-1-c9f6cdbea9f3>:11
+    f(x: numbers.Number)
+        <function f at 0x7fe47021ddc0> @ /<ipython-input-1-c9f6cdbea9f3>:16
 ```
 
 This also works for multiple arguments, enabling some neat design patterns:
