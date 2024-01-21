@@ -9,9 +9,9 @@ from beartype.peps import resolve_pep563 as beartype_resolve_pep563
 from rich.segment import Segment
 
 from . import _is_bearable
+from .plum_typing import get_type_hints
 from .repr import repr_short, rich_repr
 from .type import is_faithful, resolve_type_hint
-from .plum_typing import get_type_hints
 from .util import Comparable, Missing, TypeHint, multihash, repr_short, wrap_lambda
 
 __all__ = ["Signature", "append_default_args"]
