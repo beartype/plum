@@ -469,7 +469,7 @@ document.write(`
         <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="vm">__module__</span> <span class="ow">in</span> <span class="p">{</span>
             <span class="s2">&quot;types&quot;</span><span class="p">,</span>  <span class="c1"># E.g., `tuple[int]`</span>
             <span class="s2">&quot;typing&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;collections.abc&quot;</span><span class="p">,</span>  <span class="c1"># E.g., `Callable`,</span>
+            <span class="s2">&quot;collections.abc&quot;</span><span class="p">,</span>  <span class="c1"># E.g., `Callable`</span>
             <span class="s2">&quot;typing_extensions&quot;</span><span class="p">,</span>
         <span class="p">}</span>
     <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
@@ -560,8 +560,12 @@ document.write(`
             <span class="k">return</span> <span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">x</span>
+
+    <span class="c1"># For example, `Is[lambda x: x &gt; 0]` is an example of a `BeartypeValidator`. We</span>
+    <span class="c1"># shouldn&#39;t resolve those.</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">BeartypeValidator</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">x</span>
+
     <span class="k">else</span><span class="p">:</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Could not resolve the type hint of `</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">`. &quot;</span>
