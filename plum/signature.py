@@ -11,7 +11,8 @@ from rich.segment import Segment
 from . import _is_bearable
 from .repr import repr_short, rich_repr
 from .type import is_faithful, resolve_type_hint
-from .util import Comparable, Missing, TypeHint, multihash, wrap_lambda
+from .plum_typing import get_type_hints
+from .util import Comparable, Missing, TypeHint, multihash, repr_short, wrap_lambda
 
 __all__ = ["Signature", "append_default_args"]
 
@@ -285,7 +286,7 @@ def resolve_pep563(f: Callable):
         beartype_resolve_pep563(f)  # This mutates `f`.
         # Override the `__annotations__` attribute, since `resolve_pep563` modifies
         # `f` too.
-        for k, v in typing.get_type_hints(f).items():
+        for k, v in get_type_hints(f, include_extras=True).items():
             f.__annotations__[k] = v
 
 
