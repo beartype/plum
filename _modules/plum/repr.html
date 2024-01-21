@@ -434,9 +434,9 @@ document.write(`
         <span class="p">)</span>
         <span class="n">f_path</span><span class="o">.</span><span class="n">append_text</span><span class="p">(</span><span class="n">Text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;:</span><span class="si">{</span><span class="n">f_line</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
         <span class="n">f_path</span><span class="o">.</span><span class="n">stylize</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;link </span><span class="si">{</span><span class="n">uri</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">f_path</span>
     <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
-        <span class="n">f_path</span> <span class="o">=</span> <span class="n">Text</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">f_path</span></div>
+        <span class="k">return</span> <span class="kc">None</span></div>
 
 
 <div class="viewcode-block" id="repr_pyfunction"><a class="viewcode-back" href="../../api.html#plum.repr.repr_pyfunction">[docs]</a><span class="k">def</span> <span class="nf">repr_pyfunction</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Text</span><span class="p">:</span>
