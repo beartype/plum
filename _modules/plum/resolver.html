@@ -353,6 +353,25 @@ document.write(`
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;AmbiguousLookupError&quot;</span><span class="p">,</span> <span class="s2">&quot;NotFoundLookupError&quot;</span><span class="p">]</span>
 
 
+<span class="k">def</span> <span class="nf">_render_function_call</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tuple</span><span class="p">,</span> <span class="n">Signature</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a function call.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        f (str): Function name</span>
+<span class="sd">        target (tuple or :class:`.Signature`): Arguments or signature.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        str: Rendered call.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+        <span class="n">target_rendered</span> <span class="o">=</span> <span class="s2">&quot;(&quot;</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">target</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">target_rendered</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+        <span class="c1"># Remove the prefix `Signature`.</span>
+        <span class="n">target_rendered</span> <span class="o">=</span> <span class="n">target_rendered</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s2">&quot;Signature&quot;</span><span class="p">)</span> <span class="p">:]</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">f</span><span class="si">}{</span><span class="n">target_rendered</span><span class="si">}</span><span class="s2">&quot;</span>
+
+
 <div class="viewcode-block" id="AmbiguousLookupError"><a class="viewcode-back" href="../../api.html#plum.resolver.AmbiguousLookupError">[docs]</a><span class="nd">@rich_repr</span><span class="p">(</span><span class="nb">str</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">AmbiguousLookupError</span><span class="p">(</span><span class="ne">LookupError</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A signature cannot be resolved due to ambiguity.&quot;&quot;&quot;</span>
@@ -360,7 +379,7 @@ document.write(`
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">f_name</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
-        <span class="n">target</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">Signature</span><span class="p">],</span>
+        <span class="n">target</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tuple</span><span class="p">,</span> <span class="n">Signature</span><span class="p">],</span>
         <span class="n">methods</span><span class="p">:</span> <span class="n">MethodList</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a new :class:`AmbiguousLookupError`.</span>
@@ -368,8 +387,8 @@ document.write(`
 <span class="sd">        Args:</span>
 <span class="sd">            f_name (str or :obj:`None`): Name (or qualified name) of the function that</span>
 <span class="sd">                could not be resolved.</span>
-<span class="sd">            target (Union[Tuple[object, ...], :class:`.Signature`]): Target signature</span>
-<span class="sd">                or arguments that could not be resolved.</span>
+<span class="sd">            target (Union[Tuple, :class:`.Signature`]): Target signature or arguments</span>
+<span class="sd">                that could not be resolved.</span>
 <span class="sd">            methods (:class:`.MethodList`): List of ambiguous methods.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">f_name</span> <span class="o">=</span> <span class="n">f_name</span> <span class="k">if</span> <span class="n">f_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&lt;function&gt;&quot;</span>
@@ -377,7 +396,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">methods</span> <span class="o">=</span> <span class="n">methods</span>
 
     <span class="k">def</span> <span class="nf">__rich_console__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">console</span><span class="p">,</span> <span class="n">options</span><span class="p">):</span>
-        <span class="k">yield</span> <span class="n">Text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">f_name</span><span class="si">}{</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="si">}</span><span class="s2"> is ambiguous.&quot;</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="n">Text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">_render_function_call</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">f_name</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">)</span><span class="si">}</span><span class="s2">` is ambiguous.&quot;</span><span class="p">)</span>
         <span class="k">yield</span> <span class="n">Text</span><span class="p">()</span>
         <span class="k">yield</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;Candidates:&quot;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="p">:</span>
@@ -394,7 +413,7 @@ document.write(`
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">f_name</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
-        <span class="n">target</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">Signature</span><span class="p">],</span>
+        <span class="n">target</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tuple</span><span class="p">,</span> <span class="n">Signature</span><span class="p">],</span>
         <span class="n">methods</span><span class="p">:</span> <span class="n">MethodList</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">max_suggestions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
@@ -404,8 +423,8 @@ document.write(`
 <span class="sd">        Args:</span>
 <span class="sd">            f_name (str or :obj:`None`): Name (or qualified name) of the function that</span>
 <span class="sd">                could not be resolved.</span>
-<span class="sd">            target (Union[Tuple[object, ...], :class:`Signature`]): Target signature</span>
-<span class="sd">                or arguments that could not be resolved.</span>
+<span class="sd">            target (Union[Tuple, :class:`Signature`]): Target signature or arguments</span>
+<span class="sd">                that could not be resolved.</span>
 <span class="sd">            methods (:class:`MethodList`): Methods that were considered.</span>
 <span class="sd">            max_suggestions (int, optional): Maximum number of displayed signatures.</span>
 <span class="sd">                Defaults to three.</span>
@@ -419,7 +438,10 @@ document.write(`
     <span class="k">def</span> <span class="nf">__rich_console__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">console</span><span class="p">,</span> <span class="n">options</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a string of the top `self.max_suggestions` methods that are closest</span>
 <span class="sd">        to the given one.&quot;&quot;&quot;</span>
-        <span class="k">yield</span> <span class="n">Text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">f_name</span><span class="si">}{</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="si">}</span><span class="s2"> could not be resolved.&quot;</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="n">Text</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">_render_function_call</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">f_name</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">)</span><span class="si">}</span><span class="s2">` &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;could not be resolved.&quot;</span>
+        <span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">,</span> <span class="n">Signature</span><span class="p">):</span>
             <span class="n">distances</span> <span class="o">=</span> <span class="p">[]</span>
