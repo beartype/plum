@@ -76,13 +76,13 @@ class Comparable(metaclass=abc.ABCMeta):
         pass  # pragma: no cover
 
     def __lt__(self, other):
-        return self <= other and self != other
+        return self <= other and not other <= self
 
     def __ge__(self, other):
         return other.__le__(self)
 
     def __gt__(self, other):
-        return self >= other and self != other
+        return self >= other and not other >= self
 
     def is_comparable(self, other):
         """Check whether this object is comparable with another one.
