@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, TypeVar
 
 import beartype.door
 from beartype.roar import BeartypeDoorNonpepException
@@ -13,10 +13,13 @@ __all__ = [
     "CovariantMeta",
     "parametric",
     "type_parameter",
+    "type_unparametrized",
     "kind",
     "Kind",
     "Val",
 ]
+
+T = TypeVar("T")
 
 
 _dispatch = Dispatcher()
@@ -274,11 +277,82 @@ def parametric(original_class=None):
             cls.__new__ = class_new
         super(original_class, cls).__init_subclass__(**kw_args)
 
+    def __class_nonparametric__(cls):
+        """Return the non-parametric type of an object.
+
+        :mod:`plum.parametric` produces parametric subtypes of classes. This
+        method can be used to get the non-parametric type of an object.
+
+        Examples
+        --------
+        >>> from plum import parametric
+        >>> @parametric
+        ... class Obj:
+        ...     @classmethod
+        ...     def __infer_type_parameter__(cls, *arg):
+        ...         return type(arg[0])
+        ...     def __init__(self, x):
+        ...         self.x = x
+        ...     def __repr__(self):
+        ...         return f"Obj({self.x})"
+
+        >>> obj = Obj(1)
+        >>> obj
+        Obj(1)
+
+        >>> type(obj).mro()
+        [Obj[int], Obj, object]
+
+        >>> type_unparametrized(obj).__name__
+        [Obj, object]
+        """
+        return original_class
+
+    def __class_unparametrized__(cls):
+        """Return the unparametrized type of an object.
+
+        :mod:`plum.parametric` produces parametric subtypes of classes. This
+        method can be used to get the un-parametrized type of an object.
+
+        Examples
+        --------
+        >>> from plum import parametric
+        >>> @parametric
+        ... class Obj:
+        ...     @classmethod
+        ...     def __infer_type_parameter__(cls, *arg):
+        ...         return type(arg[0])
+        ...     def __init__(self, x):
+        ...         self.x = x
+        ...     def __repr__(self):
+        ...         return f"Obj({self.x})"
+
+        >>> obj = Obj(1)
+        >>> obj
+        Obj(1)
+
+        >>> type(obj).__name__
+        Obj[int]
+
+        >>> obj.__class_unparametrized__().mro()
+        [Obj, Obj, object]
+
+        Note that this is still NOT the 'original' non-`parametric`-wrapped
+        type.  This is the type that is wrapped by :mod:`plum.parametric`, but
+        without the inferred type parameter(s).
+        """
+        return parametric_class
+
     # Create parametric class.
     parametric_class = meta(
         original_class.__name__,
         (original_class,),
-        {"__new__": __new__, "__init_subclass__": __init_subclass__},
+        {
+            "__new__": __new__,
+            "__init_subclass__": __init_subclass__,
+            "__class_nonparametric__": __class_nonparametric__,
+            "__class_unparametrized__": __class_unparametrized__,
+        },
     )
     parametric_class._parametric = True
     parametric_class._concrete = False
@@ -354,6 +428,44 @@ def type_parameter(x):
         f"`{x}` is not a concrete parametric type or an instance of a"
         f" concrete parametric type."
     )
+
+
+def type_unparametrized(q: T) -> type[T]:
+    """Return the unparametrized type of an object.
+
+    :mod:`plum.parametric` produces parametric subtypes of classes.  This
+    function can be used to get the un-parametrized type of an object.
+    This function also works for normal, :mod:`plum.parametric`-wrapped classes.
+
+    Examples
+    --------
+    >>> from plum import parametric
+    >>> @parametric
+    ... class Obj:
+    ...     @classmethod
+    ...     def __infer_type_parameter__(cls, *arg):
+    ...         return type(arg[0])
+    ...     def __init__(self, x):
+    ...         self.x = x
+    ...     def __repr__(self):
+    ...         return f"Obj({self.x})"
+
+    >>> obj = Obj(1)
+    >>> obj
+    Obj(1)
+
+    >>> type(obj).__name__
+    Obj[int]
+
+    >>> type_unparametrized(obj).__name__
+    Obj
+
+    Note that this is still NOT the 'original' non-`parametric`-wrapped type.
+    This is the type that is wrapped by :mod:`plum.parametric`, but without the
+    inferred type parameter(s).
+    """
+    typ = type(q)
+    return q.__class_unparametrized__() if isinstance(typ, ParametricTypeMeta) else typ
 
 
 def kind(SuperClass=object):
