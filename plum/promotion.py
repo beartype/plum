@@ -72,6 +72,7 @@ def conversion_method(type_from, type_to):
 
     def add_method(f):
         add_conversion_method(type_from, type_to, f)
+        return f
 
     return add_method
 
