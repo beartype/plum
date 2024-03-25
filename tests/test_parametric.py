@@ -15,7 +15,7 @@ from plum import (
     parametric,
     type_parameter,
 )
-from plum.parametric import CovariantMeta, is_concrete, is_type
+from plum.parametric import CovariantMeta, is_concrete, is_type, type_unparametrized
 
 
 def test_covariantmeta():
@@ -59,6 +59,15 @@ def test_parametric(metaclass):
     assert issubclass(type(a1), A)
     assert issubclass(type(a1), Base1)
     assert not issubclass(type(a1), Base2)
+
+    assert a1.__class_unparametrized__() is A
+    assert a2.__class_unparametrized__() is A
+
+    # Here we are testing that the class returned by `__class_nonparametric__`
+    # is the 'original' class that the @parametric decorator was applied to.
+    assert a1.__class_nonparametric__() is A.mro()[1]
+    assert issubclass(a2.__class_nonparametric__(), Base1)
+    assert a2.__class_nonparametric__() is not Base1
 
     # Test multiple type parameters.
     assert A[1, 2] == A[1, 2]
@@ -575,3 +584,25 @@ def test_init_subclass_correct_args():
 
     Wrapper[int]
     assert Wrapper[int] in register
+
+
+def test_type_unparametrized():
+    """Test the `type_unparametrized` function."""
+
+    @parametric
+    class Obj:
+        @classmethod
+        def __infer_type_parameter__(cls, *arg):
+            return type(arg[0])
+
+        def __init__(self, x):
+            self.x = x
+
+        def __repr__(self):
+            return f"Obj({self.x})"
+
+    pobj = Obj(1)
+
+    assert type(pobj) is Obj[int]
+    assert type_unparametrized(pobj) is not Obj[int]
+    assert type_unparametrized(pobj) is Obj
