@@ -1,4 +1,4 @@
-from typing import Union, TypeVar, Type
+from typing import Type, TypeVar, Union
 
 import beartype.door
 from beartype.roar import BeartypeDoorNonpepException
