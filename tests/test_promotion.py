@@ -50,6 +50,9 @@ def test_convert(convert):
     assert convert(r, Num) == r
     assert convert(r, Rat) == 3.0
 
+    # Test that `conversion_method` returns the function.
+    assert num_to_fp(1) == 3.0
+
 
 def test_convert_resolve_type_hints(convert):
     add_conversion_method(int, float, lambda x: 2.0)
