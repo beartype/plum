@@ -303,7 +303,7 @@ def parametric(original_class=None):
         >>> type(obj).mro()
         [Obj[int], Obj, object]
 
-        >>> type_unparametrized(obj).__name__
+        >>> obj.__class_nonparametric__().mro()
         [Obj, object]
         """
         return original_class
