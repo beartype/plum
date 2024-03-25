@@ -1,4 +1,4 @@
-from typing import Union, TypeVar
+from typing import Union, TypeVar, Type
 
 import beartype.door
 from beartype.roar import BeartypeDoorNonpepException
@@ -430,7 +430,7 @@ def type_parameter(x):
     )
 
 
-def type_unparametrized(q: T) -> type[T]:
+def type_unparametrized(q: T) -> Type[T]:
     """Return the unparametrized type of an object.
 
     :mod:`plum.parametric` produces parametric subtypes of classes.  This
