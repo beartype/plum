@@ -336,7 +336,7 @@ document.write(`
                 <article class="bd-article" role="main">
                   
   <h1>Source code for plum.parametric</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Type</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">beartype.door</span>
 <span class="kn">from</span> <span class="nn">beartype.roar</span> <span class="kn">import</span> <span class="n">BeartypeDoorNonpepException</span>
@@ -351,10 +351,13 @@ document.write(`
     <span class="s2">&quot;CovariantMeta&quot;</span><span class="p">,</span>
     <span class="s2">&quot;parametric&quot;</span><span class="p">,</span>
     <span class="s2">&quot;type_parameter&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;type_unparametrized&quot;</span><span class="p">,</span>
     <span class="s2">&quot;kind&quot;</span><span class="p">,</span>
     <span class="s2">&quot;Kind&quot;</span><span class="p">,</span>
     <span class="s2">&quot;Val&quot;</span><span class="p">,</span>
 <span class="p">]</span>
+
+<span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
 
 
 <span class="n">_dispatch</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">()</span>
@@ -612,11 +615,82 @@ document.write(`
             <span class="bp">cls</span><span class="o">.</span><span class="fm">__new__</span> <span class="o">=</span> <span class="n">class_new</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">original_class</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="n">__init_subclass__</span><span class="p">(</span><span class="o">**</span><span class="n">kw_args</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">__class_nonparametric__</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the non-parametric type of an object.</span>
+
+<span class="sd">        :mod:`plum.parametric` produces parametric subtypes of classes. This</span>
+<span class="sd">        method can be used to get the non-parametric type of an object.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; from plum import parametric</span>
+<span class="sd">        &gt;&gt;&gt; @parametric</span>
+<span class="sd">        ... class Obj:</span>
+<span class="sd">        ...     @classmethod</span>
+<span class="sd">        ...     def __infer_type_parameter__(cls, *arg):</span>
+<span class="sd">        ...         return type(arg[0])</span>
+<span class="sd">        ...     def __init__(self, x):</span>
+<span class="sd">        ...         self.x = x</span>
+<span class="sd">        ...     def __repr__(self):</span>
+<span class="sd">        ...         return f&quot;Obj({self.x})&quot;</span>
+
+<span class="sd">        &gt;&gt;&gt; obj = Obj(1)</span>
+<span class="sd">        &gt;&gt;&gt; obj</span>
+<span class="sd">        Obj(1)</span>
+
+<span class="sd">        &gt;&gt;&gt; type(obj).mro()</span>
+<span class="sd">        [Obj[int], Obj, object]</span>
+
+<span class="sd">        &gt;&gt;&gt; obj.__class_nonparametric__().mro()</span>
+<span class="sd">        [Obj, object]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">original_class</span>
+
+    <span class="k">def</span> <span class="nf">__class_unparametrized__</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the unparametrized type of an object.</span>
+
+<span class="sd">        :mod:`plum.parametric` produces parametric subtypes of classes. This</span>
+<span class="sd">        method can be used to get the un-parametrized type of an object.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; from plum import parametric</span>
+<span class="sd">        &gt;&gt;&gt; @parametric</span>
+<span class="sd">        ... class Obj:</span>
+<span class="sd">        ...     @classmethod</span>
+<span class="sd">        ...     def __infer_type_parameter__(cls, *arg):</span>
+<span class="sd">        ...         return type(arg[0])</span>
+<span class="sd">        ...     def __init__(self, x):</span>
+<span class="sd">        ...         self.x = x</span>
+<span class="sd">        ...     def __repr__(self):</span>
+<span class="sd">        ...         return f&quot;Obj({self.x})&quot;</span>
+
+<span class="sd">        &gt;&gt;&gt; obj = Obj(1)</span>
+<span class="sd">        &gt;&gt;&gt; obj</span>
+<span class="sd">        Obj(1)</span>
+
+<span class="sd">        &gt;&gt;&gt; type(obj).__name__</span>
+<span class="sd">        Obj[int]</span>
+
+<span class="sd">        &gt;&gt;&gt; obj.__class_unparametrized__().mro()</span>
+<span class="sd">        [Obj, Obj, object]</span>
+
+<span class="sd">        Note that this is still NOT the &#39;original&#39; non-`parametric`-wrapped</span>
+<span class="sd">        type.  This is the type that is wrapped by :mod:`plum.parametric`, but</span>
+<span class="sd">        without the inferred type parameter(s).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">parametric_class</span>
+
     <span class="c1"># Create parametric class.</span>
     <span class="n">parametric_class</span> <span class="o">=</span> <span class="n">meta</span><span class="p">(</span>
         <span class="n">original_class</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
         <span class="p">(</span><span class="n">original_class</span><span class="p">,),</span>
-        <span class="p">{</span><span class="s2">&quot;__new__&quot;</span><span class="p">:</span> <span class="fm">__new__</span><span class="p">,</span> <span class="s2">&quot;__init_subclass__&quot;</span><span class="p">:</span> <span class="n">__init_subclass__</span><span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;__new__&quot;</span><span class="p">:</span> <span class="fm">__new__</span><span class="p">,</span>
+            <span class="s2">&quot;__init_subclass__&quot;</span><span class="p">:</span> <span class="n">__init_subclass__</span><span class="p">,</span>
+            <span class="s2">&quot;__class_nonparametric__&quot;</span><span class="p">:</span> <span class="n">__class_nonparametric__</span><span class="p">,</span>
+            <span class="s2">&quot;__class_unparametrized__&quot;</span><span class="p">:</span> <span class="n">__class_unparametrized__</span><span class="p">,</span>
+        <span class="p">},</span>
     <span class="p">)</span>
     <span class="n">parametric_class</span><span class="o">.</span><span class="n">_parametric</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">parametric_class</span><span class="o">.</span><span class="n">_concrete</span> <span class="o">=</span> <span class="kc">False</span>
@@ -692,6 +766,44 @@ document.write(`
         <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">` is not a concrete parametric type or an instance of a&quot;</span>
         <span class="sa">f</span><span class="s2">&quot; concrete parametric type.&quot;</span>
     <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="type_unparametrized"><a class="viewcode-back" href="../../api.html#plum.parametric.type_unparametrized">[docs]</a><span class="k">def</span> <span class="nf">type_unparametrized</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the unparametrized type of an object.</span>
+
+<span class="sd">    :mod:`plum.parametric` produces parametric subtypes of classes.  This</span>
+<span class="sd">    function can be used to get the un-parametrized type of an object.</span>
+<span class="sd">    This function also works for normal, :mod:`plum.parametric`-wrapped classes.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; from plum import parametric</span>
+<span class="sd">    &gt;&gt;&gt; @parametric</span>
+<span class="sd">    ... class Obj:</span>
+<span class="sd">    ...     @classmethod</span>
+<span class="sd">    ...     def __infer_type_parameter__(cls, *arg):</span>
+<span class="sd">    ...         return type(arg[0])</span>
+<span class="sd">    ...     def __init__(self, x):</span>
+<span class="sd">    ...         self.x = x</span>
+<span class="sd">    ...     def __repr__(self):</span>
+<span class="sd">    ...         return f&quot;Obj({self.x})&quot;</span>
+
+<span class="sd">    &gt;&gt;&gt; obj = Obj(1)</span>
+<span class="sd">    &gt;&gt;&gt; obj</span>
+<span class="sd">    Obj(1)</span>
+
+<span class="sd">    &gt;&gt;&gt; type(obj).__name__</span>
+<span class="sd">    Obj[int]</span>
+
+<span class="sd">    &gt;&gt;&gt; type_unparametrized(obj).__name__</span>
+<span class="sd">    Obj</span>
+
+<span class="sd">    Note that this is still NOT the &#39;original&#39; non-`parametric`-wrapped type.</span>
+<span class="sd">    This is the type that is wrapped by :mod:`plum.parametric`, but without the</span>
+<span class="sd">    inferred type parameter(s).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">typ</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">q</span><span class="o">.</span><span class="n">__class_unparametrized__</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="n">ParametricTypeMeta</span><span class="p">)</span> <span class="k">else</span> <span class="n">typ</span></div>
 
 
 <div class="viewcode-block" id="kind"><a class="viewcode-back" href="../../api.html#plum.parametric.kind">[docs]</a><span class="k">def</span> <span class="nf">kind</span><span class="p">(</span><span class="n">SuperClass</span><span class="o">=</span><span class="nb">object</span><span class="p">):</span>

@@ -1081,6 +1081,44 @@ parametric type.</p>
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="plum.parametric.type_unparametrized">
+<span class="sig-prename descclassname"><span class="pre">plum.parametric.</span></span><span class="sig-name descname"><span class="pre">type_unparametrized</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">T</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/plum/parametric.html#type_unparametrized"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.parametric.type_unparametrized" title="Permalink to this definition">#</a></dt>
+<dd><p>Return the unparametrized type of an object.</p>
+<p><a class="reference internal" href="#module-plum.parametric" title="plum.parametric"><code class="xref py py-mod docutils literal notranslate"><span class="pre">plum.parametric</span></code></a> produces parametric subtypes of classes.  This
+function can be used to get the un-parametrized type of an object.
+This function also works for normal, <a class="reference internal" href="#module-plum.parametric" title="plum.parametric"><code class="xref py py-mod docutils literal notranslate"><span class="pre">plum.parametric</span></code></a>-wrapped classes.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">parametric</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nd">@parametric</span>
+<span class="gp">... </span><span class="k">class</span> <span class="nc">Obj</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="nd">@classmethod</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">__infer_type_parameter__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">x</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Obj(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="si">}</span><span class="s2">)&quot;</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">obj</span> <span class="o">=</span> <span class="n">Obj</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">obj</span>
+<span class="go">Obj(1)</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+<span class="go">Obj[int]</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">type_unparametrized</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+<span class="go">Obj</span>
+</pre></div>
+</div>
+<p>Note that this is still NOT the ‘original’ non-<cite>parametric</cite>-wrapped type.
+This is the type that is wrapped by <a class="reference internal" href="#module-plum.parametric" title="plum.parametric"><code class="xref py py-mod docutils literal notranslate"><span class="pre">plum.parametric</span></code></a>, but without the
+inferred type parameter(s).</p>
+</dd></dl>
+
 </section>
 <section id="module-plum.promotion">
 <span id="promotion-and-conversion"></span><h2>Promotion and Conversion<a class="headerlink" href="#module-plum.promotion" title="Permalink to this heading">#</a></h2>
