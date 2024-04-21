@@ -122,7 +122,7 @@ def is_in_class(f: Callable) -> bool:
 
 
 def _split_parts(f: Callable) -> List[str]:
-    qualified_name = f.__module__ + "." + f.__qualname__
+    qualified_name = (f.__module__ or "") + "." + f.__qualname__
     return qualified_name.split(".")
 
 

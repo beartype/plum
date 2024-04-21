@@ -47,9 +47,12 @@ monkeypatches `Union.__str__` and `Union.__repr__`.
 >>> activate_union_aliases()
 
 >>> set_union_alias(Scalar, alias="Scalar")
+typing.Union[Scalar]
 ```
 
 After this, `help(add)` now prints the following:
+
+% skip: next  "illustrative only"
 
 ```python
 Help on Function in module __main__:
@@ -83,7 +86,7 @@ If we don't include all of `scalar_types`, we won't see `Scalar`, as desired:
 
 ```python
 >>> Union[tuple(scalar_types[:-1])]
-typing.Union[numpy.int8, numpy.int16, numpy.int32, numpy.int64, numpy.uint8, numpy.uint16, numpy.uint32, numpy.uint64, numpy.float16, numpy.float32, numpy.float64, numpy.float128, numpy.complex64, numpy.complex128, numpy.complex256, bool, object, bytes, str]
+typing.Union[numpy.int8, numpy.int16, numpy.int32, numpy.int64, numpy.uint8, numpy.uint16, numpy.uint32, numpy.uint64, numpy.float16, numpy.float32, numpy.float64, numpy.complex64, numpy.complex128, bool, object, bytes, str]
 ```
 
 You can deactivate union aliases with `deactivate_union_aliases`:
@@ -94,5 +97,5 @@ You can deactivate union aliases with `deactivate_union_aliases`:
 >>> deactivate_union_aliases()
 
 >>> Scalar
-typing.Union[numpy.int8, numpy.int16, numpy.int32, numpy.int64, numpy.uint8, numpy.uint16, numpy.uint32, numpy.uint64, numpy.float16, numpy.float32, numpy.float64, numpy.float128, numpy.complex64, numpy.complex128, numpy.complex256, bool, object, bytes, str, numpy.void]
+typing.Union[numpy.int8, numpy.int16, numpy.int32, numpy.int64, numpy.uint8, numpy.uint16, numpy.uint32, numpy.uint64, numpy.float16, numpy.float32, numpy.float64, numpy.complex64, numpy.complex128, bool, object, bytes, str, numpy.void]
 ```

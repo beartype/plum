@@ -63,7 +63,7 @@ command_line = "-m pytest --verbose test"
 source = ["plum"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests/", "plum"]
+testpaths = ["tests/", "plum", "docs"]
 addopts = [
     "-ra",
     "-p no:doctest",

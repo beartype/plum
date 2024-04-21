@@ -1,5 +1,7 @@
 # Scope of Functions
 
+% skip: start "example code"
+
 Consider the following package design.
 
 `package/__init__.py`:
@@ -111,3 +113,5 @@ NotFoundLookupError: For function `f`, `(1,)` could not be resolved.
 >>> f(1.0)
 'float'
 ```
+
+% skip end

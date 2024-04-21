@@ -22,6 +22,8 @@ This is not necessarily the case for other packages.
 
 For example,
 
+% skip: start  "multipledispatch is not installed or tested"
+
 ```python
 from numbers import Number
 
@@ -62,6 +64,8 @@ Possible fix, define
   f(::Int64, ::Int64)
 ```
 
+% skip: end
+
 Plum handles this correctly.
 
 ```python
@@ -82,10 +86,14 @@ def f(x: int, y: Number):
 ```
 
 ```python
->>> f(1, 1)
-AmbiguousLookupError: For function `f`, `(1, 1)` is ambiguous among the following:
-  Signature(typing.Union[int, numbers.Number], int, implementation=<function f at 0x7fbbe8e3cdc0>) (precedence: 0)
-  Signature(int, numbers.Number, implementation=<function f at 0x7fbbc81813a0>) (precedence: 0)
+>>> try: f(1, 1)
+... except Exception as e: print(f"{type(e).__name__}: {e}")
+AmbiguousLookupError: `f(1, 1)` is ambiguous.
+Candidates:
+    f(x: typing.Union[int, numbers.Number], y: int)                              
+        <function f at ...> @ ~/local/plum/docs/comparison.md:78         
+    f(x: int, y: numbers.Number)                                                 
+        <function f at ...> @ ~/local/plum/docs/comparison.md:83         
 ```
 
 Just to sanity check that things are indeed working correctly:
@@ -103,6 +111,8 @@ Just to sanity check that things are indeed working correctly:
 Plum takes OOP very seriously.
 
 Consider the following snippet:
+
+% skip: start "other multiple-dispatchers are not installed or tested"
 
 ```python
 from multipledispatch import dispatch
@@ -155,6 +165,8 @@ class B(A):
 >>> b.f("1")
 DispatchError: ('f: 0 methods found', (<class '__main__.B'>, <class 'str'>), [])
 ```
+
+% skip: end
 
 This behaviour is undesirable.
 Since `B.f` isn't matched, according to OOP principles, `A.f` should be tried next.

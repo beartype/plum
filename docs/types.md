@@ -65,6 +65,8 @@ Plum achieves performance by caching the dispatch process.
 Unfortunately, efficient caching is not always possible.
 Efficient caching is possible for so-called _faithful_ types.
 
+% skip: next "example only"
+
 ````{admonition} Definition: faithful type
 A type `t` is _faithful_ if, for all `x`, the following is true:
 ```python
@@ -99,10 +101,10 @@ def add_5_unfaithful(x: Literal[1]):
 ```
 
 ```python
->>> %timeit add_5_faithful(1)
+>>> %timeit add_5_faithful(1)  # doctest:+SKIP
 585 ns ± 6.2 ns per loop (mean ± std. dev. of 7 runs, 1,000,000 loops each)
 
->>> %timeit add_5_unfaithful(1)
+>>> %timeit add_5_unfaithful(1)  # doctest:+SKIP
 6.24 µs ± 68.9 ns per loop (mean ± std. dev. of 7 runs, 100,000 loops each)
 ```
 
@@ -122,6 +124,8 @@ False
 If you implement, e.g., a type with a custom `__instancecheck__`, then `is_faithful`
 will detect this and conservatively say that your type is not faithful.
 You can tell Plum whether your type is faithful or not by setting `__faithful__`:
+
+% skip: next
 
 ```python
 ...
@@ -146,6 +150,8 @@ After the dependency is imported, you must clear all cache using `clear_all_cach
 If you do not, due to existing caches, dispatch may behave erroneously.
 ```
 
+% skip: start "requires tensorflow"
+
 Example:
 
 ```python
@@ -160,11 +166,15 @@ def f(x: EagerTensor):
 ```
 
 ```python
->>> f(1)
-NotFoundLookupError: For function `f`, `(1,)` could not be resolved.
+>>> try: f(1)
+... except Exception as e: print(f"{type(e).__name__}: {e}")
+NotFoundLookupError: `f(1)` could not be resolved...
 
->>> f.methods
-[Signature(plum.type.ModuleType[tensorflow.python.framework.ops.EagerTensor], implementation=<function f at 0x7fc2a89a5310>)]
+>>> g.methods
+List of 1 method(s):
+    [0] f(x:                                                                    
+        plum.type.ModuleType[tensorflow.python.framework.ops.EagerTensor])          
+            <function f at ...> @ ...
 
 >>> import tensorflow as tf  # Very slow...
 
@@ -186,6 +196,8 @@ plum.type.ModuleType[tensorflow.python.framework.ops.EagerTensor]
 >>> resolve_type_hint(EagerTensor)
 tensorflow.python.framework.ops.EagerTensor
 ```
+
+% skip: end
 
 (promisedtype)=
 ## `PromisedType`
@@ -226,10 +238,10 @@ You can resolve it to what it points to with `resolve_type_hint`:
 
 ```python
 >>> ProxyInt
-plum.type.PromisedType[SpecialInt]
+<class 'plum.type.PromisedType[SpecialInt]'>
 
 >>> from plum import resolve_type_hint
 
 >>> resolve_type_hint(ProxyInt)
-int
+<class 'int'>
 ```

@@ -6,6 +6,8 @@
 When a return type is not matched, Plum will attempt to convert the result to the 
 right type.
 
+% clear-namespace
+
 ```python
 from typing import Union
 
@@ -21,7 +23,8 @@ def f(x: Union[int, str]) -> int:
 >>> f(1)
 1
 
->>> f("1")
+>>> try: f("1")
+... except Exception as e: print(f"{type(e).__name__}: {e}")
 TypeError: Cannot convert `1` to `int`.
 ```
 
@@ -60,8 +63,9 @@ class Rational:
 >>> convert(0.5, Number)
 0.5
 
->>> convert(Rational(1, 2), Number)
-TypeError: Cannot convert `<__main__.Rational object at 0x7f88f8369310>` to `numbers.Number`.
+>>> try: convert(Rational(1, 2), Number)
+... except Exception as e: print(f"{type(e).__name__}: {e}")
+TypeError: Cannot convert `<Rational object at ...>` to `numbers.Number`.
 ```
 
 The `TypeError` indicates that `convert` does not know how to convert a
@@ -87,12 +91,15 @@ def rational_to_number(q):
 As above, instead of the decorator `conversion_method`, one can also use
 `add_conversion_method`:
 
+% skip: start
 
 ```python
 >>> from plum import add_conversion_method
 
 >>> add_conversion_method(type_from, type_to, conversion_function)
 ```
+
+% skip: end
 
 ## Promotion
 
@@ -124,7 +131,8 @@ def add(x: float, y: float):
 >>> add(1.0, 2.0)
 3.0
 
->>> add(1, 2.0)
+>>> try: add(1, 2.0)
+... except Exception as e: print(f"{type(e).__name__}: {e}")
 TypeError: No promotion rule for `int` and `float`.
 ```
 
@@ -133,7 +141,8 @@ You can add promotion rules with `add_promotion_rule`:
 ```python
 >>> add_promotion_rule(int, float, float)
 
->>> add(1, 2.0)
+>>> try: add(1, 2.0)
+... except Exception as e: print(f"{type(e).__name__}: {e}")
 TypeError: Cannot convert `1` to `float`.
 
 >>> add_conversion_method(type_from=int, type_to=float, f=float)
