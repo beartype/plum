@@ -13,6 +13,7 @@ __all__ = [
     "CovariantMeta",
     "parametric",
     "type_parameter",
+    "type_nonparametric",
     "type_unparametrized",
     "kind",
     "Kind",
@@ -281,7 +282,7 @@ def parametric(original_class=None):
         """Return the non-parametric type of an object.
 
         :mod:`plum.parametric` produces parametric subtypes of classes. This
-        method can be used to get the non-parametric type of an object.
+        method can be used to get the original non-parametric type of an object.
 
         See Also
         --------
@@ -465,6 +466,72 @@ def type_parameter(x):
     raise ValueError(
         f"`{x}` is not a concrete parametric type or an instance of a"
         f" concrete parametric type."
+    )
+
+
+def type_nonparametric(q: T) -> Type[T]:
+    """Return the non-parametric type of an object.
+
+    :mod:`plum.parametric` produces parametric subtypes of classes. This method
+    can be used to get the original non-parametric type of an object.
+
+    See Also
+    --------
+    :func:`plum.type_unparametrized`
+        A function that returns the non-concrete, but still parametric, type of
+        an object.
+
+    Examples
+    --------
+    In this example we will demonstrate how to retrieve the original
+    non-parametric class from a :func:`plum.parametric` decorated class.
+
+    :func:`plum.parametric` defines a parametric class of the same name as the
+    original class, and then creates a subclass of the original class with the
+    type parameter inferred from the arguments of the constructor.
+
+    >>> from plum import parametric
+    >>> class Obj:
+    ...     @classmethod
+    ...     def __infer_type_parameter__(cls, *arg):
+    ...         return type(arg[0])
+    ...     def __init__(self, x):
+    ...         self.x = x
+    ...     def __repr__(self):
+    ...         return f"Obj({self.x})"
+    >>> PObj = parametric(Obj)
+    >>> pobj = PObj(1)
+
+    >>> type(pobj).mro()
+    [<class 'plum.parametric.Obj'>, <class 'plum.parametric.Obj'>,
+        <class 'object'>]
+
+    Note that the class `Obj` appears twice in the MRO. The first one is the
+    parametric class, and the second one is the non-parametric class. The
+    non-parametric class is the original class that was passed to the
+    ``parametric`` decorator.
+
+    Rather than navigating the MRO, we can get the non-parametric class of an
+    object by calling ``type_nonparametric`` function.
+
+    >>> type(pobj) is PObj[int]
+    True
+    >>> type(pobj) is PObj
+    False
+    >>> type(pobj) is Obj
+    False
+
+    >>> type_nonparametric(pobj) is PObj[int]
+    False
+    >>> type_nonparametric(pobj) is PObj
+    False
+    >>> type_nonparametric(pobj) is Obj
+    True
+    """
+    return (
+        q.__class_nonparametric__()
+        if isinstance(type(q), ParametricTypeMeta)
+        else type(q)
     )
 
 
