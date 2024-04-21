@@ -61,12 +61,10 @@ def mul(a: Element, b: SpecialisedElement):
 AmbiguousLookupError: `mul_no_precedence(<ZeroElement object at ...>, <SpecialisedElement 
 object at ...>)` is ambiguous.
 Candidates:
-    mul_no_precedence(a: ZeroElement, b: Element)                                
-        <function mul_no_precedence at ...> @                            
-    ~/local/plum/docs/precedence.md:26                                           
-    mul_no_precedence(a: Element, b: SpecialisedElement)                         
-        <function mul_no_precedence at ...> @                            
-    ~/local/plum/docs/precedence.md:31
+    mul_no_precedence(a: ZeroElement, b: Element)
+        <function mul_no_precedence at ...> @ ...md:26                                           
+    mul_no_precedence(a: Element, b: SpecialisedElement)
+        <function mul_no_precedence at ...> @ ...
 
 >>> mul(zero, specialised_element)
 'zero'

@@ -39,10 +39,10 @@ Then
 ```python
 >>> f.methods  # No implementation for `Number`s!
 List of 2 method(s):
-    [0] f(x: float, y: float)                                                   
-        <function f at ...> @ ~/local/plum/docs/dispatch.md:25          
-    [1] f(x: int, y: int)                                                       
-        <function f at ...> @ ~/local/plum/docs/dispatch.md:31          
+    [0] f(x: float, y: float)
+        <function f at ...> @ ...
+    [1] f(x: int, y: int)
+        <function f at ...> @ ...
 ```
 
 and calling `help(f)` produces
@@ -150,8 +150,8 @@ def add(x: Union[int, float], y: Union[int, float]):
 ... except Exception as e: print(f"{type(e).__name__}: {e}")
 NotFoundLookupError: `add(1, 1.0)` could not be resolved.
 Closest candidates are the following:
-    add(x: int, y: int)                                                         
-        <function add at ...> @ ~/local/plum/docs/dispatch.md:137       
-    add(x: float, y: float)                                                     
-        <function add at ...> @ ~/local/plum/docs/dispatch.md:137       
+    add(x: int, y: int)
+        <function add at ...> @ ...
+    add(x: float, y: float)
+        <function add at ...> @ ...
 ```

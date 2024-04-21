@@ -90,10 +90,10 @@ def f(x: int, y: Number):
 ... except Exception as e: print(f"{type(e).__name__}: {e}")
 AmbiguousLookupError: `f(1, 1)` is ambiguous.
 Candidates:
-    f(x: typing.Union[int, numbers.Number], y: int)                              
-        <function f at ...> @ ~/local/plum/docs/comparison.md:78         
-    f(x: int, y: numbers.Number)                                                 
-        <function f at ...> @ ~/local/plum/docs/comparison.md:83         
+    f(x: typing.Union[int, numbers.Number], y: int)
+        <function f at ...> @ ...
+    f(x: int, y: numbers.Number)
+        <function f at ...> @ ...
 ```
 
 Just to sanity check that things are indeed working correctly:
