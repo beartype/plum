@@ -65,12 +65,11 @@ For a function `f`, all available methods can be obtained with `f.methods`:
 >>> f.methods
 List of 3 method(s):
     [0] f(x: str)                                                               
-        <function f at ...> @ ~/local/plum/docs/basic_usage.md:10       
+        <function f at ...> @ ...
     [1] f(x: int)                                                               
-        <function f at ...> @ ~/local/plum/docs/basic_usage.md:15       
+        <function f at ...> @ ...
     [2] f(x: numbers.Number)                                                    
-        <function f at ...> @ ~/local/plum/docs/basic_usage.md:44       
-<BLANKLINE>
+        <function f at ...> @ ...
 ```
 
 For an excellent and way more detailed overview of multiple dispatch, see the
