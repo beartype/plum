@@ -88,7 +88,7 @@ class Function(metaclass=_FunctionMeta):
 
         # Initialise pending and resolved methods.
         self._pending: List[Tuple[Callable, Optional[Signature], int]] = []
-        self._resolver = Resolver(function_name=self.__name__)
+        self._resolver = Resolver(self.__name__)
         self._resolved: List[Tuple[Callable, Signature, int]] = []
 
     @property
@@ -233,7 +233,7 @@ class Function(metaclass=_FunctionMeta):
 
             # Clear resolved.
             self._resolved = []
-            self._resolver = Resolver()
+            self._resolver = Resolver(self._resolver.function_name)
 
     def register(
         self, f: Callable, signature: Optional[Signature] = None, precedence=0

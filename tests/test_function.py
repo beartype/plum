@@ -612,3 +612,17 @@ def test_bound():
     # Also test that `invoke` is wrapped, like above.
     assert A().do.invoke(int).__doc__ == "Docs"
     assert A.do.invoke(A, int).__doc__ == "Docs"
+
+
+def test_name_after_clearing_cache():
+    dispatch = Dispatcher()
+
+    @dispatch
+    def some_function_name(x: int):
+        pass
+
+    assert some_function_name._resolver.function_name == "some_function_name"
+
+    some_function_name.clear_cache()
+
+    assert some_function_name._resolver.function_name == "some_function_name"
