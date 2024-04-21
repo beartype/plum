@@ -71,6 +71,16 @@ def test_moduletype(module, name, type):
     assert not t.retrieve()
 
 
+def test_moduletype_allow_fail():
+    t_not_allowed = ModuleType("__builtin__", "nonexisting")
+    t_allowed = ModuleType("__builtin__", "nonexisting", allow_fail=True)
+
+    with pytest.raises(AttributeError):
+        t_not_allowed.retrieve()
+
+    assert not t_allowed.retrieve()
+
+
 def test_is_hint():
     assert not _is_hint(int)
     assert _is_hint(typing.Union[int, float])

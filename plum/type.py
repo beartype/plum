@@ -87,28 +87,35 @@ class ModuleType(ResolvableType):
     Args:
         module (str): Module that the type lives in.
         name (str): Name of the type that is promised.
+        allow_fail (bool, optional): If the type is does not exist in `module`,
+            do not raise an `AttributeError`.
     """
 
-    def __init__(self, module, name):
+    def __init__(self, module, name, allow_fail=False):
         if module in {"__builtin__", "__builtins__"}:
             module = "builtins"
         ResolvableType.__init__(self, f"ModuleType[{module}.{name}]")
         self._name = name
         self._module = module
+        self._allow_fail = allow_fail
 
-    def __new__(cls, module, name):
+    def __new__(cls, module, name, allow_fail=False):
         return ResolvableType.__new__(cls, f"ModuleType[{module}.{name}]")
 
     def retrieve(self):
         """Attempt to retrieve the type from the reference module.
 
         Returns:
-            :class:`ModuleType`: `self`.
+            bool: Whether the retrieval succeeded.
         """
         if self._type is None:
             if self._module in sys.modules:
                 type = sys.modules[self._module]
                 for name in self._name.split("."):
+                    # If `type` does not contain `name` and `self._allow_fail` is
+                    # set, then silently fail.
+                    if not hasattr(type, name) and self._allow_fail:
+                        return False
                     type = getattr(type, name)
                 self.deliver(type)
         return self._type is not None
