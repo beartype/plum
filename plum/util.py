@@ -122,8 +122,10 @@ def is_in_class(f: Callable) -> bool:
 
 
 def _split_parts(f: Callable) -> List[str]:
-    qualified_name = (f.__module__ or "") + "." + f.__qualname__
-    return qualified_name.split(".")
+    # Under edge cases, `f.__module__` can be `None`. In this case we skip it.
+    # Otherwise, the fully-qualified name is the module.qual.name.
+    fqn = ("" if f.__module__ is None else f.__module__ + ".") + f.__qualname__
+    return fqn.split(".")
 
 
 def get_class(f: Callable) -> str:
