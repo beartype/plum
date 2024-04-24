@@ -22,7 +22,7 @@ This is not necessarily the case for other packages.
 
 For example,
 
-% skip: start  "multipledispatch is not installed or tested"
+% skip: start "`multipledispatch` is not installed."
 
 ```python
 from numbers import Number
@@ -112,7 +112,7 @@ Plum takes OOP very seriously.
 
 Consider the following snippet:
 
-% skip: start "other multiple-dispatchers are not installed or tested"
+% skip: start "`multipledispatch` and `multimethod` not installed."
 
 ```python
 from multipledispatch import dispatch

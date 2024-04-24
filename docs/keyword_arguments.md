@@ -101,7 +101,7 @@ Is not entirely clear how
 this would work.
 For example, consider the following scenario:
 
-% skip: start "pseudocode"
+% skip: start "Pseudocode"
 
 ```python
 @dispatch

@@ -1,7 +1,5 @@
 """Doctest configuration."""
 
-from __future__ import annotations
-
 from doctest import ELLIPSIS, NORMALIZE_WHITESPACE
 
 import pytest
@@ -20,13 +18,13 @@ OPTIONS = ELLIPSIS | NORMALIZE_WHITESPACE
 def use_clean_dispatcher():
     import plum
 
-    # Save the original dispatcher
+    # Save the original dispatcher.
     dispatcher = plum.dispatch
-    # Swap the dispatcher with a temporary one
+    # Swap the dispatcher with a temporary one.
     temp_dispatcher = plum.Dispatcher()
     plum.dispatch = temp_dispatcher
     yield
-    # Restore the original dispatcher
+    # Restore the original dispatcher.
     plum.dispatch = dispatcher
 
 

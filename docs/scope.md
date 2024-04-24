@@ -1,6 +1,6 @@
 # Scope of Functions
 
-% skip: start "example code"
+% skip: start "Example code"
 
 Consider the following package design.
 

@@ -65,7 +65,7 @@ Plum achieves performance by caching the dispatch process.
 Unfortunately, efficient caching is not always possible.
 Efficient caching is possible for so-called _faithful_ types.
 
-% skip: next "example only"
+% skip: next "Definition"
 
 ````{admonition} Definition: faithful type
 A type `t` is _faithful_ if, for all `x`, the following is true:
@@ -150,7 +150,7 @@ After the dependency is imported, you must clear all cache using `clear_all_cach
 If you do not, due to existing caches, dispatch may behave erroneously.
 ```
 
-% skip: start "requires tensorflow"
+% skip: start "Requires `tensorflow`."
 
 Example:
 
