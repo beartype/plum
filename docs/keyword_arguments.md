@@ -23,8 +23,9 @@ def f(x: int):
 >>> f(1)    # OK
 1
 
->>> f(x=1)  # Not OK
-NotFoundLookupError: For function `f`, `()` could not be resolved.
+>>> try: f(x=1)  # Not OK
+... except Exception as e: print(f"{type(e).__name__}: {e}")
+NotFoundLookupError: `f()` could not be resolved...
 ```
 
 See [below](why) for why this is the case.
@@ -75,19 +76,20 @@ from plum import dispatch
 
 
 @dispatch
-def f(x, *, option="a"):
+def g(x, *, option="a"):
     return option
 ```
 
 ```python
->>> f(1)
+>>> g(1)
 'a'
 
->>> f(1, option="b")
+>>> g(1, option="b")
 'b'
 
->>> f(1, "b")  # This will not work, because `option` must be given as a keyword.
-NotFoundLookupError: For function `f`, `(1, 'b')` could not be resolved.
+>>> try: g(1, "b")  # This will not work, because `option` must be given as a keyword.
+... except Exception as e: print(f"{type(e).__name__}: {e}")
+NotFoundLookupError: `g(1, 'b')` could not be resolved...
 ```
 
 (why)=
@@ -98,6 +100,8 @@ The main reason is that it presents some new challenges.
 Is not entirely clear how
 this would work.
 For example, consider the following scenario:
+
+% skip: start "pseudocode"
 
 ```python
 @dispatch
@@ -139,3 +143,5 @@ and once you position something, the name of the argument becomes irrelevant.
 
 Therefore, if we were to support naming arguments,
 how precisely this would work would have to be spelled out in detail.
+
+% skip: end

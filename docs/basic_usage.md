@@ -29,8 +29,9 @@ We haven't implemented a method for `float`s, so in that case an exception
 will be raised:
 
 ```python
->>> f(1.0)
-NotFoundLookupError: For function `f`, `(1.0,)` could not be resolved.
+>>> try: f(1.0)
+... except Exception as e: print(f"{type(e).__name__}: {e}")
+NotFoundLookupError: `f(1.0)` could not be resolved...
 ```
 
 Instead of implementing a method for `float`s, let's implement a method for
@@ -62,9 +63,13 @@ For a function `f`, all available methods can be obtained with `f.methods`:
 
 ```python
 >>> f.methods
-[Signature(str, implementation=<function f at 0x7f9f6014f160>),
- Signature(int, implementation=<function f at 0x7f9f6029c280>),
- Signature(numbers.Number, implementation=<function f at 0x7f9f801fdf70>)]
+List of 3 method(s):
+    [0] f(x: str)                                                               
+        <function f at ...> @ ...
+    [1] f(x: int)                                                               
+        <function f at ...> @ ...
+    [2] f(x: numbers.Number)                                                    
+        <function f at ...> @ ...
 ```
 
 For an excellent and way more detailed overview of multiple dispatch, see the

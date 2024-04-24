@@ -40,7 +40,8 @@ dev = [
     "jupyter-book",
     "mypy",
     "pyright>=1.1.331",
-    "ruff==0.1.0"
+    "ruff==0.1.0",
+    "sybil",
 ]
 
 [project.urls]
@@ -62,9 +63,12 @@ command_line = "-m pytest --verbose test"
 source = ["plum"]
 
 [tool.pytest.ini_options]
-testpaths = [
-    "tests",
+testpaths = ["tests/", "plum", "docs"]
+addopts = [
+    "-ra",
+    "-p no:doctest",
 ]
+minversion = "6.0"
 
 # Formatting tools
 [tool.black]
