@@ -474,10 +474,14 @@ For example, compare with Julia:</p>
     <span class="k">return</span> <span class="s2">&quot;second&quot;</span>
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="go">AmbiguousLookupError: For function `f`, `(1, 1)` is ambiguous among the following:</span>
-<span class="go">  Signature(typing.Union[int, numbers.Number], int, implementation=&lt;function f at 0x7fbbe8e3cdc0&gt;) (precedence: 0)</span>
-<span class="go">  Signature(int, numbers.Number, implementation=&lt;function f at 0x7fbbc81813a0&gt;) (precedence: 0)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span> <span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="gp">... </span><span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="go">AmbiguousLookupError: `f(1, 1)` is ambiguous.</span>
+<span class="go">Candidates:</span>
+<span class="go">    f(x: typing.Union[int, numbers.Number], y: int)</span>
+<span class="go">        &lt;function f at ...&gt; @ ...</span>
+<span class="go">    f(x: int, y: numbers.Number)</span>
+<span class="go">        &lt;function f at ...&gt; @ ...</span>
 </pre></div>
 </div>
 <p>Just to sanity check that things are indeed working correctly:</p>

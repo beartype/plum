@@ -433,8 +433,11 @@ are defined.</p>
 </div>
 <p>Then</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">methods</span>  <span class="c1"># No implementation for `Number`s!</span>
-<span class="go">[Signature(float, float, implementation=&lt;function f at 0x7f8c4015e9d0&gt;),</span>
-<span class="go"> Signature(int, int, implementation=&lt;function f at 0x7f8c4015ea60&gt;)]</span>
+<span class="go">List of 2 method(s):</span>
+<span class="go">    [0] f(x: float, y: float)</span>
+<span class="go">        &lt;function f at ...&gt; @ ...</span>
+<span class="go">    [1] f(x: int, y: int)</span>
+<span class="go">        &lt;function f at ...&gt; @ ...</span>
 </pre></div>
 </div>
 <p>and calling <code class="docutils literal notranslate"><span class="pre">help(f)</span></code> produces</p>
@@ -526,8 +529,14 @@ package:</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">add</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
 <span class="go">2.0</span>
 
-<span class="gp">&gt;&gt;&gt; </span><span class="n">add</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
-<span class="go">NotFoundLookupError: For function &quot;add&quot;, signature Signature(builtins.int, builtins.float) could not be resolved.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span> <span class="n">add</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+<span class="gp">... </span><span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="go">NotFoundLookupError: `add(1, 1.0)` could not be resolved.</span>
+<span class="go">Closest candidates are the following:</span>
+<span class="go">    add(x: int, y: int)</span>
+<span class="go">        &lt;function add at ...&gt; @ ...</span>
+<span class="go">    add(x: float, y: float)</span>
+<span class="go">        &lt;function add at ...&gt; @ ...</span>
 </pre></div>
 </div>
 </section>

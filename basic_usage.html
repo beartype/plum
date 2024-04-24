@@ -412,8 +412,9 @@ document.write(`
 </div>
 <p>We haven’t implemented a method for <code class="docutils literal notranslate"><span class="pre">float</span></code>s, so in that case an exception
 will be raised:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
-<span class="go">NotFoundLookupError: For function `f`, `(1.0,)` could not be resolved.</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span> <span class="n">f</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="gp">... </span><span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="go">NotFoundLookupError: `f(1.0)` could not be resolved...</span>
 </pre></div>
 </div>
 <p>Instead of implementing a method for <code class="docutils literal notranslate"><span class="pre">float</span></code>s, let’s implement a method for
@@ -437,9 +438,13 @@ The rule of multiple dispatch is that the <em>most specific</em> method is chose
 <p>since an <code class="docutils literal notranslate"><span class="pre">int</span></code> is a <code class="docutils literal notranslate"><span class="pre">Number</span></code>, but a <code class="docutils literal notranslate"><span class="pre">Number</span></code> is not necessarily an <code class="docutils literal notranslate"><span class="pre">int</span></code>.</p>
 <p>For a function <code class="docutils literal notranslate"><span class="pre">f</span></code>, all available methods can be obtained with <code class="docutils literal notranslate"><span class="pre">f.methods</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">methods</span>
-<span class="go">[Signature(str, implementation=&lt;function f at 0x7f9f6014f160&gt;),</span>
-<span class="go"> Signature(int, implementation=&lt;function f at 0x7f9f6029c280&gt;),</span>
-<span class="go"> Signature(numbers.Number, implementation=&lt;function f at 0x7f9f801fdf70&gt;)]</span>
+<span class="go">List of 3 method(s):</span>
+<span class="go">    [0] f(x: str)                                                               </span>
+<span class="go">        &lt;function f at ...&gt; @ ...</span>
+<span class="go">    [1] f(x: int)                                                               </span>
+<span class="go">        &lt;function f at ...&gt; @ ...</span>
+<span class="go">    [2] f(x: numbers.Number)                                                    </span>
+<span class="go">        &lt;function f at ...&gt; @ ...</span>
 </pre></div>
 </div>
 <p>For an excellent and way more detailed overview of multiple dispatch, see the

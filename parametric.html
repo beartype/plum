@@ -416,10 +416,10 @@ document.write(`
 </div>
 <p>You can create a version of <code class="docutils literal notranslate"><span class="pre">A</span></code> with a type parameter using <code class="docutils literal notranslate"><span class="pre">__getindex__</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span>
-<span class="go">__main__.A</span>
+<span class="go">&lt;class &#39;A&#39;&gt;</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">A</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
-<span class="go">__main__.A[builtins.int]</span>
+<span class="go">&lt;class &#39;A[int]&#39;&gt;</span>
 </pre></div>
 </div>
 <p>These types <code class="docutils literal notranslate"><span class="pre">A[int]</span></code> can be regarded as subclasses of <code class="docutils literal notranslate"><span class="pre">A</span></code>:</p>
@@ -430,19 +430,19 @@ document.write(`
 <p>We call <code class="docutils literal notranslate"><span class="pre">A[int]</span></code> a <em>concrete</em> parametric type.
 It is concrete because <code class="docutils literal notranslate"><span class="pre">A[int]</span></code> can be instantiated into an object:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span><span class="p">[</span><span class="nb">int</span><span class="p">](</span><span class="mi">1</span><span class="p">)</span>
-<span class="go">&lt;__main__.A[int] at 0x7feb403d4d90&gt;</span>
+<span class="go">&lt;A[int] object at ...&gt;</span>
 </pre></div>
 </div>
 <p>When you don’t instantiate a concrete parametric type, but try to instantiate <code class="docutils literal notranslate"><span class="pre">A</span></code>
 directly, the type parameter is automatically inferred from the argument:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<span class="go">&lt;__main__.A[int] at 0x7feb6060e370&gt;</span>
+<span class="go">&lt;A[int] object at ...&gt;</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">A</span><span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">)</span>
-<span class="go">&lt;__main__.A[str] at 0x7feb801409d0&gt;</span>
+<span class="go">&lt;A[str] object at ...&gt;</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">A</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
-<span class="go"> &lt;__main__.A[float] at 0x7feb5034be50&gt;</span>
+<span class="go"> &lt;A[float] object at ...&gt;</span>
 </pre></div>
 </div>
 <p>You can use parametric types to perform dispatch:</p>
@@ -474,10 +474,10 @@ can extract the type parameter with <code class="docutils literal notranslate"><
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">type_parameter</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">type_parameter</span><span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span>
-<span class="go">int</span>
+<span class="go">&lt;class &#39;int&#39;&gt;</span>
 
-<span class="gp">&gt;&gt;&gt; </span><span class="n">type_parameter</span><span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="nb">int</span><span class="p">]())</span>
-<span class="go">int</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">type_parameter</span><span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="nb">int</span><span class="p">](</span><span class="mi">1</span><span class="p">))</span>
+<span class="go">&lt;class &#39;int&#39;&gt;</span>
 </pre></div>
 </div>
 </section>
@@ -545,28 +545,32 @@ See also <code class="docutils literal notranslate"><span class="pre">help(param
 <p><code class="docutils literal notranslate"><span class="pre">NTuple</span></code> automatically infers an appropriate type parameter with
 <code class="docutils literal notranslate"><span class="pre">__infer_type_parameter__</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">NTuple</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span>
-<span class="go">&lt;__main__.NTuple[3, int] at 0x7fa9d84ccd00&gt;</span>
+<span class="go">&lt;NTuple[3, int] object at ...&gt;</span>
 </pre></div>
 </div>
 <p>It also validates any given type parameter using <code class="docutils literal notranslate"><span class="pre">__init_type_parameter__</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>     <span class="c1"># OK</span>
-<span class="go">__main__.NTuple[2, int]</span>
+<span class="go">&lt;class &#39;NTuple[2, int]&#39;&gt;</span>
 
-<span class="gp">&gt;&gt;&gt; </span><span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;int&quot;</span><span class="p">]</span>   <span class="c1"># Not OK</span>
-<span class="go">NotFoundLookupError: For function `__init_type_parameter__` of `__main__.NTuple`, `(&lt;class &#39;__main__.NTuple&#39;&gt;, 2, &#39;int&#39;)` could not be resolved.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span> <span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;int&quot;</span><span class="p">]</span>   <span class="c1"># Not OK</span>
+<span class="gp">... </span><span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="go">NotFoundLookupError: `NTuple.__init_type_parameter__(&lt;class &#39;NTuple&#39;&gt;, 2, &#39;int&#39;)` could not be  resolved...</span>
 
-<span class="gp">&gt;&gt;&gt; </span><span class="n">NTuple</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>  <span class="c1"># Also not OK</span>
-<span class="go">NotFoundLookupError: For function `__init_type_parameter__` of `__main__.NTuple`, `(&lt;class &#39;__main__.NTuple&#39;&gt;, None, &lt;class &#39;int&#39;&gt;)` could not be resolved.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span> <span class="n">NTuple</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>  <span class="c1"># Also not OK</span>
+<span class="gp">... </span><span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="go">NotFoundLookupError: `NTuple.__init_type_parameter__(&lt;class &#39;NTuple&#39;&gt;, None, &lt;class &#39;int&#39;&gt;)` could not be resolved...</span>
 </pre></div>
 </div>
 <p>Given a valid type parameter, it validates the arguments:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="nb">int</span><span class="p">](</span><span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">)</span>
-<span class="go">&lt;__main__.NTuple[2, int] at 0x7fa9780a7d30&gt;</span>
+<span class="go">&lt;NTuple[2, int] object at ...&gt;</span>
 
-<span class="gp">&gt;&gt;&gt; </span><span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="nb">int</span><span class="p">](</span><span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span> 
+<span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span> <span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="nb">int</span><span class="p">](</span><span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span>
+<span class="gp">... </span><span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="go">ValueError: Incorrect arguments!</span>
 
-<span class="gp">&gt;&gt;&gt; </span><span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="nb">int</span><span class="p">](</span><span class="mi">10</span><span class="p">,</span> <span class="s2">&quot;11&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span> <span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="nb">int</span><span class="p">](</span><span class="mi">10</span><span class="p">,</span> <span class="s2">&quot;11&quot;</span><span class="p">)</span>
+<span class="gp">... </span><span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="go">ValueError: Incorrect arguments!</span>
 </pre></div>
 </div>
@@ -593,7 +597,7 @@ make a parametric wrapper object:</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">this</span> <span class="o">=</span> <span class="n">Kind</span><span class="p">[</span><span class="s2">&quot;This&quot;</span><span class="p">](</span><span class="mi">1</span><span class="p">)</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">this</span>
-<span class="go">&lt;plum.parametric.Kind[&#39;This&#39;] at 0x7fd6b861b520&gt;</span>
+<span class="go">&lt;plum.parametric.Kind[&#39;This&#39;] object at ...&gt;</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">this</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
 <span class="go">1</span>
@@ -601,7 +605,7 @@ make a parametric wrapper object:</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">that</span> <span class="o">=</span> <span class="n">Kind</span><span class="p">[</span><span class="s2">&quot;That&quot;</span><span class="p">](</span><span class="s2">&quot;some&quot;</span><span class="p">,</span> <span class="s2">&quot;args&quot;</span><span class="p">,</span> <span class="s2">&quot;here&quot;</span><span class="p">)</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">that</span>
-<span class="go">&lt;plum.parametric.Kind[&#39;That&#39;] at 0x7fd6b00d6850&gt;</span>
+<span class="go">&lt;plum.parametric.Kind[&#39;That&#39;] object at ...&gt;</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">that</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
 <span class="go">(&#39;some&#39;, &#39;args&#39;, &#39;here&#39;)</span>

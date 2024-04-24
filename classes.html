@@ -402,7 +402,6 @@ document.write(`
 <p>You can use dispatch within classes:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span>
 
-
 <span class="k">class</span> <span class="nc">Real</span><span class="p">:</span>
    <span class="nd">@dispatch</span>
    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
@@ -446,7 +445,7 @@ document.write(`
 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">a</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;1&quot;</span>  <span class="c1"># OK</span>
 
-<span class="gp">&gt;&gt;&gt; </span><span class="n">a</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="mi">1</span>    <span class="c1"># Not OK</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="mi">1</span>    <span class="c1"># Not OK  </span>
 <span class="go">NotFoundLookupError: For function `name` of `__main__.MyClass`, `(&lt;__main__.MyClass object at 0x7f8cb8813eb0&gt;, 1)` could not be resolved.</span>
 </pre></div>
 </div>

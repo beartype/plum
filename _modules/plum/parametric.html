@@ -621,11 +621,25 @@ document.write(`
 <span class="sd">        :mod:`plum.parametric` produces parametric subtypes of classes. This</span>
 <span class="sd">        method can be used to get the non-parametric type of an object.</span>
 
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        :func:`plum.type_nonparametric`</span>
+<span class="sd">            The more-user-friendly function equivalent of this method.</span>
+<span class="sd">        :func:`plum.type_unparametrized`</span>
+<span class="sd">            A function that returns the non-concrete, but still parametric, type</span>
+<span class="sd">            of an object.</span>
+
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
+<span class="sd">        In this example we will demonstrate how to retrieve the original</span>
+<span class="sd">        non-parametric class from a :func:`plum.parametric` decorated class.</span>
+
+<span class="sd">        :func:`plum.parametric` defines a parametric class of the same name as</span>
+<span class="sd">        the original class, and then creates a subclass of the original class</span>
+<span class="sd">        with the type parameter inferred from the arguments of the constructor.</span>
+
 <span class="sd">        &gt;&gt;&gt; from plum import parametric</span>
-<span class="sd">        &gt;&gt;&gt; @parametric</span>
-<span class="sd">        ... class Obj:</span>
+<span class="sd">        &gt;&gt;&gt; class Obj:</span>
 <span class="sd">        ...     @classmethod</span>
 <span class="sd">        ...     def __infer_type_parameter__(cls, *arg):</span>
 <span class="sd">        ...         return type(arg[0])</span>
@@ -633,16 +647,22 @@ document.write(`
 <span class="sd">        ...         self.x = x</span>
 <span class="sd">        ...     def __repr__(self):</span>
 <span class="sd">        ...         return f&quot;Obj({self.x})&quot;</span>
+<span class="sd">        &gt;&gt;&gt; PObj = parametric(Obj)</span>
 
-<span class="sd">        &gt;&gt;&gt; obj = Obj(1)</span>
-<span class="sd">        &gt;&gt;&gt; obj</span>
-<span class="sd">        Obj(1)</span>
+<span class="sd">        &gt;&gt;&gt; PObj.mro()</span>
+<span class="sd">        [&lt;class &#39;plum.parametric.Obj&#39;&gt;, &lt;class &#39;plum.parametric.Obj&#39;&gt;,</span>
+<span class="sd">         &lt;class &#39;object&#39;&gt;]</span>
 
-<span class="sd">        &gt;&gt;&gt; type(obj).mro()</span>
-<span class="sd">        [Obj[int], Obj, object]</span>
+<span class="sd">        Note that the class `Obj` appears twice in the MRO. The first one is the</span>
+<span class="sd">        parametric class, and the second one is the non-parametric class. The</span>
+<span class="sd">        non-parametric class is the original class that was passed to the</span>
+<span class="sd">        ``parametric`` decorator.</span>
 
-<span class="sd">        &gt;&gt;&gt; obj.__class_nonparametric__().mro()</span>
-<span class="sd">        [Obj, object]</span>
+<span class="sd">        Rather than navigating the MRO, we can get the non-parametric class of</span>
+<span class="sd">        an object by calling the ``__class_nonparametric__`` method.</span>
+
+<span class="sd">        &gt;&gt;&gt; PObj(1).__class_nonparametric__() is Obj</span>
+<span class="sd">        True</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">original_class</span>
 
@@ -652,11 +672,24 @@ document.write(`
 <span class="sd">        :mod:`plum.parametric` produces parametric subtypes of classes. This</span>
 <span class="sd">        method can be used to get the un-parametrized type of an object.</span>
 
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        :func:`plum.type_unparametrized`</span>
+<span class="sd">            The more-user-friendly function equivalent of this method.</span>
+<span class="sd">        :func:`plum.type_nonparametric`</span>
+<span class="sd">            A function to get the non-parametric type of an object.</span>
+
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
+<span class="sd">        In this example we will demonstrate how to retrieve the original</span>
+<span class="sd">        non-parametric class from a :func:`plum.parametric` decorated class.</span>
+
+<span class="sd">        :func:`plum.parametric` defines a parametric class of the same name as</span>
+<span class="sd">        the original class, and then creates a subclass of the original class</span>
+<span class="sd">        with the type parameter inferred from the arguments of the constructor.</span>
+
 <span class="sd">        &gt;&gt;&gt; from plum import parametric</span>
-<span class="sd">        &gt;&gt;&gt; @parametric</span>
-<span class="sd">        ... class Obj:</span>
+<span class="sd">        &gt;&gt;&gt; class Obj:</span>
 <span class="sd">        ...     @classmethod</span>
 <span class="sd">        ...     def __infer_type_parameter__(cls, *arg):</span>
 <span class="sd">        ...         return type(arg[0])</span>
@@ -664,20 +697,25 @@ document.write(`
 <span class="sd">        ...         self.x = x</span>
 <span class="sd">        ...     def __repr__(self):</span>
 <span class="sd">        ...         return f&quot;Obj({self.x})&quot;</span>
+<span class="sd">        &gt;&gt;&gt; PObj = parametric(Obj)</span>
 
-<span class="sd">        &gt;&gt;&gt; obj = Obj(1)</span>
-<span class="sd">        &gt;&gt;&gt; obj</span>
-<span class="sd">        Obj(1)</span>
+<span class="sd">        &gt;&gt;&gt; PObj.mro()</span>
+<span class="sd">        [&lt;class &#39;plum.parametric.Obj&#39;&gt;, &lt;class &#39;plum.parametric.Obj&#39;&gt;,</span>
+<span class="sd">         &lt;class &#39;object&#39;&gt;]</span>
 
-<span class="sd">        &gt;&gt;&gt; type(obj).__name__</span>
-<span class="sd">        Obj[int]</span>
+<span class="sd">        Note that the class `Obj` appears twice in the MRO. The first one is the</span>
+<span class="sd">        non-concrete parametric class, and the second one is the non-parametric</span>
+<span class="sd">        class. Rather than navigating the MRO, we can get the non-concrete</span>
+<span class="sd">        parametric class of an object by calling the</span>
+<span class="sd">        ``__class_unparametrized__`` method.</span>
 
-<span class="sd">        &gt;&gt;&gt; obj.__class_unparametrized__().mro()</span>
-<span class="sd">        [Obj, Obj, object]</span>
+<span class="sd">        &gt;&gt;&gt; PObj(1).__class_unparametrized__() is PObj</span>
+<span class="sd">        True</span>
 
-<span class="sd">        Note that this is still NOT the &#39;original&#39; non-`parametric`-wrapped</span>
-<span class="sd">        type.  This is the type that is wrapped by :mod:`plum.parametric`, but</span>
-<span class="sd">        without the inferred type parameter(s).</span>
+<span class="sd">        Note that this is still NOT the &#39;original&#39;</span>
+<span class="sd">        non-:func:`plum.parametric`-wrapped type.  This is the type that is</span>
+<span class="sd">        wrapped by :mod:`plum.parametric`, but without the inferred type</span>
+<span class="sd">        parameter(s).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">parametric_class</span>
 
@@ -775,11 +813,22 @@ document.write(`
 <span class="sd">    function can be used to get the un-parametrized type of an object.</span>
 <span class="sd">    This function also works for normal, :mod:`plum.parametric`-wrapped classes.</span>
 
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    :func:`plum.type_nonparametric`</span>
+<span class="sd">        A function to get the non-parametric type of an object.</span>
+
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
+<span class="sd">    In this example we will demonstrate how to retrieve the original</span>
+<span class="sd">    non-parametric class from a :func:`plum.parametric` decorated class.</span>
+
+<span class="sd">    :func:`plum.parametric` defines a parametric class of the same name as</span>
+<span class="sd">    the original class, and then creates a subclass of the original class</span>
+<span class="sd">    with the type parameter inferred from the arguments of the constructor.</span>
+
 <span class="sd">    &gt;&gt;&gt; from plum import parametric</span>
-<span class="sd">    &gt;&gt;&gt; @parametric</span>
-<span class="sd">    ... class Obj:</span>
+<span class="sd">    &gt;&gt;&gt; class Obj:</span>
 <span class="sd">    ...     @classmethod</span>
 <span class="sd">    ...     def __infer_type_parameter__(cls, *arg):</span>
 <span class="sd">    ...         return type(arg[0])</span>
@@ -787,20 +836,37 @@ document.write(`
 <span class="sd">    ...         self.x = x</span>
 <span class="sd">    ...     def __repr__(self):</span>
 <span class="sd">    ...         return f&quot;Obj({self.x})&quot;</span>
+<span class="sd">    &gt;&gt;&gt; PObj = parametric(Obj)</span>
+<span class="sd">    &gt;&gt;&gt; pobj = PObj(1)</span>
 
-<span class="sd">    &gt;&gt;&gt; obj = Obj(1)</span>
-<span class="sd">    &gt;&gt;&gt; obj</span>
-<span class="sd">    Obj(1)</span>
+<span class="sd">    &gt;&gt;&gt; type(pobj).mro()</span>
+<span class="sd">    [&lt;class &#39;plum.parametric.Obj[int]&#39;&gt;, &lt;class &#39;plum.parametric.Obj&#39;&gt;,</span>
+<span class="sd">     &lt;class &#39;plum.parametric.Obj&#39;&gt;, &lt;class &#39;object&#39;&gt;]</span>
 
-<span class="sd">    &gt;&gt;&gt; type(obj).__name__</span>
-<span class="sd">    Obj[int]</span>
+<span class="sd">    Note that the class `Obj` appears twice in the MRO. The first one is the</span>
+<span class="sd">    non-concrete parametric class, and the second one is the non-parametric</span>
+<span class="sd">    class. Rather than navigating the MRO, we can get the non-concrete</span>
+<span class="sd">    parametric class of an object by calling the</span>
+<span class="sd">    ``type_unparametrized`` function.</span>
 
-<span class="sd">    &gt;&gt;&gt; type_unparametrized(obj).__name__</span>
-<span class="sd">    Obj</span>
+<span class="sd">    &gt;&gt;&gt; type(pobj) is PObj[int]</span>
+<span class="sd">    True</span>
+<span class="sd">    &gt;&gt;&gt; type(pobj) is PObj</span>
+<span class="sd">    False</span>
+<span class="sd">    &gt;&gt;&gt; type(pobj) is Obj</span>
+<span class="sd">    False</span>
 
-<span class="sd">    Note that this is still NOT the &#39;original&#39; non-`parametric`-wrapped type.</span>
-<span class="sd">    This is the type that is wrapped by :mod:`plum.parametric`, but without the</span>
-<span class="sd">    inferred type parameter(s).</span>
+<span class="sd">    &gt;&gt;&gt; type_unparametrized(pobj) is PObj[int]</span>
+<span class="sd">    False</span>
+<span class="sd">    &gt;&gt;&gt; type_unparametrized(pobj) is PObj</span>
+<span class="sd">    True</span>
+<span class="sd">    &gt;&gt;&gt; type_unparametrized(pobj) is Obj</span>
+<span class="sd">    False</span>
+
+<span class="sd">    Note that this is still NOT the &#39;original&#39;</span>
+<span class="sd">    non-:func:`plum.parametric`-wrapped type.  This is the type that is</span>
+<span class="sd">    wrapped by :mod:`plum.parametric`, but without the inferred type</span>
+<span class="sd">    parameter(s).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">typ</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">q</span><span class="o">.</span><span class="n">__class_unparametrized__</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="n">ParametricTypeMeta</span><span class="p">)</span> <span class="k">else</span> <span class="n">typ</span></div>

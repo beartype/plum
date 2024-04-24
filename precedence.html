@@ -439,10 +439,15 @@ Method precendence is a powerful tool that can be used to simplify more complica
 <span class="gp">&gt;&gt;&gt; </span><span class="n">mul</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">specialised_element</span><span class="p">)</span>
 <span class="go">&#39;specialised operation&#39;</span>
 
-<span class="gp">&gt;&gt;&gt; </span><span class="n">mul_no_precedence</span><span class="p">(</span><span class="n">zero</span><span class="p">,</span> <span class="n">specialised_element</span><span class="p">)</span>
-<span class="go">AmbiguousLookupError: For function `mul_no_precedence`, `(&lt;__main__.ZeroElement object at 0x7feb80140d00&gt;, &lt;__main__.SpecialisedElement object at 0x7feb605abfd0&gt;)` is ambiguous among the following:</span>
-<span class="go">  Signature(__main__.ZeroElement, __main__.Element, implementation=&lt;function mul_no_precedence at 0x7feb6066a700&gt;) (precedence: 0)</span>
-<span class="go">  Signature(__main__.Element, __main__.SpecialisedElement, implementation=&lt;function mul_no_precedence at 0x7feb3000f670&gt;) (precedence: 0)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span> <span class="n">mul_no_precedence</span><span class="p">(</span><span class="n">zero</span><span class="p">,</span> <span class="n">specialised_element</span><span class="p">)</span>
+<span class="gp">... </span><span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="go">AmbiguousLookupError: `mul_no_precedence(&lt;ZeroElement object at ...&gt;, &lt;SpecialisedElement </span>
+<span class="go">object at ...&gt;)` is ambiguous.</span>
+<span class="go">Candidates:</span>
+<span class="go">    mul_no_precedence(a: ZeroElement, b: Element)</span>
+<span class="go">        &lt;function mul_no_precedence at ...&gt; @ ...md:26                                           </span>
+<span class="go">    mul_no_precedence(a: Element, b: SpecialisedElement)</span>
+<span class="go">        &lt;function mul_no_precedence at ...&gt; @ ...</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">mul</span><span class="p">(</span><span class="n">zero</span><span class="p">,</span> <span class="n">specialised_element</span><span class="p">)</span>
 <span class="go">&#39;zero&#39;</span>

@@ -460,8 +460,10 @@ document.write(`
 
 
 <span class="k">def</span> <span class="nf">_split_parts</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-    <span class="n">qualified_name</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="n">f</span><span class="o">.</span><span class="vm">__qualname__</span>
-    <span class="k">return</span> <span class="n">qualified_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+    <span class="c1"># Under edge cases, `f.__module__` can be `None`. In this case we skip it.</span>
+    <span class="c1"># Otherwise, the fully-qualified name is the module.qual.name.</span>
+    <span class="n">fqn</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="vm">__module__</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">f</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">f</span><span class="o">.</span><span class="vm">__qualname__</span>
+    <span class="k">return</span> <span class="n">fqn</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="get_class"><a class="viewcode-back" href="../../api.html#plum.util.get_class">[docs]</a><span class="k">def</span> <span class="nf">get_class</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>

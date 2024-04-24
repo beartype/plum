@@ -489,10 +489,10 @@ unfaithful types cannot use caching and will therefore be less performant.</p>
     <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="mi">5</span>
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="o">%</span><span class="n">timeit</span> <span class="n">add_5_faithful</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="o">%</span><span class="n">timeit</span> <span class="n">add_5_faithful</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  
 <span class="go">585 ns ± 6.2 ns per loop (mean ± std. dev. of 7 runs, 1,000,000 loops each)</span>
 
-<span class="gp">&gt;&gt;&gt; </span><span class="o">%</span><span class="n">timeit</span> <span class="n">add_5_unfaithful</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="o">%</span><span class="n">timeit</span> <span class="n">add_5_unfaithful</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  
 <span class="go">6.24 µs ± 68.9 ns per loop (mean ± std. dev. of 7 runs, 100,000 loops each)</span>
 </pre></div>
 </div>
@@ -542,11 +542,15 @@ If you do not, due to existing caches, dispatch may behave erroneously.</p>
     <span class="k">return</span> <span class="s2">&quot;An eager TF tensor!&quot;</span>
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<span class="go">NotFoundLookupError: For function `f`, `(1,)` could not be resolved.</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span> <span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">... </span><span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="go">NotFoundLookupError: `f(1)` could not be resolved...</span>
 
-<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">methods</span>
-<span class="go">[Signature(plum.type.ModuleType[tensorflow.python.framework.ops.EagerTensor], implementation=&lt;function f at 0x7fc2a89a5310&gt;)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">g</span><span class="o">.</span><span class="n">methods</span>
+<span class="go">List of 1 method(s):</span>
+<span class="go">    [0] f(x:                                                                    </span>
+<span class="go">        plum.type.ModuleType[tensorflow.python.framework.ops.EagerTensor])          </span>
+<span class="go">            &lt;function f at ...&gt; @ ...</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>  <span class="c1"># Very slow...</span>
 
@@ -601,12 +605,12 @@ before the dependency is delivered.</p>
 the object <code class="docutils literal notranslate"><span class="pre">ProxyInt</span></code> is a <code class="docutils literal notranslate"><span class="pre">type</span></code>.
 You can resolve it to what it points to with <code class="docutils literal notranslate"><span class="pre">resolve_type_hint</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ProxyInt</span>
-<span class="go">plum.type.PromisedType[SpecialInt]</span>
+<span class="go">&lt;class &#39;plum.type.PromisedType[SpecialInt]&#39;&gt;</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">resolve_type_hint</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">ProxyInt</span><span class="p">)</span>
-<span class="go">int</span>
+<span class="go">&lt;class &#39;int&#39;&gt;</span>
 </pre></div>
 </div>
 </section>

@@ -19,10 +19,10 @@ You can create a version of `A` with a type parameter using `__getindex__`:
 
 ```python
 >>> A
-__main__.A
+<class 'A'>
 
 >>> A[int]
-__main__.A[builtins.int]
+<class 'A[int]'>
 ```
 
 These types `A[int]` can be regarded as subclasses of `A`:
@@ -37,7 +37,7 @@ It is concrete because `A[int]` can be instantiated into an object:
 
 ```python
 >>> A[int](1)
-<__main__.A[int] at 0x7feb403d4d90>
+<A[int] object at ...>
 ```
 
 When you don't instantiate a concrete parametric type, but try to instantiate `A`
@@ -45,13 +45,13 @@ directly, the type parameter is automatically inferred from the argument:
 
 ```python
 >>> A(1)
-<__main__.A[int] at 0x7feb6060e370>
+<A[int] object at ...>
 
 >>> A("1")
-<__main__.A[str] at 0x7feb801409d0>
+<A[str] object at ...>
 
 >>> A(1.0)
- <__main__.A[float] at 0x7feb5034be50>
+ <A[float] object at ...>
 ```
 
 You can use parametric types to perform dispatch:
@@ -89,10 +89,10 @@ can extract the type parameter with `type_parameter`:
 >>> from plum import type_parameter
 
 >>> type_parameter(A[int])
-int
+<class 'int'>
 
->>> type_parameter(A[int]())
-int
+>>> type_parameter(A[int](1))
+<class 'int'>
 ```
 
 ## Customisation
@@ -152,32 +152,36 @@ class NTuple:
 
 ```python
 >>> NTuple(10, 11, 12)
-<__main__.NTuple[3, int] at 0x7fa9d84ccd00>
+<NTuple[3, int] object at ...>
 ```
 
 It also validates any given type parameter using `__init_type_parameter__`:
 
 ```python
 >>> NTuple[2, int]     # OK
-__main__.NTuple[2, int]
+<class 'NTuple[2, int]'>
 
->>> NTuple[2, "int"]   # Not OK
-NotFoundLookupError: For function `__init_type_parameter__` of `__main__.NTuple`, `(<class '__main__.NTuple'>, 2, 'int')` could not be resolved.
+>>> try: NTuple[2, "int"]   # Not OK
+... except Exception as e: print(f"{type(e).__name__}: {e}")
+NotFoundLookupError: `NTuple.__init_type_parameter__(<class 'NTuple'>, 2, 'int')` could not be  resolved...
 
->>> NTuple[None, int]  # Also not OK
-NotFoundLookupError: For function `__init_type_parameter__` of `__main__.NTuple`, `(<class '__main__.NTuple'>, None, <class 'int'>)` could not be resolved.
+>>> try: NTuple[None, int]  # Also not OK
+... except Exception as e: print(f"{type(e).__name__}: {e}")
+NotFoundLookupError: `NTuple.__init_type_parameter__(<class 'NTuple'>, None, <class 'int'>)` could not be resolved...
 ```
 
 Given a valid type parameter, it validates the arguments:
 
 ```python
 >>> NTuple[2, int](10, 11)
-<__main__.NTuple[2, int] at 0x7fa9780a7d30>
+<NTuple[2, int] object at ...>
 
->>> NTuple[2, int](10, 11, 12) 
+>>> try: NTuple[2, int](10, 11, 12)
+... except Exception as e: print(f"{type(e).__name__}: {e}")
 ValueError: Incorrect arguments!
 
->>> NTuple[2, int](10, "11")
+>>> try: NTuple[2, int](10, "11")
+... except Exception as e: print(f"{type(e).__name__}: {e}")
 ValueError: Incorrect arguments!
 ```
 
@@ -206,7 +210,7 @@ make a parametric wrapper object:
 >>> this = Kind["This"](1)
 
 >>> this
-<plum.parametric.Kind['This'] at 0x7fd6b861b520>
+<plum.parametric.Kind['This'] object at ...>
 
 >>> this.get()
 1
@@ -214,7 +218,7 @@ make a parametric wrapper object:
 >>> that = Kind["That"]("some", "args", "here")
 
 >>> that
-<plum.parametric.Kind['That'] at 0x7fd6b00d6850>
+<plum.parametric.Kind['That'] object at ...>
 
 >>> that.get()
 ('some', 'args', 'here')

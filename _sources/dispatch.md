@@ -38,8 +38,11 @@ Then
 
 ```python
 >>> f.methods  # No implementation for `Number`s!
-[Signature(float, float, implementation=<function f at 0x7f8c4015e9d0>),
- Signature(int, int, implementation=<function f at 0x7f8c4015ea60>)]
+List of 2 method(s):
+    [0] f(x: float, y: float)
+        <function f at ...> @ ...
+    [1] f(x: int, y: int)
+        <function f at ...> @ ...
 ```
 
 and calling `help(f)` produces
@@ -68,6 +71,8 @@ f(x: numbers.Number, y: numbers.Number)
 `Function.dispatch` can be used to extend a particular function from an external
 package:
 
+% skip: start "`package` is not a real package"
+
 ```python
 from package import f
 
@@ -84,6 +89,8 @@ def f(x: int):
 >>> f(1)
 'new behaviour'
 ```
+
+% skip: end
 
 ## Directly Invoke a Method
 
@@ -139,6 +146,12 @@ def add(x: Union[int, float], y: Union[int, float]):
 >>> add(1.0, 1.0)
 2.0
 
->>> add(1, 1.0)
-NotFoundLookupError: For function "add", signature Signature(builtins.int, builtins.float) could not be resolved.
+>>> try: add(1, 1.0)
+... except Exception as e: print(f"{type(e).__name__}: {e}")
+NotFoundLookupError: `add(1, 1.0)` could not be resolved.
+Closest candidates are the following:
+    add(x: int, y: int)
+        <function add at ...> @ ...
+    add(x: float, y: float)
+        <function add at ...> @ ...
 ```

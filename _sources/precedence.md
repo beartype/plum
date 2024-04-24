@@ -56,10 +56,15 @@ def mul(a: Element, b: SpecialisedElement):
 >>> mul(element, specialised_element)
 'specialised operation'
 
->>> mul_no_precedence(zero, specialised_element)
-AmbiguousLookupError: For function `mul_no_precedence`, `(<__main__.ZeroElement object at 0x7feb80140d00>, <__main__.SpecialisedElement object at 0x7feb605abfd0>)` is ambiguous among the following:
-  Signature(__main__.ZeroElement, __main__.Element, implementation=<function mul_no_precedence at 0x7feb6066a700>) (precedence: 0)
-  Signature(__main__.Element, __main__.SpecialisedElement, implementation=<function mul_no_precedence at 0x7feb3000f670>) (precedence: 0)
+>>> try: mul_no_precedence(zero, specialised_element)
+... except Exception as e: print(f"{type(e).__name__}: {e}")
+AmbiguousLookupError: `mul_no_precedence(<ZeroElement object at ...>, <SpecialisedElement 
+object at ...>)` is ambiguous.
+Candidates:
+    mul_no_precedence(a: ZeroElement, b: Element)
+        <function mul_no_precedence at ...> @ ...md:26                                           
+    mul_no_precedence(a: Element, b: SpecialisedElement)
+        <function mul_no_precedence at ...> @ ...
 
 >>> mul(zero, specialised_element)
 'zero'

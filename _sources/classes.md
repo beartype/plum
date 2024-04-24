@@ -5,7 +5,6 @@ You can use dispatch within classes:
 ```python
 from plum import dispatch
 
-
 class Real:
    @dispatch
    def __add__(self, other: int):
@@ -54,7 +53,7 @@ class MyClass:
 
 >>> a.name = "1"  # OK
 
->>> a.name = 1    # Not OK
+>>> a.name = 1    # Not OK  # doctest:+SKIP
 NotFoundLookupError: For function `name` of `__main__.MyClass`, `(<__main__.MyClass object at 0x7f8cb8813eb0>, 1)` could not be resolved.
 ```
 
@@ -75,6 +74,8 @@ class Real:
 ```
 
 If we try to run this, we get the following error:
+
+% skip: next
 
 ```python
 NameError                                 Traceback (most recent call last)
