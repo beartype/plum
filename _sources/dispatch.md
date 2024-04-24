@@ -71,7 +71,7 @@ f(x: numbers.Number, y: numbers.Number)
 `Function.dispatch` can be used to extend a particular function from an external
 package:
 
-% skip: start "`package` is not a real package"
+% skip: start "`package` is not a real package."
 
 ```python
 from package import f
