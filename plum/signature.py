@@ -4,9 +4,10 @@ import typing
 from copy import copy
 from typing import Callable, List, Set, Tuple, Union
 
+from rich.segment import Segment
+
 import beartype.door
 from beartype.peps import resolve_pep563 as beartype_resolve_pep563
-from rich.segment import Segment
 
 from . import _is_bearable
 from .repr import repr_short, rich_repr
@@ -267,9 +268,7 @@ def inspect_signature(f) -> inspect.Signature:
     Returns:
         object: Signature.
     """
-    if isinstance(f, operator.itemgetter):
-        f = wrap_lambda(f)
-    elif isinstance(f, operator.attrgetter):
+    if isinstance(f, (operator.itemgetter, operator.attrgetter)):
         f = wrap_lambda(f)
     return inspect.signature(f)
 
@@ -329,12 +328,13 @@ def _extract_signature(f: Callable, precedence: int = 0) -> Signature:
             types.append(annotation)
 
         # If there is a default parameter, make sure that it is of the annotated type.
-        if p.default is not inspect.Parameter.empty:
-            if not _is_bearable(p.default, annotation):
-                raise TypeError(
-                    f"Default value `{p.default}` is not an instance "
-                    f"of the annotated type `{repr_short(annotation)}`."
-                )
+        if (p.default is not inspect.Parameter.empty) and not _is_bearable(
+            p.default, annotation
+        ):
+            raise TypeError(
+                f"Default value `{p.default}` is not an instance "
+                f"of the annotated type `{repr_short(annotation)}`."
+            )
 
     return types, varargs
 

@@ -1,9 +1,9 @@
 from typing import Tuple
 
 import numpy as np
+from tests.util import benchmark
 
 from plum import Dispatcher, dispatch
-from tests.util import benchmark
 
 
 def f(x):
@@ -25,8 +25,8 @@ dur_plum = benchmark(g, (1,), n=1000, burn=10)
 factor = int(np.round(dur_plum / dur_native))
 
 print("# Function Calls")
-print("Native call: {:6.2f} us ({:.1f} x)".format(dur_native, 1))
-print("Plum call:   {:6.2f} us ({:.1f} x)".format(dur_plum, factor))
+print(f"Native call: {dur_native:6.2f} us ({1:.1f} x)")
+print(f"Plum call:   {dur_plum:6.2f} us ({factor:.1f} x)")
 print()
 
 
@@ -49,8 +49,8 @@ dur_plum = benchmark(g2, ((1,),), n=1000, burn=10)
 factor = int(np.round(dur_plum / dur_native))
 
 print("# Parametric Function Calls")
-print("Native call: {:6.2f} us ({:.1f} x)".format(dur_native, 1))
-print("Plum call:   {:6.2f} us ({:.1f} x)".format(dur_plum, factor))
+print(f"Native call: {dur_native:6.2f} us ({1:.1f} x)")
+print(f"Plum call:   {dur_plum:6.2f} us ({factor:.1f} x)")
 print()
 
 
@@ -90,8 +90,8 @@ dur_plum = benchmark(b, (1,), n=1000, burn=10)
 factor = int(np.round(dur_plum / dur_native))
 
 print("# Class Calls")
-print("Native call: {:6.2f} us ({:.1f} x)".format(dur_native, 1))
-print("Plum call:   {:6.2f} us ({:.1f} x)".format(dur_plum, factor))
+print(f"Native call: {dur_native:6.2f} us ({1:.1f} x)")
+print(f"Plum call:   {dur_plum:6.2f} us ({factor:.1f} x)")
 print()
 
 dur_native = benchmark(lambda x: a.go(x), (1,), n=1000, burn=10)
@@ -99,5 +99,5 @@ dur_plum = benchmark(lambda x: b.go(x), (1,), n=1000, burn=10)
 factor = int(np.round(dur_plum / dur_native))
 
 print("# Class Attribute Calls")
-print("Native call: {:6.2f} us ({:.1f} x)".format(dur_native, 1))
-print("Plum call:   {:6.2f} us ({:.1f} x)".format(dur_plum, factor))
+print(f"Native call: {dur_native:6.2f} us ({1:.1f} x)")
+print(f"Plum call:   {dur_plum:6.2f} us ({factor:.1f} x)")

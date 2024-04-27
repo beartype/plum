@@ -33,7 +33,7 @@ from multipledispatch import dispatch
 @dispatch((int, Number), int)
 def f(x, y):
     return "first"
-    
+
 
 @dispatch(int, Number)
 def f(x, y):
@@ -121,7 +121,7 @@ from multipledispatch import dispatch
 class A:
     def f(self, x):
         return "fallback"
-        
+
 
 class B(A):
     @dispatch(int)
@@ -148,7 +148,7 @@ from multimethod import multimethod
 class A:
     def f(self, x):
         return "fallback"
-        
+
 
 class B(A):
     @multimethod

@@ -108,16 +108,15 @@ class ModuleType(ResolvableType):
         Returns:
             bool: Whether the retrieval succeeded.
         """
-        if self._type is None:
-            if self._module in sys.modules:
-                type = sys.modules[self._module]
-                for name in self._name.split("."):
-                    # If `type` does not contain `name` and `self._allow_fail` is
-                    # set, then silently fail.
-                    if not hasattr(type, name) and self._allow_fail:
-                        return False
-                    type = getattr(type, name)
-                self.deliver(type)
+        if self._type is None and self._module in sys.modules:
+            type = sys.modules[self._module]
+            for name in self._name.split("."):
+                # If `type` does not contain `name` and `self._allow_fail` is
+                # set, then silently fail.
+                if not hasattr(type, name) and self._allow_fail:
+                    return False
+                type = getattr(type, name)
+            self.deliver(type)
         return self._type is not None
 
 
@@ -209,9 +208,7 @@ def resolve_type_hint(x):
                         # This branch can never be reached.
                         raise e
 
-    elif x is None:
-        return x
-    elif x is Ellipsis:
+    elif x is None or x is Ellipsis:
         return x
 
     elif isinstance(x, tuple):
@@ -220,12 +217,11 @@ def resolve_type_hint(x):
         return list(resolve_type_hint(arg) for arg in x)
     elif isinstance(x, type):
         if isinstance(x, ResolvableType):
-            if isinstance(x, ModuleType):
-                if not x.retrieve():
-                    # If the type could not be retrieved, then just return the
-                    # wrapper. Namely, `x.resolve()` will then return `x`, which means
-                    # that the below call will result in an infinite recursion.
-                    return x
+            if isinstance(x, ModuleType) and not x.retrieve():
+                # If the type could not be retrieved, then just return the
+                # wrapper. Namely, `x.resolve()` will then return `x`, which means
+                # that the below call will result in an infinite recursion.
+                return x
             return resolve_type_hint(x.resolve())
         else:
             return x
@@ -284,9 +280,7 @@ def _is_faithful(x):
             else:
                 return False
 
-    elif x is None:
-        return True
-    elif x == Ellipsis:
+    elif x is None or x == Ellipsis:
         return True
 
     elif isinstance(x, (tuple, list)):

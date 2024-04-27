@@ -1,11 +1,10 @@
 import textwrap
 from copy import copy
 
+from .util import rich_render
 from plum import Dispatcher
 from plum.method import Method
 from plum.signature import Signature
-
-from .util import rich_render
 
 
 def test_instantiation_copy():

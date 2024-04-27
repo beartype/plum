@@ -50,7 +50,7 @@ def do(x: str) -> str:
 def do(x):
     # Final method without an implementation. This scans for all `overload`-decorated
     # methods and properly adds them as Plum methods.
-    pass  
+    pass
 
 
 @overload

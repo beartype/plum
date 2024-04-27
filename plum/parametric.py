@@ -1,3 +1,4 @@
+import contextlib
 from typing import Type, TypeVar, Union
 
 import beartype.door
@@ -55,10 +56,9 @@ class ParametricTypeMeta(type):
         Returns:
             type: A concrete class.
         """
-        if getattr(cls, "parametric", False):
-            if not cls.concrete:
-                type_parameter = cls.__infer_type_parameter__(*args, **kw_args)
-                cls = cls[type_parameter]
+        if getattr(cls, "parametric", False) and not cls.concrete:
+            type_parameter = cls.__infer_type_parameter__(*args, **kw_args)
+            cls = cls[type_parameter]
         return cls
 
     def __init_type_parameter__(cls, *ps):
@@ -135,15 +135,18 @@ class CovariantMeta(ParametricTypeMeta):
     """A metaclass that implements *covariance* of parametric types."""
 
     def __subclasscheck__(cls, subclass):
-        if is_concrete(cls) and is_concrete(subclass):
-            # Check that they are instances of the same parametric type.
-            if all(issubclass(b, cls.__bases__) for b in subclass.__bases__):
-                p_sub = subclass.type_parameter
-                p_cls = cls.type_parameter
-                # Ensure that both are in tuple form.
-                p_sub = p_sub if isinstance(p_sub, tuple) else (p_sub,)
-                p_cls = p_cls if isinstance(p_cls, tuple) else (p_cls,)
-                return cls.__le_type_parameter__(p_sub, p_cls)
+        # Check that they are instances of the same parametric type.
+        if (
+            is_concrete(cls)
+            and is_concrete(subclass)
+            and all(issubclass(b, cls.__bases__) for b in subclass.__bases__)
+        ):
+            p_sub = subclass.type_parameter
+            p_cls = cls.type_parameter
+            # Ensure that both are in tuple form.
+            p_sub = p_sub if isinstance(p_sub, tuple) else (p_sub,)
+            p_cls = p_cls if isinstance(p_cls, tuple) else (p_cls,)
+            return cls.__le_type_parameter__(p_sub, p_cls)
 
         # Default behaviour to `type`s subclass check.
         return type.__subclasscheck__(cls, subclass)
@@ -256,10 +259,8 @@ def parametric(original_class=None):
             subclass.__module__ = original_class.__module__
 
             # Attempt to correct docstring.
-            try:
+            with contextlib.suppress(AttributeError):
                 subclass.__doc__ = original_class.__doc__
-            except AttributeError:  # pragma: no cover
-                pass
 
             subclasses[ps] = subclass
         return subclasses[ps]
@@ -406,10 +407,8 @@ def parametric(original_class=None):
     _owner_transfer[parametric_class] = original_class
 
     # Attempt to correct docstring.
-    try:
+    with contextlib.suppress(AttributeError):
         parametric_class.__doc__ = original_class.__doc__
-    except AttributeError:  # pragma: no cover
-        pass
 
     return parametric_class
 
@@ -456,10 +455,7 @@ def type_parameter(x):
     Returns:
         object: Type parameter.
     """
-    if is_type(x):
-        t = x
-    else:
-        t = type(x)
+    t = x if is_type(x) else type(x)
     if hasattr(t, "parametric"):
         return t.type_parameter
     raise ValueError(

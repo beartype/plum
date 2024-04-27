@@ -60,13 +60,13 @@ You can use parametric types to perform dispatch:
 @dispatch
 def f(x: A):
     return "Just some A"
-    
-    
+
+
 @dispatch
 def f(x: A[int]):
     return "A has an integer!"
-    
-    
+
+
 @dispatch
 def f(x: A[float]):
     return "A has a float!"
@@ -136,7 +136,7 @@ class NTuple:
         n = len(args)
         # For simplicity, take the type of the first argument! We could do something
         # more refined here.
-        t = type(args[0])  
+        t = type(args[0])
         return n, t
 
     @classmethod
@@ -193,10 +193,10 @@ Finally, it implements the desired covariance:
 >>> issubclass(NTuple[2, int], NTuple[2, Number])
 True
 
->>> issubclass(NTuple[2, int], NTuple[2, float]) 
+>>> issubclass(NTuple[2, int], NTuple[2, float])
 False
 
->>> issubclass(NTuple[2, int], NTuple[3, int]) 
+>>> issubclass(NTuple[2, int], NTuple[3, int])
 False
 ```
 
@@ -279,4 +279,3 @@ Those are Python 3.7 and below, but Plum does not support those versions.
 
 ## Example: `NDArray`
 See [here](comparison-parametric).
-

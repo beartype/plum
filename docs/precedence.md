@@ -31,7 +31,7 @@ def mul_no_precedence(a: ZeroElement, b: Element):
 @dispatch
 def mul_no_precedence(a: Element, b: SpecialisedElement):
     return "specialised operation"
-    
+
 
 @dispatch(precedence=1)
 def mul(a: ZeroElement, b: Element):
@@ -58,11 +58,11 @@ def mul(a: Element, b: SpecialisedElement):
 
 >>> try: mul_no_precedence(zero, specialised_element)
 ... except Exception as e: print(f"{type(e).__name__}: {e}")
-AmbiguousLookupError: `mul_no_precedence(<ZeroElement object at ...>, <SpecialisedElement 
+AmbiguousLookupError: `mul_no_precedence(<ZeroElement object at ...>, <SpecialisedElement
 object at ...>)` is ambiguous.
 Candidates:
     mul_no_precedence(a: ZeroElement, b: Element)
-        <function mul_no_precedence at ...> @ ...md:26                                           
+        <function mul_no_precedence at ...> @ ...md:26
     mul_no_precedence(a: Element, b: SpecialisedElement)
         <function mul_no_precedence at ...> @ ...
 

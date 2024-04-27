@@ -15,11 +15,8 @@ class Number:
         self.value = value
 
     @dispatch
-    def __add__(self, other: Union[Number, int]) -> "Number":
-        if isinstance(other, int):
-            other_value = other
-        else:
-            other_value = other.value
+    def __add__(self, other: Union[Number, int]) -> Number:  # noqa: UP007
+        other_value = other if isinstance(other, int) else other.value
         return Number(self.value + other_value)
 
     @staticmethod

@@ -64,7 +64,7 @@ Hurray!
 Note that the documentation prints `Union[Scalar]` rather than just `Scalar`.
 This is intentional: it is to prevent breaking code that depends on how unions
 print.
-For example, printing just `Scalar` would omit the type parameter(s). 
+For example, printing just `Scalar` would omit the type parameter(s).
 
 Let's see with a few more examples how this works:
 

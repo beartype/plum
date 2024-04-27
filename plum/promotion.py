@@ -1,7 +1,6 @@
 from beartype.door import TypeHint
 
 import plum.function
-
 from . import _is_bearable
 from .dispatcher import Dispatcher
 from .repr import repr_short

@@ -88,12 +88,12 @@ def _new_repr(self):
     # element, the positions of following insertions need to be appropriately
     # incremented.
     args = list(args)
-    delta = 0
     # Sort by insertion position to ensure that all following insertions are at higher
     # indices. This makes the bookkeeping simple.
-    for i, alias in sorted(zip(found_positions, found_aliases), key=lambda x: x[0]):
+    for delta, (i, alias) in enumerate(
+        sorted(zip(found_positions, found_aliases), key=lambda x: x[0])
+    ):
         args.insert(i + delta, alias)
-        delta += 1
 
     # Filter all elements of unions that are aliased.
     new_args = ()
@@ -152,10 +152,7 @@ def set_union_alias(union, alias):
     Returns:
         type or type hint: `union`.
     """
-    if not isinstance(union, _union_type):
-        args = (union,)
-    else:
-        args = get_args(union)
+    args = get_args(union) if isinstance(union, _union_type) else (union,)
     for existing_union, existing_alias in _aliased_unions:
         if set(existing_union) == set(args) and alias != existing_alias:
             if isinstance(union, _union_type):

@@ -6,11 +6,10 @@ from typing import Callable, Optional, Tuple, Union
 from rich.padding import Padding
 from rich.text import Text
 
+from .util import argsort
 from plum.method import Method, MethodList
 from plum.repr import rich_repr
 from plum.signature import Signature
-
-from .util import argsort
 
 __all__ = ["AmbiguousLookupError", "NotFoundLookupError"]
 
