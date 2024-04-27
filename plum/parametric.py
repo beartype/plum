@@ -503,8 +503,8 @@ def type_nonparametric(q: T) -> Type[T]:
     >>> pobj = PObj(1)
 
     >>> type(pobj).mro()
-    [<class 'plum.parametric.Obj'>, <class 'plum.parametric.Obj'>,
-        <class 'object'>]
+    [<class 'plum.parametric.Obj[int]'>, <class 'plum.parametric.Obj'>,
+     <class 'plum.parametric.Obj'>, <class 'object'>]
 
     Note that the class `Obj` appears twice in the MRO. The first one is the
     parametric class, and the second one is the non-parametric class. The
