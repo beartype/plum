@@ -81,15 +81,17 @@ line-length = 88
 select = [
     "B",  # flake8-bugbear
     "D410",
-    "E",  # pycodestyle
+    "E", "W",  # pycodestyle
     "F",  # Pyflakes
     "I",  # isort
     "SIM",  # flake8-simplify
     "UP",  # pyupgrade
-    "W",
 ]
 ignore = ["F811", "B018"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["beartype"]
 known-local-folder = ["plum"]
+
+[tool.ruff.format]
+docstring-code-format = true
