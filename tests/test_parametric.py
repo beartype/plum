@@ -15,7 +15,13 @@ from plum import (
     parametric,
     type_parameter,
 )
-from plum.parametric import CovariantMeta, is_concrete, is_type, type_unparametrized
+from plum.parametric import (
+    CovariantMeta,
+    is_concrete,
+    is_type,
+    type_nonparametric,
+    type_unparametrized,
+)
 
 
 def test_covariantmeta():
@@ -606,3 +612,27 @@ def test_type_unparametrized():
     assert type(pobj) is Obj[int]
     assert type_unparametrized(pobj) is not Obj[int]
     assert type_unparametrized(pobj) is Obj
+
+
+def test_type_nonparametric():
+    """Test the `type_nonparametric` function."""
+
+    class NonParametricObj:
+        @classmethod
+        def __infer_type_parameter__(cls, *arg):
+            return type(arg[0])
+
+        def __init__(self, x):
+            self.x = x
+
+        def __repr__(self):
+            return f"Obj({self.x})"
+
+    Obj = parametric(NonParametricObj)
+
+    pobj = Obj(1)
+
+    assert type(pobj) is Obj[int]
+    assert type_nonparametric(pobj) is not Obj[int]
+    assert type_nonparametric(pobj) is not Obj
+    assert type_nonparametric(pobj) is NonParametricObj
