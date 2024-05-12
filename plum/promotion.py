@@ -70,7 +70,7 @@ def add_conversion_method(
     """
 
     @_convert.dispatch
-    def perform_conversion(obj, _):
+    def perform_conversion(obj: type_from, _: type_to):
         return f(obj)
 
 
