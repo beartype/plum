@@ -1066,6 +1066,67 @@ the type parameters are compared with <cite>__le_type_parameter__</cite>:</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="plum.parametric.type_nonparametric">
+<span class="sig-prename descclassname"><span class="pre">plum.parametric.</span></span><span class="sig-name descname"><span class="pre">type_nonparametric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">T</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">T</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/plum/parametric.html#type_nonparametric"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.parametric.type_nonparametric" title="Permalink to this definition">#</a></dt>
+<dd><p>Return the non-parametric type of an object.</p>
+<p><a class="reference internal" href="#module-plum.parametric" title="plum.parametric"><code class="xref py py-mod docutils literal notranslate"><span class="pre">plum.parametric</span></code></a> produces parametric subtypes of classes. This method
+can be used to get the original non-parametric type of an object.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><code class="xref py py-func docutils literal notranslate"><span class="pre">plum.type_unparametrized()</span></code></dt><dd><p>A function that returns the non-concrete, but still parametric, type of an object.</p>
+</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<p>In this example we will demonstrate how to retrieve the original
+non-parametric class from a <a class="reference internal" href="#module-plum.parametric" title="plum.parametric"><code class="xref py py-func docutils literal notranslate"><span class="pre">plum.parametric()</span></code></a> decorated class.</p>
+<p><a class="reference internal" href="#module-plum.parametric" title="plum.parametric"><code class="xref py py-func docutils literal notranslate"><span class="pre">plum.parametric()</span></code></a> defines a parametric class of the same name as the
+original class, and then creates a subclass of the original class with the
+type parameter inferred from the arguments of the constructor.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">parametric</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Obj</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="nd">@classmethod</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">__infer_type_parameter__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">x</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Obj(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="si">}</span><span class="s2">)&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">PObj</span> <span class="o">=</span> <span class="n">parametric</span><span class="p">(</span><span class="n">Obj</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pobj</span> <span class="o">=</span> <span class="n">PObj</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">type</span><span class="p">(</span><span class="n">pobj</span><span class="p">)</span><span class="o">.</span><span class="n">mro</span><span class="p">()</span>
+<span class="go">[&lt;class &#39;plum.parametric.Obj[int]&#39;&gt;, &lt;class &#39;plum.parametric.Obj&#39;&gt;,</span>
+<span class="go"> &lt;class &#39;plum.parametric.Obj&#39;&gt;, &lt;class &#39;object&#39;&gt;]</span>
+</pre></div>
+</div>
+<p>Note that the class <cite>Obj</cite> appears twice in the MRO. The first one is the
+parametric class, and the second one is the non-parametric class. The
+non-parametric class is the original class that was passed to the
+<code class="docutils literal notranslate"><span class="pre">parametric</span></code> decorator.</p>
+<p>Rather than navigating the MRO, we can get the non-parametric class of an
+object by calling <code class="docutils literal notranslate"><span class="pre">type_nonparametric</span></code> function.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="nb">type</span><span class="p">(</span><span class="n">pobj</span><span class="p">)</span> <span class="ow">is</span> <span class="n">PObj</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">type</span><span class="p">(</span><span class="n">pobj</span><span class="p">)</span> <span class="ow">is</span> <span class="n">PObj</span>
+<span class="go">False</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">type</span><span class="p">(</span><span class="n">pobj</span><span class="p">)</span> <span class="ow">is</span> <span class="n">Obj</span>
+<span class="go">False</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">type_nonparametric</span><span class="p">(</span><span class="n">pobj</span><span class="p">)</span> <span class="ow">is</span> <span class="n">PObj</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+<span class="go">False</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">type_nonparametric</span><span class="p">(</span><span class="n">pobj</span><span class="p">)</span> <span class="ow">is</span> <span class="n">PObj</span>
+<span class="go">False</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">type_nonparametric</span><span class="p">(</span><span class="n">pobj</span><span class="p">)</span> <span class="ow">is</span> <span class="n">Obj</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="plum.parametric.type_parameter">
 <span class="sig-prename descclassname"><span class="pre">plum.parametric.</span></span><span class="sig-name descname"><span class="pre">type_parameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/parametric.html#type_parameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.parametric.type_parameter" title="Permalink to this definition">#</a></dt>
 <dd><p>Get the type parameter of concrete parametric type or an instance of a concrete
