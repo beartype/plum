@@ -58,7 +58,9 @@ class _ConversionCallable(Protocol[T, R]):
 
 
 def add_conversion_method(
-    type_from: Type[T], type_to: Type[R], f: _ConversionCallable[T, R],
+    type_from: Type[T],
+    type_to: Type[R],
+    f: _ConversionCallable[T, R],
 ) -> None:
     """Add a conversion method to convert an object from one type to another.
 
