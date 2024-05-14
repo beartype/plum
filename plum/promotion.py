@@ -1,3 +1,15 @@
+"""Promotion and conversion functions."""
+
+__all__ = [
+    "convert",
+    "add_conversion_method",
+    "conversion_method",
+    "add_promotion_rule",
+    "promote",
+]
+
+from typing import Callable, Protocol, Type, TypeVar
+
 from beartype.door import TypeHint
 
 import plum.function
@@ -7,13 +19,8 @@ from .dispatcher import Dispatcher
 from .repr import repr_short
 from .type import resolve_type_hint
 
-__all__ = [
-    "convert",
-    "add_conversion_method",
-    "conversion_method",
-    "add_promotion_rule",
-    "promote",
-]
+T = TypeVar("T")
+R = TypeVar("R")
 
 _dispatch = Dispatcher()
 
@@ -40,13 +47,19 @@ plum.function._promised_convert = convert
 
 @_dispatch
 def _convert(obj, type_to):
-    if _is_bearable(obj, resolve_type_hint(type_to)):
-        return obj
-    else:
+    if not _is_bearable(obj, resolve_type_hint(type_to)):
         raise TypeError(f"Cannot convert `{obj}` to `{repr_short(type_to)}`.")
+    return obj
 
 
-def add_conversion_method(type_from, type_to, f):
+class _ConversionCallable(Protocol[T, R]):
+    def __call__(self, obj: T) -> R:
+        ...
+
+
+def add_conversion_method(
+    type_from: Type[T], type_to: Type[R], f: _ConversionCallable
+) -> None:
     """Add a conversion method to convert an object from one type to another.
 
     Args:
@@ -61,7 +74,9 @@ def add_conversion_method(type_from, type_to, f):
         return f(obj)
 
 
-def conversion_method(type_from, type_to):
+def conversion_method(
+    type_from: Type[T], type_to: Type[R]
+) -> Callable[[_ConversionCallable[T, R]], _ConversionCallable[T, R]]:
     """Decorator to add a conversion method to convert an object from one
     type to another.
 
@@ -70,7 +85,7 @@ def conversion_method(type_from, type_to):
         type_to (type): Type to convert to.
     """
 
-    def add_method(f):
+    def add_method(f: _ConversionCallable[T, R]) -> _ConversionCallable[T, R]:
         add_conversion_method(type_from, type_to, f)
         return f
 
