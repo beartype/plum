@@ -396,7 +396,7 @@ document.write(`
 <span class="nd">@dispatch</span>
 <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
     <span class="k">return</span> <span class="s2">&quot;This is a string!&quot;</span>
-    
+
 
 <span class="nd">@dispatch</span>
 <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
@@ -439,11 +439,11 @@ The rule of multiple dispatch is that the <em>most specific</em> method is chose
 <p>For a function <code class="docutils literal notranslate"><span class="pre">f</span></code>, all available methods can be obtained with <code class="docutils literal notranslate"><span class="pre">f.methods</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">methods</span>
 <span class="go">List of 3 method(s):</span>
-<span class="go">    [0] f(x: str)                                                               </span>
+<span class="go">    [0] f(x: str)</span>
 <span class="go">        &lt;function f at ...&gt; @ ...</span>
-<span class="go">    [1] f(x: int)                                                               </span>
+<span class="go">    [1] f(x: int)</span>
 <span class="go">        &lt;function f at ...&gt; @ ...</span>
-<span class="go">    [2] f(x: numbers.Number)                                                    </span>
+<span class="go">    [2] f(x: numbers.Number)</span>
 <span class="go">        &lt;function f at ...&gt; @ ...</span>
 </pre></div>
 </div>

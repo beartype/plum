@@ -336,7 +336,8 @@ document.write(`
                 <article class="bd-article" role="main">
                   
   <h1>Source code for plum.parametric</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Type</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
+<span></span><span class="kn">import</span> <span class="nn">contextlib</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Type</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">beartype.door</span>
 <span class="kn">from</span> <span class="nn">beartype.roar</span> <span class="kn">import</span> <span class="n">BeartypeDoorNonpepException</span>
@@ -394,10 +395,9 @@ document.write(`
 <span class="sd">        Returns:</span>
 <span class="sd">            type: A concrete class.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;parametric&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">concrete</span><span class="p">:</span>
-                <span class="n">type_parameter</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__infer_type_parameter__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">)</span>
-                <span class="bp">cls</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">[</span><span class="n">type_parameter</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;parametric&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">concrete</span><span class="p">:</span>
+            <span class="n">type_parameter</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__infer_type_parameter__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">)</span>
+            <span class="bp">cls</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">[</span><span class="n">type_parameter</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">cls</span>
 
     <span class="k">def</span> <span class="nf">__init_type_parameter__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">ps</span><span class="p">):</span>
@@ -474,15 +474,18 @@ document.write(`
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A metaclass that implements *covariance* of parametric types.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__subclasscheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">is_concrete</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="ow">and</span> <span class="n">is_concrete</span><span class="p">(</span><span class="n">subclass</span><span class="p">):</span>
-            <span class="c1"># Check that they are instances of the same parametric type.</span>
-            <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="nb">issubclass</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__bases__</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">subclass</span><span class="o">.</span><span class="vm">__bases__</span><span class="p">):</span>
-                <span class="n">p_sub</span> <span class="o">=</span> <span class="n">subclass</span><span class="o">.</span><span class="n">type_parameter</span>
-                <span class="n">p_cls</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">type_parameter</span>
-                <span class="c1"># Ensure that both are in tuple form.</span>
-                <span class="n">p_sub</span> <span class="o">=</span> <span class="n">p_sub</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p_sub</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="n">p_sub</span><span class="p">,)</span>
-                <span class="n">p_cls</span> <span class="o">=</span> <span class="n">p_cls</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p_cls</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="n">p_cls</span><span class="p">,)</span>
-                <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__le_type_parameter__</span><span class="p">(</span><span class="n">p_sub</span><span class="p">,</span> <span class="n">p_cls</span><span class="p">)</span>
+        <span class="c1"># Check that they are instances of the same parametric type.</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">is_concrete</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">is_concrete</span><span class="p">(</span><span class="n">subclass</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="nb">issubclass</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__bases__</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">subclass</span><span class="o">.</span><span class="vm">__bases__</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="n">p_sub</span> <span class="o">=</span> <span class="n">subclass</span><span class="o">.</span><span class="n">type_parameter</span>
+            <span class="n">p_cls</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">type_parameter</span>
+            <span class="c1"># Ensure that both are in tuple form.</span>
+            <span class="n">p_sub</span> <span class="o">=</span> <span class="n">p_sub</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p_sub</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="n">p_sub</span><span class="p">,)</span>
+            <span class="n">p_cls</span> <span class="o">=</span> <span class="n">p_cls</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p_cls</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="n">p_cls</span><span class="p">,)</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__le_type_parameter__</span><span class="p">(</span><span class="n">p_sub</span><span class="p">,</span> <span class="n">p_cls</span><span class="p">)</span>
 
         <span class="c1"># Default behaviour to `type`s subclass check.</span>
         <span class="k">return</span> <span class="nb">type</span><span class="o">.</span><span class="fm">__subclasscheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">)</span>
@@ -595,10 +598,8 @@ document.write(`
             <span class="n">subclass</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">=</span> <span class="n">original_class</span><span class="o">.</span><span class="vm">__module__</span>
 
             <span class="c1"># Attempt to correct docstring.</span>
-            <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">suppress</span><span class="p">(</span><span class="ne">AttributeError</span><span class="p">):</span>
                 <span class="n">subclass</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="n">original_class</span><span class="o">.</span><span class="vm">__doc__</span>
-            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
-                <span class="k">pass</span>
 
             <span class="n">subclasses</span><span class="p">[</span><span class="n">ps</span><span class="p">]</span> <span class="o">=</span> <span class="n">subclass</span>
         <span class="k">return</span> <span class="n">subclasses</span><span class="p">[</span><span class="n">ps</span><span class="p">]</span>
@@ -745,10 +746,8 @@ document.write(`
     <span class="n">_owner_transfer</span><span class="p">[</span><span class="n">parametric_class</span><span class="p">]</span> <span class="o">=</span> <span class="n">original_class</span>
 
     <span class="c1"># Attempt to correct docstring.</span>
-    <span class="k">try</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">suppress</span><span class="p">(</span><span class="ne">AttributeError</span><span class="p">):</span>
         <span class="n">parametric_class</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="n">original_class</span><span class="o">.</span><span class="vm">__doc__</span>
-    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
-        <span class="k">pass</span>
 
     <span class="k">return</span> <span class="n">parametric_class</span></div>
 
@@ -795,10 +794,7 @@ document.write(`
 <span class="sd">    Returns:</span>
 <span class="sd">        object: Type parameter.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">is_type</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-        <span class="n">t</span> <span class="o">=</span> <span class="n">x</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">t</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">x</span> <span class="k">if</span> <span class="n">is_type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">else</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="s2">&quot;parametric&quot;</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">type_parameter</span>
     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>

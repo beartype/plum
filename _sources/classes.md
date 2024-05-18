@@ -9,7 +9,7 @@ class Real:
    @dispatch
    def __add__(self, other: int):
       return "int added"
-   
+
    @dispatch
    def __add__(self, other: float):
       return "float added"

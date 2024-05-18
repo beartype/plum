@@ -449,13 +449,13 @@ directly, the type parameter is automatically inferred from the argument:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@dispatch</span>
 <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">A</span><span class="p">):</span>
     <span class="k">return</span> <span class="s2">&quot;Just some A&quot;</span>
-    
-    
+
+
 <span class="nd">@dispatch</span>
 <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">A</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
     <span class="k">return</span> <span class="s2">&quot;A has an integer!&quot;</span>
-    
-    
+
+
 <span class="nd">@dispatch</span>
 <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">A</span><span class="p">[</span><span class="nb">float</span><span class="p">]):</span>
     <span class="k">return</span> <span class="s2">&quot;A has a float!&quot;</span>
@@ -531,7 +531,7 @@ See also <code class="docutils literal notranslate"><span class="pre">help(param
         <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
         <span class="c1"># For simplicity, take the type of the first argument! We could do something</span>
         <span class="c1"># more refined here.</span>
-        <span class="n">t</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  
+        <span class="n">t</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">n</span><span class="p">,</span> <span class="n">t</span>
 
     <span class="nd">@classmethod</span>
@@ -580,10 +580,10 @@ See also <code class="docutils literal notranslate"><span class="pre">help(param
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">issubclass</span><span class="p">(</span><span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="n">Number</span><span class="p">])</span>
 <span class="go">True</span>
 
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">issubclass</span><span class="p">(</span><span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> 
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">issubclass</span><span class="p">(</span><span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span>
 <span class="go">False</span>
 
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">issubclass</span><span class="p">(</span><span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">NTuple</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="nb">int</span><span class="p">])</span> 
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">issubclass</span><span class="p">(</span><span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">NTuple</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="nb">int</span><span class="p">])</span>
 <span class="go">False</span>
 </pre></div>
 </div>

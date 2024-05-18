@@ -426,12 +426,12 @@ document.write(`
     <span class="c1"># element, the positions of following insertions need to be appropriately</span>
     <span class="c1"># incremented.</span>
     <span class="n">args</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
-    <span class="n">delta</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="c1"># Sort by insertion position to ensure that all following insertions are at higher</span>
     <span class="c1"># indices. This makes the bookkeeping simple.</span>
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">alias</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">found_positions</span><span class="p">,</span> <span class="n">found_aliases</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+    <span class="k">for</span> <span class="n">delta</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">alias</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+        <span class="nb">sorted</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">found_positions</span><span class="p">,</span> <span class="n">found_aliases</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="p">):</span>
         <span class="n">args</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="n">delta</span><span class="p">,</span> <span class="n">alias</span><span class="p">)</span>
-        <span class="n">delta</span> <span class="o">+=</span> <span class="mi">1</span>
 
     <span class="c1"># Filter all elements of unions that are aliased.</span>
     <span class="n">new_args</span> <span class="o">=</span> <span class="p">()</span>
@@ -490,10 +490,7 @@ document.write(`
 <span class="sd">    Returns:</span>
 <span class="sd">        type or type hint: `union`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">union</span><span class="p">,</span> <span class="n">_union_type</span><span class="p">):</span>
-        <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">union</span><span class="p">,)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">args</span> <span class="o">=</span> <span class="n">get_args</span><span class="p">(</span><span class="n">union</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">get_args</span><span class="p">(</span><span class="n">union</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">union</span><span class="p">,</span> <span class="n">_union_type</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="n">union</span><span class="p">,)</span>
     <span class="k">for</span> <span class="n">existing_union</span><span class="p">,</span> <span class="n">existing_alias</span> <span class="ow">in</span> <span class="n">_aliased_unions</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">existing_union</span><span class="p">)</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="ow">and</span> <span class="n">alias</span> <span class="o">!=</span> <span class="n">existing_alias</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">union</span><span class="p">,</span> <span class="n">_union_type</span><span class="p">):</span>
