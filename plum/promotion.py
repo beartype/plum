@@ -52,8 +52,7 @@ def _convert(obj, type_to):
 
 
 class _ConversionCallable(Protocol[T, R]):
-    def __call__(self, obj: T) -> R:
-        ...
+    def __call__(self, obj: T) -> R: ...
 
 
 def add_conversion_method(
