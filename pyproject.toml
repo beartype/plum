@@ -70,34 +70,25 @@ addopts = [
 ]
 minversion = "6.0"
 
-# Formatting tools
-[tool.black]
-line-length = 88
-target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-)/
-'''
-
-[tool.isort]
-profile = "black"
-src_paths = ["plum", "tests"]
-
 
 [tool.ruff]
+src = ["plum"]
 target-version = "py38"
-select = ["B", "E", "F", "W", "D410"]
-fixable = ["B", "E", "F", "W", "D"]
-ignore = ["F811", "B018"]
 line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "B",  # flake8-bugbear
+    "D410",
+    "E",  # pycodestyle
+    "F",  # Pyflakes
+    "I",  # isort
+    "SIM",  # flake8-simplify
+    "UP",  # pyupgrade
+    "W",
+]
+ignore = ["F811", "B018"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["beartype"]
+known-local-folder = ["plum"]

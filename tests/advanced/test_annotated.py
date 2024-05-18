@@ -1,4 +1,5 @@
 import pytest
+
 from beartype.vale import Is
 
 from plum import Dispatcher, NotFoundLookupError

@@ -81,10 +81,7 @@ def test_parametric(metaclass):
     def tuples_are_identical(tup1, tup2):
         if len(tup1) != len(tup2):
             return False
-        for x, y in zip(tup1, tup2):
-            if x is not y:
-                return False
-        return True
+        return all(x is y for x, y in zip(tup1, tup2))
 
     # Test type parameter extraction.
     assert type_parameter(A[1]()) == 1
@@ -549,7 +546,7 @@ def test_val():
         (Val[3, 4], Val((3, 4))),
         (Val[(3, 4)], Val((3, 4))),
     ]:
-        assert T == type(v)
+        assert type(v) == T
         assert T() == v
 
     # Test all checks for numbers of arguments and the like.

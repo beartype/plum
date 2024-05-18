@@ -43,7 +43,7 @@ def parse_assertions(source_dir: Path, linter: str) -> FileLineInfo:
     asserted_errors: FileLineInfo = defaultdict(lambda: defaultdict(list))
 
     for path in source_dir.resolve().rglob("*.py"):  # Important to `resolve` here!
-        with open(path, "r") as f:
+        with open(path) as f:
             lines = f.read().splitlines()
         for i, line in enumerate(lines):
             # Check if the line has an error assertion.

@@ -3,7 +3,7 @@
 
 ## Return Types
 
-When a return type is not matched, Plum will attempt to convert the result to the 
+When a return type is not matched, Plum will attempt to convert the result to the
 right type.
 
 % clear-namespace
@@ -76,7 +76,7 @@ Let us implement that conversion:
 from operator import truediv
 
 from plum import conversion_method
-        
+
 
 @conversion_method(type_from=Rational, type_to=Number)
 def rational_to_number(q):
@@ -112,13 +112,13 @@ from plum import dispatch, promote, add_promotion_rule, add_conversion_method
 @dispatch
 def add(x, y):
     return add(*promote(x, y))
-    
-    
+
+
 @dispatch
 def add(x: int, y: int):
     return x + y
-    
-    
+
+
 @dispatch
 def add(x: float, y: float):
     return x + y

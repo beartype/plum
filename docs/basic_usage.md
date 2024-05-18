@@ -10,7 +10,7 @@ from plum import dispatch
 @dispatch
 def f(x: str):
     return "This is a string!"
-    
+
 
 @dispatch
 def f(x: int):
@@ -64,11 +64,11 @@ For a function `f`, all available methods can be obtained with `f.methods`:
 ```python
 >>> f.methods
 List of 3 method(s):
-    [0] f(x: str)                                                               
+    [0] f(x: str)
         <function f at ...> @ ...
-    [1] f(x: int)                                                               
+    [1] f(x: int)
         <function f at ...> @ ...
-    [2] f(x: numbers.Number)                                                    
+    [2] f(x: numbers.Number)
         <function f at ...> @ ...
 ```
 

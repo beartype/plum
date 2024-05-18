@@ -103,8 +103,8 @@ from plum import dispatch
 @dispatch
 def f(x: int):
     return "int"
-    
-    
+
+
 @dispatch
 def f(x: str):
     return "str"

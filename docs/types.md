@@ -77,7 +77,7 @@ isinstance(x, t) == issubclass(type(x), t)
 For example, `int` is faithful, since `type(1) == int`;
 but `Literal[1]` is not faithful, since `issubclass(int, Literal[1])` is false.
 
-Methods which have signatures that depend only on faithful types will 
+Methods which have signatures that depend only on faithful types will
 be performant.
 On the other hand, methods which have one or more signatures with one or more
 unfaithful types cannot use caching and will therefore be less performant.
@@ -172,8 +172,8 @@ NotFoundLookupError: `f(1)` could not be resolved...
 
 >>> g.methods
 List of 1 method(s):
-    [0] f(x:                                                                    
-        plum.type.ModuleType[tensorflow.python.framework.ops.EagerTensor])          
+    [0] f(x:
+        plum.type.ModuleType[tensorflow.python.framework.ops.EagerTensor])
             <function f at ...> @ ...
 
 >>> import tensorflow as tf  # Very slow...
@@ -224,12 +224,12 @@ def f(x: ProxyInt):
     return "An integer!"
 
 # Deliver the type that `ProxyInt` should point to. Do this before `f` is first used!
-ProxyInt.deliver(int)  
+ProxyInt.deliver(int)
 ```
 
 ```python
 >>> f(1)
-'An integer!' 
+'An integer!'
 ```
 
 Like for `PromisedType`,

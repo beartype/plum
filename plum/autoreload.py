@@ -69,9 +69,10 @@ if _autoload in ("y", "yes", "t", "true", "on", "1"):  # pragma: no cover
         from IPython import get_ipython  # type: ignore
 
         ip = get_ipython()
-        if ip is not None:
-            if "IPython.extensions.storemagic" in ip.extension_manager.loaded:
-                activate_autoreload()
+        if (ip is not None) and (
+            "IPython.extensions.storemagic" in ip.extension_manager.loaded
+        ):
+            activate_autoreload()
 
     except ImportError:
         pass

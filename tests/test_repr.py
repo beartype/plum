@@ -2,9 +2,8 @@ import typing
 
 from rich.text import Text
 
-from plum.repr import _repr_mimebundle_from_rich_, repr_type
-
 from .util import rich_render
+from plum.repr import _repr_mimebundle_from_rich_, repr_type
 
 
 class A:
