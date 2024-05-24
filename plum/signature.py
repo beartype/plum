@@ -194,6 +194,26 @@ class Signature(Comparable):
                 other_varargs = beartype.door.TypeHint(other.varargs)
                 return self_varargs <= other_varargs
 
+            elif self.has_varargs:
+                # In this case, we have that `other >= self` is `False`, so returning
+                # `True` gives that `other < self` and returning `False` gives that
+                # `other` cannot be compared to `self`. Regardless of the return
+                # value, `other != self`.
+                #
+                # Previously, this returned `False`, which would implement the subset
+                # relationship. We now deviate from the subset relationship! The
+                # rationale rationale for this is as follows.
+                #
+                # A non-variable-arguments signature is compared to a variable-arguments
+                # signature only to determine which is more specific. At this point, the
+                # non-variable-arguments signature has number of types equal to the
+                # number of arguments given to the function, so any additional variable
+                # arguments are not necessary. Hence, we ignore the additional
+                # variable arguments in the comparison and return `True`.
+                return True
+            elif other.has_varargs:
+                return True
+
             else:
                 return True
 
