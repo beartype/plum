@@ -158,7 +158,9 @@ class Signature(Comparable):
         ):
             return False
 
-        # Finally, expand the types and compare.
+        # Finally, expand the types and compare. We implement the subset relationship,
+        # but, very importantly, deviate from the subset relationship in exactly one
+        # place.
         self_types = self.expand_varargs(len(other.types))
         other_types = other.expand_varargs(len(self.types))
         if all(
@@ -167,13 +169,12 @@ class Signature(Comparable):
                 for x, y in zip(self_types, other_types)
             ]
         ):
-            # If both have variable arguments, implement the subset relationship.
             if self.has_varargs and other.has_varargs:
                 self_varargs = beartype.door.TypeHint(self.varargs)
                 other_varargs = beartype.door.TypeHint(other.varargs)
                 return self_varargs <= other_varargs
 
-            # Having varargs makes you slightly larger.
+            # Having variable arguments makes you slightly larger.
             elif self.has_varargs:
                 return False
             elif other.has_varargs:
@@ -188,7 +189,6 @@ class Signature(Comparable):
                 for x, y in zip(self_types, other_types)
             ]
         ):
-            # If both have variable arguments, implement the subset relationship.
             if self.has_varargs and other.has_varargs:
                 self_varargs = beartype.door.TypeHint(self.varargs)
                 other_varargs = beartype.door.TypeHint(other.varargs)
@@ -202,7 +202,7 @@ class Signature(Comparable):
                 #
                 # Previously, this returned `False`, which would implement the subset
                 # relationship. We now deviate from the subset relationship! The
-                # rationale rationale for this is as follows.
+                # rationale for this is as follows.
                 #
                 # A non-variable-arguments signature is compared to a variable-arguments
                 # signature only to determine which is more specific. At this point, the
