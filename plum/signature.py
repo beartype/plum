@@ -149,24 +149,6 @@ class Signature(Comparable):
             return self.types
 
     def __le__(self, other) -> bool:
-        # If this signature has variable arguments, but the other does not, then this
-        # signature cannot be possibly smaller.
-        if self.has_varargs and not other.has_varargs:
-            return False
-
-        # If this signature and the other signature both have variable arguments, then
-        # the variable type of this signature must be less than the variable type of the
-        # other signature.
-        if (
-            self.has_varargs
-            and other.has_varargs
-            and not (
-                beartype.door.TypeHint(self.varargs)
-                <= beartype.door.TypeHint(other.varargs)
-            )
-        ):
-            return False
-
         # If the number of types of the signatures are unequal, then the signature
         # with the fewer number of types must be expanded using variable arguments.
         if not (
@@ -179,12 +161,44 @@ class Signature(Comparable):
         # Finally, expand the types and compare.
         self_types = self.expand_varargs(len(other.types))
         other_types = other.expand_varargs(len(self.types))
-        return all(
+        if all(
+            [
+                beartype.door.TypeHint(x) == beartype.door.TypeHint(y)
+                for x, y in zip(self_types, other_types)
+            ]
+        ):
+            # If both have variable arguments, implement the subset relationship.
+            if self.has_varargs and other.has_varargs:
+                self_varargs = beartype.door.TypeHint(self.varargs)
+                other_varargs = beartype.door.TypeHint(other.varargs)
+                return self_varargs <= other_varargs
+
+            # Having varargs makes you slightly larger.
+            elif self.has_varargs:
+                return False
+            elif other.has_varargs:
+                return True
+
+            else:
+                return True
+
+        elif all(
             [
                 beartype.door.TypeHint(x) <= beartype.door.TypeHint(y)
                 for x, y in zip(self_types, other_types)
             ]
-        )
+        ):
+            # If both have variable arguments, implement the subset relationship.
+            if self.has_varargs and other.has_varargs:
+                self_varargs = beartype.door.TypeHint(self.varargs)
+                other_varargs = beartype.door.TypeHint(other.varargs)
+                return self_varargs <= other_varargs
+
+            else:
+                return True
+
+        else:
+            return False
 
     def match(self, values) -> bool:
         """Check whether values match the signature.
