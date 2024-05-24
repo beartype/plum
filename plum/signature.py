@@ -209,7 +209,8 @@ class Signature(Comparable):
                 # non-variable-arguments signature has number of types equal to the
                 # number of arguments given to the function, so any additional variable
                 # arguments are not necessary. Hence, we ignore the additional
-                # variable arguments in the comparison and return `True`.
+                # variable arguments in the comparison and return correctly `True`. For
+                # example, `(int, *int)` would be more specific than `(Number)`.
                 return True
             elif other.has_varargs:
                 return True
