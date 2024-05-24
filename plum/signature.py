@@ -158,9 +158,8 @@ class Signature(Comparable):
         ):
             return False
 
-        # Finally, expand the types and compare. We implement the subset relationship,
-        # but, very importantly, deviate from the subset relationship in exactly one
-        # place.
+        # Expand the types and compare. We implement the subset relationship, but, very
+        # importantly, deviate from the subset relationship in exactly one place.
         self_types = self.expand_varargs(len(other.types))
         other_types = other.expand_varargs(len(self.types))
         if all(
