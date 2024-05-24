@@ -666,9 +666,8 @@ document.write(`
             <span class="n">types</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">annotation</span><span class="p">)</span>
 
         <span class="c1"># If there is a default parameter, make sure that it is of the annotated type.</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">empty</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_is_bearable</span><span class="p">(</span>
-            <span class="n">p</span><span class="o">.</span><span class="n">default</span><span class="p">,</span> <span class="n">annotation</span>
-        <span class="p">):</span>
+        <span class="n">default_is_empty</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">empty</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">default_is_empty</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_is_bearable</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">default</span><span class="p">,</span> <span class="n">annotation</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Default value `</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">default</span><span class="si">}</span><span class="s2">` is not an instance &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;of the annotated type `</span><span class="si">{</span><span class="n">repr_short</span><span class="p">(</span><span class="n">annotation</span><span class="p">)</span><span class="si">}</span><span class="s2">`.&quot;</span>
