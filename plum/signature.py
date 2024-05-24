@@ -328,9 +328,8 @@ def _extract_signature(f: Callable, precedence: int = 0) -> Signature:
             types.append(annotation)
 
         # If there is a default parameter, make sure that it is of the annotated type.
-        if (p.default is not inspect.Parameter.empty) and not _is_bearable(
-            p.default, annotation
-        ):
+        default_is_empty = p.default is inspect.Parameter.empty
+        if not default_is_empty and not _is_bearable(p.default, annotation):
             raise TypeError(
                 f"Default value `{p.default}` is not an instance "
                 f"of the annotated type `{repr_short(annotation)}`."
