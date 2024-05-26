@@ -1,5 +1,6 @@
 import inspect
 import os
+import sys
 import types
 import typing
 from functools import partial
@@ -67,6 +68,44 @@ def repr_short(x) -> str:
     return typing._type_repr(x)
 
 
+def _safe_getfile(function):
+    """Safer version of inspect.getfile.
+
+    Classes defined in PyBind, even if they pretend hard
+    to be functions, like `jax.jit(fun)`, will raise an error
+    if passed to `inspect.getfile`.
+
+    This function will catch those errors and try harder to get
+    the underlying file, and raise an error only if it can't.
+
+    This function can only raise an OSError.
+
+    Args:
+        function: an object
+
+    Returns:
+        A file path.
+
+    Raises:
+        OSError
+    """
+    try:
+        f_path = inspect.getfile(function)
+    except TypeError:  # pragma: no cover
+        # raised when the function passed is a C-defined class
+        # Check if it contains a module anyway
+        if hasattr(function, "__module__"):
+            module = sys.modules.get(function.__module__)
+            if getattr(module, "__file__", None):
+                return module.__file__
+            if object.__module__ == "__main__":
+                # TODO: properly extract some information from here as well
+                raise OSError("source code not available") from None
+        raise OSError("source code not available") from None
+
+    return f_path
+
+
 def repr_source_path(function: Callable) -> Text:
     """Create a :class:`rich.Text` object with an hyperlink to the function definition.
 
@@ -78,8 +117,9 @@ def repr_source_path(function: Callable) -> Text:
             Representation with a hyperlink to the source. If the introspection failed,
             it returns :obj:`None`.
     """
+
     try:
-        f_path = inspect.getfile(function)
+        f_path = _safe_getfile(function)
         f_line = inspect.getsourcelines(function)[1]
         uri = f"file://{f_path}#{f_line}"
 
