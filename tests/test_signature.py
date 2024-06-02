@@ -115,7 +115,7 @@ def test_expand_varargs():
 
 
 def test_varargs_tie_breaking():
-    # Those are related to Bug #117
+    # These are related to bug #117.
     assert Sig(int) < Sig(int, varargs=int)
     assert not Sig(int) >= Sig(int, varargs=int)
     assert Sig(int, varargs=int) < Sig(int, Num)
@@ -123,33 +123,17 @@ def test_varargs_tie_breaking():
     assert Sig(int, int, varargs=int) < Sig(int, Num)
     assert not Sig(int, int, varargs=int) >= Sig(int, Num)
 
-    assert not (Sig(int, Num) < Sig(int, varargs=int))
-    assert not (Sig(int, varargs=Num) < Sig(int, varargs=int))
-    assert not (Sig(int, varargs=Num) <= Sig(int, varargs=int))
-
-    class A:
-        pass
-
-    class B:
-        pass
-
-    assert not Sig(int, varargs=A) < Sig(int, varargs=B)
-    assert not Sig(int, varargs=B) < Sig(int, varargs=A)
-
-    assert not Sig(int, varargs=Num) < Sig(Num, varargs=int)
-    assert not Sig(Num, varargs=int) < Sig(int, varargs=Num)
-
 
 def test_varargs_subset():
-    assert Sig(int, varargs=int) <= Sig(int, varargs=int)
-    assert Sig(int, varargs=int) <= Sig(Num, varargs=int)
-    assert Sig(int, varargs=int) <= Sig(int, varargs=Num)
-    assert Sig(int, varargs=int) <= Sig(Num, varargs=Num)
-    assert Sig(int, varargs=Num) <= Sig(int, varargs=Num)
-    assert Sig(int, varargs=Num) <= Sig(Num, varargs=Num)
-    assert Sig(Num, varargs=int) <= Sig(Num, varargs=int)
-    assert Sig(Num, varargs=int) <= Sig(Num, varargs=Num)
-    assert Sig(Num, varargs=Num) <= Sig(Num, varargs=Num)
+    assert Sig(int, varargs=int) == Sig(int, varargs=int)
+    assert Sig(int, varargs=int) < Sig(Num, varargs=int)
+    assert Sig(int, varargs=int) < Sig(int, varargs=Num)
+    assert Sig(int, varargs=int) < Sig(Num, varargs=Num)
+    assert Sig(int, varargs=Num) == Sig(int, varargs=Num)
+    assert Sig(int, varargs=Num) < Sig(Num, varargs=Num)
+    assert Sig(Num, varargs=int) == Sig(Num, varargs=int)
+    assert Sig(Num, varargs=int) < Sig(Num, varargs=Num)
+    assert Sig(Num, varargs=Num) == Sig(Num, varargs=Num)
 
     assert not Sig(Num, varargs=int) <= Sig(int, varargs=int)
     assert not Sig(int, varargs=Num) <= Sig(int, varargs=int)
@@ -158,6 +142,15 @@ def test_varargs_subset():
     assert not Sig(Num, varargs=Num) <= Sig(Num, varargs=int)
     assert not Sig(Num, varargs=int) <= Sig(int, varargs=Num)
     assert not Sig(Num, varargs=Num) <= Sig(int, varargs=Num)
+
+    class A:
+        pass
+
+    class B:
+        pass
+
+    assert not Sig(int, varargs=A) <= Sig(int, varargs=B)
+    assert not Sig(int, varargs=B) <= Sig(int, varargs=A)
 
 
 def test_comparison():
