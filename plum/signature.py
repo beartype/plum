@@ -188,17 +188,23 @@ class Signature(Comparable):
                 for x, y in zip(self_types, other_types)
             ]
         ):
+            # In this case, we have that `other >= self` is `False`, so returning `True`
+            # gives that `other < self` and returning `False` gives that `other` cannot
+            # be compared to `self`. Regardless of the return value, `other != self`.
+
             if self.has_varargs and other.has_varargs:
+                # TODO: This implements the subset relationship. However, if the
+                #       variable arguments are not used, then this may unnecessarily
+                #       return `False`. For example, `(int, *A)` would not be
+                #       comparable to `(Number, *B)`. However, if the argument given
+                #       is `1.0`, then reasonably the variable arguments should be
+                #       ignored and `(int, *A)` should be considered more specific
+                #       than `(Number, *B)`.
                 self_varargs = beartype.door.TypeHint(self.varargs)
                 other_varargs = beartype.door.TypeHint(other.varargs)
                 return self_varargs <= other_varargs
 
             elif self.has_varargs:
-                # In this case, we have that `other >= self` is `False`, so returning
-                # `True` gives that `other < self` and returning `False` gives that
-                # `other` cannot be compared to `self`. Regardless of the return
-                # value, `other != self`.
-                #
                 # Previously, this returned `False`, which would implement the subset
                 # relationship. We now deviate from the subset relationship! The
                 # rationale for this is as follows.
