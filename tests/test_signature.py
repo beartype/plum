@@ -205,6 +205,8 @@ def test_117_case1():
 
     with pytest.raises(AmbiguousLookupError):
         f(1)
+    assert f(1, A()) == "int and As"
+    assert f(1, B()) == "int and Bs"
 
 
 @pytest.mark.xfail(reason="bug #117")
@@ -219,14 +221,16 @@ def test_117_case2():
 
     @dispatch
     def f(x: int, *a: A):
-        return "int"
+        return "int and As"
 
     @dispatch
     def f(x: Num, *a: B):
-        return "num"
+        return "num and Bs"
 
-    assert f(1) == "int"
-    assert f(1.0) == "num"
+    assert f(1) == "int and As"
+    assert f(1, A()) == "int and As"
+    assert f(1.0) == "num and Bs"
+    assert f(1.0, B()) == "num and Bs"
 
 
 def test_117_case3():
@@ -248,12 +252,14 @@ def test_117_case3():
 
     @dispatch
     def f(x: Num, *a: B):
-        return "num"
+        return "num and Bs"
 
     with pytest.raises(AmbiguousLookupError):
         f(1)
     assert f(1, A()) == "int and As"
     assert f(1, B()) == "int and Bs"
+    assert f(1.0) == "num and Bs"
+    assert f(1.0, B()) == "num and Bs"
 
 
 def test_varargs_subset():
