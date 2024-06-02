@@ -68,42 +68,37 @@ def repr_short(x) -> str:
     return typing._type_repr(x)
 
 
-def _safe_getfile(function):
-    """Safer version of inspect.getfile.
+def _safe_getfile(obj) -> str:
+    """Safer version of :func:`inspect.getfile`.
 
-    Classes defined in PyBind, even if they pretend hard
-    to be functions, like `jax.jit(fun)`, will raise an error
-    if passed to `inspect.getfile`.
+    Classes defined in PyBind, even if they pretend hard to be functions, like
+    `jax.jit(fun)`, will raise an error if passed to `inspect.getfile`.
 
-    This function will catch those errors and try harder to get
-    the underlying file, and raise an error only if it can't.
+    This function will catch those errors and try harder to get the underlying file, and
+    raise an error only if it cannot.
 
-    This function can only raise an OSError.
+    This function can only raise an `OSError`.
 
     Args:
-        function: an object
+        obj (object): An object.
 
     Returns:
-        A file path.
+        str: Path to the file that defines `obj`.
 
     Raises:
-        OSError
+        OSError: File that defines `obj` cannot be found.
     """
     try:
-        f_path = inspect.getfile(function)
-    except TypeError:  # pragma: no cover
-        # raised when the function passed is a C-defined class
-        # Check if it contains a module anyway
-        if hasattr(function, "__module__"):
-            module = sys.modules.get(function.__module__)
-            if getattr(module, "__file__", None):
+        return inspect.getfile(obj)
+    except TypeError:
+        # Raised when the function passed is a C-defined class. It might still contain
+        # `__module__`, which can be used to backtrace the file that defines `obj`.
+        if hasattr(obj, "__module__"):
+            module = sys.modules.get(obj.__module__, None)
+            if hasattr(module, "__file__"):
                 return module.__file__
-            if object.__module__ == "__main__":
-                # TODO: properly extract some information from here as well
-                raise OSError("source code not available") from None
-        raise OSError("source code not available") from None
 
-    return f_path
+        raise OSError("Source code not available.") from None
 
 
 def repr_source_path(function: Callable) -> Text:
