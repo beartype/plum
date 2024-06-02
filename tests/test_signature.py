@@ -6,6 +6,8 @@ from typing import Any, Tuple
 
 import pytest
 
+from plum.dispatcher import Dispatcher
+from plum.resolver import AmbiguousLookupError
 from plum.signature import Signature as Sig
 from plum.signature import append_default_args, inspect_signature
 from plum.util import Missing
@@ -112,6 +114,181 @@ def test_expand_varargs():
     assert s.expand_varargs(2) == (int, int)
     assert s.expand_varargs(3) == (int, int, float)
     assert s.expand_varargs(4) == (int, int, float, float)
+
+
+def test_varargs_tie_breaking():
+    # These are related to bug #117.
+
+    assert Sig(int) < Sig(int, varargs=int)
+    assert Sig(int, varargs=int) < Sig(int, Num)
+    assert Sig(int, int, varargs=int) < Sig(int, Num)
+
+    assert not Sig(int) >= Sig(int, varargs=int)
+    assert not Sig(int, varargs=int) >= Sig(int, Num)
+    assert not Sig(int, int, varargs=int) >= Sig(int, Num)
+
+    dispatch = Dispatcher()
+
+    @dispatch
+    def f(*xs: int):
+        return "ints"
+
+    @dispatch
+    def f(*xs: Num):
+        return "nums"
+
+    @dispatch
+    def f(x: int):
+        return "int"
+
+    @dispatch
+    def f(x: int, y: int):
+        return "two ints"
+
+    @dispatch
+    def f(x: Num):
+        return "num"
+
+    @dispatch
+    def f(x: Num, y: Num):
+        return "two nums"
+
+    @dispatch
+    def f(x: int, *ys: int):
+        return "int and ints"
+
+    @dispatch
+    def f(x: int, *ys: Num):
+        return "int and nums"
+
+    @dispatch
+    def f(x: Num, *ys: int):
+        return "num and ints"
+
+    @dispatch
+    def f(x: Num, *ys: Num):
+        return "num and nums"
+
+    assert f(1) == "int"
+    assert f(1, 1) == "two ints"
+    assert f(1, 1, 1) == "int and ints"
+
+    assert f(1.0) == "num"
+    assert f(1.0, 1.0) == "two nums"
+    assert f(1.0, 1.0, 1.0) == "num and nums"
+
+    assert f(1, 1.0) == "int and nums"
+    assert f(1.0, 1) == "num and ints"
+
+    assert f(1, 1, 1.0) == "int and nums"
+    assert f(1.0, 1.0, 1) == "num and nums"
+    assert f(1, 1.0, 1.0) == "int and nums"
+    assert f(1.0, 1, 1) == "num and ints"
+
+
+def test_117_case1():
+    dispatch = Dispatcher()
+
+    class A:
+        pass
+
+    class B:
+        pass
+
+    @dispatch
+    def f(x: int, *a: A):
+        return "int and As"
+
+    @dispatch
+    def f(x: int, *a: B):
+        return "int and Bs"
+
+    with pytest.raises(AmbiguousLookupError):
+        f(1)
+    assert f(1, A()) == "int and As"
+    assert f(1, B()) == "int and Bs"
+
+
+@pytest.mark.xfail(reason="bug #117")
+def test_117_case2():
+    dispatch = Dispatcher()
+
+    class A:
+        pass
+
+    class B:
+        pass
+
+    @dispatch
+    def f(x: int, *a: A):
+        return "int and As"
+
+    @dispatch
+    def f(x: Num, *a: B):
+        return "num and Bs"
+
+    assert f(1) == "int and As"
+    assert f(1, A()) == "int and As"
+    assert f(1.0) == "num and Bs"
+    assert f(1.0, B()) == "num and Bs"
+
+
+def test_117_case3():
+    dispatch = Dispatcher()
+
+    class A:
+        pass
+
+    class B:
+        pass
+
+    @dispatch
+    def f(x: int, *a: A):
+        return "int and As"
+
+    @dispatch
+    def f(x: int, *a: B):
+        return "int and Bs"
+
+    @dispatch
+    def f(x: Num, *a: B):
+        return "num and Bs"
+
+    with pytest.raises(AmbiguousLookupError):
+        f(1)
+    assert f(1, A()) == "int and As"
+    assert f(1, B()) == "int and Bs"
+    assert f(1.0) == "num and Bs"
+    assert f(1.0, B()) == "num and Bs"
+
+
+def test_varargs_subset():
+    assert Sig(int, varargs=int) == Sig(int, varargs=int)
+    assert Sig(int, varargs=int) < Sig(Num, varargs=int)
+    assert Sig(int, varargs=int) < Sig(int, varargs=Num)
+    assert Sig(int, varargs=int) < Sig(Num, varargs=Num)
+    assert Sig(int, varargs=Num) == Sig(int, varargs=Num)
+    assert Sig(int, varargs=Num) < Sig(Num, varargs=Num)
+    assert Sig(Num, varargs=int) == Sig(Num, varargs=int)
+    assert Sig(Num, varargs=int) < Sig(Num, varargs=Num)
+    assert Sig(Num, varargs=Num) == Sig(Num, varargs=Num)
+
+    assert not Sig(Num, varargs=int) <= Sig(int, varargs=int)
+    assert not Sig(int, varargs=Num) <= Sig(int, varargs=int)
+    assert not Sig(Num, varargs=Num) <= Sig(int, varargs=int)
+    assert not Sig(int, varargs=Num) <= Sig(Num, varargs=int)
+    assert not Sig(Num, varargs=Num) <= Sig(Num, varargs=int)
+    assert not Sig(Num, varargs=int) <= Sig(int, varargs=Num)
+    assert not Sig(Num, varargs=Num) <= Sig(int, varargs=Num)
+
+    class A:
+        pass
+
+    class B:
+        pass
+
+    assert not Sig(int, varargs=A) <= Sig(int, varargs=B)
+    assert not Sig(int, varargs=B) <= Sig(int, varargs=A)
 
 
 def test_comparison():

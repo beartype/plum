@@ -149,24 +149,6 @@ class Signature(Comparable):
             return self.types
 
     def __le__(self, other) -> bool:
-        # If this signature has variable arguments, but the other does not, then this
-        # signature cannot be possibly smaller.
-        if self.has_varargs and not other.has_varargs:
-            return False
-
-        # If this signature and the other signature both have variable arguments, then
-        # the variable type of this signature must be less than the variable type of the
-        # other signature.
-        if (
-            self.has_varargs
-            and other.has_varargs
-            and not (
-                beartype.door.TypeHint(self.varargs)
-                <= beartype.door.TypeHint(other.varargs)
-            )
-        ):
-            return False
-
         # If the number of types of the signatures are unequal, then the signature
         # with the fewer number of types must be expanded using variable arguments.
         if not (
@@ -176,15 +158,73 @@ class Signature(Comparable):
         ):
             return False
 
-        # Finally, expand the types and compare.
+        # Expand the types and compare. We implement the subset relationship, but, very
+        # importantly, deviate from the subset relationship in exactly one place.
         self_types = self.expand_varargs(len(other.types))
         other_types = other.expand_varargs(len(self.types))
-        return all(
+        if all(
+            [
+                beartype.door.TypeHint(x) == beartype.door.TypeHint(y)
+                for x, y in zip(self_types, other_types)
+            ]
+        ):
+            if self.has_varargs and other.has_varargs:
+                self_varargs = beartype.door.TypeHint(self.varargs)
+                other_varargs = beartype.door.TypeHint(other.varargs)
+                return self_varargs <= other_varargs
+
+            # Having variable arguments makes you slightly larger.
+            elif self.has_varargs:
+                return False
+            elif other.has_varargs:
+                return True
+
+            else:
+                return True
+
+        elif all(
             [
                 beartype.door.TypeHint(x) <= beartype.door.TypeHint(y)
                 for x, y in zip(self_types, other_types)
             ]
-        )
+        ):
+            # In this case, we have that `other >= self` is `False`, so returning `True`
+            # gives that `other < self` and returning `False` gives that `other` cannot
+            # be compared to `self`. Regardless of the return value, `other != self`.
+
+            if self.has_varargs and other.has_varargs:
+                # TODO: This implements the subset relationship. However, if the
+                #       variable arguments are not used, then this may unnecessarily
+                #       return `False`. For example, `(int, *A)` would not be
+                #       comparable to `(Number, *B)`. However, if the argument given
+                #       is `1.0`, then reasonably the variable arguments should be
+                #       ignored and `(int, *A)` should be considered more specific
+                #       than `(Number, *B)`.
+                self_varargs = beartype.door.TypeHint(self.varargs)
+                other_varargs = beartype.door.TypeHint(other.varargs)
+                return self_varargs <= other_varargs
+
+            elif self.has_varargs:
+                # Previously, this returned `False`, which would implement the subset
+                # relationship. We now deviate from the subset relationship! The
+                # rationale for this is as follows.
+                #
+                # A non-variable-arguments signature is compared to a variable-arguments
+                # signature only to determine which is more specific. At this point, the
+                # non-variable-arguments signature has number of types equal to the
+                # number of arguments given to the function, so any additional variable
+                # arguments are not necessary. Hence, we ignore the additional
+                # variable arguments in the comparison and return correctly `True`. For
+                # example, `(int, *int)` would be more specific than `(Number)`.
+                return True
+            elif other.has_varargs:
+                return True
+
+            else:
+                return True
+
+        else:
+            return False
 
     def match(self, values) -> bool:
         """Check whether values match the signature.
