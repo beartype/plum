@@ -115,6 +115,7 @@ def test_expand_varargs():
 
 
 def test_varargs_tie_breaking():
+    # Those are related to Bug #117
     assert Sig(int) < Sig(int, varargs=int)
     assert not Sig(int) >= Sig(int, varargs=int)
     assert Sig(int, varargs=int) < Sig(int, Num)
