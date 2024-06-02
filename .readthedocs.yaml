@@ -12,9 +12,7 @@ build:
 python:
   install:
     - method: pip
-      path: .
-      extra_requirements:
-      - sphinx
+      path: ".[dev]"
 
 sphinx:
   builder: html
