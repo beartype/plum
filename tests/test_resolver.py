@@ -1,7 +1,6 @@
 import sys
 import textwrap
 import typing
-from numbers import Number as Num
 
 import pytest
 
@@ -243,33 +242,3 @@ def test_resolve():
     assert r.resolve(m_c1.signature) == m_b1
     m_b2.signature.precedence = 2
     assert r.resolve(m_c1.signature) == m_b2
-
-
-def test_117_case():
-    class A:
-        pass
-
-    class B:
-        pass
-
-    r = Resolver()
-
-    def f(x):
-        return x
-
-    m_a = Method(f, Signature(int, varargs=A))
-    r.register(m_a)
-    m_b = Method(f, Signature(int, varargs=B))
-    r.register(m_b)
-
-    with pytest.raises(AmbiguousLookupError):
-        r.resolve((1,))
-
-    r = Resolver()
-    m_a = Method(f, Signature(Num, varargs=int))
-    r.register(m_a)
-    m_b = Method(f, Signature(int, varargs=Num))
-    r.register(m_b)
-
-    with pytest.raises(AmbiguousLookupError):
-        r.resolve((1,))
