@@ -1,3 +1,5 @@
+import sys
+from dataclasses import dataclass, field
 from functools import partial
 from typing import Any, Dict, Optional, Tuple, TypeVar, Union, overload
 
@@ -11,6 +13,12 @@ __all__ = ["Dispatcher", "dispatch", "clear_all_cache"]
 T = TypeVar("T", bound=Callable[..., Any])
 
 
+_dataclass_kwargs: Dict[str, Any] = {}
+if sys.version_info >= (3, 10):
+    _dataclass_kwargs |= {"slots": True}
+
+
+@dataclass(frozen=True, **_dataclass_kwargs)
 class Dispatcher:
     """A namespace for functions.
 
@@ -20,9 +28,8 @@ class Dispatcher:
             all classes by the qualified name of a class.
     """
 
-    def __init__(self):
-        self.functions: Dict[str, Function] = {}
-        self.classes: Dict[str, Dict[str, Function]] = {}
+    functions: Dict[str, Function] = field(default_factory=dict)
+    classes: Dict[str, Dict[str, Function]] = field(default_factory=dict)
 
     @overload
     def __call__(self, method: T, precedence: int = ...) -> T: ...
