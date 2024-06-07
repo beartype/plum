@@ -110,6 +110,14 @@ class Dispatcher:
         f = self._get_function(method)
         for signature in signatures:
             f.register(method, signature, precedence)
+
+        # Hooks to clear the JIT caches of various libraries.
+        # TODO: this needs to be systematized. This should probably work
+        #       by entry points to allow for any JIT library to be added.
+        # JAX:
+        if "jax" in type(method).__module__ and hasattr(method, "clear_cache"):
+            method.clear_cache()
+
         return f
 
     def clear_cache(self):
