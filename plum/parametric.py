@@ -497,8 +497,10 @@ def type_nonparametric(q: T) -> Type[T]:
     ...     @classmethod
     ...     def __infer_type_parameter__(cls, *arg):
     ...         return type(arg[0])
+    ...
     ...     def __init__(self, x):
     ...         self.x = x
+    ...
     ...     def __repr__(self):
     ...         return f"Obj({self.x})"
     >>> PObj = parametric(Obj)
