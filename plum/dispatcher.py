@@ -1,4 +1,5 @@
-from typing import Any, Dict, Optional, Tuple, TypeVar, Union
+from functools import partial
+from typing import Any, Dict, Optional, Tuple, TypeVar, Union, overload
 
 from .function import Function
 from .overload import get_overloads
@@ -23,7 +24,15 @@ class Dispatcher:
         self.functions: Dict[str, Function] = {}
         self.classes: Dict[str, Dict[str, Function]] = {}
 
-    def __call__(self, method: Optional[T] = None, precedence: int = 0) -> T:
+    @overload
+    def __call__(self, method: T, precedence: int = ...) -> T: ...
+
+    @overload
+    def __call__(self, method: None, precedence: int) -> Callable[[T], T]: ...
+
+    def __call__(
+        self, method: Optional[T] = None, precedence: int = 0
+    ) -> T | Callable[[T], T]:
         """Decorator to register for a particular signature.
 
         Args:
@@ -33,7 +42,7 @@ class Dispatcher:
             function: Decorator.
         """
         if method is None:
-            return lambda m: self(m, precedence=precedence)
+            return partial(self.__call__, precedence=precedence)
 
         # If `method` has overloads, assume that those overloads need to be registered
         # and that `method` is not an implementation.
