@@ -1,4 +1,7 @@
-from typing import Any, Dict, Optional, Tuple, TypeVar, Union
+import sys
+from dataclasses import dataclass, field
+from functools import partial
+from typing import Any, Dict, Optional, Tuple, TypeVar, Union, overload
 
 from .function import Function
 from .overload import get_overloads
@@ -10,6 +13,12 @@ __all__ = ["Dispatcher", "dispatch", "clear_all_cache"]
 T = TypeVar("T", bound=Callable[..., Any])
 
 
+_dataclass_kwargs: Dict[str, Any] = {}
+if sys.version_info >= (3, 10):
+    _dataclass_kwargs |= {"slots": True}
+
+
+@dataclass(frozen=True, **_dataclass_kwargs)
 class Dispatcher:
     """A namespace for functions.
 
@@ -19,11 +28,18 @@ class Dispatcher:
             all classes by the qualified name of a class.
     """
 
-    def __init__(self):
-        self.functions: Dict[str, Function] = {}
-        self.classes: Dict[str, Dict[str, Function]] = {}
+    functions: Dict[str, Function] = field(default_factory=dict)
+    classes: Dict[str, Dict[str, Function]] = field(default_factory=dict)
 
-    def __call__(self, method: Optional[T] = None, precedence: int = 0) -> T:
+    @overload
+    def __call__(self, method: T, precedence: int = ...) -> T: ...
+
+    @overload
+    def __call__(self, method: None, precedence: int) -> Callable[[T], T]: ...
+
+    def __call__(
+        self, method: Optional[T] = None, precedence: int = 0
+    ) -> Union[T, Callable[[T], T]]:
         """Decorator to register for a particular signature.
 
         Args:
@@ -33,7 +49,7 @@ class Dispatcher:
             function: Decorator.
         """
         if method is None:
-            return lambda m: self(m, precedence=precedence)
+            return partial(self.__call__, precedence=precedence)
 
         # If `method` has overloads, assume that those overloads need to be registered
         # and that `method` is not an implementation.
