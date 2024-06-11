@@ -534,7 +534,9 @@ document.write(`
 
 <span class="sd">        @classmethod</span>
 <span class="sd">        def __le_type_parameter__(cls, left, right) -&gt; bool:</span>
-<span class="sd">            ...  # Is `left &lt;= right`?</span>
+<span class="sd">            # Is `left &lt;= right`?</span>
+<span class="sd">            ...</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">original_meta</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">original_class</span><span class="p">)</span>
@@ -645,8 +647,10 @@ document.write(`
 <span class="sd">        ...     @classmethod</span>
 <span class="sd">        ...     def __infer_type_parameter__(cls, *arg):</span>
 <span class="sd">        ...         return type(arg[0])</span>
+<span class="sd">        ...</span>
 <span class="sd">        ...     def __init__(self, x):</span>
 <span class="sd">        ...         self.x = x</span>
+<span class="sd">        ...</span>
 <span class="sd">        ...     def __repr__(self):</span>
 <span class="sd">        ...         return f&quot;Obj({self.x})&quot;</span>
 <span class="sd">        &gt;&gt;&gt; PObj = parametric(Obj)</span>
@@ -695,8 +699,10 @@ document.write(`
 <span class="sd">        ...     @classmethod</span>
 <span class="sd">        ...     def __infer_type_parameter__(cls, *arg):</span>
 <span class="sd">        ...         return type(arg[0])</span>
+<span class="sd">        ...</span>
 <span class="sd">        ...     def __init__(self, x):</span>
 <span class="sd">        ...         self.x = x</span>
+<span class="sd">        ...</span>
 <span class="sd">        ...     def __repr__(self):</span>
 <span class="sd">        ...         return f&quot;Obj({self.x})&quot;</span>
 <span class="sd">        &gt;&gt;&gt; PObj = parametric(Obj)</span>
@@ -829,8 +835,10 @@ document.write(`
 <span class="sd">    ...     @classmethod</span>
 <span class="sd">    ...     def __infer_type_parameter__(cls, *arg):</span>
 <span class="sd">    ...         return type(arg[0])</span>
+<span class="sd">    ...</span>
 <span class="sd">    ...     def __init__(self, x):</span>
 <span class="sd">    ...         self.x = x</span>
+<span class="sd">    ...</span>
 <span class="sd">    ...     def __repr__(self):</span>
 <span class="sd">    ...         return f&quot;Obj({self.x})&quot;</span>
 <span class="sd">    &gt;&gt;&gt; PObj = parametric(Obj)</span>
@@ -895,8 +903,10 @@ document.write(`
 <span class="sd">    ...     @classmethod</span>
 <span class="sd">    ...     def __infer_type_parameter__(cls, *arg):</span>
 <span class="sd">    ...         return type(arg[0])</span>
+<span class="sd">    ...</span>
 <span class="sd">    ...     def __init__(self, x):</span>
 <span class="sd">    ...         self.x = x</span>
+<span class="sd">    ...</span>
 <span class="sd">    ...     def __repr__(self):</span>
 <span class="sd">    ...         return f&quot;Obj({self.x})&quot;</span>
 <span class="sd">    &gt;&gt;&gt; PObj = parametric(Obj)</span>
