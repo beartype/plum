@@ -351,12 +351,12 @@ document.write(`
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span>
 
 
-<span class="n">_dataclass_kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">10</span><span class="p">):</span>
-    <span class="n">_dataclass_kwargs</span> <span class="o">|=</span> <span class="p">{</span><span class="s2">&quot;slots&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+<span class="n">_dataclass_kw_args</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">10</span><span class="p">):</span>  <span class="c1"># pragma: specific no cover 3.8 3.9</span>
+    <span class="n">_dataclass_kw_args</span> <span class="o">|=</span> <span class="p">{</span><span class="s2">&quot;slots&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
 
 
-<div class="viewcode-block" id="Dispatcher"><a class="viewcode-back" href="../../api.html#plum.dispatcher.Dispatcher">[docs]</a><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">_dataclass_kwargs</span><span class="p">)</span>
+<div class="viewcode-block" id="Dispatcher"><a class="viewcode-back" href="../../api.html#plum.dispatcher.Dispatcher">[docs]</a><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">_dataclass_kw_args</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">Dispatcher</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A namespace for functions.</span>
 
