@@ -13,12 +13,12 @@ __all__ = ["Dispatcher", "dispatch", "clear_all_cache"]
 T = TypeVar("T", bound=Callable[..., Any])
 
 
-_dataclass_kwargs: Dict[str, Any] = {}
-if sys.version_info >= (3, 10):
-    _dataclass_kwargs |= {"slots": True}
+_dataclass_kw_args: Dict[str, Any] = {}
+if sys.version_info >= (3, 10):  # pragma: specific no cover 3.8 3.9
+    _dataclass_kw_args |= {"slots": True}
 
 
-@dataclass(frozen=True, **_dataclass_kwargs)
+@dataclass(frozen=True, **_dataclass_kw_args)
 class Dispatcher:
     """A namespace for functions.
 
