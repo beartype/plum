@@ -112,4 +112,3 @@ def multiply(x: Rational, y: Rational):
 ```
 
 ## Test
-Edit
