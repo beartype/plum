@@ -261,7 +261,8 @@ def test_redefinition_warning():
         def f(x: str):
             pass
 
-        f(1)
+        # Warnings are only emitted when all registrations are resolved.
+        f._resolve_pending_registrations()
 
     with pytest.warns(MethodRedefinitionWarning):
 
@@ -269,4 +270,4 @@ def test_redefinition_warning():
         def f(x: int):
             pass
 
-        f(1)
+        f._resolve_pending_registrations()
