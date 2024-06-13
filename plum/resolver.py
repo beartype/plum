@@ -1,5 +1,6 @@
 import pydoc
 import sys
+import warnings
 from functools import wraps
 from typing import Callable, Optional, Tuple, Union
 
@@ -12,6 +13,10 @@ from plum.repr import rich_repr
 from plum.signature import Signature
 
 __all__ = ["AmbiguousLookupError", "NotFoundLookupError"]
+
+
+class MethodRedefinitionWarning(Warning):
+    """A method is redefined."""
 
 
 def _render_function_call(f: str, target: Union[Tuple, Signature]) -> str:
@@ -260,6 +265,12 @@ class Resolver:
                     f"The added method `{method}` is equal to {sum(existing)} "
                     f"existing methods. This should never happen."
                 )
+            previous_method = self.methods[existing.index(True)]
+            warnings.warn(
+                f"`{method}` overwrites the earlier definition `{previous_method}`.",
+                category=MethodRedefinitionWarning,
+                stacklevel=0,
+            )
             self.methods[existing.index(True)] = method
         else:
             self.methods.append(method)
