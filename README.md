@@ -110,3 +110,5 @@ def multiply(x: Rational, y: Rational):
 >>> multiply(1, 1.0)  # For mixed types, it automatically chooses the right optimisation!
 'Performing specialised implementation for reals...'
 ```
+
+## Test
