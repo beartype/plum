@@ -1,13 +1,16 @@
 import sys
 import textwrap
 import typing
+import warnings
 
 import pytest
 
 import plum.resolver
+from plum.dispatcher import Dispatcher
 from plum.method import Method
 from plum.resolver import (
     AmbiguousLookupError,
+    MethodRedefinitionWarning,
     NotFoundLookupError,
     Resolver,
     _document,
@@ -242,3 +245,29 @@ def test_resolve():
     assert r.resolve(m_c1.signature) == m_b1
     m_b2.signature.precedence = 2
     assert r.resolve(m_c1.signature) == m_b2
+
+
+def test_redefinition_warning():
+    dispatch = Dispatcher()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        @dispatch
+        def f(x: int):
+            pass
+
+        @dispatch
+        def f(x: str):
+            pass
+
+        # Warnings are only emitted when all registrations are resolved.
+        f._resolve_pending_registrations()
+
+    with pytest.warns(MethodRedefinitionWarning):
+
+        @dispatch
+        def f(x: int):
+            pass
+
+        f._resolve_pending_registrations()
