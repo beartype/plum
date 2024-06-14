@@ -43,7 +43,6 @@ jobs:
           parallel: true
 
   finish:
-    name: Finish coverage
     needs: test
     if: ${{ always() }}
     runs-on: ubuntu-latest
