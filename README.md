@@ -110,3 +110,27 @@ def multiply(x: Rational, y: Rational):
 >>> multiply(1, 1.0)  # For mixed types, it automatically chooses the right optimisation!
 'Performing specialised implementation for reals...'
 ```
+# Projects Using Plum
+
+The following projects are using Plum to do multiple dispatch!
+Would you like to add your project here?
+Please feel free to open a PR to add it to the list!
+
+- [Coordinax](https://github.com/GalacticDynamics/coordinax) implements coordinates in JAX.
+- [GPAR](https://github.com/wesselb/gpar) is an implementation of the [Gaussian Process Autoregressive Model](https://arxiv.org/abs/1802.07182).
+- [GPCM](https://github.com/wesselb/gpcm) is an implementation of various [Gaussian Process Convolution Models](https://arxiv.org/abs/2203.06997).
+- [Galax](https://github.com/GalacticDynamics/galax) does galactic and gravitational dynamics.
+- [Geometric Kernels](https://github.com/GPflow/GeometricKernels) implements kernels on non-Euclidean spaces, such as Riemannian manifolds, graphs, and meshes.
+- [LAB](https://github.com/wesselb/lab) uses Plum to provide backend-agnostic linear algebra (something that works with PyTorch/TF/JAX/etc).
+- [MLKernels](https://github.com/wesselb/mlkernels) implements standard kernels.
+- [MMEval](https://github.com/open-mmlab/mmeval) is a unified evaluation library for multiple machine learning libraries.
+- [Matrix](https://github.com/wesselb/matrix) extends LAB and implements structured matrix types, such as low-rank matrices and Kronecker products.
+- [NetKet](https://github.com/netket/netket), a library for machine learning with JAX/Flax targeted at quantum physics, uses Plum extensively to pick the right, efficient implementation for a large combination of objects that interact.
+- [NeuralProcesses](https://github.com/wesselb/neuralprocesses) is a framework for composing Neural Processes.
+- [OILMM](https://github.com/wesselb/oilmm) is an implementation of the [Orthogonal Linear Mixing Model](https://arxiv.org/abs/1911.06287).
+- [PySAGES](https://github.com/SSAGESLabs/PySAGES) is a suite for advanced general ensemble simulations.
+- [Quax](https://github.com/patrick-kidger/quax) implements multiple dispatch over abstract array types in JAX.
+- [Unxt](https://github.com/GalacticDynamics/unxt) implements unitful quantities in JAX.
+- [Varz](https://github.com/wesselb/varz) uses Plum to provide backend-agnostic tools for non-linear optimisation.
+
+[See the docs for a comparison of Plum to other implementations of multiple dispatch.](https://beartype.github.io/plum/comparison.html)
