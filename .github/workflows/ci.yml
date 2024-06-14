@@ -37,7 +37,7 @@ jobs:
           PRAGMA_VERSION=`python -c "import sys; print('.'.join(map(str, sys.version_info[:2])))"` \
             pytest -v --cov=plum --cov-report term-missing
       - name: Coveralls Parallel
-        uses: coverallsapp/github-action@v2.3
+        uses: coverallsapp/github-action@v2.3.0
         with:
           flag-name: run-${{ join(matrix.*, '-') }}
           parallel: true
@@ -50,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Coveralls Finished
-      uses: coverallsapp/github-action@v2.3
+      uses: coverallsapp/github-action@v2.3.0
       with:
         parallel-finished: true
         github-token: ${{ secrets.GITHUB_TOKEN }}
