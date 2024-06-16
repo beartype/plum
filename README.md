@@ -74,6 +74,31 @@ Closest candidates are the following:
         <function f at 0x7fd3a0235d30> @ /<ipython-input-2-c9f6cdbea9f3>:16
 ```
 
+
+> [!IMPORTANT]  
+> Dispatch, as implemented by Plum, is based on the _positional_ arguments to a function.
+> Keyword arguments are not used in the decision making for which method to call.
+> In particular, this means that _positional arguments without a default value must
+> always be given as positional arguments_!
+>
+> Example:
+> ```python
+> from plum import dispatch
+>
+> @dispatch
+> def f(x: int):
+>    return x
+> 
+> >>> f(1)    # OK
+> 1
+> 
+> >> try: f(x=1)  # Not OK
+> ... except Exception as e: print(f"{type(e).__name__}: {e}")
+> NotFoundLookupError: `f()` could not be resolved...
+> ```
+
+
+
 This also works for multiple arguments, enabling some neat design patterns:
 
 ```python
