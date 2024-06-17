@@ -97,7 +97,6 @@ typing.Union[numpy.int8, numpy.int16, numpy.int32, numpy.longlong, numpy.int64, 
 
 You can deactivate union aliases with `deactivate_union_aliases`:
 
-
 ```python
 >>> from plum import deactivate_union_aliases
 
