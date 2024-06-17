@@ -75,7 +75,7 @@ Closest candidates are the following:
 ```
 
 
-> [!IMPORTANT]  
+> [!IMPORTANT]
 > Dispatch, as implemented by Plum, is based on the _positional_ arguments to a function.
 > Keyword arguments are not used in the decision making for which method to call.
 > In particular, this means that _positional arguments without a default value must
@@ -88,15 +88,14 @@ Closest candidates are the following:
 > @dispatch
 > def f(x: int):
 >    return x
-> 
-> >>> f(1)    # OK
+>
+> >>> f(1)        # OK
 > 1
-> 
+>
 > >> try: f(x=1)  # Not OK
 > ... except Exception as e: print(f"{type(e).__name__}: {e}")
 > NotFoundLookupError: `f()` could not be resolved...
 > ```
-
 
 
 This also works for multiple arguments, enabling some neat design patterns:
