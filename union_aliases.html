@@ -457,7 +457,7 @@ For example, printing just <code class="docutils literal notranslate"><span clas
 </div>
 <p>If we don’t include all of <code class="docutils literal notranslate"><span class="pre">scalar_types</span></code>, we won’t see <code class="docutils literal notranslate"><span class="pre">Scalar</span></code>, as desired:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Union</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">scalar_types</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])]</span>
-<span class="go">typing.Union[numpy.int8, numpy.int16, numpy.int32, numpy.int64, numpy.uint8, numpy.uint16, numpy.uint32, numpy.uint64, numpy.float16, numpy.float32, numpy.float64, numpy.longdouble, numpy.complex64, numpy.complex128, numpy.clongdouble, bool, object, bytes, str]</span>
+<span class="go">typing.Union[numpy.int8, numpy.int16, numpy.int32, numpy.longlong, numpy.int64, numpy.uint8, numpy.uint16, numpy.uint32, numpy.uint64, numpy.ulonglong, numpy.float16, numpy.float32, numpy.float64, numpy.longdouble, numpy.complex64, numpy.complex128, numpy.clongdouble, numpy.str_, numpy.bytes_, numpy.void, numpy.bool]</span>
 </pre></div>
 </div>
 <p>You can deactivate union aliases with <code class="docutils literal notranslate"><span class="pre">deactivate_union_aliases</span></code>:</p>
@@ -467,7 +467,7 @@ For example, printing just <code class="docutils literal notranslate"><span clas
 
 <span class="go">% skip: next if(sys.version_info &lt; (3, 9), reason=&quot;Requires Python 3.9 or higher.&quot;)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">Scalar</span>
-<span class="go">typing.Union[numpy.int8, numpy.int16, numpy.int32, numpy.int64, numpy.uint8, numpy.uint16, numpy.uint32, numpy.uint64, numpy.float16, numpy.float32, numpy.float64, numpy.longdouble, numpy.complex64, numpy.complex128, numpy.clongdouble, bool, object, bytes, str, numpy.void]</span>
+<span class="go">typing.Union[numpy.int8, numpy.int16, numpy.int32, numpy.longlong, numpy.int64, numpy.uint8, numpy.uint16, numpy.uint32, numpy.uint64, numpy.ulonglong, numpy.float16, numpy.float32, numpy.float64, numpy.longdouble, numpy.complex64, numpy.complex128, numpy.clongdouble, numpy.str_, numpy.bytes_, numpy.void, numpy.bool, numpy.object_]</span>
 </pre></div>
 </div>
 </section>
