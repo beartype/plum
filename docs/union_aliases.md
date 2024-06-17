@@ -89,7 +89,7 @@ If we don't include all of `scalar_types`, we won't see `Scalar`, as desired:
 % import sys
 
 ```python
-% skip: next "Result depends on NumPy version.'
+% skip: next "Result depends on NumPy version."
 >>> Union[tuple(scalar_types[:-1])]
 typing.Union[numpy.int8, numpy.int16, numpy.int32, numpy.longlong, numpy.int64, numpy.uint8, numpy.uint16, numpy.uint32, numpy.uint64, numpy.ulonglong, numpy.float16, numpy.float32, numpy.float64, numpy.longdouble, numpy.complex64, numpy.complex128, numpy.clongdouble, numpy.str_, numpy.bytes_, numpy.void, numpy.bool]
 ```
@@ -102,7 +102,7 @@ You can deactivate union aliases with `deactivate_union_aliases`:
 
 >>> deactivate_union_aliases()
 
-% skip: next "Result depends on NumPy version.'
+% skip: next "Result depends on NumPy version."
 >>> Scalar
 typing.Union[numpy.int8, numpy.int16, numpy.int32, numpy.longlong, numpy.int64, numpy.uint8, numpy.uint16, numpy.uint32, numpy.uint64, numpy.ulonglong, numpy.float16, numpy.float32, numpy.float64, numpy.longdouble, numpy.complex64, numpy.complex128, numpy.clongdouble, numpy.str_, numpy.bytes_, numpy.void, numpy.bool, numpy.object_]
 ```
