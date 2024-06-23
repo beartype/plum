@@ -9,7 +9,7 @@ from rich.text import Text
 
 from .util import argsort
 from plum.method import Method, MethodList
-from plum.repr import rich_repr
+from plum.repr import repr_source_path, rich_repr
 from plum.signature import Signature
 
 __all__ = ["AmbiguousLookupError", "NotFoundLookupError"]
@@ -202,6 +202,26 @@ def _document(f: Callable, f_name: Optional[str] = None) -> str:
     return "\n".join([title] + body).rstrip()
 
 
+def _unwrap_invoked_methods(f):
+    """Undo wrapping of :meth:`Function.invoke`d methods.
+
+    :meth:`Function.invoke` uses :func:`functools.wraps` to wrap the function and
+    convert the output to the right return type. This wrapping obscures where the
+    method was originally defined, meaning that :func:`plum.repr.repr_source_path`
+    gives erroneous results. This function undoes that wrapping and makes
+    :func:`plum.repr.repr_source_path` work correctly.
+
+    Args:
+        f (function): Function, possibly wrapped.
+
+    Returns:
+        function: `f`, but without any wrapping.
+    """
+    while hasattr(f, "__wrapped_by_plum__"):
+        f = f.__wrapped_by_plum__
+    return f
+
+
 class Resolver:
     """Method resolver.
 
@@ -265,12 +285,22 @@ class Resolver:
                     f"The added method `{method}` is equal to {sum(existing)} "
                     f"existing methods. This should never happen."
                 )
+
+            # Determine the new and previous implementation. Unwrap possible wrapping
+            # by Plum from :meth:`Function.invoke`s, which can obscure the location
+            # where the implementation was originally defined.
             previous_method = self.methods[existing.index(True)]
+            prev_impl = _unwrap_invoked_methods(previous_method.implementation)
+            impl = _unwrap_invoked_methods(method.implementation)
             warnings.warn(
-                f"`{method}` overwrites the earlier definition `{previous_method}`.",
+                f"`{method}` (`{repr_source_path(impl)}`) "
+                f"overwrites the earlier definition "
+                f"`{previous_method}` "
+                f"(`{repr_source_path(prev_impl)}`).",
                 category=MethodRedefinitionWarning,
                 stacklevel=0,
             )
+
             self.methods[existing.index(True)] = method
         else:
             self.methods.append(method)
