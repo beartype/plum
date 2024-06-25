@@ -158,3 +158,8 @@ def test_inheritance(convert, promote):
     assert promote(n, Rat()) == (n, "Num from Rat")
     assert promote(Re(), n) == ("Num from Re", n)
     assert promote(Re(), Rat()) == ("Num from Re", "Num from Rat")
+
+    # Test that explicit self-promotion works.
+    # This should also trigger the "escape hatch" in `add_promotion_rule`.
+    add_promotion_rule(Num, Num, Num)
+    assert promote(n, n) == (n, n)
