@@ -477,8 +477,9 @@ document.write(`
     <span class="k">def</span> <span class="nf">rule</span><span class="p">(</span><span class="n">t1</span><span class="p">:</span> <span class="n">type1</span><span class="p">,</span> <span class="n">t2</span><span class="p">:</span> <span class="n">type2</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">type_to</span>
 
-    <span class="c1"># If the types are the same, we don&#39;t need to add the reverse rule.</span>
-    <span class="k">if</span> <span class="n">type1</span> <span class="ow">is</span> <span class="n">type2</span><span class="p">:</span>
+    <span class="c1"># If the types are the same, we don&#39;t need to add the reverse rule. Resolve the</span>
+    <span class="c1"># types to handle the case where types are equal, but not identical.</span>
+    <span class="k">if</span> <span class="n">TypeHint</span><span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">type1</span><span class="p">))</span> <span class="o">==</span> <span class="n">TypeHint</span><span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">type2</span><span class="p">)):</span>
         <span class="k">return</span>  <span class="c1"># Escape early.</span>
 
     <span class="nd">@_promotion_rule</span><span class="o">.</span><span class="n">dispatch</span>
