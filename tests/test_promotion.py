@@ -1,3 +1,5 @@
+import typing
+import warnings
 from numbers import Number
 from typing import Union
 
@@ -159,7 +161,24 @@ def test_inheritance(convert, promote):
     assert promote(Re(), n) == ("Num from Re", n)
     assert promote(Re(), Rat()) == ("Num from Re", "Num from Rat")
 
-    # Test that explicit self-promotion works.
-    # This should also trigger the "escape hatch" in `add_promotion_rule`.
-    add_promotion_rule(Num, Num, Num)
-    assert promote(n, n) == (n, n)
+
+def test_self_promotion(convert, promote):
+    # This should trigger the "escape hatch" in `add_promotion_rule`. It also should not
+    # trigger a redefinition warning. Explicitly test for that.
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        # Simple case where types are identical:
+        add_promotion_rule(Num, Num, Num)
+        n = Num()
+        assert promote(n, n) == (n, n)
+
+        # Also test a more complicated scenario where the types are equal, but not
+        # identical.
+        t1 = typing.Union[int, float]
+        t2 = typing.Union[float, int]
+        assert t1 is not t2
+        add_promotion_rule(t1, t2, str)
+        add_conversion_method(int, str, str)
+        add_conversion_method(float, str, str)
+        assert promote(1, 1.0) == ("1", "1.0")
