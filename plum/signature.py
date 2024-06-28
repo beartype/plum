@@ -44,7 +44,7 @@ class Signature(Comparable):
     _default_varargs: ClassVar = Missing
     _default_precedence: ClassVar[int] = 0
 
-    __slots__: tuple[str, ...] = ("types", "varargs", "precedence", "is_faithful")
+    __slots__: Tuple[str, ...] = ("types", "varargs", "precedence", "is_faithful")
 
     def __init__(
         self,
