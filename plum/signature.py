@@ -13,7 +13,7 @@ from . import _is_bearable
 from .repr import repr_short, rich_repr
 from .type import is_faithful, resolve_type_hint
 from .typing import get_type_hints
-from .util import Comparable, Missing, TypeHint, multihash, wrap_lambda
+from .util import Comparable, Missing, TypeHint, wrap_lambda
 
 __all__ = ["Signature", "append_default_args"]
 
@@ -131,7 +131,7 @@ class Signature(Comparable):
         return False
 
     def __hash__(self):
-        return multihash(Signature, *self.types, self.varargs)
+        return hash((Signature, *self.types, self.varargs))
 
     def expand_varargs(self, n: int) -> Tuple[TypeHint, ...]:
         """Expand variable arguments.
