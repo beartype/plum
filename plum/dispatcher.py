@@ -65,7 +65,9 @@ class Dispatcher:
         # set the signature argument to `None`.
         return self._add_method(method, None, precedence=precedence)
 
-    def multi(self, *signatures: Union[Signature, Tuple[TypeHint, ...]]) -> Callable:
+    def multi(
+        self, *signatures: Union[Signature, Tuple[TypeHint, ...]]
+    ) -> Callable[[Callable], Function]:
         """Decorator to register multiple signatures at once.
 
         Args:
@@ -87,7 +89,7 @@ class Dispatcher:
                     f"`plum.signature.Signature`."
                 )
 
-        def decorator(method):
+        def decorator(method: Callable) -> Function:
             # The precedence will not be used, so we can safely set it to `None`.
             return self._add_method(method, *resolved_signatures, precedence=None)
 
