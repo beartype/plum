@@ -4,7 +4,7 @@ import sys
 import types
 import typing
 from functools import partial
-from typing import Any, Callable, Dict, Iterable, Optional
+from typing import Any, Callable, Dict, Iterable, Optional, Type, TypeVar
 
 import rich
 from rich.color import Color
@@ -18,6 +18,8 @@ __all__ = [
     "repr_pyfunction",
     "rich_repr",
 ]
+
+T = TypeVar("T")
 
 path_style = Style(color=Color.from_ansi(7))
 file_style = Style(bold=True, underline=True)
@@ -202,7 +204,7 @@ def _repr_mimebundle_from_rich_(
     return data
 
 
-def rich_repr(cls: Optional[type] = None, str: bool = False):
+def rich_repr(cls: Optional[Type[T]] = None, str: bool = False) -> Type[T]:
     """Class decorator defining a `__repr__` method that calls :mod:`rich.`
 
     This also sets `_repr_mimebundle_` for better rendering in Jupyter.

@@ -1,10 +1,10 @@
 import inspect
 import operator
-import typing
 from copy import copy
-from typing import Callable, List, Set, Tuple, Union
+from typing import Any, Callable, ClassVar, List, Set, Tuple, Union
 
 from rich.segment import Segment
+from typing_extensions import Self
 
 import beartype.door
 from beartype.peps import resolve_pep563 as beartype_resolve_pep563
@@ -41,17 +41,17 @@ class Signature(Comparable):
         is_faithful (bool): Whether this signature only uses faithful types.
     """
 
-    _default_varargs = Missing
-    _default_precedence = 0
+    _default_varargs: ClassVar = Missing
+    _default_precedence: ClassVar[int] = 0
 
-    __slots__ = ("types", "varargs", "precedence", "is_faithful")
+    __slots__: Tuple[str, ...] = ("types", "varargs", "precedence", "is_faithful")
 
     def __init__(
         self,
         *types: Tuple[TypeHint, ...],
         varargs: OptionalType = _default_varargs,
         precedence: int = _default_precedence,
-    ):
+    ) -> None:
         """Instantiate a signature, which contains exactly the information necessary for
         dispatch.
 
@@ -90,17 +90,15 @@ class Signature(Comparable):
     def has_varargs(self) -> bool:
         return self.varargs is not Missing
 
-    def __copy__(self):
+    def __copy__(self) -> Self:
         cls = type(self)
         copy = cls.__new__(cls)
+        for attr in self.__slots__:
+            setattr(copy, attr, getattr(self, attr))
 
-        copy.types = self.types
-        copy.varargs = self.varargs
-        copy.precedence = self.precedence
-        copy.is_faithful = self.is_faithful
         return copy
 
-    def __rich_console__(self, console, options):
+    def __rich_console__(self, console, options) -> Segment:
         yield Segment("Signature(")
         show_comma = True
         if self.types:
@@ -115,7 +113,7 @@ class Signature(Comparable):
             yield Segment("precedence=" + repr(self.precedence))
         yield Segment(")")
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if isinstance(other, Signature):
             return (
                 self.types,
@@ -148,7 +146,7 @@ class Signature(Comparable):
         else:
             return self.types
 
-    def __le__(self, other) -> bool:
+    def __le__(self, other: "Signature") -> bool:
         # If the number of types of the signatures are unequal, then the signature
         # with the fewer number of types must be expanded using variable arguments.
         if not (
@@ -226,7 +224,7 @@ class Signature(Comparable):
         else:
             return False
 
-    def match(self, values) -> bool:
+    def match(self, values: Tuple) -> bool:
         """Check whether values match the signature.
 
         Args:
@@ -298,7 +296,7 @@ class Signature(Comparable):
         return mismatches, varargs_matched
 
 
-def inspect_signature(f) -> inspect.Signature:
+def inspect_signature(f: Callable) -> inspect.Signature:
     """Wrapper of :func:`inspect.signature` which adds support for certain non-function
     objects.
 
@@ -352,7 +350,7 @@ def _extract_signature(f: Callable, precedence: int = 0) -> Signature:
 
         # Parse and resolve annotation.
         if p.annotation is inspect.Parameter.empty:
-            annotation = typing.Any
+            annotation = Any
         else:
             annotation = resolve_type_hint(p.annotation)
 
