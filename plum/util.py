@@ -1,6 +1,7 @@
 import abc
 import sys
-from typing import List, Sequence
+import warnings
+from typing import Hashable, List, Sequence
 
 if sys.version_info.minor <= 8:  # pragma: specific no cover 3.9 3.10 3.11
     from typing import Callable
@@ -11,7 +12,6 @@ __all__ = [
     "Callable",
     "TypeHint",
     "Missing",
-    "multihash",
     "Comparable",
     "wrap_lambda",
     "is_in_class",
@@ -47,7 +47,7 @@ class Missing(metaclass=_MissingType):
         raise TypeError("`Missing` cannot be instantiated.")
 
 
-def multihash(*args):
+def multihash(*args: Hashable) -> int:
     """Multi-argument order-sensitive hash.
 
     Args:
@@ -56,6 +56,12 @@ def multihash(*args):
     Returns:
         int: Hash.
     """
+    warnings.warn(
+        "The function `multihash` is deprecated and will be removed in a future "
+        "version. Please use `hash(tuple(*args))` instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return hash(args)
 
 
