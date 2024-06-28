@@ -351,7 +351,7 @@ document.write(`
 <span class="kn">from</span> <span class="nn">.repr</span> <span class="kn">import</span> <span class="n">repr_short</span><span class="p">,</span> <span class="n">rich_repr</span>
 <span class="kn">from</span> <span class="nn">.type</span> <span class="kn">import</span> <span class="n">is_faithful</span><span class="p">,</span> <span class="n">resolve_type_hint</span>
 <span class="kn">from</span> <span class="nn">.typing</span> <span class="kn">import</span> <span class="n">get_type_hints</span>
-<span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="n">Comparable</span><span class="p">,</span> <span class="n">Missing</span><span class="p">,</span> <span class="n">TypeHint</span><span class="p">,</span> <span class="n">multihash</span><span class="p">,</span> <span class="n">wrap_lambda</span>
+<span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="n">Comparable</span><span class="p">,</span> <span class="n">Missing</span><span class="p">,</span> <span class="n">TypeHint</span><span class="p">,</span> <span class="n">wrap_lambda</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Signature&quot;</span><span class="p">,</span> <span class="s2">&quot;append_default_args&quot;</span><span class="p">]</span>
 
@@ -469,7 +469,7 @@ document.write(`
         <span class="k">return</span> <span class="kc">False</span>
 
     <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">multihash</span><span class="p">(</span><span class="n">Signature</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">types</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">varargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">((</span><span class="n">Signature</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">types</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">varargs</span><span class="p">))</span>
 
 <div class="viewcode-block" id="Signature.expand_varargs"><a class="viewcode-back" href="../../api.html#plum.signature.Signature.expand_varargs">[docs]</a>    <span class="k">def</span> <span class="nf">expand_varargs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">TypeHint</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Expand variable arguments.</span>
