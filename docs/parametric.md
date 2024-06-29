@@ -242,39 +242,36 @@ def i_expect_that(that: Kind["that"]):
     ...
 ```
 
-## `Val`
+## `typing.Literal` (and `Val`)
 
-Plum provides a parametric class `Val` which you can use to bring information
-from the object domain to the type domain.
+To bring information from the object domain to the type domain use
+`typing.Literal`.
+Plum's now-deprecated equivalent means is through the class `plum.Val`.
 
 Example:
 
 ```python
-from plum import dispatch, Val
+from typing import Literal
+from plum import dispatch
 
 
 @dispatch
-def algorithm(setting: Val["fast"], x):
+def algorithm(setting: Literal["fast"], x):
     return "Running fast!"
 
 
 @dispatch
-def algorithm(setting: Val["slow"], x):
+def algorithm(setting: Literal["slow"], x):
     return "Running slowly..."
 ```
 
 ```python
->>> algorithm(Val("fast"), 1)
+>>> algorithm("fast", 1)
 'Running fast!'
 
->>> algorithm(Val("slow"), 1)
+>>> algorithm("slow", 1)
 'Running slowly...'
 ```
-
-`typing.Literal` fills a very similar purpose.
-We recommend using `typing.Literal` instead.
-`Val` is only useful for Python versions that do not have `typing.Literal`.
-Those are Python 3.7 and below, but Plum does not support those versions.
 
 
 ## Example: `NDArray`

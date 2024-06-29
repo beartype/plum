@@ -539,6 +539,7 @@ def test_kind():
     assert issubclass(Kind2[1], object)
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_val():
     # Check some cases.
     for T, v in [

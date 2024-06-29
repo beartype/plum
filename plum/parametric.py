@@ -1,4 +1,5 @@
 import contextlib
+import warnings
 from typing import Type, TypeVar, Union
 
 import beartype.door
@@ -634,7 +635,14 @@ Kind = kind()  #: A default kind provided for convenience.
 @parametric
 class Val:
     """A parametric type used to move information from the value domain to the type
-    domain."""
+    domain.
+
+    .. deprecated::  v0.5.0
+
+        This class is deprecated and will be removed in a future version.
+        Please use `typing.Literal` instead.
+
+    """
 
     @classmethod
     def __infer_type_parameter__(cls, *arg):
@@ -653,12 +661,12 @@ class Val:
         Args:
             val (object): The value to be moved to the type domain.
         """
-        # Do not deprecate until beartype#276 is solved
-        # warnings.warn(
-        #     "`plum.Val` is deprecated and will be removed in a future version. "
-        #     "Please use `typing.Literal` instead.",
-        #     stacklevel=2,
-        # )
+        warnings.warn(
+            "`plum.Val` is deprecated and will be removed in a future version. "
+            "Please use `typing.Literal` instead.",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
         if type(self).concrete:
             if val is not None and type_parameter(self) != val:
                 raise ValueError("The value must be equal to the type parameter.")
