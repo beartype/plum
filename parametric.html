@@ -387,7 +387,7 @@ document.write(`
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#construction">Construction</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#customisation">Customisation</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#kind"><code class="docutils literal notranslate"><span class="pre">Kind</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#val"><code class="docutils literal notranslate"><span class="pre">Val</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#typing-literal-and-val"><code class="docutils literal notranslate"><span class="pre">typing.Literal</span></code> (and <code class="docutils literal notranslate"><span class="pre">Val</span></code>)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-ndarray">Example: <code class="docutils literal notranslate"><span class="pre">NDArray</span></code></a></li>
 </ul>
             </nav>
@@ -628,35 +628,33 @@ make a parametric wrapper object:</p>
 </pre></div>
 </div>
 </section>
-<section id="val">
-<h2><code class="docutils literal notranslate"><span class="pre">Val</span></code><a class="headerlink" href="#val" title="Permalink to this heading">#</a></h2>
-<p>Plum provides a parametric class <code class="docutils literal notranslate"><span class="pre">Val</span></code> which you can use to bring information
-from the object domain to the type domain.</p>
+<section id="typing-literal-and-val">
+<h2><code class="docutils literal notranslate"><span class="pre">typing.Literal</span></code> (and <code class="docutils literal notranslate"><span class="pre">Val</span></code>)<a class="headerlink" href="#typing-literal-and-val" title="Permalink to this heading">#</a></h2>
+<p>To bring information from the object domain to the type domain use
+<code class="docutils literal notranslate"><span class="pre">typing.Literal</span></code>.
+Plum’s now-deprecated equivalent means is through the class <code class="docutils literal notranslate"><span class="pre">plum.Val</span></code>.</p>
 <p>Example:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span><span class="p">,</span> <span class="n">Val</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span>
+<span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span>
 
 
 <span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">algorithm</span><span class="p">(</span><span class="n">setting</span><span class="p">:</span> <span class="n">Val</span><span class="p">[</span><span class="s2">&quot;fast&quot;</span><span class="p">],</span> <span class="n">x</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">algorithm</span><span class="p">(</span><span class="n">setting</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;fast&quot;</span><span class="p">],</span> <span class="n">x</span><span class="p">):</span>
     <span class="k">return</span> <span class="s2">&quot;Running fast!&quot;</span>
 
 
 <span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">algorithm</span><span class="p">(</span><span class="n">setting</span><span class="p">:</span> <span class="n">Val</span><span class="p">[</span><span class="s2">&quot;slow&quot;</span><span class="p">],</span> <span class="n">x</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">algorithm</span><span class="p">(</span><span class="n">setting</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;slow&quot;</span><span class="p">],</span> <span class="n">x</span><span class="p">):</span>
     <span class="k">return</span> <span class="s2">&quot;Running slowly...&quot;</span>
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">algorithm</span><span class="p">(</span><span class="n">Val</span><span class="p">(</span><span class="s2">&quot;fast&quot;</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">algorithm</span><span class="p">(</span><span class="s2">&quot;fast&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="go">&#39;Running fast!&#39;</span>
 
-<span class="gp">&gt;&gt;&gt; </span><span class="n">algorithm</span><span class="p">(</span><span class="n">Val</span><span class="p">(</span><span class="s2">&quot;slow&quot;</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">algorithm</span><span class="p">(</span><span class="s2">&quot;slow&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="go">&#39;Running slowly...&#39;</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">typing.Literal</span></code> fills a very similar purpose.
-We recommend using <code class="docutils literal notranslate"><span class="pre">typing.Literal</span></code> instead.
-<code class="docutils literal notranslate"><span class="pre">Val</span></code> is only useful for Python versions that do not have <code class="docutils literal notranslate"><span class="pre">typing.Literal</span></code>.
-Those are Python 3.7 and below, but Plum does not support those versions.</p>
 </section>
 <section id="example-ndarray">
 <h2>Example: <code class="docutils literal notranslate"><span class="pre">NDArray</span></code><a class="headerlink" href="#example-ndarray" title="Permalink to this heading">#</a></h2>
@@ -730,7 +728,7 @@ Those are Python 3.7 and below, but Plum does not support those versions.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#construction">Construction</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#customisation">Customisation</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#kind"><code class="docutils literal notranslate"><span class="pre">Kind</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#val"><code class="docutils literal notranslate"><span class="pre">Val</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#typing-literal-and-val"><code class="docutils literal notranslate"><span class="pre">typing.Literal</span></code> (and <code class="docutils literal notranslate"><span class="pre">Val</span></code>)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example-ndarray">Example: <code class="docutils literal notranslate"><span class="pre">NDArray</span></code></a></li>
 </ul>
   </nav></div>
