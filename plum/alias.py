@@ -26,20 +26,22 @@ Note that `IntOrFloat` prints to `typing.Union[IntOrFloat]` rather than just
 parsing how unions print.
 """
 
-import typing
 from functools import wraps
+from typing import List, TypeVar, Union, _type_repr
 
 from .typing import get_args
 
 __all__ = ["activate_union_aliases", "deactivate_union_aliases", "set_union_alias"]
 
-_union_type = type(typing.Union[int, float])
+UnionT = TypeVar("UnionT")
+
+_union_type = type(Union[int, float])
 _original_repr = _union_type.__repr__
 _original_str = _union_type.__str__
 
 
 @wraps(_original_repr)
-def _new_repr(self):
+def _new_repr(self: object) -> str:
     """Print a `typing.Union`, replacing all aliased unions by their aliased names.
 
     Returns:
@@ -52,7 +54,7 @@ def _new_repr(self):
     found_unions = []
     found_positions = []
     found_aliases = []
-    for union, alias in reversed(_aliased_unions):
+    for union, alias in reversed(_ALIASED_UNIONS):
         union_set = set(union)
         if union_set <= args_set:
             found = False
@@ -103,7 +105,7 @@ def _new_repr(self):
     args = new_args
 
     # Generate a string representation.
-    args_repr = [a if isinstance(a, str) else typing._type_repr(a) for a in args]
+    args_repr = [a if isinstance(a, str) else _type_repr(a) for a in args]
     # Like `typing` does, print `Optional` whenever possible.
     if len(args) == 2:
         if args[0] is type(None):  # noqa: E721
@@ -116,7 +118,7 @@ def _new_repr(self):
 
 
 @wraps(_original_str)
-def _new_str(self):
+def _new_str(self: object) -> str:
     """Does the same as :func:`_new_repr`.
 
     Returns:
@@ -125,24 +127,24 @@ def _new_str(self):
     return _new_repr(self)
 
 
-def activate_union_aliases():
+def activate_union_aliases() -> None:
     """When printing `typing.Union`s, replace all aliased unions by the aliased names.
     This monkey patches `__repr__` and `__str__` for `typing.Union`."""
     _union_type.__repr__ = _new_repr
     _union_type.__str__ = _new_str
 
 
-def deactivate_union_aliases():
+def deactivate_union_aliases() -> None:
     """Undo what :func:`.alias.activate` did. This restores the original  `__repr__`
     and `__str__` for `typing.Union`."""
     _union_type.__repr__ = _original_repr
     _union_type.__str__ = _original_str
 
 
-_aliased_unions = []
+_ALIASED_UNIONS: List = []
 
 
-def set_union_alias(union, alias):
+def set_union_alias(union: UnionT, alias: str) -> UnionT:
     """Change how a `typing.Union` is printed. This does not modify `union`.
 
     Args:
@@ -153,12 +155,12 @@ def set_union_alias(union, alias):
         type or type hint: `union`.
     """
     args = get_args(union) if isinstance(union, _union_type) else (union,)
-    for existing_union, existing_alias in _aliased_unions:
+    for existing_union, existing_alias in _ALIASED_UNIONS:
         if set(existing_union) == set(args) and alias != existing_alias:
             if isinstance(union, _union_type):
                 union_str = _original_str(union)
             else:
                 union_str = repr(union)
             raise RuntimeError(f"`{union_str}` already has alias `{existing_alias}`.")
-    _aliased_unions.append((args, alias))
+    _ALIASED_UNIONS.append((args, alias))
     return union
