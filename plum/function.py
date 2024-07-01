@@ -417,6 +417,8 @@ class Function(metaclass=_FunctionMeta):
         def wrapped_method(*args, **kw_args):
             return _convert(method(*args, **kw_args), return_type)
 
+        wrapped_method.__wrapped_by_plum__ = method
+
         return wrapped_method
 
     def __get__(self, instance, owner):
@@ -491,5 +493,7 @@ class _BoundFunction:
             # TODO: Can we do this without `type` here?
             method = self._f.invoke(type(self._instance), *types)
             return method(self._instance, *args, **kw_args)
+
+        wrapped_method.__wrapped_by_plum__ = self._f
 
         return wrapped_method

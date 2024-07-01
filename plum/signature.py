@@ -393,15 +393,15 @@ def append_default_args(signature: Signature, f: Callable) -> List[Signature]:
             remove default arguments.
 
     Returns:
-        list[:class:`.signature.Signature`]: list of signatures excluding from 0 to all
-        default arguments.
+        list[:class:`.signature.Signature`]: List of signatures excluding from no to all
+            default arguments.
     """
     # Extract specification.
     f_signature = inspect_signature(f)
 
     signatures = [signature]
 
-    arg_names = list(f_signature.parameters.keys())
+    arg_names = list(f_signature.parameters.keys())[: len(signature.types)]
     # We start at the end and, once we reach non-keyword-only arguments, delete the
     # argument with defaults values one by one. This generates a sequence of signatures,
     # which we return.

@@ -86,8 +86,10 @@ class Method:
         function_name = self.function_name
         signature = self.signature
         return_type = self.return_type
-        impl = self.implementation
-        return f"Method({function_name=}, {signature=}, {return_type=}, {impl=})"
+        implementation = self.implementation
+        return (
+            f"Method({function_name=}, {signature=}, {return_type=}, {implementation=})"
+        )
 
     def __rich_console__(self, console, options):
         yield self.repr_mismatch()
