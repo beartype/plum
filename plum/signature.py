@@ -1,11 +1,12 @@
 import inspect
 import operator
-from copy import copy
-from typing import Any, Callable, ClassVar, List, Set, Tuple, Union
 
 # TODO: When minimum version required is 3.11, remove typing extensions
 import sys
-if sys.version_info >= (3,11):  # pragma: specific no cover 3.7 3.8 3.9 3.10
+from copy import copy
+from typing import Any, Callable, ClassVar, List, Set, Tuple, Union
+
+if sys.version_info >= (3, 11):  # pragma: specific no cover 3.7 3.8 3.9 3.10
     from typing import Self
 else:  # pragma: specific no cover 3.11
     from typing_extensions import Self
