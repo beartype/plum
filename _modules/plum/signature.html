@@ -338,11 +338,17 @@ document.write(`
   <h1>Source code for plum.signature</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">inspect</span>
 <span class="kn">import</span> <span class="nn">operator</span>
+<span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">copy</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
+<span class="c1"># TODO: When minimum version required is 3.11, remove typing extensions</span>
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">11</span><span class="p">):</span>  <span class="c1"># pragma: specific no cover 3.7 3.8 3.9 3.10</span>
+    <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Self</span>
+<span class="k">else</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.11</span>
+    <span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">Self</span>
+
 <span class="kn">from</span> <span class="nn">rich.segment</span> <span class="kn">import</span> <span class="n">Segment</span>
-<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">Self</span>
 
 <span class="kn">import</span> <span class="nn">beartype.door</span>
 <span class="kn">from</span> <span class="nn">beartype.peps</span> <span class="kn">import</span> <span class="n">resolve_pep563</span> <span class="k">as</span> <span class="n">beartype_resolve_pep563</span>
