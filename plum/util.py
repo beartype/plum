@@ -1,7 +1,8 @@
 import abc
 import sys
-import warnings
 from typing import Hashable, List, Sequence
+
+from typing_extensions import deprecated
 
 if sys.version_info.minor <= 8:  # pragma: specific no cover 3.9 3.10 3.11
     from typing import Callable
@@ -47,6 +48,7 @@ class Missing(metaclass=_MissingType):
         raise TypeError("`Missing` cannot be instantiated.")
 
 
+@deprecated("Use `hash(tuple_of_args)` instead.")
 def multihash(*args: Hashable) -> int:
     """Multi-argument order-sensitive hash.
 
@@ -56,12 +58,6 @@ def multihash(*args: Hashable) -> int:
     Returns:
         int: Hash.
     """
-    warnings.warn(
-        "The function `multihash` is deprecated and will be removed in a future "
-        "version. Please use `hash(tuple(*args))` instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
     return hash(args)
 
 

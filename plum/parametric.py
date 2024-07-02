@@ -1,6 +1,7 @@
 import contextlib
-import warnings
 from typing import Type, TypeVar, Union
+
+from typing_extensions import deprecated
 
 import beartype.door
 from beartype.roar import BeartypeDoorNonpepException
@@ -19,7 +20,6 @@ __all__ = [
     "type_unparametrized",
     "kind",
     "Kind",
-    "Val",
 ]
 
 T = TypeVar("T")
@@ -632,6 +632,7 @@ def kind(SuperClass=object):
 Kind = kind()  #: A default kind provided for convenience.
 
 
+@deprecated("Use `typing.Literal[val]` instead.")
 @parametric
 class Val:
     """A parametric type used to move information from the value domain to the type
@@ -661,12 +662,6 @@ class Val:
         Args:
             val (object): The value to be moved to the type domain.
         """
-        warnings.warn(
-            "`plum.Val` is deprecated and will be removed in a future version. "
-            "Please use `typing.Literal` instead.",
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
         if type(self).concrete:
             if val is not None and type_parameter(self) != val:
                 raise ValueError("The value must be equal to the type parameter.")
