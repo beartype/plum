@@ -3,7 +3,7 @@ from typing import Union
 import pytest
 
 from plum import activate_union_aliases, deactivate_union_aliases, set_union_alias
-from plum.alias import _aliased_unions
+from plum.alias import _ALIASED_UNIONS
 
 
 @pytest.fixture()
@@ -13,7 +13,7 @@ def union_aliases():
     activate_union_aliases()
     yield
     deactivate_union_aliases()
-    _aliased_unions.clear()
+    _ALIASED_UNIONS.clear()
 
 
 @pytest.mark.parametrize("display", [str, repr])
