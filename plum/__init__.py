@@ -2,7 +2,9 @@
 # versions from `typing`. To not break backward compatibility, we still export these
 # types.
 from functools import partial
-from typing import Dict, List, Tuple, Union  # noqa: F401
+from typing import Dict, List, Tuple, Type, TypeVar, Union  # noqa: F401
+
+from typing_extensions import TypeGuard  # noqa: F401
 
 from beartype import BeartypeConf as _BeartypeConf
 from beartype import BeartypeStrategy as _BeartypeStrategy
@@ -31,8 +33,14 @@ from .util import multihash  # noqa: F401, F403
 # actually is not yet available, but we can already opt in to use it.
 _is_bearable = partial(_is_bearable, conf=_BeartypeConf(strategy=_BeartypeStrategy.On))
 
+T = TypeVar("T")
+T2 = TypeVar("T2")
 
-def isinstance(instance, c):
+
+# TODO: TypeGuard or
+def isinstance(
+    instance: object, c: Union[Type[T], _TypeHint[T]]
+) -> TypeGuard[Union[T, _TypeHint[T]]]:
     """Check if `instance` is of type or type hint `c`.
 
     This is a drop-in replace for the built-in :func:`ininstance` which supports type
@@ -45,10 +53,13 @@ def isinstance(instance, c):
     Returns:
         bool: Whether `instance` is of type or type hint `c`.
     """
-    return _is_bearable(instance, resolve_type_hint(c))
+    pred: bool = _is_bearable(instance, resolve_type_hint(c))
+    return pred
 
 
-def issubclass(c1, c2):
+def issubclass(
+    c1: Union[Type[T], _TypeHint[T]], c2: Union[Type[T2], _TypeHint[T2]]
+) -> TypeGuard[Union[T2, _TypeHint[T2]]]:
     """Check if `c1` is a subclass or sub-type hint of `c2`.
 
     This is a drop-in replace for the built-in :func:`issubclass` which supports type
@@ -61,4 +72,5 @@ def issubclass(c1, c2):
     Returns:
         bool: Whether `c1` is a subtype or sub-type hint of `c2`.
     """
-    return _TypeHint(resolve_type_hint(c1)) <= _TypeHint(resolve_type_hint(c2))
+    pred: bool = _TypeHint(resolve_type_hint(c1)) <= _TypeHint(resolve_type_hint(c2))
+    return pred

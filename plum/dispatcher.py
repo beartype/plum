@@ -32,10 +32,10 @@ class Dispatcher:
     classes: Dict[str, Dict[str, Function]] = field(default_factory=dict)
 
     @overload
-    def __call__(self, method: T, precedence: int = ...) -> T: ...
+    def __call__(self, method: None, precedence: int) -> Callable[[T], T]: ...
 
     @overload
-    def __call__(self, method: None, precedence: int) -> Callable[[T], T]: ...
+    def __call__(self, method: T, precedence: int = ...) -> T: ...
 
     def __call__(
         self, method: Optional[T] = None, precedence: int = 0
@@ -130,13 +130,13 @@ class Dispatcher:
             f.register(method, signature, precedence)
         return f
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear cache."""
         for f in self.functions.values():
             f.clear_cache()
 
 
-def clear_all_cache():
+def clear_all_cache() -> None:
     """Clear all cache, including the cache of subclass checks. This should be called
     if types are modified."""
     for f in Function._instances:
