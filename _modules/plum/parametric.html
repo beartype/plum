@@ -337,8 +337,9 @@ document.write(`
                   
   <h1>Source code for plum.parametric</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">contextlib</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Type</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">deprecated</span>
 
 <span class="kn">import</span> <span class="nn">beartype.door</span>
 <span class="kn">from</span> <span class="nn">beartype.roar</span> <span class="kn">import</span> <span class="n">BeartypeDoorNonpepException</span>
@@ -357,7 +358,6 @@ document.write(`
     <span class="s2">&quot;type_unparametrized&quot;</span><span class="p">,</span>
     <span class="s2">&quot;kind&quot;</span><span class="p">,</span>
     <span class="s2">&quot;Kind&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;Val&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
@@ -970,7 +970,8 @@ document.write(`
 <span class="n">Kind</span> <span class="o">=</span> <span class="n">kind</span><span class="p">()</span>  <span class="c1">#: A default kind provided for convenience.</span>
 
 
-<div class="viewcode-block" id="Val"><a class="viewcode-back" href="../../api.html#plum.parametric.Val">[docs]</a><span class="nd">@parametric</span>
+<span class="nd">@deprecated</span><span class="p">(</span><span class="s2">&quot;Use `typing.Literal[val]` instead.&quot;</span><span class="p">)</span>
+<span class="nd">@parametric</span>
 <span class="k">class</span> <span class="nc">Val</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A parametric type used to move information from the value domain to the type</span>
 <span class="sd">    domain.</span>
@@ -999,12 +1000,6 @@ document.write(`
 <span class="sd">        Args:</span>
 <span class="sd">            val (object): The value to be moved to the type domain.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-            <span class="s2">&quot;`plum.Val` is deprecated and will be removed in a future version. &quot;</span>
-            <span class="s2">&quot;Please use `typing.Literal` instead.&quot;</span><span class="p">,</span>
-            <span class="n">category</span><span class="o">=</span><span class="ne">DeprecationWarning</span><span class="p">,</span>
-            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-        <span class="p">)</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">concrete</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">type_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">!=</span> <span class="n">val</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The value must be equal to the type parameter.&quot;</span><span class="p">)</span>
@@ -1015,7 +1010,7 @@ document.write(`
         <span class="k">return</span> <span class="n">repr_short</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot;()&quot;</span>
 
     <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
 </pre></div>
 
                 </article>

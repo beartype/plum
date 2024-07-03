@@ -338,8 +338,9 @@ document.write(`
   <h1>Source code for plum.util</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">abc</span>
 <span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Sequence</span>
+
+<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">deprecated</span>
 
 <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="o">.</span><span class="n">minor</span> <span class="o">&lt;=</span> <span class="mi">8</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.9 3.10 3.11</span>
     <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span>
@@ -385,6 +386,7 @@ document.write(`
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;`Missing` cannot be instantiated.&quot;</span><span class="p">)</span></div>
 
 
+<span class="nd">@deprecated</span><span class="p">(</span><span class="s2">&quot;Use `hash(tuple_of_args)` instead.&quot;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">multihash</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Hashable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Multi-argument order-sensitive hash.</span>
 
@@ -394,12 +396,6 @@ document.write(`
 <span class="sd">    Returns:</span>
 <span class="sd">        int: Hash.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-        <span class="s2">&quot;The function `multihash` is deprecated and will be removed in a future &quot;</span>
-        <span class="s2">&quot;version. Please use `hash(tuple(*args))` instead.&quot;</span><span class="p">,</span>
-        <span class="ne">DeprecationWarning</span><span class="p">,</span>
-        <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-    <span class="p">)</span>
     <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
 
 
