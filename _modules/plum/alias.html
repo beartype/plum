@@ -364,20 +364,22 @@ document.write(`
 <span class="sd">parsing how unions print.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">import</span> <span class="nn">typing</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">_type_repr</span>
 
 <span class="kn">from</span> <span class="nn">.typing</span> <span class="kn">import</span> <span class="n">get_args</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;activate_union_aliases&quot;</span><span class="p">,</span> <span class="s2">&quot;deactivate_union_aliases&quot;</span><span class="p">,</span> <span class="s2">&quot;set_union_alias&quot;</span><span class="p">]</span>
 
-<span class="n">_union_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">typing</span><span class="o">.</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span>
+<span class="n">UnionT</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;UnionT&quot;</span><span class="p">)</span>
+
+<span class="n">_union_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span>
 <span class="n">_original_repr</span> <span class="o">=</span> <span class="n">_union_type</span><span class="o">.</span><span class="fm">__repr__</span>
 <span class="n">_original_str</span> <span class="o">=</span> <span class="n">_union_type</span><span class="o">.</span><span class="fm">__str__</span>
 
 
 <span class="nd">@wraps</span><span class="p">(</span><span class="n">_original_repr</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">_new_repr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_new_repr</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Print a `typing.Union`, replacing all aliased unions by their aliased names.</span>
 
 <span class="sd">    Returns:</span>
@@ -390,7 +392,7 @@ document.write(`
     <span class="n">found_unions</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">found_positions</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">found_aliases</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">union</span><span class="p">,</span> <span class="n">alias</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">_aliased_unions</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">union</span><span class="p">,</span> <span class="n">alias</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">_ALIASED_UNIONS</span><span class="p">):</span>
         <span class="n">union_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">union</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">union_set</span> <span class="o">&lt;=</span> <span class="n">args_set</span><span class="p">:</span>
             <span class="n">found</span> <span class="o">=</span> <span class="kc">False</span>
@@ -441,7 +443,7 @@ document.write(`
     <span class="n">args</span> <span class="o">=</span> <span class="n">new_args</span>
 
     <span class="c1"># Generate a string representation.</span>
-    <span class="n">args_repr</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">typing</span><span class="o">.</span><span class="n">_type_repr</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">]</span>
+    <span class="n">args_repr</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">_type_repr</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">]</span>
     <span class="c1"># Like `typing` does, print `Optional` whenever possible.</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">):</span>  <span class="c1"># noqa: E721</span>
@@ -454,7 +456,7 @@ document.write(`
 
 
 <span class="nd">@wraps</span><span class="p">(</span><span class="n">_original_str</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">_new_str</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_new_str</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Does the same as :func:`_new_repr`.</span>
 
 <span class="sd">    Returns:</span>
@@ -463,24 +465,24 @@ document.write(`
     <span class="k">return</span> <span class="n">_new_repr</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="activate_union_aliases"><a class="viewcode-back" href="../../api.html#plum.alias.activate_union_aliases">[docs]</a><span class="k">def</span> <span class="nf">activate_union_aliases</span><span class="p">():</span>
+<div class="viewcode-block" id="activate_union_aliases"><a class="viewcode-back" href="../../api.html#plum.alias.activate_union_aliases">[docs]</a><span class="k">def</span> <span class="nf">activate_union_aliases</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;When printing `typing.Union`s, replace all aliased unions by the aliased names.</span>
 <span class="sd">    This monkey patches `__repr__` and `__str__` for `typing.Union`.&quot;&quot;&quot;</span>
     <span class="n">_union_type</span><span class="o">.</span><span class="fm">__repr__</span> <span class="o">=</span> <span class="n">_new_repr</span>
     <span class="n">_union_type</span><span class="o">.</span><span class="fm">__str__</span> <span class="o">=</span> <span class="n">_new_str</span></div>
 
 
-<div class="viewcode-block" id="deactivate_union_aliases"><a class="viewcode-back" href="../../api.html#plum.alias.deactivate_union_aliases">[docs]</a><span class="k">def</span> <span class="nf">deactivate_union_aliases</span><span class="p">():</span>
+<div class="viewcode-block" id="deactivate_union_aliases"><a class="viewcode-back" href="../../api.html#plum.alias.deactivate_union_aliases">[docs]</a><span class="k">def</span> <span class="nf">deactivate_union_aliases</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Undo what :func:`.alias.activate` did. This restores the original  `__repr__`</span>
 <span class="sd">    and `__str__` for `typing.Union`.&quot;&quot;&quot;</span>
     <span class="n">_union_type</span><span class="o">.</span><span class="fm">__repr__</span> <span class="o">=</span> <span class="n">_original_repr</span>
     <span class="n">_union_type</span><span class="o">.</span><span class="fm">__str__</span> <span class="o">=</span> <span class="n">_original_str</span></div>
 
 
-<span class="n">_aliased_unions</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">_ALIASED_UNIONS</span><span class="p">:</span> <span class="n">List</span> <span class="o">=</span> <span class="p">[]</span>
 
 
-<div class="viewcode-block" id="set_union_alias"><a class="viewcode-back" href="../../api.html#plum.alias.set_union_alias">[docs]</a><span class="k">def</span> <span class="nf">set_union_alias</span><span class="p">(</span><span class="n">union</span><span class="p">,</span> <span class="n">alias</span><span class="p">):</span>
+<div class="viewcode-block" id="set_union_alias"><a class="viewcode-back" href="../../api.html#plum.alias.set_union_alias">[docs]</a><span class="k">def</span> <span class="nf">set_union_alias</span><span class="p">(</span><span class="n">union</span><span class="p">:</span> <span class="n">UnionT</span><span class="p">,</span> <span class="n">alias</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">UnionT</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Change how a `typing.Union` is printed. This does not modify `union`.</span>
 
 <span class="sd">    Args:</span>
@@ -491,14 +493,14 @@ document.write(`
 <span class="sd">        type or type hint: `union`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">args</span> <span class="o">=</span> <span class="n">get_args</span><span class="p">(</span><span class="n">union</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">union</span><span class="p">,</span> <span class="n">_union_type</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="n">union</span><span class="p">,)</span>
-    <span class="k">for</span> <span class="n">existing_union</span><span class="p">,</span> <span class="n">existing_alias</span> <span class="ow">in</span> <span class="n">_aliased_unions</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">existing_union</span><span class="p">,</span> <span class="n">existing_alias</span> <span class="ow">in</span> <span class="n">_ALIASED_UNIONS</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">existing_union</span><span class="p">)</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="ow">and</span> <span class="n">alias</span> <span class="o">!=</span> <span class="n">existing_alias</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">union</span><span class="p">,</span> <span class="n">_union_type</span><span class="p">):</span>
                 <span class="n">union_str</span> <span class="o">=</span> <span class="n">_original_str</span><span class="p">(</span><span class="n">union</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">union_str</span> <span class="o">=</span> <span class="nb">repr</span><span class="p">(</span><span class="n">union</span><span class="p">)</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">union_str</span><span class="si">}</span><span class="s2">` already has alias `</span><span class="si">{</span><span class="n">existing_alias</span><span class="si">}</span><span class="s2">`.&quot;</span><span class="p">)</span>
-    <span class="n">_aliased_unions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">args</span><span class="p">,</span> <span class="n">alias</span><span class="p">))</span>
+    <span class="n">_ALIASED_UNIONS</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">args</span><span class="p">,</span> <span class="n">alias</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">union</span></div>
 </pre></div>
 
