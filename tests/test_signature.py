@@ -427,6 +427,15 @@ def test_append_default_args():
     assert (sigs[1].types, sigs[1].varargs) == ((int, Any), Missing)
     assert (sigs[2].types, sigs[2].varargs) == ((int,), Missing)
 
+    # Test the case of more argument names than types.
+    sigs = append_default_args(Sig(int, Any), f)
+    assert len(sigs) == 2
+    assert (sigs[0].types, sigs[0].varargs) == ((int, Any), Missing)
+    assert (sigs[1].types, sigs[1].varargs) == ((int,), Missing)
+    sigs = append_default_args(Sig(int), f)
+    assert len(sigs) == 1
+    assert (sigs[0].types, sigs[0].varargs) == ((int,), Missing)
+
     # Test that `itemgetter` is supported.
     f = operator.itemgetter(0)
     assert len(append_default_args(Sig.from_callable(f), f)) == 1
