@@ -9,7 +9,7 @@ from rich.text import Text
 
 from .util import argsort
 from plum.method import Method, MethodList
-from plum.repr import rich_repr
+from plum.repr import repr_source_path, rich_repr
 from plum.signature import Signature
 
 __all__ = ["AmbiguousLookupError", "NotFoundLookupError"]
@@ -202,17 +202,52 @@ def _document(f: Callable, f_name: Optional[str] = None) -> str:
     return "\n".join([title] + body).rstrip()
 
 
+def _unwrap_invoked_methods(f):
+    """Undo wrapping of :meth:`Function.invoke`d methods.
+
+    :meth:`Function.invoke` uses :func:`functools.wraps` to wrap the function and
+    convert the output to the right return type. This wrapping obscures where the
+    method was originally defined, meaning that :func:`plum.repr.repr_source_path`
+    gives erroneous results. This function undoes that wrapping and makes
+    :func:`plum.repr.repr_source_path` work correctly.
+
+    Args:
+        f (function): Function, possibly wrapped.
+
+    Returns:
+        function: `f`, but without any wrapping.
+    """
+    while hasattr(f, "__wrapped_by_plum__"):
+        f = f.__wrapped_by_plum__
+    return f
+
+
 class Resolver:
     """Method resolver.
+
+    Args:
+        function_name (str, optional): Name of the function.
+        warn_redefinition (bool, optional): Throw a warning whenever a method is
+            redefined. Defaults to `False`.
 
     Attributes:
         methods (list[:class:`.method.Method`]): Registered methods.
         is_faithful (bool): Whether all methods are faithful or not.
+        warn_redefinition (bool): Throw a warning whenever a method is redefined.
     """
 
-    __slots__ = ("methods", "is_faithful", "function_name")
+    __slots__ = (
+        "function_name",
+        "methods",
+        "is_faithful",
+        "warn_redefinition",
+    )
 
-    def __init__(self, function_name: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        function_name: Optional[str] = None,
+        warn_redefinition: bool = False,
+    ) -> None:
         """Initialise the resolver.
 
         Args:
@@ -221,6 +256,7 @@ class Resolver:
         self.function_name = function_name
         self.methods: MethodList = MethodList()
         self.is_faithful: bool = True
+        self.warn_redefinition = warn_redefinition
 
     def doc(self, exclude: Union[Callable, None] = None) -> str:
         """Concatenate the docstrings of all methods of this function. Remove duplicate
@@ -265,12 +301,23 @@ class Resolver:
                     f"The added method `{method}` is equal to {sum(existing)} "
                     f"existing methods. This should never happen."
                 )
-            previous_method = self.methods[existing.index(True)]
-            warnings.warn(
-                f"`{method}` overwrites the earlier definition `{previous_method}`.",
-                category=MethodRedefinitionWarning,
-                stacklevel=0,
-            )
+
+            if self.warn_redefinition:
+                # Determine the new and previous implementation. Unwrap possible
+                # wrapping by Plum from :meth:`Function.invoke`s, which can obscure the
+                # location where the implementation was originally defined.
+                previous_method = self.methods[existing.index(True)]
+                prev_impl = _unwrap_invoked_methods(previous_method.implementation)
+                impl = _unwrap_invoked_methods(method.implementation)
+                warnings.warn(
+                    f"`{method}` (`{repr_source_path(impl)}`) "
+                    f"overwrites the earlier definition "
+                    f"`{previous_method}` "
+                    f"(`{repr_source_path(prev_impl)}`).",
+                    category=MethodRedefinitionWarning,
+                    stacklevel=0,
+                )
+
             self.methods[existing.index(True)] = method
         else:
             self.methods.append(method)

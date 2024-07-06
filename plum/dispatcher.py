@@ -22,12 +22,18 @@ if sys.version_info >= (3, 10):  # pragma: specific no cover 3.8 3.9
 class Dispatcher:
     """A namespace for functions.
 
+    Args:
+        warn_redefinition (bool, optional): Throw a warning whenever a method is
+            redefined. Defaults to `False`.
+
     Attributes:
         functions (dict[str, :class:`.function.Function`]): Functions by name.
         classes (dict[str, dict[str, :class:`.function.Function`]]): Methods of
             all classes by the qualified name of a class.
+        warn_redefinition (bool): Throw a warning whenever a method is redefined.
     """
 
+    warn_redefinition: bool = False
     functions: Dict[str, Function] = field(default_factory=dict)
     classes: Dict[str, Dict[str, Function]] = field(default_factory=dict)
 
@@ -115,7 +121,11 @@ class Dispatcher:
         # Create a new function only if the function does not already exist.
         name = method.__name__
         if name not in namespace:
-            namespace[name] = Function(method, owner=owner)
+            namespace[name] = Function(
+                method,
+                owner=owner,
+                warn_redefinition=self.warn_redefinition,
+            )
 
         return namespace[name]
 

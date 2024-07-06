@@ -63,6 +63,8 @@ class Function(metaclass=_FunctionMeta):
     Args:
         f (function): Function that is wrapped.
         owner (str, optional): Name of the class that owns the function.
+        warn_redefinition (bool, optional): Throw a warning whenever a method is
+            redefined. Defaults to `False`.
     """
 
     # When we set `__doc__`, we will lose the docstring of the class, so we save it now.
@@ -71,7 +73,12 @@ class Function(metaclass=_FunctionMeta):
 
     _instances = []
 
-    def __init__(self, f: Callable, owner: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        f: Callable,
+        owner: Optional[str] = None,
+        warn_redefinition: bool = False,
+    ) -> None:
         Function._instances.append(self)
 
         self._f: Callable = f
@@ -86,9 +93,14 @@ class Function(metaclass=_FunctionMeta):
         self._owner_name: Optional[str] = owner
         self._owner: Optional[type] = None
 
+        self._warn_redefinition = warn_redefinition
+
         # Initialise pending and resolved methods.
         self._pending: List[Tuple[Callable, Optional[Signature], int]] = []
-        self._resolver = Resolver(self.__name__)
+        self._resolver = Resolver(
+            self.__name__,
+            warn_redefinition=self._warn_redefinition,
+        )
         self._resolved: List[Tuple[Callable, Signature, int]] = []
 
     @property
@@ -233,7 +245,10 @@ class Function(metaclass=_FunctionMeta):
 
             # Clear resolved.
             self._resolved = []
-            self._resolver = Resolver(self._resolver.function_name)
+            self._resolver = Resolver(
+                self._resolver.function_name,
+                warn_redefinition=self._warn_redefinition,
+            )
 
     def register(
         self, f: Callable, signature: Optional[Signature] = None, precedence=0
@@ -417,6 +432,8 @@ class Function(metaclass=_FunctionMeta):
         def wrapped_method(*args, **kw_args):
             return _convert(method(*args, **kw_args), return_type)
 
+        wrapped_method.__wrapped_by_plum__ = method
+
         return wrapped_method
 
     def __get__(self, instance, owner):
@@ -491,5 +508,10 @@ class _BoundFunction:
             # TODO: Can we do this without `type` here?
             method = self._f.invoke(type(self._instance), *types)
             return method(self._instance, *args, **kw_args)
+
+        # We set `f.__wrapped_by_plum__` for :func:`Function.invoke`, but here we do
+        # not: this method has `self._instance` prepended to its arguments, so there
+        # is no "wrapped method". In addition, bound functions cannot be directly
+        # extended, so unwrapping is likely never desired.
 
         return wrapped_method
