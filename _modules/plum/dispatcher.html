@@ -360,12 +360,18 @@ document.write(`
 <span class="k">class</span> <span class="nc">Dispatcher</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A namespace for functions.</span>
 
+<span class="sd">    Args:</span>
+<span class="sd">        warn_redefinition (bool, optional): Throw a warning whenever a method is</span>
+<span class="sd">            redefined. Defaults to `False`.</span>
+
 <span class="sd">    Attributes:</span>
 <span class="sd">        functions (dict[str, :class:`.function.Function`]): Functions by name.</span>
 <span class="sd">        classes (dict[str, dict[str, :class:`.function.Function`]]): Methods of</span>
 <span class="sd">            all classes by the qualified name of a class.</span>
+<span class="sd">        warn_redefinition (bool): Throw a warning whenever a method is redefined.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">warn_redefinition</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">functions</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Function</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">classes</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Function</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
 
@@ -453,7 +459,11 @@ document.write(`
         <span class="c1"># Create a new function only if the function does not already exist.</span>
         <span class="n">name</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="vm">__name__</span>
         <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">namespace</span><span class="p">:</span>
-            <span class="n">namespace</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">owner</span><span class="o">=</span><span class="n">owner</span><span class="p">)</span>
+            <span class="n">namespace</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span>
+                <span class="n">method</span><span class="p">,</span>
+                <span class="n">owner</span><span class="o">=</span><span class="n">owner</span><span class="p">,</span>
+                <span class="n">warn_redefinition</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">warn_redefinition</span><span class="p">,</span>
+            <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">namespace</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
 

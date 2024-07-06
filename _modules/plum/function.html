@@ -401,6 +401,8 @@ document.write(`
 <span class="sd">    Args:</span>
 <span class="sd">        f (function): Function that is wrapped.</span>
 <span class="sd">        owner (str, optional): Name of the class that owns the function.</span>
+<span class="sd">        warn_redefinition (bool, optional): Throw a warning whenever a method is</span>
+<span class="sd">            redefined. Defaults to `False`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># When we set `__doc__`, we will lose the docstring of the class, so we save it now.</span>
@@ -409,7 +411,12 @@ document.write(`
 
     <span class="n">_instances</span> <span class="o">=</span> <span class="p">[]</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">owner</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">owner</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">warn_redefinition</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">Function</span><span class="o">.</span><span class="n">_instances</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_f</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">f</span>
@@ -424,9 +431,14 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">_owner_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">owner</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_owner</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">type</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">_warn_redefinition</span> <span class="o">=</span> <span class="n">warn_redefinition</span>
+
         <span class="c1"># Initialise pending and resolved methods.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_pending</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Signature</span><span class="p">],</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span> <span class="o">=</span> <span class="n">Resolver</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span> <span class="o">=</span> <span class="n">Resolver</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+            <span class="n">warn_redefinition</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_warn_redefinition</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_resolved</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Signature</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="nd">@property</span>
@@ -571,7 +583,10 @@ document.write(`
 
             <span class="c1"># Clear resolved.</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_resolved</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span> <span class="o">=</span> <span class="n">Resolver</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="o">.</span><span class="n">function_name</span><span class="p">)</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span> <span class="o">=</span> <span class="n">Resolver</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="o">.</span><span class="n">function_name</span><span class="p">,</span>
+                <span class="n">warn_redefinition</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_warn_redefinition</span><span class="p">,</span>
+            <span class="p">)</span></div>
 
 <div class="viewcode-block" id="Function.register"><a class="viewcode-back" href="../../api.html#plum.function.Function.register">[docs]</a>    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">signature</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Signature</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">precedence</span><span class="o">=</span><span class="mi">0</span>
@@ -755,6 +770,8 @@ document.write(`
         <span class="k">def</span> <span class="nf">wrapped_method</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">_convert</span><span class="p">(</span><span class="n">method</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">),</span> <span class="n">return_type</span><span class="p">)</span>
 
+        <span class="n">wrapped_method</span><span class="o">.</span><span class="n">__wrapped_by_plum__</span> <span class="o">=</span> <span class="n">method</span>
+
         <span class="k">return</span> <span class="n">wrapped_method</span></div>
 
     <span class="k">def</span> <span class="fm">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">owner</span><span class="p">):</span>
@@ -829,6 +846,11 @@ document.write(`
             <span class="c1"># TODO: Can we do this without `type` here?</span>
             <span class="n">method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_f</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_instance</span><span class="p">),</span> <span class="o">*</span><span class="n">types</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">method</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_instance</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">)</span>
+
+        <span class="c1"># We set `f.__wrapped_by_plum__` for :func:`Function.invoke`, but here we do</span>
+        <span class="c1"># not: this method has `self._instance` prepended to its arguments, so there</span>
+        <span class="c1"># is no &quot;wrapped method&quot;. In addition, bound functions cannot be directly</span>
+        <span class="c1"># extended, so unwrapping is likely never desired.</span>
 
         <span class="k">return</span> <span class="n">wrapped_method</span>
 </pre></div>

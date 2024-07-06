@@ -731,15 +731,15 @@ document.write(`
 <span class="sd">            remove default arguments.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        list[:class:`.signature.Signature`]: list of signatures excluding from 0 to all</span>
-<span class="sd">        default arguments.</span>
+<span class="sd">        list[:class:`.signature.Signature`]: List of signatures excluding from no to all</span>
+<span class="sd">            default arguments.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Extract specification.</span>
     <span class="n">f_signature</span> <span class="o">=</span> <span class="n">inspect_signature</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 
     <span class="n">signatures</span> <span class="o">=</span> <span class="p">[</span><span class="n">signature</span><span class="p">]</span>
 
-    <span class="n">arg_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">f_signature</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="n">arg_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">f_signature</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">keys</span><span class="p">())[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">signature</span><span class="o">.</span><span class="n">types</span><span class="p">)]</span>
     <span class="c1"># We start at the end and, once we reach non-keyword-only arguments, delete the</span>
     <span class="c1"># argument with defaults values one by one. This generates a sequence of signatures,</span>
     <span class="c1"># which we return.</span>

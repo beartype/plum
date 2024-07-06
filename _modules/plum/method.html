@@ -424,8 +424,10 @@ document.write(`
         <span class="n">function_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_name</span>
         <span class="n">signature</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">signature</span>
         <span class="n">return_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span>
-        <span class="n">impl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">implementation</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Method(</span><span class="si">{</span><span class="n">function_name</span><span class="si">=}</span><span class="s2">, </span><span class="si">{</span><span class="n">signature</span><span class="si">=}</span><span class="s2">, </span><span class="si">{</span><span class="n">return_type</span><span class="si">=}</span><span class="s2">, </span><span class="si">{</span><span class="n">impl</span><span class="si">=}</span><span class="s2">)&quot;</span>
+        <span class="n">implementation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">implementation</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Method(</span><span class="si">{</span><span class="n">function_name</span><span class="si">=}</span><span class="s2">, </span><span class="si">{</span><span class="n">signature</span><span class="si">=}</span><span class="s2">, </span><span class="si">{</span><span class="n">return_type</span><span class="si">=}</span><span class="s2">, </span><span class="si">{</span><span class="n">implementation</span><span class="si">=}</span><span class="s2">)&quot;</span>
+        <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__rich_console__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">console</span><span class="p">,</span> <span class="n">options</span><span class="p">):</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">repr_mismatch</span><span class="p">()</span>

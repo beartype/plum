@@ -361,7 +361,9 @@ document.write(`
   </button>
 `);
 </script>
-
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
 </div></div>
       
     </div>
@@ -377,6 +379,15 @@ document.write(`
     <div id="print-main-content">
         <div id="jb-print-toc">
             
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dispatchers">Dispatchers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#redefinition-warnings">Redefinition Warnings</a></li>
+</ul>
+            </nav>
         </div>
     </div>
 </div>
@@ -388,6 +399,8 @@ document.write(`
                   
   <section id="scope-of-functions">
 <h1>Scope of Functions<a class="headerlink" href="#scope-of-functions" title="Permalink to this heading">#</a></h1>
+<section id="dispatchers">
+<h2>Dispatchers<a class="headerlink" href="#dispatchers" title="Permalink to this heading">#</a></h2>
 <p>Consider the following package design.</p>
 <p><code class="docutils literal notranslate"><span class="pre">package/__init__.py</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">a</span>
@@ -481,6 +494,33 @@ dispatchers.</p>
 </pre></div>
 </div>
 </section>
+<section id="redefinition-warnings">
+<h2>Redefinition Warnings<a class="headerlink" href="#redefinition-warnings" title="Permalink to this heading">#</a></h2>
+<p>Whenever you create a dispatcher, you can set <code class="docutils literal notranslate"><span class="pre">warn_redefinition=True</span></code> to throw a warning whenever a method of a function overwrites another.
+It is recommended to use this setting.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">Dispatcher</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dispatch</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">(</span><span class="n">warn_redefinition</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nd">@dispatch</span>
+<span class="gp">... </span><span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="gp">... </span>   <span class="k">return</span> <span class="n">x</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nd">@dispatch</span>
+<span class="gp">... </span><span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="gp">... </span>   <span class="k">return</span> <span class="n">x</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">w</span><span class="p">:</span>  
+<span class="gp">... </span>    <span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">w</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+<span class="go">1</span>
+<span class="go">`Method(function_name=&#39;f&#39;, signature=Signature(int), return_type=typing.Any, implementation=&lt;function f at 0x...&gt;)` (`&lt;doctest .../scope.md[0]&gt;:1`) overwrites the earlier definition `Method(function_name=&#39;f&#39;, signature=Signature(int), return_type=typing.Any, implementation=&lt;function f at 0x...&gt;)` (`&lt;doctest .../scope.md[0]&gt;:1`).</span>
+</pre></div>
+</div>
+<p>Note that the redefinition warning is thrown whenever the function is run for the first
+time, because methods are only registered whenever they are needed.</p>
+</section>
+</section>
 
     <script type="text/x-thebe-config">
     {
@@ -536,6 +576,21 @@ dispatchers.</p>
             </div>
             
             
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dispatchers">Dispatchers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#redefinition-warnings">Redefinition Warnings</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
               
             
           </div>

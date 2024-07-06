@@ -684,8 +684,11 @@ remove default arguments.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>list of signatures excluding from 0 to all
-default arguments.</p>
+<dd class="field-even"><p><dl class="simple">
+<dt>List of signatures excluding from no to all</dt><dd><p>default arguments.</p>
+</dd>
+</dl>
+</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>list[<a class="reference internal" href="#plum.signature.Signature" title="plum.signature.Signature"><code class="xref py py-class docutils literal notranslate"><span class="pre">signature.Signature</span></code></a>]</p>
@@ -771,13 +774,15 @@ are mismatched.</p>
 <span id="functions"></span><h2>Functions<a class="headerlink" href="#module-plum.function" title="Permalink to this heading">#</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="plum.function.Function">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.function.</span></span><span class="sig-name descname"><span class="pre">Function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">owner</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/function.html#Function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.function.Function" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.function.</span></span><span class="sig-name descname"><span class="pre">Function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">owner</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warn_redefinition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/function.html#Function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.function.Function" title="Permalink to this definition">#</a></dt>
 <dd><p>A function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>f</strong> (<em>function</em>) – Function that is wrapped.</p></li>
 <li><p><strong>owner</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the class that owns the function.</p></li>
+<li><p><strong>warn_redefinition</strong> (<em>bool</em><em>, </em><em>optional</em>) – Throw a warning whenever a method is
+redefined. Defaults to <cite>False</cite>.</p></li>
 </ul>
 </dd>
 </dl>
@@ -913,8 +918,14 @@ given, then this argument will not be used. Defaults to <cite>0</cite>.</p></li>
 <span id="dispatchers"></span><h2>Dispatchers<a class="headerlink" href="#module-plum.dispatcher" title="Permalink to this heading">#</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="plum.dispatcher.Dispatcher">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.dispatcher.</span></span><span class="sig-name descname"><span class="pre">Dispatcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">functions:</span> <span class="pre">~typing.Dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">~plum.function.Function]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classes:</span> <span class="pre">~typing.Dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">~typing.Dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">~plum.function.Function]]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/dispatcher.html#Dispatcher"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.dispatcher.Dispatcher" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum.dispatcher.</span></span><span class="sig-name descname"><span class="pre">Dispatcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">warn_redefinition:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">functions:</span> <span class="pre">~typing.Dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">~plum.function.Function]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classes:</span> <span class="pre">~typing.Dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">~typing.Dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">~plum.function.Function]]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/dispatcher.html#Dispatcher"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.dispatcher.Dispatcher" title="Permalink to this definition">#</a></dt>
 <dd><p>A namespace for functions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>warn_redefinition</strong> (<em>bool</em><em>, </em><em>optional</em>) – Throw a warning whenever a method is
+redefined. Defaults to <cite>False</cite>.</p>
+</dd>
+</dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="plum.dispatcher.Dispatcher.functions">
 <span class="sig-name descname"><span class="pre">functions</span></span><a class="headerlink" href="#plum.dispatcher.Dispatcher.functions" title="Permalink to this definition">#</a></dt>
@@ -934,6 +945,17 @@ all classes by the qualified name of a class.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>dict[str, dict[str, <a class="reference internal" href="#plum.function.Function" title="plum.function.Function"><code class="xref py py-class docutils literal notranslate"><span class="pre">function.Function</span></code></a>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="plum.dispatcher.Dispatcher.warn_redefinition">
+<span class="sig-name descname"><span class="pre">warn_redefinition</span></span><a class="headerlink" href="#plum.dispatcher.Dispatcher.warn_redefinition" title="Permalink to this definition">#</a></dt>
+<dd><p>Throw a warning whenever a method is redefined.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
 </dd>
 </dl>
 </dd></dl>
@@ -980,7 +1002,7 @@ if types are modified.</p>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="plum.dispatcher.dispatch">
-<span class="sig-prename descclassname"><span class="pre">plum.dispatcher.</span></span><span class="sig-name descname"><span class="pre">dispatch</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Dispatcher(functions={},</span> <span class="pre">classes={})</span></em><a class="headerlink" href="#plum.dispatcher.dispatch" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">plum.dispatcher.</span></span><span class="sig-name descname"><span class="pre">dispatch</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Dispatcher(warn_redefinition=False,</span> <span class="pre">functions={},</span> <span class="pre">classes={})</span></em><a class="headerlink" href="#plum.dispatcher.dispatch" title="Permalink to this definition">#</a></dt>
 <dd><p>A default dispatcher for convenience purposes.</p>
 </dd></dl>
 

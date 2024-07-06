@@ -347,7 +347,7 @@ document.write(`
 
 <span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="n">argsort</span>
 <span class="kn">from</span> <span class="nn">plum.method</span> <span class="kn">import</span> <span class="n">Method</span><span class="p">,</span> <span class="n">MethodList</span>
-<span class="kn">from</span> <span class="nn">plum.repr</span> <span class="kn">import</span> <span class="n">rich_repr</span>
+<span class="kn">from</span> <span class="nn">plum.repr</span> <span class="kn">import</span> <span class="n">repr_source_path</span><span class="p">,</span> <span class="n">rich_repr</span>
 <span class="kn">from</span> <span class="nn">plum.signature</span> <span class="kn">import</span> <span class="n">Signature</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;AmbiguousLookupError&quot;</span><span class="p">,</span> <span class="s2">&quot;NotFoundLookupError&quot;</span><span class="p">]</span>
@@ -540,17 +540,52 @@ document.write(`
     <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">title</span><span class="p">]</span> <span class="o">+</span> <span class="n">body</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span>
 
 
+<span class="k">def</span> <span class="nf">_unwrap_invoked_methods</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Undo wrapping of :meth:`Function.invoke`d methods.</span>
+
+<span class="sd">    :meth:`Function.invoke` uses :func:`functools.wraps` to wrap the function and</span>
+<span class="sd">    convert the output to the right return type. This wrapping obscures where the</span>
+<span class="sd">    method was originally defined, meaning that :func:`plum.repr.repr_source_path`</span>
+<span class="sd">    gives erroneous results. This function undoes that wrapping and makes</span>
+<span class="sd">    :func:`plum.repr.repr_source_path` work correctly.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        f (function): Function, possibly wrapped.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        function: `f`, but without any wrapping.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">while</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s2">&quot;__wrapped_by_plum__&quot;</span><span class="p">):</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">__wrapped_by_plum__</span>
+    <span class="k">return</span> <span class="n">f</span>
+
+
 <span class="k">class</span> <span class="nc">Resolver</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Method resolver.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        function_name (str, optional): Name of the function.</span>
+<span class="sd">        warn_redefinition (bool, optional): Throw a warning whenever a method is</span>
+<span class="sd">            redefined. Defaults to `False`.</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        methods (list[:class:`.method.Method`]): Registered methods.</span>
 <span class="sd">        is_faithful (bool): Whether all methods are faithful or not.</span>
+<span class="sd">        warn_redefinition (bool): Throw a warning whenever a method is redefined.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;methods&quot;</span><span class="p">,</span> <span class="s2">&quot;is_faithful&quot;</span><span class="p">,</span> <span class="s2">&quot;function_name&quot;</span><span class="p">)</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;function_name&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;methods&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;is_faithful&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;warn_redefinition&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">function_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">function_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">warn_redefinition</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialise the resolver.</span>
 
 <span class="sd">        Args:</span>
@@ -559,6 +594,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">function_name</span> <span class="o">=</span> <span class="n">function_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="p">:</span> <span class="n">MethodList</span> <span class="o">=</span> <span class="n">MethodList</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">is_faithful</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">warn_redefinition</span> <span class="o">=</span> <span class="n">warn_redefinition</span>
 
     <span class="k">def</span> <span class="nf">doc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exclude</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Concatenate the docstrings of all methods of this function. Remove duplicate</span>
@@ -603,12 +639,23 @@ document.write(`
                     <span class="sa">f</span><span class="s2">&quot;The added method `</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">` is equal to </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">existing</span><span class="p">)</span><span class="si">}</span><span class="s2"> &quot;</span>
                     <span class="sa">f</span><span class="s2">&quot;existing methods. This should never happen.&quot;</span>
                 <span class="p">)</span>
-            <span class="n">previous_method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="p">[</span><span class="n">existing</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="kc">True</span><span class="p">)]</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">` overwrites the earlier definition `</span><span class="si">{</span><span class="n">previous_method</span><span class="si">}</span><span class="s2">`.&quot;</span><span class="p">,</span>
-                <span class="n">category</span><span class="o">=</span><span class="n">MethodRedefinitionWarning</span><span class="p">,</span>
-                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">warn_redefinition</span><span class="p">:</span>
+                <span class="c1"># Determine the new and previous implementation. Unwrap possible</span>
+                <span class="c1"># wrapping by Plum from :meth:`Function.invoke`s, which can obscure the</span>
+                <span class="c1"># location where the implementation was originally defined.</span>
+                <span class="n">previous_method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="p">[</span><span class="n">existing</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="kc">True</span><span class="p">)]</span>
+                <span class="n">prev_impl</span> <span class="o">=</span> <span class="n">_unwrap_invoked_methods</span><span class="p">(</span><span class="n">previous_method</span><span class="o">.</span><span class="n">implementation</span><span class="p">)</span>
+                <span class="n">impl</span> <span class="o">=</span> <span class="n">_unwrap_invoked_methods</span><span class="p">(</span><span class="n">method</span><span class="o">.</span><span class="n">implementation</span><span class="p">)</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">` (`</span><span class="si">{</span><span class="n">repr_source_path</span><span class="p">(</span><span class="n">impl</span><span class="p">)</span><span class="si">}</span><span class="s2">`) &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;overwrites the earlier definition &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">previous_method</span><span class="si">}</span><span class="s2">` &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;(`</span><span class="si">{</span><span class="n">repr_source_path</span><span class="p">(</span><span class="n">prev_impl</span><span class="p">)</span><span class="si">}</span><span class="s2">`).&quot;</span><span class="p">,</span>
+                    <span class="n">category</span><span class="o">=</span><span class="n">MethodRedefinitionWarning</span><span class="p">,</span>
+                    <span class="n">stacklevel</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                <span class="p">)</span>
+
             <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="p">[</span><span class="n">existing</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="kc">True</span><span class="p">)]</span> <span class="o">=</span> <span class="n">method</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">method</span><span class="p">)</span>
