@@ -483,46 +483,29 @@ also be used, but are <em>not</em> dispatched on.</p>
 </section>
 <section id="why-doesn-t-dispatch-fully-support-keyword-arguments">
 <span id="why"></span><h2>Why Doesn’t Dispatch Fully Support Keyword Arguments?<a class="headerlink" href="#why-doesn-t-dispatch-fully-support-keyword-arguments" title="Permalink to this heading">#</a></h2>
-<p>That’s a very good question, and unfortunately I don’t have a strong answer.
-The main reason is that it presents some new challenges.
-Is not entirely clear how
-this would work.
-For example, consider the following scenario:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-    <span class="o">...</span> <span class="c1"># Method 1</span>
-
-
-<span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">y</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-   <span class="o">...</span> <span class="c1"># Method 2</span>
-</pre></div>
-</div>
-<p>Then calling <code class="docutils literal notranslate"><span class="pre">f(1,</span> <span class="pre">1.0)</span></code> would call method 1 and calling <code class="docutils literal notranslate"><span class="pre">f(1.0,</span> <span class="pre">1)</span></code> would call method 2.</p>
-<p>What might be confusing is what <code class="docutils literal notranslate"><span class="pre">f(x=1.0,</span> <span class="pre">y=1)</span></code> would do.
-For method 1, the call would be equivalent to <code class="docutils literal notranslate"><span class="pre">f(1.0,</span> <span class="pre">1)</span></code>, which wouldn’t match.
-For method 2, the call would be equivalent to <code class="docutils literal notranslate"><span class="pre">f(1,</span> <span class="pre">1.0)</span></code>, which also wouldn’t match.
-The strange thing is that the arguments are switched around between the two methods
-because the names don’t line up.</p>
-<p>Perhaps this a poor example, but what’s going wrong is the following.
-In Python, there are two ways to say that a particular argument should have a value:</p>
-<ol class="arabic simple">
-<li><p>by <em>position</em>, or</p></li>
-<li><p>by <em>name</em>.</p></li>
-</ol>
-<p>Once you name things, the position becomes irrelevant.
-And once you position an argument, the name of the argument as written in the function
-doesn’t matter.
-Hence, in some sense, it’s an either-or situation where you have to choose to
-designate arguments by position <em>or</em> designate arguments by name.</p>
-<p>Currently, the whole multiple dispatch system has been designed around
-arguments-designated-by-position (and type), which is, as argued above,
-somehow incongruent with designating arguments by name.
-Why?
-Once you name things, the position becomes irrelevant;
-and once you position something, the name of the argument becomes irrelevant.</p>
-<p>Therefore, if we were to support naming arguments,
-how precisely this would work would have to be spelled out in detail.</p>
+<p>In multiple dispatch, a function can have many implementations, called methods.
+For all methods of a function, what is meant by the first argument is unambiguous and
+clear.
+However, what is meant by an argument named <code class="docutils literal notranslate"><span class="pre">x</span></code> depends on where a method
+positioned <code class="docutils literal notranslate"><span class="pre">x</span></code>:
+for some methods, <code class="docutils literal notranslate"><span class="pre">x</span></code> might be the first argument, whereas for other method <code class="docutils literal notranslate"><span class="pre">x</span></code>
+might be the second argument.
+In general, for a function with many methods, argument <code class="docutils literal notranslate"><span class="pre">x</span></code> does not have a unique
+position.
+In other words, for functions with many methods,
+there is usually no correspondence between argument names and positions.</p>
+<p>We therefore see that
+supporting both positional and named arguments hence results in a specification that
+mixes two non-corresponding systems.
+Whereas this would be possible, and admittedly it would be convenient to support named
+arguments, it would add substantial complexity to the dispatch process.
+In addition, for named arguments to be usable,
+it would require all methods of a function
+to name their arguments in a consistent manner.
+This can be particularly problematic if the methods of a function are spread across
+multiple packages with different authors and code conventions.</p>
+<p>In general, Plum closely mimics how multiple dispatch works in the
+<a class="reference external" href="https://docs.julialang.org/en/">Julia programming language</a>.</p>
 </section>
 </section>
 
