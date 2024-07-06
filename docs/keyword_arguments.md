@@ -120,5 +120,3 @@ multiple packages with different authors and code conventions.
 
 In general, Plum closely mimics how multiple dispatch works in the
 [Julia programming language](https://docs.julialang.org/en/).
-
-% skip: end
