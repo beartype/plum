@@ -247,8 +247,9 @@ def test_resolve():
     assert r.resolve(m_c1.signature) == m_b2
 
 
-def test_redefinition_warning():
-    dispatch = Dispatcher()
+@pytest.mark.parametrize("warn_redefinition", [False, True])
+def test_redefinition_warning(warn_redefinition):
+    dispatch = Dispatcher(warn_redefinition=warn_redefinition)
 
     with warnings.catch_warnings():
         warnings.simplefilter("error")
@@ -264,10 +265,44 @@ def test_redefinition_warning():
         # Warnings are only emitted when all registrations are resolved.
         f._resolve_pending_registrations()
 
-    with pytest.warns(MethodRedefinitionWarning):
+    # Perform the test twice, once more after clearing the cache. This reinstantiates
+    # the resolver, so we check that `warn_redefinition` is then set correctly.
+    for _ in range(2):
+        if warn_redefinition:
+            with pytest.warns(MethodRedefinitionWarning):
 
-        @dispatch
-        def f(x: int):
-            pass
+                @dispatch
+                def f(x: int):
+                    pass
 
+                f._resolve_pending_registrations()
+        else:
+            with warnings.catch_warnings():
+                warnings.simplefilter("error")
+
+                @dispatch
+                def f(x: int):
+                    pass
+
+                f._resolve_pending_registrations()
+
+        dispatch.clear_cache()
+
+
+def test_redefinition_warning_unwrapping():
+    dispatch = Dispatcher(warn_redefinition=True)
+
+    @dispatch
+    def f(x: int):
+        pass
+
+    # Write and overwrite a method derived from an invoked methods. We test that the
+    # unwrapping to find the location of the implementation works correctly.
+    f.dispatch_multi((str,))(f.invoke(int))
+    f.dispatch_multi((str,))(f.invoke(int))
+
+    with pytest.warns(
+        MethodRedefinitionWarning,
+        match=r".*`.*test_resolver.py:[0-9]+`.*" * 2,
+    ):
         f._resolve_pending_registrations()
