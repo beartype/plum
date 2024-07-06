@@ -494,6 +494,9 @@ class _BoundFunction:
             method = self._f.invoke(type(self._instance), *types)
             return method(self._instance, *args, **kw_args)
 
-        wrapped_method.__wrapped_by_plum__ = self._f
+        # We set `f.__wrapped_by_plum__` for :func:`Function.invoke`, but here we do
+        # not: this method has `self._instance` prepended to its arguments, so there
+        # is no "wrapped method". In addition, bound functions cannot be directly
+        # extended, so unwrapping is likely never desired.
 
         return wrapped_method

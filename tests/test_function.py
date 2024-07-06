@@ -12,6 +12,7 @@ from plum.resolver import (
     AmbiguousLookupError,
     NotFoundLookupError,
     _change_function_name,
+    _unwrap_invoked_methods,
 )
 from plum.signature import Signature
 
@@ -592,6 +593,27 @@ def test_invoke_wrapping():
 
     assert f.invoke(int).__name__ == "f"
     assert f.invoke(int).__doc__ == "Docs"
+
+
+def test_invoke_implementation_unwrapping():
+    dispatch = Dispatcher()
+
+    def f(x: int):
+        return type(x)
+
+    f_orig = f
+    f = dispatch(f)
+
+    # Redirect `float`s to `int`s.
+    dispatch.multi((float,))(f.invoke(int))
+
+    assert f(1) == int
+    assert f(1.0) == float
+
+    assert f.methods[0].implementation is f_orig
+    assert f.methods[1].implementation is not f_orig
+    assert _unwrap_invoked_methods(f.methods[0].implementation) is f_orig
+    assert _unwrap_invoked_methods(f.methods[1].implementation) is f_orig
 
 
 def test_bound():
