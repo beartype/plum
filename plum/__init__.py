@@ -24,6 +24,8 @@ from .type import resolve_type_hint
 from .util import *  # noqa: F401, F403
 
 # Deprecated
+# isort: split
+from .parametric import Val  # noqa: F401, F403
 from .util import multihash  # noqa: F401, F403
 
 # Ensure that type checking is always entirely correct! The default O(1) strategy
