@@ -265,7 +265,7 @@ def test_redefinition_warning(warn_redefinition):
         # Warnings are only emitted when all registrations are resolved.
         f._resolve_pending_registrations()
 
-    # Perform the test twice, once more after clearing the cache. This reinstantiates
+    # Perform the testonce before more after clearing the cache. This reinstantiates
     # the resolver, so we check that `warn_redefinition` is then set correctly.
     for _ in range(2):
         if warn_redefinition:
