@@ -13,29 +13,46 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.8, 3.9, "3.10", "3.11"]
+        value:
+          - name: "3.8"
+            python-version: "3.8"
+            extra-install: ""
+          - name: "3.9"
+            python-version: "3.9"
+            extra-install: ""
+          - name: "3.10"
+            python-version: "3.10"
+            extra-install: ""
+          - name: "3.11"
+            python-version: "3.11"
+            extra-install: ""
+          - name: "3.11-pre-beartype"
+            python-version: "3.11"
+            extra-install: "pip install --upgrade --pre beartype"
 
+    name: Test ${{ matrix.value.name }}
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.value.python-version }}
         uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.value.python-version }}
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install --upgrade --no-cache-dir -e '.[dev]'
+          ${{ matrix.value.extra-install }}
       - name: Test linter assertions
         run: |
           python check_linter_assertions.py tests/typechecked
-      - name: Test py${{ matrix.python-version }}
+      - name: Run tests
         run: |
           PRAGMA_VERSION=`python -c "import sys; print('.'.join(map(str, sys.version_info[:2])))"` \
             pytest -v --cov=plum --cov-report term-missing
-      - name: Coveralls Parallel
+      - name: Coveralls parallel
         uses: coverallsapp/github-action@v2
         with:
-          flag-name: run-${{ join(matrix.*, '-') }}
+          flag-name: run-${{ matrix.value.name }}
           parallel: true
 
   finish:
@@ -44,7 +61,7 @@ jobs:
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
-    - name: Coveralls Finished
+    - name: Coveralls finished
       uses: coverallsapp/github-action@v2
       with:
         parallel-finished: true

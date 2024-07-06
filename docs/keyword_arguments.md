@@ -95,53 +95,28 @@ NotFoundLookupError: `g(1, 'b')` could not be resolved...
 (why)=
 ## Why Doesn't Dispatch Fully Support Keyword Arguments?
 
-That's a very good question, and unfortunately I don't have a strong answer.
-The main reason is that it presents some new challenges.
-Is not entirely clear how
-this would work.
-For example, consider the following scenario:
+In multiple dispatch, a function can have many implementations, called methods.
+For all methods of a function, what is meant by the first argument is unambiguous and
+clear.
+However, what is meant by an argument named `x` depends on where a method
+positioned `x`:
+for some methods, `x` might be the first argument, whereas for other method `x`
+might be the second argument.
+In general, for a function with many methods, argument `x` does not have a unique
+position.
+In other words, for functions with many methods,
+there is usually no correspondence between argument names and positions.
 
-% skip: start "Pseudocode"
+We therefore see that
+supporting both positional and named arguments hence results in a specification that
+mixes two non-corresponding systems.
+Whereas this would be possible, and admittedly it would be convenient to support named
+arguments, it would add substantial complexity to the dispatch process.
+In addition, for named arguments to be usable,
+it would require all methods of a function
+to name their arguments in a consistent manner.
+This can be particularly problematic if the methods of a function are spread across
+multiple packages with different authors and code conventions.
 
-```python
-@dispatch
-def f(x: int, y: float):
-    ... # Method 1
-
-
-@dispatch
-def f(y: float, x: int):
-   ... # Method 2
-```
-
-Then calling `f(1, 1.0)` would call method 1 and calling `f(1.0, 1)` would call method 2.
-
-What might be confusing is what `f(x=1.0, y=1)` would do.
-For method 1, the call would be equivalent to `f(1.0, 1)`, which wouldn't match.
-For method 2, the call would be equivalent to `f(1, 1.0)`, which also wouldn't match.
-The strange thing is that the arguments are switched around between the two methods
-because the names don't line up.
-
-Perhaps this a poor example, but what's going wrong is the following.
-In Python, there are two ways to say that a particular argument should have a value:
-
-1. by _position_, or
-2. by _name_.
-
-Once you name things, the position becomes irrelevant.
-And once you position an argument, the name of the argument as written in the function
-doesn't matter.
-Hence, in some sense, it's an either-or situation where you have to choose to
-designate arguments by position _or_ designate arguments by name.
-
-Currently, the whole multiple dispatch system has been designed around
-arguments-designated-by-position (and type), which is, as argued above,
-somehow incongruent with designating arguments by name.
-Why?
-Once you name things, the position becomes irrelevant;
-and once you position something, the name of the argument becomes irrelevant.
-
-Therefore, if we were to support naming arguments,
-how precisely this would work would have to be spelled out in detail.
-
-% skip: end
+In general, Plum closely mimics how multiple dispatch works in the
+[Julia programming language](https://docs.julialang.org/en/).

@@ -139,7 +139,10 @@ def add_promotion_rule(type1, type2, type_to):
     def rule(t1: type1, t2: type2):
         return type_to
 
-    # If the types are the same, the method will get overwritten.
+    # If the types are the same, we don't need to add the reverse rule. Resolve the
+    # types to handle the case where types are equal, but not identical.
+    if TypeHint(resolve_type_hint(type1)) == TypeHint(resolve_type_hint(type2)):
+        return  # Escape early.
 
     @_promotion_rule.dispatch
     def rule(t1: type2, t2: type1):  # noqa: F811
