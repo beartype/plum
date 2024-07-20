@@ -1,3 +1,6 @@
+from numbers import Number
+from types import SimpleNamespace
+
 import pytest
 
 from plum import Dispatcher
@@ -70,3 +73,38 @@ def test_abstract():
 
     assert f.__doc__ == "Docs"
     assert f.methods == []
+
+
+def test_multiple_dispatchers_on_same_function():
+    dispatch1 = Dispatcher()
+    dispatch2 = Dispatcher()
+
+    @dispatch1.abstract
+    def f(x: Number, y: Number):
+        return x - 2 * y
+
+    @dispatch2.abstract
+    def f(x: Number, y: Number):
+        return x - y
+
+    @(dispatch2 | dispatch1)
+    def f(x: int, y: float):
+        return x + y
+
+    @dispatch1
+    def f(x: str):
+        return x
+
+    ns1 = SimpleNamespace(f=f)
+
+    @dispatch2
+    def f(x: int):
+        return x
+
+    ns2 = SimpleNamespace(f=f)
+
+    assert ns1.f("a") == "a"
+    assert ns1.f(1, 1.0) == 2.0
+
+    assert ns2.f(1) == 1
+    assert ns2.f(1, 1.0) == 2.0
