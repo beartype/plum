@@ -386,6 +386,7 @@ document.write(`
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#default-arguments">Default Arguments</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#why-doesn-t-dispatch-fully-support-keyword-arguments">Why Doesn’t Dispatch Fully Support Keyword Arguments?</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#i-really-want-keyword-arguments">I Really Want Keyword Arguments!</a></li>
 </ul>
             </nav>
         </div>
@@ -483,29 +484,67 @@ also be used, but are <em>not</em> dispatched on.</p>
 </section>
 <section id="why-doesn-t-dispatch-fully-support-keyword-arguments">
 <span id="why"></span><h2>Why Doesn’t Dispatch Fully Support Keyword Arguments?<a class="headerlink" href="#why-doesn-t-dispatch-fully-support-keyword-arguments" title="Permalink to this heading">#</a></h2>
-<p>In multiple dispatch, a function can have many implementations, called methods.
-For all methods of a function, what is meant by the first argument is unambiguous and
-clear.
-However, what is meant by an argument named <code class="docutils literal notranslate"><span class="pre">x</span></code> depends on where a method
-positioned <code class="docutils literal notranslate"><span class="pre">x</span></code>:
-for some methods, <code class="docutils literal notranslate"><span class="pre">x</span></code> might be the first argument, whereas for other method <code class="docutils literal notranslate"><span class="pre">x</span></code>
-might be the second argument.
-In general, for a function with many methods, argument <code class="docutils literal notranslate"><span class="pre">x</span></code> does not have a unique
-position.
-In other words, for functions with many methods,
-there is usually no correspondence between argument names and positions.</p>
-<p>We therefore see that
-supporting both positional and named arguments hence results in a specification that
-mixes two non-corresponding systems.
-Whereas this would be possible, and admittedly it would be convenient to support named
-arguments, it would add substantial complexity to the dispatch process.
-In addition, for named arguments to be usable,
-it would require all methods of a function
-to name their arguments in a consistent manner.
-This can be particularly problematic if the methods of a function are spread across
-multiple packages with different authors and code conventions.</p>
-<p>In general, Plum closely mimics how multiple dispatch works in the
+<p>It would technically be possible to dispatch of keyword arguments.
+Whereas Plum should or not is an ongoing discussion.</p>
+<p>The main argument against is that dispatching on keyword arguments
+would make the dispatch process sensitive to argument names.
+For this to work well, the arguments of all methods of a function would
+have to be named consistently.
+This can be problematic if the methods of a function are spread across
+multiple packages with different authors and code conventions.
+In contrast, dispatching only on positional arguments means that
+dispatch does not depend on argument names.</p>
+<p>In general, Plum attempts to mimics how multiple dispatch works in the
 <a class="reference external" href="https://docs.julialang.org/en/">Julia programming language</a>.</p>
+</section>
+<section id="i-really-want-keyword-arguments">
+<h2>I Really Want Keyword Arguments!<a class="headerlink" href="#i-really-want-keyword-arguments" title="Permalink to this heading">#</a></h2>
+<p>You can use the following pattern as a work-around,
+which converts all arguments to positional arguments using a wrapper function:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span>
+
+
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">_f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+
+<span class="nd">@dispatch</span>
+<span class="k">def</span> <span class="nf">_f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Only `x` is provided! It is an integer.&quot;</span><span class="p">)</span>
+
+
+<span class="nd">@dispatch</span>
+<span class="k">def</span> <span class="nf">_f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Only `x` is provided! It is a float.&quot;</span><span class="p">)</span>
+
+
+<span class="nd">@dispatch</span>
+<span class="k">def</span> <span class="nf">_f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Only `y` is provided! It is a float.&quot;</span><span class="p">)</span>
+
+
+<span class="nd">@dispatch</span>
+<span class="k">def</span> <span class="nf">_f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Both are provided!&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">Only `x` is provided! It is an integer.</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="go">Only `x` is provided! It is a float.</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span> <span class="n">f</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">... </span><span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="go">NotFoundLookupError: `_f(None, 1)` could not be resolved...</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="go">Only `y` is provided! It is a float.</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="go">Both are provided!</span>
+</pre></div>
+</div>
 </section>
 </section>
 
@@ -574,6 +613,7 @@ multiple packages with different authors and code conventions.</p>
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#default-arguments">Default Arguments</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#why-doesn-t-dispatch-fully-support-keyword-arguments">Why Doesn’t Dispatch Fully Support Keyword Arguments?</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#i-really-want-keyword-arguments">I Really Want Keyword Arguments!</a></li>
 </ul>
   </nav></div>
 
