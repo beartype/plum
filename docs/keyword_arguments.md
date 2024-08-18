@@ -95,28 +95,68 @@ NotFoundLookupError: `g(1, 'b')` could not be resolved...
 (why)=
 ## Why Doesn't Dispatch Fully Support Keyword Arguments?
 
-In multiple dispatch, a function can have many implementations, called methods.
-For all methods of a function, what is meant by the first argument is unambiguous and
-clear.
-However, what is meant by an argument named `x` depends on where a method
-positioned `x`:
-for some methods, `x` might be the first argument, whereas for other method `x`
-might be the second argument.
-In general, for a function with many methods, argument `x` does not have a unique
-position.
-In other words, for functions with many methods,
-there is usually no correspondence between argument names and positions.
+It would technically be possible to dispatch of keyword arguments.
+Whereas Plum should or not is an ongoing discussion.
 
-We therefore see that
-supporting both positional and named arguments hence results in a specification that
-mixes two non-corresponding systems.
-Whereas this would be possible, and admittedly it would be convenient to support named
-arguments, it would add substantial complexity to the dispatch process.
-In addition, for named arguments to be usable,
-it would require all methods of a function
-to name their arguments in a consistent manner.
-This can be particularly problematic if the methods of a function are spread across
+The main argument against is that dispatching on keyword arguments
+would make the dispatch process sensitive to argument names.
+For this to work well, the arguments of all methods of a function would
+have to be named consistently.
+This can be problematic if the methods of a function are spread across
 multiple packages with different authors and code conventions.
+In contrast, dispatching only on positional arguments means that
+dispatch does not depend on argument names.
 
-In general, Plum closely mimics how multiple dispatch works in the
+In general, Plum attempts to mimics how multiple dispatch works in the
 [Julia programming language](https://docs.julialang.org/en/).
+
+## I Really Want Keyword Arguments!
+
+You can use the following pattern as a work-around,
+which converts all arguments to positional arguments using a wrapper function:
+
+```python
+from plum import dispatch
+
+
+def f(x=None, y=None):
+    return _f(x, y)
+
+
+@dispatch
+def _f(x: int, y: None):
+    print("Only `x` is provided! It is an integer.")
+
+
+@dispatch
+def _f(x: float, y: None):
+    print("Only `x` is provided! It is a float.")
+
+
+@dispatch
+def _f(x: None, y: float):
+    print("Only `y` is provided! It is a float.")
+
+
+@dispatch
+def _f(x: int, y: float):
+    print("Both are provided!")
+```
+
+```python
+>>> f(x=1)
+Only `x` is provided! It is an integer.
+
+>>> f(x=1.0)
+Only `x` is provided! It is a float.
+
+>>> try: f(y=1)
+... except Exception as e: print(f"{type(e).__name__}: {e}")
+NotFoundLookupError: `_f(None, 1)` could not be resolved...
+
+>>> f(y=1.0)
+Only `y` is provided! It is a float.
+
+>>> f(x=1, y=1.0)
+Both are provided!
+```
