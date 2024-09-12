@@ -62,6 +62,15 @@ branch = true
 command_line = "-m pytest --verbose test"
 source = ["plum"]
 
+
+[tool.mypy]
+  disable_error_code = ["no-redef"]
+  enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
+  files = ["plum"]
+  strict = true
+  follow_imports = "skip"
+
+
 [tool.pytest.ini_options]
 testpaths = ["tests/", "plum", "docs"]
 addopts = [
