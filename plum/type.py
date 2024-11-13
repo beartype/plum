@@ -236,7 +236,7 @@ def resolve_type_hint(x):
             f"Could not resolve the type hint of `{x}`. "
             f"I have ended the resolution here to not make your code break, but some "
             f"types might not be working correctly. "
-            f"Please open an issue at https://github.com/wesselb/plum.",
+            f"Please open an issue at https://github.com/beartype/plum.",
             stacklevel=2,
         )
         return x
@@ -300,7 +300,7 @@ def _is_faithful(x):
             f"Could not determine whether `{x}` is faithful or not. "
             f"I have concluded that the type is not faithful, so your code might run "
             f"with subpar performance. "
-            f"Please open an issue at https://github.com/wesselb/plum.",
+            f"Please open an issue at https://github.com/beartype/plum.",
             stacklevel=2,
         )
         return False
