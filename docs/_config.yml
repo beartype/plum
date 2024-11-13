@@ -32,7 +32,7 @@ bibtex_bibfiles:
 
 # Information about where the book exists on the web.
 repository:
-  url: https://github.com/wesselb/plum
+  url: https://github.com/beartype/plum
   path_to_book: docs
   branch: master
 
