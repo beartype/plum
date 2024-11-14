@@ -89,6 +89,7 @@ select = [
 ignore = ["F811", "B018"]
 
 [tool.ruff.lint.isort]
+combine-as-imports = true
 known-first-party = ["beartype"]
 known-local-folder = ["plum"]
 

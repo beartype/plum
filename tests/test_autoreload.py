@@ -1,7 +1,6 @@
 import pytest
 
-from plum import Dispatcher
-from plum import autoreload as ar
+from plum import Dispatcher, autoreload as ar
 from plum.function import NotFoundLookupError
 
 

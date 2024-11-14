@@ -4,12 +4,16 @@ from doctest import ELLIPSIS, NORMALIZE_WHITESPACE
 
 import pytest
 from sybil import Sybil
-from sybil.parsers.myst import DocTestDirectiveParser as MarkdownDocTestParser
-from sybil.parsers.myst import PythonCodeBlockParser as MarkdownPythonCodeBlockParser
-from sybil.parsers.myst import SkipParser as MarkdownSkipParser
-from sybil.parsers.rest import DocTestParser as ReSTDocTestParser
-from sybil.parsers.rest import PythonCodeBlockParser as ReSTPythonCodeBlockParser
-from sybil.parsers.rest import SkipParser as ReSTSkipParser
+from sybil.parsers.myst import (
+    DocTestDirectiveParser as MarkdownDocTestParser,
+    PythonCodeBlockParser as MarkdownPythonCodeBlockParser,
+    SkipParser as MarkdownSkipParser,
+)
+from sybil.parsers.rest import (
+    DocTestParser as ReSTDocTestParser,
+    PythonCodeBlockParser as ReSTPythonCodeBlockParser,
+    SkipParser as ReSTSkipParser,
+)
 
 OPTIONS = ELLIPSIS | NORMALIZE_WHITESPACE
 
