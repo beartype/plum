@@ -607,8 +607,8 @@ def test_invoke_implementation_unwrapping():
     # Redirect `float`s to `int`s.
     dispatch.multi((float,))(f.invoke(int))
 
-    assert f(1) == int
-    assert f(1.0) == float
+    assert f(1) is int
+    assert f(1.0) is float
 
     assert f.methods[0].implementation is f_orig
     assert f.methods[1].implementation is not f_orig

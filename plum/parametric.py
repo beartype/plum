@@ -672,4 +672,4 @@ class Val:
         return repr_short(type(self)) + "()"
 
     def __eq__(self, other):
-        return type(self) == type(other)
+        return type(self) is type(other)

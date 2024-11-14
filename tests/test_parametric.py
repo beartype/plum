@@ -58,8 +58,8 @@ def test_parametric(metaclass):
     a1 = A[1]()
     a2 = A[2]()
 
-    assert type(a1) == A[1]
-    assert type(a2) == A[2]
+    assert type(a1) is A[1]
+    assert type(a2) is A[2]
     assert isinstance(a1, A[1])
     assert not isinstance(a1, A[2])
     assert issubclass(type(a1), A)
@@ -157,11 +157,11 @@ def test_parametric_inheritance():
     assert not issubclass(E[1], D[1, 2])
     assert not issubclass(E[1], D[2])
 
-    assert type(A(1)) == A
-    assert type(B(1, 2)) == B[int, int]
-    assert type(C(1, 2, 3)) == C
-    assert type(D(1, 2, 3, 4)) == D[int, int, int, int]
-    assert type(E(1, 2, 3, 4, 5)) == E[int, int, int, int, int]
+    assert type(A(1)) is A
+    assert type(B(1, 2)) is B[int, int]
+    assert type(C(1, 2, 3)) is C
+    assert type(D(1, 2, 3, 4)) is D[int, int, int, int]
+    assert type(E(1, 2, 3, 4, 5)) is E[int, int, int, int, int]
 
 
 def test_parametric_covariance():
@@ -249,7 +249,7 @@ def test_parametric_constructor():
 
     assert A[float].parametric
     assert A[float].concrete
-    assert A[float].type_parameter == float
+    assert A[float].type_parameter is float
 
     a1 = A[float](5.0)
     a2 = A(5.0)
@@ -259,9 +259,9 @@ def test_parametric_constructor():
     assert a1.y == 3
     assert a2.y == 3
 
-    assert type_parameter(a1) == float
-    assert type_parameter(a2) == float
-    assert type(a1) == type(a2)
+    assert type_parameter(a1) is float
+    assert type_parameter(a2) is float
+    assert type(a1) is type(a2)
     assert type(a1).__name__ == type(a2).__name__ == "A[float]"
 
 
@@ -547,7 +547,7 @@ def test_val():
         (Val[3, 4], Val((3, 4))),
         (Val[(3, 4)], Val((3, 4))),
     ]:
-        assert type(v) == T
+        assert type(v) is T
         assert T() == v
 
     # Test all checks for numbers of arguments and the like.

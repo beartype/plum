@@ -23,7 +23,7 @@ def test_instantiation_copy():
     for _ in range(2):
         assert s.types == (int, int)
         assert s.has_varargs
-        assert s.varargs == float
+        assert s.varargs is float
         assert s.precedence == 1
         assert s.is_faithful
 
