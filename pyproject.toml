@@ -27,25 +27,37 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "numpy",
-    "pytest>=6",
-    "pytest-cov",
-    "coveralls",
-    "pre-commit",
     "IPython",
     "black==23.9.0",
     "ghp-import",
-    "wheel",
     "build",
-    "tox",
-    "jupyter-book",
     "mypy",
     "pyright>=1.1.331",
-    "ruff==0.1.0",
-    "sybil",
 ]
 
 [project.urls]
 repository = "https://github.com/beartype/plum"
+
+
+[dependency-groups]
+dev = [
+    { include-group = "docs" },
+    { include-group = "lint" },
+    { include-group = "test" },
+]
+lint = [
+    "pre-commit",
+]
+test = [
+    "tox",
+    "pytest>=6",
+    "pytest-cov",
+    "coveralls",
+    "sybil",
+]
+docs = [
+    "jupyter-book",
+]
 
 [tool.hatch.build]
 include = ["plum*"]
