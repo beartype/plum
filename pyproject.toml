@@ -47,14 +47,12 @@ dev = [
 [project.urls]
 repository = "https://github.com/beartype/plum"
 
-[tool.hatch.build]
-include = ["plum*"]
 
-[tool.hatch.version]
-source = "vcs"
+[tool.hatch]
+version.source = "vcs"
+build.include = ["plum*"]
+build.hooks.vcs.version-file = "plum/_version.py"
 
-[tool.hatch.build.hooks.vcs]
-version-file = "plum/_version.py"
 
 # Development tools
 [tool.coverage.run]
