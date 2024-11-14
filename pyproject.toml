@@ -1,7 +1,3 @@
-[build-system]
-requires = ["hatchling>=1.8.0", "hatch-vcs"]
-build-backend = "hatchling.build"
-
 [project]
 name = "plum-dispatch"
 description="Multiple dispatch in Python"
@@ -46,6 +42,11 @@ dev = [
 
 [project.urls]
 repository = "https://github.com/beartype/plum"
+
+
+[build-system]
+requires = ["hatchling>=1.8.0", "hatch-vcs"]
+build-backend = "hatchling.build"
 
 
 [tool.hatch]
