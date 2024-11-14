@@ -5,6 +5,11 @@ build:
   tools:
     python: "3.12"
   jobs:
+    install:
+        # Since the install step is overridden, pip is no longer updated automatically.
+        - pip install --upgrade pip
+        - pip install --group 'docs'
+
     pre_build:
       # Generate the Sphinx configuration for this Jupyter Book, so it builds.
       - "jupyter-book config sphinx docs/"
@@ -12,7 +17,7 @@ build:
 python:
   install:
     - method: pip
-      path: ".[dev]"
+      path: "."
 
 sphinx:
   builder: html
