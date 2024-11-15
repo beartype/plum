@@ -40,6 +40,20 @@ def test_dispatch_class():
     assert dispatch.classes[b]["g"].methods[0].signature == Sig(float, precedence=1)
 
 
+def test_bound_function_attributes():
+    """Test the attributes on a bound function."""
+    dispatch = Dispatcher()
+
+    class A:
+        @dispatch
+        def f(self, x: int):
+            pass
+
+    # The 'methods' should point to those of the underlying object.
+    assert A().f.methods is A.f.methods
+    assert A().f.methods is A().f._f.methods
+
+
 def test_dispatch_multi():
     dispatch = Dispatcher()
 
