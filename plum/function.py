@@ -515,3 +515,8 @@ class _BoundFunction:
         # extended, so unwrapping is likely never desired.
 
         return wrapped_method
+
+    @property
+    def methods(self) -> List[Signature]:
+        """list[:class:`.signature.Signature`]: All available methods."""
+        return self._f.methods
