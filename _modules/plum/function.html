@@ -853,6 +853,11 @@ document.write(`
         <span class="c1"># extended, so unwrapping is likely never desired.</span>
 
         <span class="k">return</span> <span class="n">wrapped_method</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">methods</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Signature</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;list[:class:`.signature.Signature`]: All available methods.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_f</span><span class="o">.</span><span class="n">methods</span>
 </pre></div>
 
                 </article>
