@@ -25,7 +25,7 @@ def test_instantiation_copy():
     for _ in range(2):
         assert m.function_name == "different_name"
         assert m.signature == sig
-        assert m.return_type == complex
+        assert m.return_type is complex
         assert m.implementation == f
 
         # Test copying.
@@ -79,7 +79,7 @@ def test_autodetect_name_return():
 
     m = Method(f, sig)
     assert m.function_name == "f"
-    assert m.return_type == float
+    assert m.return_type is float
 
 
 def test_equality():

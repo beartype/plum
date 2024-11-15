@@ -46,11 +46,11 @@ def test_precedence():
     el = Element()
     spel = SpecialisedElement()
 
-    assert type(mul(zero, el)) == ZeroElement
-    assert type(mul(el, spel)) == SpecialisedElement
+    assert type(mul(zero, el)) is ZeroElement
+    assert type(mul(el, spel)) is SpecialisedElement
     with pytest.raises(AmbiguousLookupError):
         mul(zero, spel)
 
-    assert type(mul_precedence(zero, el)) == ZeroElement
-    assert type(mul_precedence(el, spel)) == SpecialisedElement
-    assert type(mul_precedence(zero, spel)) == ZeroElement
+    assert type(mul_precedence(zero, el)) is ZeroElement
+    assert type(mul_precedence(el, spel)) is SpecialisedElement
+    assert type(mul_precedence(zero, spel)) is ZeroElement
