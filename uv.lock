@@ -1218,11 +1218,12 @@ wheels = [
 
 [[package]]
 name = "plum-dispatch"
-version = "2.5.4.dev3+g65e4341.d20241118"
+version = "2.5.4.dev4+geb7d7f0.d20241118"
 source = { editable = "." }
 dependencies = [
     { name = "beartype" },
     { name = "rich" },
+    { name = "setuptools" },
     { name = "typing-extensions" },
 ]
 
@@ -1237,6 +1238,7 @@ dev = [
     { name = "pyright" },
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "setuptools" },
     { name = "sybil" },
     { name = "tox" },
 ]
@@ -1254,6 +1256,7 @@ test = [
     { name = "pyright" },
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "setuptools" },
     { name = "sybil" },
     { name = "tox" },
 ]
@@ -1262,6 +1265,7 @@ test = [
 requires-dist = [
     { name = "beartype", specifier = ">=0.16.2" },
     { name = "rich", specifier = ">=10.0" },
+    { name = "setuptools" },
     { name = "typing-extensions", specifier = ">=4.9.0" },
 ]
 
@@ -1271,11 +1275,12 @@ dev = [
     { name = "ipython" },
     { name = "jupyter-book" },
     { name = "mypy" },
-    { name = "numpy" },
+    { name = "numpy", specifier = ">=1.24.4" },
     { name = "pre-commit" },
     { name = "pyright", specifier = ">=1.1.331" },
     { name = "pytest", specifier = ">=6" },
     { name = "pytest-cov" },
+    { name = "setuptools", specifier = ">=75.3.0" },
     { name = "sybil" },
     { name = "tox" },
 ]
@@ -1285,10 +1290,11 @@ test = [
     { name = "coveralls" },
     { name = "ipython" },
     { name = "mypy" },
-    { name = "numpy" },
+    { name = "numpy", specifier = ">=1.24.4" },
     { name = "pyright", specifier = ">=1.1.331" },
     { name = "pytest", specifier = ">=6" },
     { name = "pytest-cov" },
+    { name = "setuptools", specifier = ">=75.3.0" },
     { name = "sybil" },
     { name = "tox" },
 ]
