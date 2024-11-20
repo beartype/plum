@@ -42,6 +42,7 @@ dev = [
 
 [project.urls]
 repository = "https://github.com/beartype/plum"
+documentation = "https://beartype.github.io/plum"
 
 
 [build-system]
