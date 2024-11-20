@@ -4,10 +4,11 @@
 from functools import partial
 from typing import Dict, List, Tuple, Union  # noqa: F401
 
-from beartype import BeartypeConf as _BeartypeConf
-from beartype import BeartypeStrategy as _BeartypeStrategy
-from beartype.door import TypeHint as _TypeHint
-from beartype.door import is_bearable as _is_bearable
+from beartype import (
+    BeartypeConf as _BeartypeConf,
+    BeartypeStrategy as _BeartypeStrategy,
+)
+from beartype.door import TypeHint as _TypeHint, is_bearable as _is_bearable
 
 from ._version import __version__  # noqa: F401
 from .alias import *  # noqa: F401, F403

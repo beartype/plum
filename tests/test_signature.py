@@ -1,15 +1,13 @@
 import inspect
 import operator
-from numbers import Number as Num
-from numbers import Real as Re
+from numbers import Number as Num, Real as Re
 from typing import Any, Tuple
 
 import pytest
 
 from plum.dispatcher import Dispatcher
 from plum.resolver import AmbiguousLookupError
-from plum.signature import Signature as Sig
-from plum.signature import append_default_args, inspect_signature
+from plum.signature import Signature as Sig, append_default_args, inspect_signature
 from plum.util import Missing
 
 
