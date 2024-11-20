@@ -8,8 +8,11 @@ license = {text= "MIT"}
 readme = "README.md"
 keywords = ["multiple dispatch"]
 classifiers = [
-    "Programming Language :: Python :: 3",
     "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Typing :: Typed",
 ]
 dynamic = ["version"]
 
