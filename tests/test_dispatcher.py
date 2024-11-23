@@ -49,9 +49,14 @@ def test_bound_function_attributes():
         def f(self, x: int):
             pass
 
+    a = A()
+
     # The 'methods' should point to those of the underlying object.
-    assert A().f.methods is A.f.methods
-    assert A().f.methods is A().f._f.methods
+    assert a.f.methods is A.f.methods
+    assert a.f.methods is a.f._f.methods
+
+    # The 'dispatcher' should point to the dispatcher.
+    assert hash(a.f.dispatch) == hash(a.f._f.dispatch)
 
 
 def test_dispatch_multi():
