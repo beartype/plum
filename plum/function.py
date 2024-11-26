@@ -3,7 +3,7 @@ import textwrap
 from copy import copy
 from functools import wraps
 from types import MethodType
-from typing import Any, Callable, List, Optional, Tuple, TypeVar, Union
+from typing import Any, Callable, List, Optional, Protocol, Tuple, TypeVar, Union
 
 from .method import Method
 from .resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
@@ -473,6 +473,14 @@ def _generate_qualname(f: Callable) -> str:
     return qualname
 
 
+class _DispatchFunction(Protocol):
+    """Protocol for the `dispatch` method of a function."""
+
+    def __call__(
+        self, method: Optional[Callable], precedence: int
+    ) -> Union[Self, Callable[[Callable], Self]]: ...
+
+
 class _BoundFunction:
     """A bound instance of `.function.Function`.
 
@@ -520,3 +528,8 @@ class _BoundFunction:
     def methods(self) -> List[Signature]:
         """list[:class:`.signature.Signature`]: All available methods."""
         return self._f.methods
+
+    @property
+    def dispatch(self) -> _DispatchFunction:
+        """See :meth:`.Function.dispatch`."""
+        return self._f.dispatch
