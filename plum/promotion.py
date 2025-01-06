@@ -8,7 +8,9 @@ __all__ = [
     "promote",
 ]
 
-from typing import Callable, Protocol, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Protocol, Type, TypeVar
+
+from typing_extensions import TypeAlias
 
 from beartype.door import TypeHint
 
@@ -21,11 +23,18 @@ from .type import resolve_type_hint
 T = TypeVar("T")
 R = TypeVar("R")
 
+if TYPE_CHECKING:
+    TypeTo = TypeVar("TypeTo")
+    typeTypeTo: TypeAlias = type[TypeTo]
+else:
+    TypeTo = Any
+    typeTypeTo = Any
+
 _dispatch = Dispatcher()
 
 
 @_dispatch
-def convert(obj, type_to):
+def convert(obj: object, type_to: typeTypeTo) -> TypeTo:
     """Convert an object to a particular type.
 
     Args:
