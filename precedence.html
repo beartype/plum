@@ -392,38 +392,38 @@ document.write(`
 precedence levels of methods, which are used to break ambiguity.
 Method precendence is a powerful tool that can be used to simplify more complicated designs.</p>
 <p>Example:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">dispatch</span>
 
 
-<span class="k">class</span> <span class="nc">Element</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Element</span><span class="p">:</span>
     <span class="k">pass</span>
 
 
-<span class="k">class</span> <span class="nc">ZeroElement</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ZeroElement</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
     <span class="k">pass</span>
 
 
-<span class="k">class</span> <span class="nc">SpecialisedElement</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SpecialisedElement</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
     <span class="k">pass</span>
 
 
 <span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">mul_no_precedence</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">ZeroElement</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">mul_no_precedence</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">ZeroElement</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
     <span class="k">return</span> <span class="s2">&quot;zero&quot;</span>
 
 
 <span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">mul_no_precedence</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">Element</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">SpecialisedElement</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">mul_no_precedence</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">Element</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">SpecialisedElement</span><span class="p">):</span>
     <span class="k">return</span> <span class="s2">&quot;specialised operation&quot;</span>
 
 
 <span class="nd">@dispatch</span><span class="p">(</span><span class="n">precedence</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">mul</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">ZeroElement</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">mul</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">ZeroElement</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">Element</span><span class="p">):</span>
     <span class="k">return</span> <span class="s2">&quot;zero&quot;</span>
 
 
 <span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">mul</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">Element</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">SpecialisedElement</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">mul</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">Element</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">SpecialisedElement</span><span class="p">):</span>
     <span class="k">return</span> <span class="s2">&quot;specialised operation&quot;</span>
 </pre></div>
 </div>

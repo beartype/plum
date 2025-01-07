@@ -402,16 +402,16 @@ document.write(`
 <h2><code class="docutils literal notranslate"><span class="pre">PLUM_SIMPLE_DOC</span></code><a class="headerlink" href="#plum-simple-doc" title="Permalink to this heading">#</a></h2>
 <p>Set <code class="docutils literal notranslate"><span class="pre">PLUM_SIMPLE_DOC=1</span></code> to prevent Plum from concatenating the docstrings of all methods.
 Consider</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">dispatch</span>
 
 
 <span class="nd">@dispatch</span><span class="o">.</span><span class="n">abstract</span>
-<span class="k">def</span> <span class="nf">do</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">do</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Do something.&quot;&quot;&quot;</span>
 
 
 <span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">do</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">do</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Do something with integers.&quot;&quot;&quot;</span>
 </pre></div>
 </div>

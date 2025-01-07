@@ -336,15 +336,15 @@ document.write(`
                 <article class="bd-article" role="main">
                   
   <h1>Source code for plum.autoreload</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 
-<span class="kn">from</span> <span class="nn">.dispatcher</span> <span class="kn">import</span> <span class="n">clear_all_cache</span>
-<span class="kn">from</span> <span class="nn">.type</span> <span class="kn">import</span> <span class="n">type_mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.dispatcher</span><span class="w"> </span><span class="kn">import</span> <span class="n">clear_all_cache</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.type</span><span class="w"> </span><span class="kn">import</span> <span class="n">type_mapping</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;activate_autoreload&quot;</span><span class="p">,</span> <span class="s2">&quot;deactivate_autoreload&quot;</span><span class="p">]</span>
 
 
-<span class="k">def</span> <span class="nf">_update_instances</span><span class="p">(</span><span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_update_instances</span><span class="p">(</span><span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;First call the original implementation of Autoreload&#39;s :meth:`update_instances`,</span>
 <span class="sd">    and then use :obj:`.type._type_mapping` to map type `old` to the type `new`.</span>
 
@@ -371,10 +371,10 @@ document.write(`
 <span class="sd">&quot;&quot;&quot;function: Original implementation of :func:`update_instances`.&quot;&quot;&quot;</span>
 
 
-<div class="viewcode-block" id="activate_autoreload"><a class="viewcode-back" href="../../api.html#plum.autoreload.activate_autoreload">[docs]</a><span class="k">def</span> <span class="nf">activate_autoreload</span><span class="p">():</span>
+<div class="viewcode-block" id="activate_autoreload"><a class="viewcode-back" href="../../api.html#plum.autoreload.activate_autoreload">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">activate_autoreload</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Pirate Autoreload&#39;s `update_instance` function to have Plum work with</span>
 <span class="sd">    Autoreload.&quot;&quot;&quot;</span>
-    <span class="kn">from</span> <span class="nn">IPython.extensions</span> <span class="kn">import</span> <span class="n">autoreload</span>  <span class="c1"># type: ignore</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">IPython.extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">autoreload</span>  <span class="c1"># type: ignore</span>
 
     <span class="c1"># First, cache the original method so we can deactivate ourselves.</span>
     <span class="k">global</span> <span class="n">_update_instances_original</span>
@@ -385,14 +385,14 @@ document.write(`
     <span class="n">autoreload</span><span class="o">.</span><span class="n">update_instances</span> <span class="o">=</span> <span class="n">_update_instances</span></div>
 
 
-<div class="viewcode-block" id="deactivate_autoreload"><a class="viewcode-back" href="../../api.html#plum.autoreload.deactivate_autoreload">[docs]</a><span class="k">def</span> <span class="nf">deactivate_autoreload</span><span class="p">():</span>
+<div class="viewcode-block" id="deactivate_autoreload"><a class="viewcode-back" href="../../api.html#plum.autoreload.deactivate_autoreload">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">deactivate_autoreload</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Disable Plum&#39;s autoreload hack. This undoes what</span>
 <span class="sd">    :func:`.autoreload.activate_autoreload` did.&quot;&quot;&quot;</span>
     <span class="k">global</span> <span class="n">_update_instances_original</span>
     <span class="k">if</span> <span class="n">_update_instances_original</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Plum Autoreload module was never activated.&quot;</span><span class="p">)</span>
 
-    <span class="kn">from</span> <span class="nn">IPython.extensions</span> <span class="kn">import</span> <span class="n">autoreload</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">IPython.extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">autoreload</span>
 
     <span class="n">autoreload</span><span class="o">.</span><span class="n">update_instances</span> <span class="o">=</span> <span class="n">_update_instances_original</span></div>
 
@@ -404,7 +404,7 @@ document.write(`
     <span class="k">try</span><span class="p">:</span>
         <span class="c1"># Try to load iPython and get the iPython session, but don&#39;t crash if</span>
         <span class="c1"># this does not work (for example IPython not installed, or python shell)</span>
-        <span class="kn">from</span> <span class="nn">IPython</span> <span class="kn">import</span> <span class="n">get_ipython</span>  <span class="c1"># type: ignore</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">IPython</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_ipython</span>  <span class="c1"># type: ignore</span>
 
         <span class="n">ip</span> <span class="o">=</span> <span class="n">get_ipython</span><span class="p">()</span>
         <span class="n">ext_loaded</span> <span class="o">=</span> <span class="s2">&quot;IPython.extensions.storemagic&quot;</span> <span class="ow">in</span> <span class="n">ip</span><span class="o">.</span><span class="n">extension_manager</span><span class="o">.</span><span class="n">loaded</span>

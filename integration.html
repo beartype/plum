@@ -408,13 +408,13 @@ The idea is to implement and decorate your methods with <code class="docutils li
 After all <code class="docutils literal notranslate"><span class="pre">typing.overload</span></code>-decorated methods, add one more method decorated with <code class="docutils literal notranslate"><span class="pre">plum.dispatch</span></code> <em>without</em> an implementation.
 This call to <code class="docutils literal notranslate"><span class="pre">plum.dispatch</span></code> will scan for all <code class="docutils literal notranslate"><span class="pre">typing.overload</span></code>-decorated methods and properly add them as Plum methods.</p>
 <p>An example is as follows:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span><span class="p">,</span> <span class="n">overload</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">dispatch</span><span class="p">,</span> <span class="n">overload</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;do&quot;</span><span class="p">,</span> <span class="s2">&quot;add&quot;</span><span class="p">]</span>
 
 
 <span class="nd">@overload</span>
-<span class="k">def</span> <span class="nf">do</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">do</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Do something to an integer.</span>
 
 <span class="sd">    Args:</span>
@@ -427,7 +427,7 @@ This call to <code class="docutils literal notranslate"><span class="pre">plum.d
 
 
 <span class="nd">@overload</span>
-<span class="k">def</span> <span class="nf">do</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">do</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Do something to a string.</span>
 
 <span class="sd">    Args:</span>
@@ -440,14 +440,14 @@ This call to <code class="docutils literal notranslate"><span class="pre">plum.d
 
 
 <span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">do</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">do</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="c1"># Final method without an implementation. This scans for all `overload`-decorated</span>
     <span class="c1"># methods and properly adds them as Plum methods.</span>
     <span class="k">pass</span>
 
 
 <span class="nd">@overload</span>
-<span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Add two integers.</span>
 
 <span class="sd">    Args:</span>
@@ -461,7 +461,7 @@ This call to <code class="docutils literal notranslate"><span class="pre">plum.d
 
 
 <span class="nd">@overload</span>
-<span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Add two floats.</span>
 
 <span class="sd">    Args:</span>
@@ -475,7 +475,7 @@ This call to <code class="docutils literal notranslate"><span class="pre">plum.d
 
 
 <span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="k">pass</span>
 </pre></div>
 </div>

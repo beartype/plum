@@ -336,18 +336,18 @@ document.write(`
                 <article class="bd-article" role="main">
                   
   <h1>Source code for plum.repr</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">inspect</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">import</span> <span class="nn">types</span>
-<span class="kn">import</span> <span class="nn">typing</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">TypeVar</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">types</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">typing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">TypeVar</span>
 
-<span class="kn">import</span> <span class="nn">rich</span>
-<span class="kn">from</span> <span class="nn">rich.color</span> <span class="kn">import</span> <span class="n">Color</span>
-<span class="kn">from</span> <span class="nn">rich.style</span> <span class="kn">import</span> <span class="n">Style</span>
-<span class="kn">from</span> <span class="nn">rich.text</span> <span class="kn">import</span> <span class="n">Text</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">rich</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rich.color</span><span class="w"> </span><span class="kn">import</span> <span class="n">Color</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rich.style</span><span class="w"> </span><span class="kn">import</span> <span class="n">Style</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rich.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">Text</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;repr_short&quot;</span><span class="p">,</span>
@@ -366,7 +366,7 @@ document.write(`
 <span class="n">class_style</span> <span class="o">=</span> <span class="n">Style</span><span class="p">(</span><span class="n">bold</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="repr_type"><a class="viewcode-back" href="../../api.html#plum.repr.repr_type">[docs]</a><span class="k">def</span> <span class="nf">repr_type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Text</span><span class="p">:</span>
+<div class="viewcode-block" id="repr_type"><a class="viewcode-back" href="../../api.html#plum.repr.repr_type">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">repr_type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Text</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a :class:`rich.Text` representation of a type or module.</span>
 
 <span class="sd">    Does some light syntax highlighting mimicking Julia, boldening class names and</span>
@@ -393,7 +393,7 @@ document.write(`
     <span class="k">return</span> <span class="n">Text</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">style</span><span class="o">=</span><span class="n">class_style</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="repr_short"><a class="viewcode-back" href="../../api.html#plum.repr.repr_short">[docs]</a><span class="k">def</span> <span class="nf">repr_short</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<div class="viewcode-block" id="repr_short"><a class="viewcode-back" href="../../api.html#plum.repr.repr_short">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">repr_short</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Representation as a string, but in shorter form. This just calls</span>
 <span class="sd">    :func:`typing._type_repr`.</span>
 
@@ -408,7 +408,7 @@ document.write(`
     <span class="k">return</span> <span class="n">typing</span><span class="o">.</span><span class="n">_type_repr</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
 
 
-<span class="k">def</span> <span class="nf">_safe_getfile</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_safe_getfile</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Safer version of :func:`inspect.getfile`.</span>
 
 <span class="sd">    Classes defined in PyBind, even if they pretend hard to be functions, like</span>
@@ -438,10 +438,10 @@ document.write(`
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">&quot;__file__&quot;</span><span class="p">):</span>
                 <span class="k">return</span> <span class="n">module</span><span class="o">.</span><span class="vm">__file__</span>
 
-        <span class="k">raise</span> <span class="ne">OSError</span><span class="p">(</span><span class="s2">&quot;Source code not available.&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="kc">None</span>
+        <span class="k">raise</span> <span class="ne">OSError</span><span class="p">(</span><span class="s2">&quot;Source code not available.&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
 
 
-<div class="viewcode-block" id="repr_source_path"><a class="viewcode-back" href="../../api.html#plum.repr.repr_source_path">[docs]</a><span class="k">def</span> <span class="nf">repr_source_path</span><span class="p">(</span><span class="n">function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Text</span><span class="p">:</span>
+<div class="viewcode-block" id="repr_source_path"><a class="viewcode-back" href="../../api.html#plum.repr.repr_source_path">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">repr_source_path</span><span class="p">(</span><span class="n">function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Text</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a :class:`rich.Text` object with an hyperlink to the function definition.</span>
 
 <span class="sd">    Args:</span>
@@ -476,7 +476,7 @@ document.write(`
         <span class="k">return</span> <span class="kc">None</span></div>
 
 
-<div class="viewcode-block" id="repr_pyfunction"><a class="viewcode-back" href="../../api.html#plum.repr.repr_pyfunction">[docs]</a><span class="k">def</span> <span class="nf">repr_pyfunction</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Text</span><span class="p">:</span>
+<div class="viewcode-block" id="repr_pyfunction"><a class="viewcode-back" href="../../api.html#plum.repr.repr_pyfunction">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">repr_pyfunction</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Text</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a :class:`rich.Text` object representation a function, including a link</span>
 <span class="sd">    to the source definition created with :func:`repr_source_path`.</span>
 
@@ -499,7 +499,7 @@ document.write(`
 <span class="c1">########################</span>
 
 
-<span class="k">def</span> <span class="nf">__repr_from_rich__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">__repr_from_rich__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Default implementation of `__repr__` that calls :mod:`rich`.</span>
 
 <span class="sd">    Returns:</span>
@@ -512,7 +512,7 @@ document.write(`
     <span class="k">return</span> <span class="n">res</span>
 
 
-<span class="k">def</span> <span class="nf">_repr_mimebundle_from_rich_</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_repr_mimebundle_from_rich_</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">include</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">exclude</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
@@ -528,7 +528,7 @@ document.write(`
 <span class="sd">    Returns:</span>
 <span class="sd">        dict[str, str]: Representation by MIME type.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span> <span class="nn">rich.jupyter</span> <span class="kn">import</span> <span class="n">_render_segments</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">rich.jupyter</span><span class="w"> </span><span class="kn">import</span> <span class="n">_render_segments</span>
 
     <span class="n">console</span> <span class="o">=</span> <span class="n">rich</span><span class="o">.</span><span class="n">get_console</span><span class="p">()</span>
     <span class="n">segments</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">console</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">console</span><span class="o">.</span><span class="n">options</span><span class="p">))</span>  <span class="c1"># type: ignore</span>
@@ -542,7 +542,7 @@ document.write(`
     <span class="k">return</span> <span class="n">data</span>
 
 
-<div class="viewcode-block" id="rich_repr"><a class="viewcode-back" href="../../api.html#plum.repr.rich_repr">[docs]</a><span class="k">def</span> <span class="nf">rich_repr</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">T</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+<div class="viewcode-block" id="rich_repr"><a class="viewcode-back" href="../../api.html#plum.repr.rich_repr">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">rich_repr</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">T</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Class decorator defining a `__repr__` method that calls :mod:`rich.`</span>
 
 <span class="sd">    This also sets `_repr_mimebundle_` for better rendering in Jupyter.</span>

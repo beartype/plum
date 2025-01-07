@@ -336,19 +336,19 @@ document.write(`
                 <article class="bd-article" role="main">
                   
   <h1>Source code for plum.parametric</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">contextlib</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Type</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Type</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
 
-<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">deprecated</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">deprecated</span>
 
-<span class="kn">import</span> <span class="nn">beartype.door</span>
-<span class="kn">from</span> <span class="nn">beartype.roar</span> <span class="kn">import</span> <span class="n">BeartypeDoorNonpepException</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">beartype.door</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">beartype.roar</span><span class="w"> </span><span class="kn">import</span> <span class="n">BeartypeDoorNonpepException</span>
 
-<span class="kn">from</span> <span class="nn">.dispatcher</span> <span class="kn">import</span> <span class="n">Dispatcher</span>
-<span class="kn">from</span> <span class="nn">.function</span> <span class="kn">import</span> <span class="n">_owner_transfer</span>
-<span class="kn">from</span> <span class="nn">.repr</span> <span class="kn">import</span> <span class="n">repr_short</span>
-<span class="kn">from</span> <span class="nn">.type</span> <span class="kn">import</span> <span class="n">resolve_type_hint</span>
-<span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="n">TypeHint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.dispatcher</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dispatcher</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.function</span><span class="w"> </span><span class="kn">import</span> <span class="n">_owner_transfer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.repr</span><span class="w"> </span><span class="kn">import</span> <span class="n">repr_short</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.type</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_type_hint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeHint</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;CovariantMeta&quot;</span><span class="p">,</span>
@@ -366,7 +366,7 @@ document.write(`
 <span class="n">_dispatch</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">()</span>
 
 
-<span class="k">class</span> <span class="nc">ParametricTypeMeta</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ParametricTypeMeta</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Parametric types can be instantiated with indexing.</span>
 
 <span class="sd">    A concrete parametric type can be instantiated by calling `Type[Par1, Par2]`.</span>
@@ -374,7 +374,7 @@ document.write(`
 <span class="sd">    `Type[type(Arg1), type(Arg2)](Arg1, Arg2, **kw_args)`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">concrete</span><span class="p">:</span>
             <span class="c1"># Initialise the type parameters. This can perform, e.g., validation.</span>
             <span class="n">p</span> <span class="o">=</span> <span class="n">p</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="n">p</span><span class="p">,)</span>  <span class="c1"># Ensure that it is a tuple.</span>
@@ -385,7 +385,7 @@ document.write(`
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Cannot specify type parameters. This type is concrete.&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__concrete_class__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__concrete_class__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;If `cls` is not a concrete class, infer the type parameters and return a</span>
 <span class="sd">        concrete class. If `cls` is already a concrete class, simply return it.</span>
 
@@ -401,7 +401,7 @@ document.write(`
             <span class="bp">cls</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">[</span><span class="n">type_parameter</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">cls</span>
 
-    <span class="k">def</span> <span class="nf">__init_type_parameter__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">ps</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__init_type_parameter__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">ps</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Function called to initialise the type parameters.</span>
 
 <span class="sd">        The default behaviour is to just return `ps`.</span>
@@ -414,7 +414,7 @@ document.write(`
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">ps</span>
 
-    <span class="k">def</span> <span class="nf">__infer_type_parameter__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__infer_type_parameter__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Function called when the constructor of this parametric type is called</span>
 <span class="sd">        before the parameters have been specified.</span>
 
@@ -435,12 +435,12 @@ document.write(`
         <span class="k">return</span> <span class="n">type_parameter</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">parametric</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">parametric</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;bool: Check whether the type is a parametric type.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;_parametric&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">concrete</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">concrete</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;bool: Check whether the parametric type is instantiated or not.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">parametric</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;_concrete&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
@@ -450,7 +450,7 @@ document.write(`
             <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">type_parameter</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">type_parameter</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;object: Get the type parameter. Parametric type must be instantiated.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">concrete</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_type_parameter</span>
@@ -460,7 +460,7 @@ document.write(`
             <span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_default_le_type_par</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_default_le_type_par</span><span class="p">(</span>
     <span class="n">p_left</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">TypeHint</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span> <span class="n">p_right</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">TypeHint</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
     <span class="k">if</span> <span class="n">is_type</span><span class="p">(</span><span class="n">p_left</span><span class="p">)</span> <span class="ow">and</span> <span class="n">is_type</span><span class="p">(</span><span class="n">p_right</span><span class="p">):</span>
@@ -471,10 +471,10 @@ document.write(`
         <span class="k">return</span> <span class="n">p_left</span> <span class="o">==</span> <span class="n">p_right</span>
 
 
-<div class="viewcode-block" id="CovariantMeta"><a class="viewcode-back" href="../../api.html#plum.parametric.CovariantMeta">[docs]</a><span class="k">class</span> <span class="nc">CovariantMeta</span><span class="p">(</span><span class="n">ParametricTypeMeta</span><span class="p">):</span>
+<div class="viewcode-block" id="CovariantMeta"><a class="viewcode-back" href="../../api.html#plum.parametric.CovariantMeta">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">CovariantMeta</span><span class="p">(</span><span class="n">ParametricTypeMeta</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A metaclass that implements *covariance* of parametric types.&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__subclasscheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__subclasscheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">):</span>
         <span class="c1"># Check that they are instances of the same parametric type.</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="n">is_concrete</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
@@ -491,7 +491,7 @@ document.write(`
         <span class="c1"># Default behaviour to `type`s subclass check.</span>
         <span class="k">return</span> <span class="nb">type</span><span class="o">.</span><span class="fm">__subclasscheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">subclass</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__instancecheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__instancecheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
         <span class="c1"># If `A` is a parametric type, then `A[T1]` and `A[T2]` are subclasses of</span>
         <span class="c1"># `A`. With the implementation of `__subclasscheck__` above, we have that</span>
         <span class="c1"># `issubclass(A[T1], A[T2])` whenever `issubclass(T1, T2)`. _However_,</span>
@@ -503,7 +503,7 @@ document.write(`
         <span class="c1"># since it is fast and only gives true positives.</span>
         <span class="k">return</span> <span class="nb">type</span><span class="o">.</span><span class="fm">__instancecheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">issubclass</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">instance</span><span class="p">),</span> <span class="bp">cls</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__le_type_parameter__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">p_left</span><span class="p">,</span> <span class="n">p_right</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__le_type_parameter__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">p_left</span><span class="p">,</span> <span class="n">p_right</span><span class="p">):</span>
         <span class="c1"># Check that there are an equal number of parameters.</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_left</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_right</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">False</span>
@@ -511,7 +511,7 @@ document.write(`
         <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">_default_le_type_par</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">)</span> <span class="k">for</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">p_left</span><span class="p">,</span> <span class="n">p_right</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="parametric"><a class="viewcode-back" href="../../api.html#plum.parametric.parametric">[docs]</a><span class="k">def</span> <span class="nf">parametric</span><span class="p">(</span><span class="n">original_class</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="parametric"><a class="viewcode-back" href="../../api.html#plum.parametric.parametric">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">parametric</span><span class="p">(</span><span class="n">original_class</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A decorator for parametric classes.</span>
 
 <span class="sd">    When the constructor of this parametric type is called before the type parameter</span>
@@ -553,11 +553,11 @@ document.write(`
         <span class="n">bases</span> <span class="o">=</span> <span class="p">(</span><span class="n">CovariantMeta</span><span class="p">,</span> <span class="n">original_meta</span><span class="p">)</span>
         <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;CovariantMeta[</span><span class="si">{</span><span class="n">repr_short</span><span class="p">(</span><span class="n">original_meta</span><span class="p">)</span><span class="si">}</span><span class="s2">]&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
         <span class="bp">cls</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__concrete_class__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">original_meta</span><span class="o">.</span><span class="fm">__call__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__instancecheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__instancecheck__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">instance</span><span class="p">):</span>
         <span class="c1"># An implementation of `__instancecheck__` is necessary to ensure that</span>
         <span class="c1"># `isinstance(A[SubType](), A[Type])`. `CovariantMeta` comes first in the MRO,</span>
         <span class="c1"># but the implementation of `__instancecheck__` should be taken from</span>
@@ -580,11 +580,11 @@ document.write(`
 
     <span class="n">subclasses</span> <span class="o">=</span> <span class="p">{}</span>
 
-    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">ps</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">ps</span><span class="p">):</span>
         <span class="c1"># Only create a new subclass if it doesn&#39;t exist already.</span>
         <span class="k">if</span> <span class="n">ps</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">subclasses</span><span class="p">:</span>
 
-            <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
+            <span class="k">def</span><span class="w"> </span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
                 <span class="k">return</span> <span class="n">original_class</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
 
             <span class="c1"># Create subclass.</span>
@@ -607,20 +607,20 @@ document.write(`
             <span class="n">subclasses</span><span class="p">[</span><span class="n">ps</span><span class="p">]</span> <span class="o">=</span> <span class="n">subclass</span>
         <span class="k">return</span> <span class="n">subclasses</span><span class="p">[</span><span class="n">ps</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">__init_subclass__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__init_subclass__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
         <span class="bp">cls</span><span class="o">.</span><span class="n">_parametric</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="c1"># If the subclass has the same `__new__` as `ParametricClass`, then we should</span>
         <span class="c1"># replace it with the `__new__` of `Class`. If the user already defined another</span>
         <span class="c1"># `__new__`, then everything is fine.</span>
         <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="fm">__new__</span> <span class="ow">is</span> <span class="fm">__new__</span><span class="p">:</span>
 
-            <span class="k">def</span> <span class="nf">class_new</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">class_new</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
                 <span class="k">return</span> <span class="n">original_class</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
 
             <span class="bp">cls</span><span class="o">.</span><span class="fm">__new__</span> <span class="o">=</span> <span class="n">class_new</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">original_class</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="n">__init_subclass__</span><span class="p">(</span><span class="o">**</span><span class="n">kw_args</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__class_nonparametric__</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__class_nonparametric__</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the non-parametric type of an object.</span>
 
 <span class="sd">        :mod:`plum.parametric` produces parametric subtypes of classes. This</span>
@@ -673,7 +673,7 @@ document.write(`
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">original_class</span>
 
-    <span class="k">def</span> <span class="nf">__class_unparametrized__</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__class_unparametrized__</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the unparametrized type of an object.</span>
 
 <span class="sd">        :mod:`plum.parametric` produces parametric subtypes of classes. This</span>
@@ -759,7 +759,7 @@ document.write(`
     <span class="k">return</span> <span class="n">parametric_class</span></div>
 
 
-<span class="k">def</span> <span class="nf">is_concrete</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_concrete</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if a type `t` is a concrete instance of a parametric type.</span>
 
 <span class="sd">    Args:</span>
@@ -772,7 +772,7 @@ document.write(`
     <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="s2">&quot;parametric&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span> <span class="ow">and</span> <span class="n">t</span><span class="o">.</span><span class="n">concrete</span>
 
 
-<span class="k">def</span> <span class="nf">is_type</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_type</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Check whether `x` is a type or a type hint.</span>
 
 <span class="sd">    Under the hood, this attempts to construct a :class:`beartype.door.TypeHint` from</span>
@@ -791,7 +791,7 @@ document.write(`
         <span class="k">return</span> <span class="kc">False</span>
 
 
-<div class="viewcode-block" id="type_parameter"><a class="viewcode-back" href="../../api.html#plum.parametric.type_parameter">[docs]</a><span class="k">def</span> <span class="nf">type_parameter</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<div class="viewcode-block" id="type_parameter"><a class="viewcode-back" href="../../api.html#plum.parametric.type_parameter">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">type_parameter</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the type parameter of concrete parametric type or an instance of a concrete</span>
 <span class="sd">    parametric type.</span>
 
@@ -810,7 +810,7 @@ document.write(`
     <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="type_nonparametric"><a class="viewcode-back" href="../../api.html#plum.parametric.type_nonparametric">[docs]</a><span class="k">def</span> <span class="nf">type_nonparametric</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+<div class="viewcode-block" id="type_nonparametric"><a class="viewcode-back" href="../../api.html#plum.parametric.type_nonparametric">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">type_nonparametric</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the non-parametric type of an object.</span>
 
 <span class="sd">    :mod:`plum.parametric` produces parametric subtypes of classes. This method</span>
@@ -878,7 +878,7 @@ document.write(`
     <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="type_unparametrized"><a class="viewcode-back" href="../../api.html#plum.parametric.type_unparametrized">[docs]</a><span class="k">def</span> <span class="nf">type_unparametrized</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+<div class="viewcode-block" id="type_unparametrized"><a class="viewcode-back" href="../../api.html#plum.parametric.type_unparametrized">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">type_unparametrized</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the unparametrized type of an object.</span>
 
 <span class="sd">    :mod:`plum.parametric` produces parametric subtypes of classes.  This</span>
@@ -946,7 +946,7 @@ document.write(`
     <span class="k">return</span> <span class="n">q</span><span class="o">.</span><span class="n">__class_unparametrized__</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="n">ParametricTypeMeta</span><span class="p">)</span> <span class="k">else</span> <span class="n">typ</span></div>
 
 
-<div class="viewcode-block" id="kind"><a class="viewcode-back" href="../../api.html#plum.parametric.kind">[docs]</a><span class="k">def</span> <span class="nf">kind</span><span class="p">(</span><span class="n">SuperClass</span><span class="o">=</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="kind"><a class="viewcode-back" href="../../api.html#plum.parametric.kind">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">kind</span><span class="p">(</span><span class="n">SuperClass</span><span class="o">=</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a parametric wrapper type for dispatch purposes.</span>
 
 <span class="sd">    Args:</span>
@@ -957,11 +957,11 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nd">@parametric</span>
-    <span class="k">class</span> <span class="nc">Kind</span><span class="p">(</span><span class="n">SuperClass</span><span class="p">):</span>
-        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">xs</span><span class="p">):</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Kind</span><span class="p">(</span><span class="n">SuperClass</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">xs</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">xs</span> <span class="o">=</span> <span class="n">xs</span>
 
-        <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">xs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">xs</span>
 
     <span class="k">return</span> <span class="n">Kind</span></div>
@@ -972,7 +972,7 @@ document.write(`
 
 <span class="nd">@deprecated</span><span class="p">(</span><span class="s2">&quot;Use `typing.Literal[val]` instead.&quot;</span><span class="p">)</span>
 <span class="nd">@parametric</span>
-<span class="k">class</span> <span class="nc">Val</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Val</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A parametric type used to move information from the value domain to the type</span>
 <span class="sd">    domain.</span>
 
@@ -984,7 +984,7 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">__infer_type_parameter__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__infer_type_parameter__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Function called when the constructor of `Val` is called to determine the type</span>
 <span class="sd">        parameters.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -993,7 +993,7 @@ document.write(`
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Too many values. `Val` accepts only one argument.&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct a value object with type `Val(arg)` that can be used to dispatch</span>
 <span class="sd">        based on values.</span>
 
@@ -1006,10 +1006,10 @@ document.write(`
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The value must be specified.&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">repr_short</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot;()&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
 </pre></div>
 

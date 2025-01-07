@@ -336,20 +336,20 @@ document.write(`
                 <article class="bd-article" role="main">
                   
   <h1>Source code for plum.type</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">abc</span>
-<span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">import</span> <span class="nn">typing</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">abc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">typing</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 
-<span class="kn">from</span> <span class="nn">beartype.vale._core._valecore</span> <span class="kn">import</span> <span class="n">BeartypeValidator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">beartype.vale._core._valecore</span><span class="w"> </span><span class="kn">import</span> <span class="n">BeartypeValidator</span>
 
-<span class="kn">from</span> <span class="nn">.typing</span> <span class="kn">import</span> <span class="n">get_args</span><span class="p">,</span> <span class="n">get_origin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_args</span><span class="p">,</span> <span class="n">get_origin</span>
 
 <span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.8 3.9</span>
-    <span class="kn">from</span> <span class="nn">types</span> <span class="kn">import</span> <span class="n">UnionType</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnionType</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.10 3.11</span>
 
-    <span class="k">class</span> <span class="nc">UnionType</span><span class="p">:</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">UnionType</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Replacement for :class:`types.UnionType`.&quot;&quot;&quot;</span>
 
 
@@ -362,7 +362,7 @@ document.write(`
 <span class="p">]</span>
 
 
-<span class="k">class</span> <span class="nc">ResolvableType</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ResolvableType</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A resolvable type that will resolve to `type` after `type` has been delivered via</span>
 <span class="sd">    :meth:`.ResolvableType.deliver`. Before then, it will resolve to itself.</span>
 
@@ -370,14 +370,14 @@ document.write(`
 <span class="sd">        name (str): Name of the type to be delivered.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="nb">type</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="p">(),</span> <span class="p">{})</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__new__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">type</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="p">(),</span> <span class="p">{})</span>
 
-    <span class="k">def</span> <span class="nf">deliver</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">deliver</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Deliver the type.</span>
 
 <span class="sd">        Args:</span>
@@ -389,7 +389,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="o">=</span> <span class="nb">type</span>
         <span class="k">return</span> <span class="bp">self</span>
 
-    <span class="k">def</span> <span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve the type.</span>
 
 <span class="sd">        Returns:</span>
@@ -403,7 +403,7 @@ document.write(`
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span>
 
 
-<div class="viewcode-block" id="PromisedType"><a class="viewcode-back" href="../../api.html#plum.type.PromisedType">[docs]</a><span class="k">class</span> <span class="nc">PromisedType</span><span class="p">(</span><span class="n">ResolvableType</span><span class="p">):</span>
+<div class="viewcode-block" id="PromisedType"><a class="viewcode-back" href="../../api.html#plum.type.PromisedType">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">PromisedType</span><span class="p">(</span><span class="n">ResolvableType</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A type that is promised to be available when you will you need it.</span>
 
 <span class="sd">    Args:</span>
@@ -411,15 +411,15 @@ document.write(`
 <span class="sd">            `&quot;SomeType&quot;`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;SomeType&quot;</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;SomeType&quot;</span><span class="p">):</span>
         <span class="n">ResolvableType</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;PromisedType[</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">name</span>
 
-    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;SomeType&quot;</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;SomeType&quot;</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">ResolvableType</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;PromisedType[</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="ModuleType"><a class="viewcode-back" href="../../api.html#plum.type.ModuleType">[docs]</a><span class="k">class</span> <span class="nc">ModuleType</span><span class="p">(</span><span class="n">ResolvableType</span><span class="p">):</span>
+<div class="viewcode-block" id="ModuleType"><a class="viewcode-back" href="../../api.html#plum.type.ModuleType">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">ModuleType</span><span class="p">(</span><span class="n">ResolvableType</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A type from another module.</span>
 
 <span class="sd">    Args:</span>
@@ -429,7 +429,7 @@ document.write(`
 <span class="sd">            do not raise an `AttributeError`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">allow_fail</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">allow_fail</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">module</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;__builtin__&quot;</span><span class="p">,</span> <span class="s2">&quot;__builtins__&quot;</span><span class="p">}:</span>
             <span class="n">module</span> <span class="o">=</span> <span class="s2">&quot;builtins&quot;</span>
         <span class="n">ResolvableType</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;ModuleType[</span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
@@ -437,10 +437,10 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">_module</span> <span class="o">=</span> <span class="n">module</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_allow_fail</span> <span class="o">=</span> <span class="n">allow_fail</span>
 
-    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">allow_fail</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">allow_fail</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">ResolvableType</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;ModuleType[</span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="ModuleType.retrieve"><a class="viewcode-back" href="../../api.html#plum.type.ModuleType.retrieve">[docs]</a>    <span class="k">def</span> <span class="nf">retrieve</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="ModuleType.retrieve"><a class="viewcode-back" href="../../api.html#plum.type.ModuleType.retrieve">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Attempt to retrieve the type from the reference module.</span>
 
 <span class="sd">        Returns:</span>
@@ -458,7 +458,7 @@ document.write(`
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div></div>
 
 
-<span class="k">def</span> <span class="nf">_is_hint</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_hint</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if an object is a type hint.</span>
 
 <span class="sd">    Args:</span>
@@ -482,7 +482,7 @@ document.write(`
         <span class="k">return</span> <span class="kc">False</span>
 
 
-<span class="k">def</span> <span class="nf">_hashable</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_hashable</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if an object is hashable.</span>
 
 <span class="sd">    Args:</span>
@@ -503,7 +503,7 @@ document.write(`
 <span class="sd">values.&quot;&quot;&quot;</span>
 
 
-<div class="viewcode-block" id="resolve_type_hint"><a class="viewcode-back" href="../../api.html#plum.type.resolve_type_hint">[docs]</a><span class="k">def</span> <span class="nf">resolve_type_hint</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<div class="viewcode-block" id="resolve_type_hint"><a class="viewcode-back" href="../../api.html#plum.type.resolve_type_hint">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">resolve_type_hint</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve all :class:`ResolvableType` in a type or type hint.</span>
 
 <span class="sd">    Args:</span>
@@ -580,7 +580,7 @@ document.write(`
         <span class="k">return</span> <span class="n">x</span></div>
 
 
-<div class="viewcode-block" id="is_faithful"><a class="viewcode-back" href="../../api.html#plum.type.is_faithful">[docs]</a><span class="k">def</span> <span class="nf">is_faithful</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<div class="viewcode-block" id="is_faithful"><a class="viewcode-back" href="../../api.html#plum.type.is_faithful">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">is_faithful</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Check whether a type hint is faithful.</span>
 
 <span class="sd">    A type or type hint `t` is defined _faithful_ if, for all `x`, the following holds</span>
@@ -603,7 +603,7 @@ document.write(`
     <span class="k">return</span> <span class="n">_is_faithful</span><span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></div>
 
 
-<span class="k">def</span> <span class="nf">_is_faithful</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_faithful</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">_is_hint</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
         <span class="n">origin</span> <span class="o">=</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">args</span> <span class="o">=</span> <span class="n">get_args</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>

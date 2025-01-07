@@ -392,10 +392,10 @@ document.write(`
 following example.
 Suppose that we would want to implement a special addition function, and we would
 want to implement it for all NumPy scalar types:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
-<span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">dispatch</span>
 
 
 <span class="n">scalar_types</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">sctypes</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="p">[])</span>  <span class="c1"># All NumPy scalar types</span>
@@ -403,7 +403,7 @@ want to implement it for all NumPy scalar types:</p>
 
 
 <span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Scalar</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">Scalar</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Scalar</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">Scalar</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span>
 </pre></div>
 </div>
@@ -422,7 +422,7 @@ This is precisely what union aliases do:
 by aliasing a union, you change the way it is displayed.
 Union aliases must be activated explicitly, because the feature
 monkeypatches <code class="docutils literal notranslate"><span class="pre">Union.__str__</span></code> and <code class="docutils literal notranslate"><span class="pre">Union.__repr__</span></code>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">activate_union_aliases</span><span class="p">,</span> <span class="n">set_union_alias</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">activate_union_aliases</span><span class="p">,</span> <span class="n">set_union_alias</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">activate_union_aliases</span><span class="p">()</span>
 
@@ -461,7 +461,7 @@ For example, printing just <code class="docutils literal notranslate"><span clas
 </pre></div>
 </div>
 <p>You can deactivate union aliases with <code class="docutils literal notranslate"><span class="pre">deactivate_union_aliases</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">deactivate_union_aliases</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">deactivate_union_aliases</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">deactivate_union_aliases</span><span class="p">()</span>
 

@@ -346,24 +346,33 @@ document.write(`
     <span class="s2">&quot;promote&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">TypeVar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">TypeVar</span>
 
-<span class="kn">from</span> <span class="nn">beartype.door</span> <span class="kn">import</span> <span class="n">TypeHint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeAlias</span>
 
-<span class="kn">import</span> <span class="nn">plum.function</span>
-<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">_is_bearable</span>
-<span class="kn">from</span> <span class="nn">.dispatcher</span> <span class="kn">import</span> <span class="n">Dispatcher</span>
-<span class="kn">from</span> <span class="nn">.repr</span> <span class="kn">import</span> <span class="n">repr_short</span>
-<span class="kn">from</span> <span class="nn">.type</span> <span class="kn">import</span> <span class="n">resolve_type_hint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">beartype.door</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeHint</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">plum.function</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">_is_bearable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.dispatcher</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dispatcher</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.repr</span><span class="w"> </span><span class="kn">import</span> <span class="n">repr_short</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.type</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_type_hint</span>
 
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
 <span class="n">R</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;R&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="n">TypeTo</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;TypeTo&quot;</span><span class="p">)</span>
+    <span class="n">typeTypeTo</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="nb">type</span><span class="p">[</span><span class="n">TypeTo</span><span class="p">]</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">TypeTo</span> <span class="o">=</span> <span class="n">Any</span>
+    <span class="n">typeTypeTo</span> <span class="o">=</span> <span class="n">Any</span>
 
 <span class="n">_dispatch</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">()</span>
 
 
 <div class="viewcode-block" id="convert"><a class="viewcode-back" href="../../api.html#plum.promotion.convert">[docs]</a><span class="nd">@_dispatch</span>
-<span class="k">def</span> <span class="nf">convert</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">type_to</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">convert</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="n">type_to</span><span class="p">:</span> <span class="n">typeTypeTo</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TypeTo</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert an object to a particular type.</span>
 
 <span class="sd">    Args:</span>
@@ -383,17 +392,17 @@ document.write(`
 
 
 <span class="nd">@_dispatch</span>
-<span class="k">def</span> <span class="nf">_convert</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">type_to</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_convert</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">type_to</span><span class="p">):</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_bearable</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">type_to</span><span class="p">)):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot convert `</span><span class="si">{</span><span class="n">obj</span><span class="si">}</span><span class="s2">` to `</span><span class="si">{</span><span class="n">repr_short</span><span class="p">(</span><span class="n">type_to</span><span class="p">)</span><span class="si">}</span><span class="s2">`.&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">obj</span>
 
 
-<span class="k">class</span> <span class="nc">_ConversionCallable</span><span class="p">(</span><span class="n">Protocol</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">R</span><span class="p">]):</span>
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">R</span><span class="p">:</span> <span class="o">...</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_ConversionCallable</span><span class="p">(</span><span class="n">Protocol</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">R</span><span class="p">]):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">R</span><span class="p">:</span> <span class="o">...</span>
 
 
-<div class="viewcode-block" id="add_conversion_method"><a class="viewcode-back" href="../../api.html#plum.promotion.add_conversion_method">[docs]</a><span class="k">def</span> <span class="nf">add_conversion_method</span><span class="p">(</span>
+<div class="viewcode-block" id="add_conversion_method"><a class="viewcode-back" href="../../api.html#plum.promotion.add_conversion_method">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">add_conversion_method</span><span class="p">(</span>
     <span class="n">type_from</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">T</span><span class="p">],</span>
     <span class="n">type_to</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">R</span><span class="p">],</span>
     <span class="n">f</span><span class="p">:</span> <span class="n">_ConversionCallable</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">R</span><span class="p">],</span>
@@ -408,11 +417,11 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nd">@_convert</span><span class="o">.</span><span class="n">dispatch</span>
-    <span class="k">def</span> <span class="nf">perform_conversion</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">type_from</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">type_to</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">perform_conversion</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">type_from</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">type_to</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="conversion_method"><a class="viewcode-back" href="../../api.html#plum.promotion.conversion_method">[docs]</a><span class="k">def</span> <span class="nf">conversion_method</span><span class="p">(</span>
+<div class="viewcode-block" id="conversion_method"><a class="viewcode-back" href="../../api.html#plum.promotion.conversion_method">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">conversion_method</span><span class="p">(</span>
     <span class="n">type_from</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">type_to</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">R</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">_ConversionCallable</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">R</span><span class="p">]],</span> <span class="n">_ConversionCallable</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">R</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Decorator to add a conversion method to convert an object from one</span>
@@ -423,7 +432,7 @@ document.write(`
 <span class="sd">        type_to (type): Type to convert to.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">add_method</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">_ConversionCallable</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">R</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">_ConversionCallable</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">R</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_method</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">_ConversionCallable</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">R</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">_ConversionCallable</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">R</span><span class="p">]:</span>
         <span class="n">add_conversion_method</span><span class="p">(</span><span class="n">type_from</span><span class="p">,</span> <span class="n">type_to</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">f</span>
 
@@ -441,7 +450,7 @@ document.write(`
 
 
 <span class="nd">@_dispatch</span>
-<span class="k">def</span> <span class="nf">_promotion_rule</span><span class="p">(</span><span class="n">type1</span><span class="p">,</span> <span class="n">type2</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_promotion_rule</span><span class="p">(</span><span class="n">type1</span><span class="p">,</span> <span class="n">type2</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Promotion rule.</span>
 
 <span class="sd">    Args:</span>
@@ -464,7 +473,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="add_promotion_rule"><a class="viewcode-back" href="../../api.html#plum.promotion.add_promotion_rule">[docs]</a><span class="nd">@_dispatch</span>
-<span class="k">def</span> <span class="nf">add_promotion_rule</span><span class="p">(</span><span class="n">type1</span><span class="p">,</span> <span class="n">type2</span><span class="p">,</span> <span class="n">type_to</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">add_promotion_rule</span><span class="p">(</span><span class="n">type1</span><span class="p">,</span> <span class="n">type2</span><span class="p">,</span> <span class="n">type_to</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Add a promotion rule.</span>
 
 <span class="sd">    Args:</span>
@@ -474,7 +483,7 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nd">@_promotion_rule</span><span class="o">.</span><span class="n">dispatch</span>
-    <span class="k">def</span> <span class="nf">rule</span><span class="p">(</span><span class="n">t1</span><span class="p">:</span> <span class="n">type1</span><span class="p">,</span> <span class="n">t2</span><span class="p">:</span> <span class="n">type2</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rule</span><span class="p">(</span><span class="n">t1</span><span class="p">:</span> <span class="n">type1</span><span class="p">,</span> <span class="n">t2</span><span class="p">:</span> <span class="n">type2</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">type_to</span>
 
     <span class="c1"># If the types are the same, we don&#39;t need to add the reverse rule. Resolve the</span>
@@ -483,12 +492,12 @@ document.write(`
         <span class="k">return</span>  <span class="c1"># Escape early.</span>
 
     <span class="nd">@_promotion_rule</span><span class="o">.</span><span class="n">dispatch</span>
-    <span class="k">def</span> <span class="nf">rule</span><span class="p">(</span><span class="n">t1</span><span class="p">:</span> <span class="n">type2</span><span class="p">,</span> <span class="n">t2</span><span class="p">:</span> <span class="n">type1</span><span class="p">):</span>  <span class="c1"># noqa: F811</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rule</span><span class="p">(</span><span class="n">t1</span><span class="p">:</span> <span class="n">type2</span><span class="p">,</span> <span class="n">t2</span><span class="p">:</span> <span class="n">type1</span><span class="p">):</span>  <span class="c1"># noqa: F811</span>
         <span class="k">return</span> <span class="n">type_to</span></div>
 
 
 <span class="nd">@_dispatch</span>
-<span class="k">def</span> <span class="nf">promote</span><span class="p">(</span><span class="n">obj1</span><span class="p">,</span> <span class="n">obj2</span><span class="p">,</span> <span class="o">*</span><span class="n">objs</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">promote</span><span class="p">(</span><span class="n">obj1</span><span class="p">,</span> <span class="n">obj2</span><span class="p">,</span> <span class="o">*</span><span class="n">objs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Promote objects to a common type.</span>
 
 <span class="sd">    Args:</span>
@@ -504,7 +513,7 @@ document.write(`
     <span class="c1"># TODO: Can we implement this without calling `type`?!</span>
     <span class="n">types</span> <span class="o">=</span> <span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">objs</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">_promote_types</span><span class="p">(</span><span class="n">t0</span><span class="p">,</span> <span class="n">t1</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_promote_types</span><span class="p">(</span><span class="n">t0</span><span class="p">,</span> <span class="n">t1</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">_promotion_rule</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">t0</span><span class="p">,</span> <span class="n">t1</span><span class="p">)(</span><span class="n">t0</span><span class="p">,</span> <span class="n">t1</span><span class="p">))</span>
 
     <span class="c1"># Find the common type.</span>
@@ -518,13 +527,13 @@ document.write(`
 
 
 <span class="nd">@_dispatch</span>
-<span class="k">def</span> <span class="nf">promote</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="nb">object</span><span class="p">):</span>  <span class="c1"># noqa: F811</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">promote</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="nb">object</span><span class="p">):</span>  <span class="c1"># noqa: F811</span>
     <span class="c1"># Promote should always return a tuple to avoid edge cases.</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">obj</span><span class="p">,)</span>
 
 
 <div class="viewcode-block" id="promote"><a class="viewcode-back" href="../../api.html#plum.promotion.promote">[docs]</a><span class="nd">@_dispatch</span>
-<span class="k">def</span> <span class="nf">promote</span><span class="p">():</span>  <span class="c1"># noqa: F811</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">promote</span><span class="p">():</span>  <span class="c1"># noqa: F811</span>
     <span class="k">return</span> <span class="p">()</span></div>
 </pre></div>
 

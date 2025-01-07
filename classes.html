@@ -400,15 +400,15 @@ document.write(`
   <section id="classes">
 <h1>Classes<a class="headerlink" href="#classes" title="Permalink to this heading">#</a></h1>
 <p>You can use dispatch within classes:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">dispatch</span>
 
-<span class="k">class</span> <span class="nc">Real</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Real</span><span class="p">:</span>
    <span class="nd">@dispatch</span>
-   <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+   <span class="k">def</span><span class="w"> </span><span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
       <span class="k">return</span> <span class="s2">&quot;int added&quot;</span>
 
    <span class="nd">@dispatch</span>
-   <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+   <span class="k">def</span><span class="w"> </span><span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
       <span class="k">return</span> <span class="s2">&quot;float added&quot;</span>
 </pre></div>
 </div>
@@ -424,20 +424,20 @@ document.write(`
 <section id="decorators">
 <h2>Decorators<a class="headerlink" href="#decorators" title="Permalink to this heading">#</a></h2>
 <p>You can use <code class="docutils literal notranslate"><span class="pre">&#64;dispatch</span></code> with other decorators without any problem:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">dispatch</span>
 
 
-<span class="k">class</span> <span class="nc">MyClass</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MyClass</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span>
 
     <span class="nd">@name</span><span class="o">.</span><span class="n">setter</span>
     <span class="nd">@dispatch</span>
-    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">value</span>
 </pre></div>
 </div>
@@ -453,28 +453,28 @@ document.write(`
 <section id="forward-references">
 <span id="id1"></span><h2>Forward References<a class="headerlink" href="#forward-references" title="Permalink to this heading">#</a></h2>
 <p>Imagine the following design:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">dispatch</span>
 
 
-<span class="k">class</span> <span class="nc">Real</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Real</span><span class="p">:</span>
     <span class="nd">@dispatch</span>
-    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Real</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Real</span><span class="p">):</span>
         <span class="o">...</span>
 </pre></div>
 </div>
 <p>If we try to run this, we get the following error:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="ne">NameError</span>                                 <span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">)</span>
 <span class="o">&lt;</span><span class="n">ipython</span><span class="o">-</span><span class="nb">input</span><span class="o">-</span><span class="mi">1</span><span class="o">-</span><span class="mi">2</span><span class="n">c6fe56c8a98</span><span class="o">&gt;</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
-      <span class="mi">1</span> <span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span>
+      <span class="mi">1</span> <span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">dispatch</span>
       <span class="mi">2</span>
-<span class="o">----&gt;</span> <span class="mi">3</span> <span class="k">class</span> <span class="nc">Real</span><span class="p">:</span>
+<span class="o">----&gt;</span> <span class="mi">3</span> <span class="k">class</span><span class="w"> </span><span class="nc">Real</span><span class="p">:</span>
       <span class="mi">4</span>     <span class="nd">@dispatch</span>
-      <span class="mi">5</span>     <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Real</span><span class="p">):</span>
+      <span class="mi">5</span>     <span class="k">def</span><span class="w"> </span><span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Real</span><span class="p">):</span>
 
 <span class="o">&lt;</span><span class="n">ipython</span><span class="o">-</span><span class="nb">input</span><span class="o">-</span><span class="mi">1</span><span class="o">-</span><span class="mi">2</span><span class="n">c6fe56c8a98</span><span class="o">&gt;</span> <span class="ow">in</span> <span class="n">Real</span><span class="p">()</span>
-      <span class="mi">3</span> <span class="k">class</span> <span class="nc">Real</span><span class="p">:</span>
+      <span class="mi">3</span> <span class="k">class</span><span class="w"> </span><span class="nc">Real</span><span class="p">:</span>
       <span class="mi">4</span>     <span class="nd">@dispatch</span>
-<span class="o">----&gt;</span> <span class="mi">5</span>     <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Real</span><span class="p">):</span>
+<span class="o">----&gt;</span> <span class="mi">5</span>     <span class="k">def</span><span class="w"> </span><span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Real</span><span class="p">):</span>
       <span class="mi">6</span>         <span class="o">...</span>
 
 <span class="ne">NameError</span><span class="p">:</span> <span class="n">name</span> <span class="s1">&#39;Real&#39;</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">defined</span>
@@ -483,12 +483,12 @@ document.write(`
 <p>The problem is that name <code class="docutils literal notranslate"><span class="pre">Real</span></code> is not yet defined, when <code class="docutils literal notranslate"><span class="pre">__add__</span></code> is defined and
 the type hint for <code class="docutils literal notranslate"><span class="pre">other</span></code> is set.
 To circumvent this issue, you can use a forward reference:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">dispatch</span>
 
 
-<span class="k">class</span> <span class="nc">Real</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Real</span><span class="p">:</span>
     <span class="nd">@dispatch</span>
-    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;Real&quot;</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;Real&quot;</span><span class="p">):</span>
         <span class="o">...</span>
 </pre></div>
 </div>

@@ -405,12 +405,12 @@ document.write(`
 <section id="construction">
 <h2>Construction<a class="headerlink" href="#construction" title="Permalink to this heading">#</a></h2>
 <p>The decorator <code class="docutils literal notranslate"><span class="pre">&#64;parametric</span></code> can be used to create parametric classes:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span><span class="p">,</span> <span class="n">parametric</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">dispatch</span><span class="p">,</span> <span class="n">parametric</span>
 
 
 <span class="nd">@parametric</span>
-<span class="k">class</span> <span class="nc">A</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">A</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">x</span>
 </pre></div>
 </div>
@@ -447,23 +447,23 @@ directly, the type parameter is automatically inferred from the argument:</p>
 </div>
 <p>You can use parametric types to perform dispatch:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">A</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">A</span><span class="p">):</span>
     <span class="k">return</span> <span class="s2">&quot;Just some A&quot;</span>
 
 
 <span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">A</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">A</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
     <span class="k">return</span> <span class="s2">&quot;A has an integer!&quot;</span>
 
 
 <span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">A</span><span class="p">[</span><span class="nb">float</span><span class="p">]):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">A</span><span class="p">[</span><span class="nb">float</span><span class="p">]):</span>
     <span class="k">return</span> <span class="s2">&quot;A has a float!&quot;</span>
 </pre></div>
 </div>
 <p>Note that parametric types are <em>covariant</em>, which means
 that <code class="docutils literal notranslate"><span class="pre">A[T1]</span></code> is a subtype of <code class="docutils literal notranslate"><span class="pre">A[T2]</span></code> whenever <code class="docutils literal notranslate"><span class="pre">T1</span></code> is a subtype of <code class="docutils literal notranslate"><span class="pre">T2</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">numbers</span> <span class="kn">import</span> <span class="n">Number</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">numbers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Number</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">issubclass</span><span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">A</span><span class="p">[</span><span class="n">Number</span><span class="p">])</span>
 <span class="go">True</span>
@@ -471,7 +471,7 @@ that <code class="docutils literal notranslate"><span class="pre">A[T1]</span></
 </div>
 <p>For a concrete parametric type or an instance of a concrete parametric type, you
 can extract the type parameter with <code class="docutils literal notranslate"><span class="pre">type_parameter</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">type_parameter</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">type_parameter</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">type_parameter</span><span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span>
 <span class="go">&lt;class &#39;int&#39;&gt;</span>
@@ -505,12 +505,12 @@ by overriding certain <code class="docutils literal notranslate"><span class="pr
 </table>
 <p>How these methods work is best described with an example.
 See also <code class="docutils literal notranslate"><span class="pre">help(parametric)</span></code> for information.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span><span class="p">,</span> <span class="n">parametric</span><span class="p">,</span> <span class="n">type_parameter</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">dispatch</span><span class="p">,</span> <span class="n">parametric</span><span class="p">,</span> <span class="n">type_parameter</span>
 
 
 <span class="nd">@parametric</span>
-<span class="k">class</span> <span class="nc">NTuple</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NTuple</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="c1"># Check that the arguments satisfy the type specification.</span>
         <span class="n">n</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="n">type_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">!=</span> <span class="n">n</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">):</span>
@@ -520,13 +520,13 @@ See also <code class="docutils literal notranslate"><span class="pre">help(param
 
     <span class="nd">@classmethod</span>
     <span class="nd">@dispatch</span>
-    <span class="k">def</span> <span class="nf">__init_type_parameter__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">type</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__init_type_parameter__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">type</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether the type parameters are valid.&quot;&quot;&quot;</span>
         <span class="c1"># In this case, we use `@dispatch` to check the validity of the type parameter.</span>
         <span class="k">return</span> <span class="n">n</span><span class="p">,</span> <span class="n">t</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">__infer_type_parameter__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__infer_type_parameter__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Inter the type parameter from the arguments.&quot;&quot;&quot;</span>
         <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
         <span class="c1"># For simplicity, take the type of the first argument! We could do something</span>
@@ -535,7 +535,7 @@ See also <code class="docutils literal notranslate"><span class="pre">help(param
         <span class="k">return</span> <span class="n">n</span><span class="p">,</span> <span class="n">t</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">__le_type_parameter__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__le_type_parameter__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Is `NTuple[left]` a subtype of `NTuple[right]`?&quot;&quot;&quot;</span>
         <span class="n">n_left</span><span class="p">,</span> <span class="n">t_left</span> <span class="o">=</span> <span class="n">left</span>
         <span class="n">n_right</span><span class="p">,</span> <span class="n">t_right</span> <span class="o">=</span> <span class="n">right</span>
@@ -575,7 +575,7 @@ See also <code class="docutils literal notranslate"><span class="pre">help(param
 </pre></div>
 </div>
 <p>Finally, it implements the desired covariance:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">numbers</span> <span class="kn">import</span> <span class="n">Number</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">numbers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Number</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">issubclass</span><span class="p">(</span><span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">NTuple</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="n">Number</span><span class="p">])</span>
 <span class="go">True</span>
@@ -592,7 +592,7 @@ See also <code class="docutils literal notranslate"><span class="pre">help(param
 <h2><code class="docutils literal notranslate"><span class="pre">Kind</span></code><a class="headerlink" href="#kind" title="Permalink to this heading">#</a></h2>
 <p>Plum provides a convience parametric class <code class="docutils literal notranslate"><span class="pre">Kind</span></code> which you can use to quickly
 make a parametric wrapper object:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">Kind</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Kind</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">this</span> <span class="o">=</span> <span class="n">Kind</span><span class="p">[</span><span class="s2">&quot;This&quot;</span><span class="p">](</span><span class="mi">1</span><span class="p">)</span>
 
@@ -612,17 +612,17 @@ make a parametric wrapper object:</p>
 </pre></div>
 </div>
 <p>For example, you can use this in the following way:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">dispatch</span>
 
 
 <span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">i_expect_this</span><span class="p">(</span><span class="n">this</span><span class="p">:</span> <span class="n">Kind</span><span class="p">[</span><span class="s2">&quot;this&quot;</span><span class="p">]):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">i_expect_this</span><span class="p">(</span><span class="n">this</span><span class="p">:</span> <span class="n">Kind</span><span class="p">[</span><span class="s2">&quot;this&quot;</span><span class="p">]):</span>
     <span class="n">arg</span> <span class="o">=</span> <span class="n">this</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
     <span class="o">...</span>
 
 
 <span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">i_expect_that</span><span class="p">(</span><span class="n">that</span><span class="p">:</span> <span class="n">Kind</span><span class="p">[</span><span class="s2">&quot;that&quot;</span><span class="p">]):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">i_expect_that</span><span class="p">(</span><span class="n">that</span><span class="p">:</span> <span class="n">Kind</span><span class="p">[</span><span class="s2">&quot;that&quot;</span><span class="p">]):</span>
     <span class="n">arg0</span><span class="p">,</span> <span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span> <span class="o">=</span> <span class="n">that</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
     <span class="o">...</span>
 </pre></div>
@@ -634,17 +634,17 @@ make a parametric wrapper object:</p>
 <code class="docutils literal notranslate"><span class="pre">typing.Literal</span></code>.
 Plum’s now-deprecated equivalent means is through the class <code class="docutils literal notranslate"><span class="pre">plum.Val</span></code>.</p>
 <p>Example:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span>
-<span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">dispatch</span>
 
 
 <span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">algorithm</span><span class="p">(</span><span class="n">setting</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;fast&quot;</span><span class="p">],</span> <span class="n">x</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">algorithm</span><span class="p">(</span><span class="n">setting</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;fast&quot;</span><span class="p">],</span> <span class="n">x</span><span class="p">):</span>
     <span class="k">return</span> <span class="s2">&quot;Running fast!&quot;</span>
 
 
 <span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">algorithm</span><span class="p">(</span><span class="n">setting</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;slow&quot;</span><span class="p">],</span> <span class="n">x</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">algorithm</span><span class="p">(</span><span class="n">setting</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;slow&quot;</span><span class="p">],</span> <span class="n">x</span><span class="p">):</span>
     <span class="k">return</span> <span class="s2">&quot;Running slowly...&quot;</span>
 </pre></div>
 </div>

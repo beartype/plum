@@ -404,13 +404,13 @@ document.write(`
 <h2>Return Types<a class="headerlink" href="#return-types" title="Permalink to this heading">#</a></h2>
 <p>When a return type is not matched, Plum will attempt to convert the result to the
 right type.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span>
 
-<span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span><span class="p">,</span> <span class="n">add_conversion_method</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">dispatch</span><span class="p">,</span> <span class="n">add_conversion_method</span>
 
 
 <span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">x</span>
 </pre></div>
 </div>
@@ -437,13 +437,13 @@ You can tell Plum how the conversion should be done with <code class="docutils l
 This is also what is used to perform the conversion in the case the return type
 does not match.</p>
 <p>Example:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">numbers</span> <span class="kn">import</span> <span class="n">Number</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">numbers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Number</span>
 
-<span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">convert</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert</span>
 
 
-<span class="k">class</span> <span class="nc">Rational</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="n">denom</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Rational</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="n">denom</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num</span> <span class="o">=</span> <span class="n">num</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">denom</span> <span class="o">=</span> <span class="n">denom</span>
 </pre></div>
@@ -459,13 +459,13 @@ does not match.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">TypeError</span></code> indicates that <code class="docutils literal notranslate"><span class="pre">convert</span></code> does not know how to convert a
 <code class="docutils literal notranslate"><span class="pre">Rational</span></code> to a <code class="docutils literal notranslate"><span class="pre">Number</span></code>.
 Let us implement that conversion:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">operator</span> <span class="kn">import</span> <span class="n">truediv</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">operator</span><span class="w"> </span><span class="kn">import</span> <span class="n">truediv</span>
 
-<span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">conversion_method</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">conversion_method</span>
 
 
 <span class="nd">@conversion_method</span><span class="p">(</span><span class="n">type_from</span><span class="o">=</span><span class="n">Rational</span><span class="p">,</span> <span class="n">type_to</span><span class="o">=</span><span class="n">Number</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">rational_to_number</span><span class="p">(</span><span class="n">q</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">rational_to_number</span><span class="p">(</span><span class="n">q</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">truediv</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">num</span><span class="p">,</span> <span class="n">q</span><span class="o">.</span><span class="n">denom</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -475,7 +475,7 @@ Let us implement that conversion:</p>
 </div>
 <p>As above, instead of the decorator <code class="docutils literal notranslate"><span class="pre">conversion_method</span></code>, one can also use
 <code class="docutils literal notranslate"><span class="pre">add_conversion_method</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">add_conversion_method</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_conversion_method</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">add_conversion_method</span><span class="p">(</span><span class="n">type_from</span><span class="p">,</span> <span class="n">type_to</span><span class="p">,</span> <span class="n">conversion_function</span><span class="p">)</span>
 </pre></div>
@@ -484,21 +484,21 @@ Let us implement that conversion:</p>
 <section id="promotion">
 <h2>Promotion<a class="headerlink" href="#promotion" title="Permalink to this heading">#</a></h2>
 <p>The function <code class="docutils literal notranslate"><span class="pre">promote</span></code> can be used to promote objects to a common type:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">plum</span> <span class="kn">import</span> <span class="n">dispatch</span><span class="p">,</span> <span class="n">promote</span><span class="p">,</span> <span class="n">add_promotion_rule</span><span class="p">,</span> <span class="n">add_conversion_method</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">dispatch</span><span class="p">,</span> <span class="n">promote</span><span class="p">,</span> <span class="n">add_promotion_rule</span><span class="p">,</span> <span class="n">add_conversion_method</span>
 
 
 <span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">add</span><span class="p">(</span><span class="o">*</span><span class="n">promote</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
 
 
 <span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span>
 
 
 <span class="nd">@dispatch</span>
-<span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span>
 </pre></div>
 </div>
