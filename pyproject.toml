@@ -60,10 +60,15 @@ build.hooks.vcs.version-file = "plum/_version.py"
 
 
 # Development tools
-[tool.coverage.run]
-branch = true
-command_line = "-m pytest --verbose test"
-source = ["plum"]
+[tool.coverage]
+run.branch = true
+run.command_line = "-m pytest --verbose test"
+run.source = ["plum"]
+report.exclude_also = [
+  '\.\.\.',
+  'if TYPE_CHECKING:',
+  'if typing.TYPE_CHECKING:',
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/", "plum", "docs"]
