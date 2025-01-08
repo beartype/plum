@@ -2,6 +2,9 @@ import abc
 import sys
 import typing
 import warnings
+from typing import Hashable, Union
+
+from typing_extensions import Self, TypeGuard
 
 from beartype.vale._core._valecore import BeartypeValidator
 
@@ -32,14 +35,14 @@ class ResolvableType(type):
         name (str): Name of the type to be delivered.
     """
 
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         type.__init__(self, name, (), {})
         self._type = None
 
-    def __new__(self, name):
+    def __new__(self, name: str) -> Self:
         return type.__new__(self, name, (), {})
 
-    def deliver(self, type):
+    def deliver(self, type: type) -> Self:
         """Deliver the type.
 
         Args:
@@ -51,7 +54,7 @@ class ResolvableType(type):
         self._type = type
         return self
 
-    def resolve(self):
+    def resolve(self) -> Union[type, Self]:
         """Resolve the type.
 
         Returns:
@@ -73,11 +76,11 @@ class PromisedType(ResolvableType):
             `"SomeType"`.
     """
 
-    def __init__(self, name="SomeType"):
+    def __init__(self, name: str = "SomeType") -> None:
         ResolvableType.__init__(self, f"PromisedType[{name}]")
         self._name = name
 
-    def __new__(cls, name="SomeType"):
+    def __new__(cls, name: str = "SomeType") -> Self:
         return ResolvableType.__new__(cls, f"PromisedType[{name}]")
 
 
@@ -91,7 +94,7 @@ class ModuleType(ResolvableType):
             do not raise an `AttributeError`.
     """
 
-    def __init__(self, module, name, allow_fail=False):
+    def __init__(self, module: str, name: str, allow_fail: bool = False) -> None:
         if module in {"__builtin__", "__builtins__"}:
             module = "builtins"
         ResolvableType.__init__(self, f"ModuleType[{module}.{name}]")
@@ -99,10 +102,10 @@ class ModuleType(ResolvableType):
         self._module = module
         self._allow_fail = allow_fail
 
-    def __new__(cls, module, name, allow_fail=False):
+    def __new__(cls, module: str, name: str, allow_fail: bool = False) -> Self:
         return ResolvableType.__new__(cls, f"ModuleType[{module}.{name}]")
 
-    def retrieve(self):
+    def retrieve(self) -> bool:
         """Attempt to retrieve the type from the reference module.
 
         Returns:
@@ -120,7 +123,7 @@ class ModuleType(ResolvableType):
         return self._type is not None
 
 
-def _is_hint(x):
+def _is_hint(x: object) -> bool:
     """Check if an object is a type hint.
 
     Args:
@@ -144,7 +147,7 @@ def _is_hint(x):
         return False
 
 
-def _hashable(x):
+def _hashable(x: object) -> TypeGuard[Hashable]:
     """Check if an object is hashable.
 
     Args:
@@ -242,7 +245,7 @@ def resolve_type_hint(x):
         return x
 
 
-def is_faithful(x):
+def is_faithful(x) -> bool:
     """Check whether a type hint is faithful.
 
     A type or type hint `t` is defined _faithful_ if, for all `x`, the following holds
@@ -265,7 +268,7 @@ def is_faithful(x):
     return _is_faithful(resolve_type_hint(x))
 
 
-def _is_faithful(x):
+def _is_faithful(x) -> bool:
     if _is_hint(x):
         origin = get_origin(x)
         args = get_args(x)
