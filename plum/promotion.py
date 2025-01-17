@@ -135,7 +135,7 @@ def _promotion_rule(type1, type2):
 
 
 @_dispatch
-def add_promotion_rule(type1: object, type2: object, type_to: type) -> None:
+def add_promotion_rule(type1: object, type2: object, type_to: object) -> None:
     """Add a promotion rule.
 
     Args:
