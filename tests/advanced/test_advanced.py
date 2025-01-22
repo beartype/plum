@@ -337,3 +337,26 @@ def test_none():
         return x
 
     assert f(None) is None
+
+
+class A6:
+    @staticmethod
+    @dispatch
+    def f(x: int):
+        return "int"
+
+    @staticmethod
+    @dispatch
+    def f(x: str):
+        return "str"
+
+
+def test_staticmethod():
+    assert A6.f(1) == "int"
+    assert A6().f(1) == "int"
+    assert A6.f("1") == "str"
+    assert A6().f("1") == "str"
+    with pytest.raises(NotFoundLookupError):
+        A6.f(1.0)
+    with pytest.raises(NotFoundLookupError):
+        A6().f(1.0)
