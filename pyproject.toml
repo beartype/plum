@@ -20,32 +20,40 @@ requires-python = ">=3.8"
 dependencies = [
     "beartype>=0.16.2",
     "typing-extensions>=4.9.0",
-    "rich>=10.0"
-]
-
-[project.optional-dependencies]
-dev = [
-    "numpy",
-    "pytest>=6",
-    "pytest-cov",
-    "coveralls",
-    "pre-commit",
-    "IPython",
-    "black==23.9.0",
-    "ghp-import",
-    "wheel",
-    "build",
-    "tox",
-    "jupyter-book",
-    "mypy",
-    "pyright>=1.1.331",
-    "ruff>=0.2.1",
-    "sybil",
+    "rich>=10.0",
+    "setuptools"
 ]
 
 [project.urls]
 repository = "https://github.com/beartype/plum"
 documentation = "https://beartype.github.io/plum"
+
+
+[dependency-groups]
+dev = [
+    { include-group = "docs" },
+    { include-group = "lint" },
+    { include-group = "test" },
+]
+lint = [
+    "pre-commit",
+]
+test = [
+    "IPython",
+    "tox",
+    "pytest>=6",
+    "pytest-cov",
+    "coveralls",
+    "sybil",
+    "mypy",
+    "pyright>=1.1.331",
+    "sybil",
+    "numpy>=1.24.4",
+    "setuptools>=75.3.0",
+]
+docs = [
+    "jupyter-book",
+]
 
 
 [build-system]
