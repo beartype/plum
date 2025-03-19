@@ -141,6 +141,7 @@ Would you like to add your project here?
 Please feel free to open a PR to add it to the list!
 
 - [Coordinax](https://github.com/GalacticDynamics/coordinax) implements coordinates in JAX.
+- [`fasttransform`](https://github.com/AnswerDotAI/fasttransform) provides the main building block of data pipelines in `fastai`.
 - [GPAR](https://github.com/wesselb/gpar) is an implementation of the [Gaussian Process Autoregressive Model](https://arxiv.org/abs/1802.07182).
 - [GPCM](https://github.com/wesselb/gpcm) is an implementation of various [Gaussian Process Convolution Models](https://arxiv.org/abs/2203.06997).
 - [Galax](https://github.com/GalacticDynamics/galax) does galactic and gravitational dynamics.
