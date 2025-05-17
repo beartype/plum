@@ -31,6 +31,12 @@ jobs:
           - name: "3.11-pre-beartype"
             python-version: "3.11"
             extra-install: "pip install --upgrade --pre beartype"
+          - name: "3.12"
+            python-version: "3.12"
+            extra-install: ""
+          - name: "3.12-pre-beartype"
+            python-version: "3.12"
+            extra-install: "pip install --upgrade --pre beartype"
 
     name: Test ${{ matrix.value.name }}
     steps:
