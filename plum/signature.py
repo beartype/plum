@@ -121,6 +121,9 @@ class Signature(Comparable):
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, Signature):
+            # First check if number of arguments is different
+            if len(self.types) != len(other.types):
+                return False
             return (
                 self.types,
                 self.varargs,
