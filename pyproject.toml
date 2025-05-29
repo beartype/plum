@@ -70,6 +70,15 @@ report.exclude_also = [
   'if typing.TYPE_CHECKING:',
 ]
 
+
+[tool.mypy]
+  disable_error_code = ["no-redef"]
+  enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
+  files = ["plum"]
+  strict = true
+  follow_imports = "skip"
+
+
 [tool.pytest.ini_options]
 testpaths = ["tests/", "plum", "docs"]
 addopts = [
