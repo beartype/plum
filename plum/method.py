@@ -1,6 +1,7 @@
 import inspect
 import typing
-from typing import Callable, List, Optional, Set, Tuple
+from collections.abc import Callable
+from typing import List, Optional, Set, Tuple
 
 from rich.padding import Padding
 from rich.text import Text

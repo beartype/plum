@@ -16,7 +16,7 @@ classifiers = [
 ]
 dynamic = ["version"]
 
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
     "beartype>=0.16.2",
     "typing-extensions>=4.9.0",

@@ -14,7 +14,7 @@ T = TypeVar("T", bound=Callable[..., Any])
 
 
 _dataclass_kw_args: Dict[str, Any] = {}
-if sys.version_info >= (3, 10):  # pragma: specific no cover 3.8 3.9
+if sys.version_info >= (3, 10):  # pragma: specific no cover 3.9
     _dataclass_kw_args |= {"slots": True}
 
 

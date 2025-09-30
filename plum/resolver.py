@@ -1,8 +1,9 @@
 import pydoc
 import sys
 import warnings
+from collections.abc import Callable
 from functools import wraps
-from typing import Callable, Optional, Tuple, Union
+from typing import Optional, Tuple, Union
 
 from rich.padding import Padding
 from rich.text import Text
