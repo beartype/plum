@@ -50,11 +50,11 @@ jobs:
           uv sync --locked --all-extras --group dev
           ${{ matrix.value.extra-install }}
       - name: Test linter assertions
-        run: uv run check_linter_assertions.py tests/typechecked
+        run: uv run --frozen check_linter_assertions.py tests/typechecked
       - name: Run tests
         run: |
           PRAGMA_VERSION=`uv run python -c "import sys; print('.'.join(map(str, sys.version_info[:2])))"` \
-          uv run pytest -v --cov=plum --cov-report term-missing
+          uv run --frozen pytest -v --cov=plum --cov-report term-missing
       - name: Coveralls parallel
         uses: coverallsapp/github-action@v2
         with:
