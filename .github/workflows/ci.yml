@@ -16,9 +16,6 @@ jobs:
       fail-fast: false
       matrix:
         value:
-          - name: "3.8"
-            python-version: "3.8"
-            extra-install: ""
           - name: "3.9"
             python-version: "3.9"
             extra-install: ""
@@ -28,14 +25,17 @@ jobs:
           - name: "3.11"
             python-version: "3.11"
             extra-install: ""
-          - name: "3.11-pre-beartype"
-            python-version: "3.11"
-            extra-install: "pip install --upgrade --pre beartype"
           - name: "3.12"
             python-version: "3.12"
             extra-install: ""
           - name: "3.12-pre-beartype"
             python-version: "3.12"
+            extra-install: "pip install --upgrade --pre beartype"
+          - name: "3.13"
+            python-version: "3.13"
+            extra-install: ""
+          - name: "3.13-pre-beartype"
+            python-version: "3.13"
             extra-install: "pip install --upgrade --pre beartype"
 
     name: Test ${{ matrix.value.name }}
@@ -48,7 +48,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install --upgrade --no-cache-dir -e '.[dev]'
+          python -m pip install --no-cache-dir --group dev
+          python -m pip install --no-cache-dir -e .
           ${{ matrix.value.extra-install }}
       - name: Test linter assertions
         run: |

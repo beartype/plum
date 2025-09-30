@@ -1,7 +1,7 @@
 import sys
 from dataclasses import dataclass, field
 from functools import partial
-from typing import Any, Dict, Optional, Tuple, TypeVar, Union, overload
+from typing import Any, Optional, TypeVar, Union, overload
 
 from .function import Function
 from .overload import get_overloads
@@ -13,8 +13,8 @@ __all__ = ["Dispatcher", "dispatch", "clear_all_cache"]
 T = TypeVar("T", bound=Callable[..., Any])
 
 
-_dataclass_kw_args: Dict[str, Any] = {}
-if sys.version_info >= (3, 10):  # pragma: specific no cover 3.8 3.9
+_dataclass_kw_args: dict[str, Any] = {}
+if sys.version_info >= (3, 10):  # pragma: specific no cover 3.9
     _dataclass_kw_args |= {"slots": True}
 
 
@@ -34,8 +34,8 @@ class Dispatcher:
     """
 
     warn_redefinition: bool = False
-    functions: Dict[str, Function] = field(default_factory=dict)
-    classes: Dict[str, Dict[str, Function]] = field(default_factory=dict)
+    functions: dict[str, Function] = field(default_factory=dict)
+    classes: dict[str, dict[str, Function]] = field(default_factory=dict)
 
     @overload
     def __call__(self, method: T, /, *, precedence: int = ...) -> T: ...
@@ -74,7 +74,7 @@ class Dispatcher:
         return self._add_method(method, None, precedence=precedence)
 
     def multi(
-        self, *signatures: Union[Signature, Tuple[TypeHint, ...]]
+        self, *signatures: Union[Signature, tuple[TypeHint, ...]]
     ) -> Callable[[Callable], Function]:
         """Decorator to register multiple signatures at once.
 

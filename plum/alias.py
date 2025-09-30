@@ -27,9 +27,7 @@ parsing how unions print.
 """
 
 from functools import wraps
-from typing import List, TypeVar, Union, _type_repr
-
-from .typing import get_args
+from typing import TypeVar, Union, _type_repr, get_args
 
 __all__ = ["activate_union_aliases", "deactivate_union_aliases", "set_union_alias"]
 
@@ -141,7 +139,7 @@ def deactivate_union_aliases() -> None:
     _union_type.__str__ = _original_str
 
 
-_ALIASED_UNIONS: List = []
+_ALIASED_UNIONS: list = []
 
 
 def set_union_alias(union: UnionT, alias: str) -> UnionT:
