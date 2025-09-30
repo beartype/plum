@@ -121,14 +121,24 @@ class Signature(Comparable):
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, Signature):
+            if self.varargs is Missing:
+                self_varargs = Missing
+            else:
+                self_varargs = beartype.door.TypeHint(self.varargs)
+
+            if other.varargs is Missing:
+                other_varargs = Missing
+            else:
+                other_varargs = beartype.door.TypeHint(other.varargs)
+
             return (
-                self.types,
-                self.varargs,
+                tuple(beartype.door.TypeHint(t) for t in self.types),
+                self_varargs,
                 self.precedence,
                 self.is_faithful,
             ) == (
-                other.types,
-                other.varargs,
+                tuple(beartype.door.TypeHint(t) for t in other.types),
+                other_varargs,
                 other.precedence,
                 other.is_faithful,
             )

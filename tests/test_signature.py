@@ -1,9 +1,11 @@
 import inspect
 import operator
 from numbers import Number as Num, Real as Re
-from typing import Any, Tuple
+from typing import Any, Tuple, Union
 
 import pytest
+
+from beartype.door import TypeHint
 
 from plum.dispatcher import Dispatcher
 from plum.resolver import AmbiguousLookupError
@@ -101,6 +103,20 @@ def test_equality():
     assert sig != Sig(int, float, varargs=complex, precedence=2)
     # :class:`Signature` should allow comparison against other objects.
     assert sig != 1
+
+    # Test all branches of variable argument `TypeHint` casting.
+    assert Sig() == Sig()
+    assert Sig() != Sig(varargs=int)
+    assert Sig(varargs=int) != Sig()
+    assert Sig(varargs=int) == Sig(varargs=int)
+
+    # Test equivalent but not identical types.
+    t1 = Union[int, bool]
+    t2 = int
+    assert t1 is not t2 and t1 != t2
+    assert TypeHint(t1) == TypeHint(t2)
+    assert Sig(t1) == Sig(t2)
+    assert Sig(varargs=t1) == Sig(varargs=t2)
 
 
 def test_expand_varargs():
