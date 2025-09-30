@@ -516,7 +516,7 @@ class D(type):
 
 class E(D):
     @dispatch
-    def __init__(self, name: str, bases: typing.Tuple[type], methods: dict):
+    def __init__(self, name: str, bases: tuple[type], methods: dict):
         pass
 
     @dispatch

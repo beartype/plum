@@ -1,8 +1,10 @@
-# Plum previously exported a number of types. As of recently, the user can use the
-# versions from `typing`. To not break backward compatibility, we still export these
-# types.
+# Plum previously exported a number of types. As of recently, the user can use
+# the versions from `typing`. To not break backward compatibility, we still
+# export these types.
+from typing import Dict, List, Tuple, Union  # noqa: F401, UP035
+
+# isort: split
 from functools import partial
-from typing import Dict, List, Tuple, Union  # noqa: F401
 
 from beartype import (
     BeartypeConf as _BeartypeConf,

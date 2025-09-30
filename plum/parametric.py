@@ -1,6 +1,5 @@
 import contextlib
-from typing import Type, TypeVar, Union
-
+from typing import TypeVar, Union
 from typing_extensions import deprecated
 
 import beartype.door
@@ -472,7 +471,7 @@ def type_parameter(x):
     )
 
 
-def type_nonparametric(q: T) -> Type[T]:
+def type_nonparametric(q: T) -> type[T]:
     """Return the non-parametric type of an object.
 
     :mod:`plum.parametric` produces parametric subtypes of classes. This method
@@ -540,7 +539,7 @@ def type_nonparametric(q: T) -> Type[T]:
     )
 
 
-def type_unparametrized(q: T) -> Type[T]:
+def type_unparametrized(q: T) -> type[T]:
     """Return the unparametrized type of an object.
 
     :mod:`plum.parametric` produces parametric subtypes of classes.  This

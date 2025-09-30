@@ -42,9 +42,10 @@ def test_missing():
 
 
 def test_multihash():
-    assert multihash(1, 2) == multihash(1, 2)
-    assert multihash(2, 2) != multihash(1, 2)
-    assert multihash(2, 1) != multihash(1, 2)
+    with pytest.deprecated_call():
+        assert multihash(1, 2) == multihash(1, 2)
+        assert multihash(2, 2) != multihash(1, 2)
+        assert multihash(2, 1) != multihash(1, 2)
 
 
 class Number(Comparable):

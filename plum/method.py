@@ -1,6 +1,7 @@
 import inspect
 import typing
-from typing import Callable, List, Optional, Set, Tuple
+from collections.abc import Callable
+from typing import Optional
 
 from rich.padding import Padding
 from rich.text import Text
@@ -96,7 +97,7 @@ class Method:
 
     def repr_mismatch(
         self,
-        mismatches: Set[int] = frozenset(),
+        mismatches: set[int] = frozenset(),
         varargs_matched: bool = True,
     ) -> str:
         """Version of `__repr__` that can print which arguments are mismatched. This
@@ -168,7 +169,7 @@ class MethodList(list):
             yield Padding(sum(method_repr, Text(f"[{i}] ")), (0, 4))
 
 
-def extract_arg_names(f: Callable) -> Tuple[List[str], List[str], Optional[str]]:
+def extract_arg_names(f: Callable) -> tuple[list[str], list[str], Optional[str]]:
     """Extract the argument names for a function.
 
     Args:

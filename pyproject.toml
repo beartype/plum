@@ -16,31 +16,11 @@ classifiers = [
 ]
 dynamic = ["version"]
 
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
     "beartype>=0.16.2",
     "typing-extensions>=4.9.0",
     "rich>=10.0"
-]
-
-[project.optional-dependencies]
-dev = [
-    "numpy",
-    "pytest>=6",
-    "pytest-cov",
-    "coveralls",
-    "pre-commit",
-    "IPython",
-    "black==23.9.0",
-    "ghp-import",
-    "wheel",
-    "build",
-    "tox",
-    "jupyter-book",
-    "mypy",
-    "pyright>=1.1.331",
-    "ruff>=0.2.1",
-    "sybil",
 ]
 
 [project.urls]
@@ -52,6 +32,30 @@ documentation = "https://beartype.github.io/plum"
 requires = ["hatchling>=1.8.0", "hatch-vcs"]
 build-backend = "hatchling.build"
 
+
+[dependency-groups]
+dev = [
+    { include-group = "docs" },
+    { include-group = "lint" },
+    { include-group = "test" },
+]
+lint = [
+    "pre-commit>=4.3.0",
+]
+test = [
+    "coveralls>=4.0.1",
+    "ipython>=8.18.1",
+    "mypy>=1.18.2",
+    "numpy>=2.0.2",
+    "pyright>=1.1.331",
+    "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
+    "sybil>=9.2.0",
+    "tox>=4.30.2",
+]
+docs = [
+    "jupyter-book>=1.0.4.post1",
+]
 
 [tool.hatch]
 version.source = "vcs"
@@ -82,7 +86,7 @@ minversion = "6.0"
 
 [tool.ruff]
 src = ["plum"]
-target-version = "py38"
+target-version = "py39"
 line-length = 88
 
 [tool.ruff.lint]
@@ -101,6 +105,7 @@ ignore = ["F811", "B018"]
 combine-as-imports = true
 known-first-party = ["beartype"]
 known-local-folder = ["plum"]
+extra-standard-library = ["typing_extensions"]
 
 [tool.ruff.format]
 docstring-code-format = true
