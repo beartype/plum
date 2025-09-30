@@ -9,7 +9,6 @@ __all__ = [
 ]
 
 from typing import TYPE_CHECKING, Any, Callable, Protocol, TypeVar
-
 from typing_extensions import TypeAlias
 
 from beartype.door import TypeHint
