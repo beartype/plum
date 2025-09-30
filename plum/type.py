@@ -4,7 +4,6 @@ import typing
 import warnings
 from collections.abc import Callable, Hashable
 from typing import Optional, Union, get_args, get_origin
-
 from typing_extensions import Self, TypeGuard
 
 from beartype.vale._core._valecore import BeartypeValidator

@@ -1,7 +1,6 @@
 import abc
 import sys
 from collections.abc import Callable, Hashable, Sequence
-
 from typing_extensions import deprecated
 
 __all__ = [

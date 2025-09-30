@@ -1,6 +1,5 @@
 import contextlib
 from typing import TypeVar, Union
-
 from typing_extensions import deprecated
 
 import beartype.door

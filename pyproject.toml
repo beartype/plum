@@ -101,6 +101,7 @@ ignore = ["F811", "B018"]
 combine-as-imports = true
 known-first-party = ["beartype"]
 known-local-folder = ["plum"]
+extra-standard-library = ["typing_extensions"]
 
 [tool.ruff.format]
 docstring-code-format = true
