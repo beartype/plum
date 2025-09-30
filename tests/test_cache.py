@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import Union
 
 from .util import benchmark
 from plum import Dispatcher, Function, clear_all_cache
@@ -172,7 +172,7 @@ def test_cache_unfaithful():
         return 1
 
     @dispatch
-    def f(x: List[int]):
+    def f(x: list[int]):
         return 2
 
     # Since `f` is not faithful, no cache should be accumulated.

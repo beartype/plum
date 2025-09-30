@@ -8,7 +8,7 @@ __all__ = [
     "promote",
 ]
 
-from typing import TYPE_CHECKING, Any, Callable, Protocol, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Protocol, TypeVar
 
 from typing_extensions import TypeAlias
 
@@ -65,8 +65,8 @@ class _ConversionCallable(Protocol[T, R]):
 
 
 def add_conversion_method(
-    type_from: Type[T],
-    type_to: Type[R],
+    type_from: type[T],
+    type_to: type[R],
     f: _ConversionCallable[T, R],
 ) -> None:
     """Add a conversion method to convert an object from one type to another.
@@ -84,7 +84,7 @@ def add_conversion_method(
 
 
 def conversion_method(
-    type_from: Type[T], type_to: Type[R]
+    type_from: type[T], type_to: type[R]
 ) -> Callable[[_ConversionCallable[T, R]], _ConversionCallable[T, R]]:
     """Decorator to add a conversion method to convert an object from one
     type to another.

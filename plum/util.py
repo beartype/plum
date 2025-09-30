@@ -1,7 +1,6 @@
 import abc
 import sys
-from collections.abc import Callable
-from typing import Hashable, List, Sequence
+from collections.abc import Callable, Hashable, Sequence
 
 from typing_extensions import deprecated
 
@@ -119,7 +118,7 @@ def is_in_class(f: Callable) -> bool:
     return len(parts) >= 2 and parts[-2] != "<locals>"
 
 
-def _split_parts(f: Callable) -> List[str]:
+def _split_parts(f: Callable) -> list[str]:
     # Under edge cases, `f.__module__` can be `None`. In this case we, skip it.
     # Otherwise, the fully-qualified name is the name of the module plus the qualified
     # name of the function.
@@ -163,7 +162,7 @@ def get_context(f) -> str:
         return ".".join(parts[:-1])
 
 
-def argsort(seq: Sequence) -> List[int]:
+def argsort(seq: Sequence) -> list[int]:
     """Compute the indices that sort a sequence.
 
     Args:

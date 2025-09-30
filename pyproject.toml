@@ -82,7 +82,7 @@ minversion = "6.0"
 
 [tool.ruff]
 src = ["plum"]
-target-version = "py38"
+target-version = "py39"
 line-length = 88
 
 [tool.ruff.lint]

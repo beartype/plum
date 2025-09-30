@@ -4,14 +4,13 @@ import sys
 from collections import defaultdict
 from collections.abc import Callable
 from pathlib import Path
-from typing import Dict, List, Tuple
 
-FileLineInfo = Dict[Path, Dict[int, List[str]]]
+FileLineInfo = dict[Path, dict[int, list[str]]]
 """type: Type of a nested dictionary that gives for a collection of files line-wise
 information, where the information is of the form `list[str]`."""
 
 
-def next_noncomment_line(index: int, lines: List[str], path: Path) -> int:
+def next_noncomment_line(index: int, lines: list[str], path: Path) -> int:
     """Starting at `index`, find the next line with code.
 
     Args:
@@ -71,7 +70,7 @@ def parse_assertions(source_dir: Path, linter: str) -> FileLineInfo:
     return asserted_errors
 
 
-def parse_mypy_line(line: str) -> Tuple[Path, int, str, str]:
+def parse_mypy_line(line: str) -> tuple[Path, int, str, str]:
     """Parse a line of the output of `mypy`.
 
     Args:
@@ -91,7 +90,7 @@ def parse_mypy_line(line: str) -> Tuple[Path, int, str, str]:
     return Path(path).resolve(), int(line_number), status, message
 
 
-def parse_pyright_line(line: str) -> Tuple[Path, int, str, str]:
+def parse_pyright_line(line: str) -> tuple[Path, int, str, str]:
     """Parse a line of the output of `pyright`.
 
     Args:
@@ -113,7 +112,7 @@ def parse_pyright_line(line: str) -> Tuple[Path, int, str, str]:
     return Path(path.strip()).resolve(), int(line_number), status, message
 
 
-parse_line: Dict[str, Callable[[str], Tuple[Path, int, str, str]]] = {
+parse_line: dict[str, Callable[[str], tuple[Path, int, str, str]]] = {
     "mypy": parse_mypy_line,
     "pyright": parse_pyright_line,
 }
