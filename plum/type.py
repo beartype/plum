@@ -278,7 +278,7 @@ def _is_faithful(x) -> bool:
             # counter-example, we will refine this logic.
             return True
         else:
-            if origin in {typing.Union, typing.Optional}:
+            if origin in {typing.Union, UnionType, typing.Optional}:
                 return all(is_faithful(arg) for arg in args)
             else:
                 return False

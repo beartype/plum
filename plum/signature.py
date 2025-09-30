@@ -131,16 +131,16 @@ class Signature(Comparable):
             else:
                 other_varargs = beartype.door.TypeHint(other.varargs)
 
+            # We don't need to check faithfulness, because that is automatically derived
+            # from the arguments.
             return (
                 tuple(beartype.door.TypeHint(t) for t in self.types),
                 self_varargs,
                 self.precedence,
-                self.is_faithful,
             ) == (
                 tuple(beartype.door.TypeHint(t) for t in other.types),
                 other_varargs,
                 other.precedence,
-                other.is_faithful,
             )
         return False
 

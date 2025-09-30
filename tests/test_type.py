@@ -242,7 +242,7 @@ def test_is_faithful_dunder():
     reason="Requires Python 3.10 or higher.",
 )
 def test_is_faithful_new_union():
-    assert not is_faithful(int | float)
+    assert is_faithful(int | float)
 
 
 def test_is_faithful_literal(recwarn):
