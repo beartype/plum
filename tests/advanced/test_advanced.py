@@ -360,3 +360,17 @@ def test_staticmethod():
         A6.f(1.0)
     with pytest.raises(NotFoundLookupError):
         A6().f(1.0)
+
+
+def test_equivalent_method_override():
+    dispatch = Dispatcher()
+
+    @dispatch
+    def f(x: int):
+        pass
+
+    @dispatch
+    def f(x: Union[int, bool]):
+        pass
+
+    assert len(f.methods) == 1
