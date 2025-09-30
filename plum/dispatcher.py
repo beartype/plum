@@ -38,13 +38,15 @@ class Dispatcher:
     classes: Dict[str, Dict[str, Function]] = field(default_factory=dict)
 
     @overload
-    def __call__(self, method: T, precedence: int = ...) -> T: ...
+    def __call__(self, method: T, /, *, precedence: int = ...) -> T: ...
 
     @overload
-    def __call__(self, method: None, precedence: int) -> Callable[[T], T]: ...
+    def __call__(
+        self, method: None, /, *, precedence: int = ...
+    ) -> Callable[[T], T]: ...
 
     def __call__(
-        self, method: Optional[T] = None, precedence: int = 0
+        self, method: Optional[T] = None, /, *, precedence: int = 0
     ) -> Union[T, Callable[[T], T]]:
         """Decorator to register for a particular signature.
 
