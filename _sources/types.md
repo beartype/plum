@@ -48,11 +48,40 @@ def f(x: Dict[int, str]) -> str:
    return "dict of int to str"
 ```
 
-**Note:**
 Although parametric types such as `List[int]` and `Dict[int, str]` are fully
 supported, they do incur a performance penalty.
 For optimal performance, is recommended to use parametric types only where necessary.
 `Union` and `Optional` do not incur a performance penalty.
+
+````{important}
+Plum's type system is powered by [Beartype](https://github.com/beartype/beartype).
+To ensure constant-time performance,
+Beartype checks the types of containers by checking the type of a random single element.
+This means that it is not safe to use containers with mixed element types!
+
+```python
+from typing import List
+
+from plum import dispatch
+
+
+@dispatch
+def f(x: List[int]) -> str:
+    return "list of int"
+```
+
+```
+>>> f([1, "1"])  # It might happen to check the first element.
+"list of int"
+
+>>> f([1, "1"])  # Or it might check the second. :(
+NotFoundLookupError: `f([1, '1'])` could not be resolved.
+```
+
+In the future, Beartype
+[will support exhaustive type checking](https://beartype.readthedocs.io/en/latest/api_decor/#beartype.BeartypeStrategy.On).
+Plum already opts into this behaviour and will use it once it becomes available.
+````
 
 The type system is *covariant*, as opposed to Julia's type
 system, which is *invariant*.

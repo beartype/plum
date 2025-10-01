@@ -477,16 +477,26 @@ document.write(`
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Signature</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">varargs</span> <span class="ow">is</span> <span class="n">Missing</span><span class="p">:</span>
+                <span class="n">self_varargs</span> <span class="o">=</span> <span class="n">Missing</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">self_varargs</span> <span class="o">=</span> <span class="n">beartype</span><span class="o">.</span><span class="n">door</span><span class="o">.</span><span class="n">TypeHint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">varargs</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">other</span><span class="o">.</span><span class="n">varargs</span> <span class="ow">is</span> <span class="n">Missing</span><span class="p">:</span>
+                <span class="n">other_varargs</span> <span class="o">=</span> <span class="n">Missing</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">other_varargs</span> <span class="o">=</span> <span class="n">beartype</span><span class="o">.</span><span class="n">door</span><span class="o">.</span><span class="n">TypeHint</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">varargs</span><span class="p">)</span>
+
+            <span class="c1"># We don&#39;t need to check faithfulness, because that is automatically derived</span>
+            <span class="c1"># from the arguments.</span>
             <span class="k">return</span> <span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">types</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">varargs</span><span class="p">,</span>
+                <span class="nb">tuple</span><span class="p">(</span><span class="n">beartype</span><span class="o">.</span><span class="n">door</span><span class="o">.</span><span class="n">TypeHint</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">types</span><span class="p">),</span>
+                <span class="n">self_varargs</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">precedence</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">is_faithful</span><span class="p">,</span>
             <span class="p">)</span> <span class="o">==</span> <span class="p">(</span>
-                <span class="n">other</span><span class="o">.</span><span class="n">types</span><span class="p">,</span>
-                <span class="n">other</span><span class="o">.</span><span class="n">varargs</span><span class="p">,</span>
+                <span class="nb">tuple</span><span class="p">(</span><span class="n">beartype</span><span class="o">.</span><span class="n">door</span><span class="o">.</span><span class="n">TypeHint</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">other</span><span class="o">.</span><span class="n">types</span><span class="p">),</span>
+                <span class="n">other_varargs</span><span class="p">,</span>
                 <span class="n">other</span><span class="o">.</span><span class="n">precedence</span><span class="p">,</span>
-                <span class="n">other</span><span class="o">.</span><span class="n">is_faithful</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="kc">False</span>
 
