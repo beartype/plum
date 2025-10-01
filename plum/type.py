@@ -2,15 +2,13 @@ import abc
 import sys
 import typing
 import warnings
-from typing import Hashable, Union
+from typing import Hashable, Union, get_args, get_origin
 
 from typing_extensions import Self, TypeGuard
 
 from beartype.vale._core._valecore import BeartypeValidator
 
-from .typing import get_args, get_origin
-
-try:  # pragma: specific no cover 3.8 3.9
+try:  # pragma: specific no cover 3.9
     from types import UnionType
 except ImportError:  # pragma: specific no cover 3.10 3.11
 
@@ -133,7 +131,7 @@ def _is_hint(x: object) -> bool:
         bool: `True` if `x` is a type hint and `False` otherwise.
     """
     try:
-        if x.__module__ == "builtins":  # pragma: specific no cover 3.8
+        if x.__module__ == "builtins":
             # Check if `x` is a subscripted built-in. We do this by checking the module
             # of the type of `x`.
             x = type(x)
@@ -188,7 +186,7 @@ def resolve_type_hint(x):
             # hint itself.
             return x
         else:
-            if origin is UnionType:  # pragma: specific no cover 3.8 3.9
+            if origin is UnionType:  # pragma: specific no cover 3.9
                 # The new union syntax was used.
                 y = args[0]
                 for arg in args[1:]:
@@ -198,18 +196,8 @@ def resolve_type_hint(x):
                 # Do not resolve the arguments for `Literal`s.
                 if origin != typing.Literal:
                     args = resolve_type_hint(args)
-                try:
-                    return origin[args]
-                except TypeError as e:  # pragma: specific no cover 3.9 3.10 3.11
-                    # In Python 3.8, the origin might be a type that cannot be
-                    # subscripted. As a workaround, we get the name of the type,
-                    # capitalize it, and try to get it from `typing`. So far, this
-                    # seems to have worked fine.
-                    if sys.version_info.minor <= 8:
-                        return getattr(typing, origin.__name__.capitalize())[args]
-                    else:  # pragma: no cover
-                        # This branch can never be reached.
-                        raise e
+
+                return origin[args]
 
     elif x is None or x is Ellipsis:
         return x

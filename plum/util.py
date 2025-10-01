@@ -1,13 +1,9 @@
 import abc
 import sys
+from collections.abc import Callable
 from typing import Hashable, List, Sequence
 
 from typing_extensions import deprecated
-
-if sys.version_info.minor <= 8:  # pragma: specific no cover 3.9 3.10 3.11
-    from typing import Callable
-else:  # pragma: specific no cover 3.8
-    from collections.abc import Callable
 
 __all__ = [
     "Callable",

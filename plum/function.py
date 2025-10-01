@@ -20,7 +20,7 @@ _promised_convert = None
 # `typing.Self` is available for Python 3.11 and higher.
 try:  # pragma: specific no cover 3.11
     from typing import Self
-except ImportError:  # pragma: specific no cover 3.8 3.9 3.10
+except ImportError:  # pragma: specific no cover 3.10
     Self = TypeVar("Self", bound="Function")
 
 SomeExceptionType = TypeVar("SomeExceptionType", bound=Exception)
@@ -125,7 +125,7 @@ class Function(metaclass=_FunctionMeta):
         """
         try:
             self._resolve_pending_registrations()
-        except NameError:  # pragma: specific no cover 3.7 3.8 3.9
+        except NameError:  # pragma: specific no cover 3.9
             # When `staticmethod` is combined with
             # `from __future__ import annotations`, in Python 3.10 and higher
             # `staticmethod` will attempt to inherit `__doc__` (see

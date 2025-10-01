@@ -66,7 +66,7 @@ def repr_short(x) -> str:
         str: Shorter representation of `x`.
     """
     # :func:`typing._type_repr` is an internal function, but it should be available in
-    # Python versions 3.8 through 3.11.
+    # Python versions 3.9 through 3.11.
     return typing._type_repr(x)
 
 

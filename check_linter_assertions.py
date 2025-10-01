@@ -2,8 +2,9 @@ import re
 import subprocess
 import sys
 from collections import defaultdict
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Dict, List, Tuple
+from typing import Dict, List, Tuple
 
 FileLineInfo = Dict[Path, Dict[int, List[str]]]
 """type: Type of a nested dictionary that gives for a collection of files line-wise

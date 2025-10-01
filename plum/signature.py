@@ -5,10 +5,12 @@ from copy import copy
 from typing import Any, Callable, ClassVar, List, Set, Tuple, Union
 
 # TODO: When minimum version required is 3.11, remove `typing_extensions`.
-if sys.version_info >= (3, 11):  # pragma: specific no cover 3.7 3.8 3.9 3.10
+if sys.version_info >= (3, 11):  # pragma: specific no cover 3.9 3.10
     from typing import Self
 else:  # pragma: specific no cover 3.11
     from typing_extensions import Self
+
+from typing import get_type_hints
 
 from rich.segment import Segment
 
@@ -18,7 +20,6 @@ from beartype.peps import resolve_pep563 as beartype_resolve_pep563
 from . import _is_bearable
 from .repr import repr_short, rich_repr
 from .type import is_faithful, resolve_type_hint
-from .typing import get_type_hints
 from .util import Comparable, Missing, TypeHint, wrap_lambda
 
 __all__ = ["Signature", "append_default_args"]
