@@ -2,7 +2,7 @@ import inspect
 import operator
 import sys
 from copy import copy
-from typing import Any, Callable, ClassVar, List, Set, Tuple, Union
+from typing import Any, Callable, ClassVar, Union
 
 # TODO: When minimum version required is 3.11, remove `typing_extensions`.
 if sys.version_info >= (3, 11):  # pragma: specific no cover 3.9 3.10
@@ -51,11 +51,11 @@ class Signature(Comparable):
     _default_varargs: ClassVar = Missing
     _default_precedence: ClassVar[int] = 0
 
-    __slots__: Tuple[str, ...] = ("types", "varargs", "precedence", "is_faithful")
+    __slots__: tuple[str, ...] = ("types", "varargs", "precedence", "is_faithful")
 
     def __init__(
         self,
-        *types: Tuple[TypeHint, ...],
+        *types: tuple[TypeHint, ...],
         varargs: OptionalType = _default_varargs,
         precedence: int = _default_precedence,
     ) -> None:
@@ -148,7 +148,7 @@ class Signature(Comparable):
     def __hash__(self):
         return hash((Signature, *self.types, self.varargs))
 
-    def expand_varargs(self, n: int) -> Tuple[TypeHint, ...]:
+    def expand_varargs(self, n: int) -> tuple[TypeHint, ...]:
         """Expand variable arguments.
 
         Args:
@@ -241,7 +241,7 @@ class Signature(Comparable):
         else:
             return False
 
-    def match(self, values: Tuple) -> bool:
+    def match(self, values: tuple) -> bool:
         """Check whether values match the signature.
 
         Args:
@@ -261,7 +261,7 @@ class Signature(Comparable):
             types = self.expand_varargs(len(values))
             return all(_is_bearable(v, t) for v, t in zip(values, types))
 
-    def compute_distance(self, values: Tuple[object, ...]) -> int:
+    def compute_distance(self, values: tuple[object, ...]) -> int:
         """For given values, computes the edit distance between these vales and this
         signature.
 
@@ -285,7 +285,7 @@ class Signature(Comparable):
 
         return distance
 
-    def compute_mismatches(self, values: Tuple) -> Tuple[Set[int], bool]:
+    def compute_mismatches(self, values: tuple) -> tuple[set[int], bool]:
         """For given `values`, find the indices of the arguments that are mismatched.
         Also return whether the varargs is matched.
 
@@ -393,7 +393,7 @@ def _extract_signature(f: Callable, precedence: int = 0) -> Signature:
     return types, varargs
 
 
-def append_default_args(signature: Signature, f: Callable) -> List[Signature]:
+def append_default_args(signature: Signature, f: Callable) -> list[Signature]:
     """Returns a list of signatures of function `f`, where those signatures are derived
     from the input arguments of `f` by treating every non-keyword-only argument with a
     default value as a keyword-only argument turn by turn.

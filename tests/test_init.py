@@ -1,5 +1,5 @@
 import typing
-from typing import List, Union
+from typing import Union
 
 import pytest
 
@@ -11,7 +11,7 @@ from plum import ModuleType
 def test_beartype_on_strategy():
     # The `O(n)` strategy is not yet supported.
     for _ in range(10):
-        assert not plum.isinstance([1, 1, 1, 1, None], List[int])
+        assert not plum.isinstance([1, 1, 1, 1, None], list[int])
 
 
 def test_isinstance():
@@ -31,7 +31,7 @@ def test_issubclass():
 
 
 def test_backward_compatibility():
-    assert plum.Dict == typing.Dict
-    assert plum.List == typing.List
-    assert plum.Tuple == typing.Tuple
+    assert plum.Dict == typing.Dict  # noqa: UP006
+    assert plum.List == typing.List  # noqa: UP006
+    assert plum.Tuple == typing.Tuple  # noqa: UP006
     assert plum.Union == typing.Union

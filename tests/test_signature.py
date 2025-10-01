@@ -1,7 +1,7 @@
 import inspect
 import operator
 from numbers import Number as Num, Real as Re
-from typing import Any, Tuple, Union
+from typing import Any, Union
 
 import pytest
 
@@ -38,9 +38,9 @@ def test_instantiation_copy():
     # Test faithfulness check.
     assert Sig(int, int).is_faithful
     assert Sig(int, int, varargs=int).is_faithful
-    assert not Sig(Tuple[int], int, varargs=int).is_faithful
-    assert not Sig(int, Tuple[int], varargs=int).is_faithful
-    assert not Sig(int, int, varargs=Tuple[int]).is_faithful
+    assert not Sig(tuple[int], int, varargs=int).is_faithful
+    assert not Sig(int, tuple[int], varargs=int).is_faithful
+    assert not Sig(int, int, varargs=tuple[int]).is_faithful
 
 
 def _impl(x, y, *z):

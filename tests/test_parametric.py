@@ -1,6 +1,6 @@
 import abc
 from numbers import Number
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 
 import numpy as np
 import pytest
@@ -340,7 +340,7 @@ class NDArray(np.ndarray, metaclass=NDArrayMeta):
     @dispatch
     def __init_type_parameter__(
         cls,
-        shape: Optional[Tuple[int, ...]],
+        shape: Optional[tuple[int, ...]],
         dtype: Optional[type],
     ):
         """Validate the type parameter."""
@@ -350,8 +350,8 @@ class NDArray(np.ndarray, metaclass=NDArrayMeta):
     @dispatch
     def __le_type_parameter__(
         cls,
-        left: Tuple[Optional[Tuple[int, ...]], Optional[type]],
-        right: Tuple[Optional[Tuple[int, ...]], Optional[type]],
+        left: tuple[Optional[tuple[int, ...]], Optional[type]],
+        right: tuple[Optional[tuple[int, ...]], Optional[type]],
     ):
         """Define an order on type parameters. That is, check whether `left <= right`
         or not."""

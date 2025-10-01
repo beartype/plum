@@ -1,6 +1,5 @@
 import sys
 import textwrap
-import typing
 import warnings
 
 import pytest
@@ -141,7 +140,7 @@ def test_register():
     r.register(Method(f, Signature(int)))
     r.register(Method(f, Signature(float)))
     assert r.is_faithful
-    r.register(Method(f, Signature(typing.Tuple[int])))
+    r.register(Method(f, Signature(tuple[int])))
     assert not r.is_faithful
 
     # Test that signatures can be replaced.

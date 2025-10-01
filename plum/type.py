@@ -2,7 +2,8 @@ import abc
 import sys
 import typing
 import warnings
-from typing import Hashable, Union, get_args, get_origin
+from collections.abc import Hashable
+from typing import Union, get_args, get_origin
 
 from typing_extensions import Self, TypeGuard
 

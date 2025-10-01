@@ -3,7 +3,7 @@ import sys
 import warnings
 from collections.abc import Callable
 from functools import wraps
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 
 from rich.padding import Padding
 from rich.text import Text
@@ -20,7 +20,7 @@ class MethodRedefinitionWarning(Warning):
     """A method is redefined."""
 
 
-def _render_function_call(f: str, target: Union[Tuple, Signature]) -> str:
+def _render_function_call(f: str, target: Union[tuple, Signature]) -> str:
     """Render a function call.
 
     Args:
@@ -46,7 +46,7 @@ class AmbiguousLookupError(LookupError):
     def __init__(
         self,
         f_name: Union[str, None],
-        target: Union[Tuple, Signature],
+        target: Union[tuple, Signature],
         methods: MethodList,
     ):
         """Create a new :class:`AmbiguousLookupError`.
@@ -80,7 +80,7 @@ class NotFoundLookupError(LookupError):
     def __init__(
         self,
         f_name: Union[str, None],
-        target: Union[Tuple, Signature],
+        target: Union[tuple, Signature],
         methods: MethodList,
         *,
         max_suggestions: int = 3,
@@ -329,7 +329,7 @@ class Resolver:
     def __len__(self) -> int:
         return len(self.methods)
 
-    def resolve(self, target: Union[Tuple[object, ...], Signature]) -> Method:
+    def resolve(self, target: Union[tuple[object, ...], Signature]) -> Method:
         """Find the most specific signature that satisfies a target.
 
         Args:
