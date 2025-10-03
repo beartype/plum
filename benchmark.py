@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import numpy as np
 from tests.util import benchmark
 
@@ -35,12 +33,12 @@ def f2(x):
 
 
 @dispatch
-def g2(x: Tuple[int]):
+def g2(x: tuple[int]):
     pass
 
 
 @dispatch
-def g2(x: Tuple[str]):
+def g2(x: tuple[str]):
     pass
 
 

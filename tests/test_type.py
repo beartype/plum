@@ -29,6 +29,11 @@ from plum.type import (
 )
 from plum.util import Callable
 
+skip_if_less_than_py310 = pytest.mark.skipif(
+    sys.version_info < (3, 10),
+    reason="Requires Python 3.10 or higher.",
+)
+
 
 def test_resolvabletype():
     t = ResolvableType("int")
@@ -87,18 +92,7 @@ def test_is_hint():
     assert _is_hint(Callable)
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 9),
-    reason="Requires Python 3.9 or higher.",
-)
-def test_is_hint_subscripted_builtins():
-    assert _is_hint(tuple[int])
-
-
-@pytest.mark.skipif(
-    sys.version_info < (3, 10),
-    reason="Requires Python 3.10 or higher.",
-)
+@skip_if_less_than_py310
 def test_is_hint_new_union():
     assert int | float
 
@@ -164,10 +158,7 @@ def test_resolve_type_hint_moduletype_recursion():
     assert resolve_type_hint(t) == t
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 10),
-    reason="Requires Python 3.10 or higher.",
-)
+@skip_if_less_than_py310
 def test_resolve_type_hint_new_union():
     assert resolve_type_hint(float | int) == float | int
 
@@ -237,10 +228,7 @@ def test_is_faithful_dunder():
     assert is_faithful(FaithfulClass)
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 10),
-    reason="Requires Python 3.10 or higher.",
-)
+@skip_if_less_than_py310
 def test_is_faithful_new_union():
     assert is_faithful(int | float)
 

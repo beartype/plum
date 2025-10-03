@@ -3,7 +3,7 @@ import textwrap
 from copy import copy
 from functools import wraps
 from types import MethodType
-from typing import Any, Callable, List, Optional, Protocol, Tuple, TypeVar, Union
+from typing import Any, Callable, Optional, Protocol, TypeVar, Union
 
 from .method import Method
 from .resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
@@ -20,7 +20,7 @@ _promised_convert = None
 # `typing.Self` is available for Python 3.11 and higher.
 try:  # pragma: specific no cover 3.11
     from typing import Self
-except ImportError:  # pragma: specific no cover 3.8 3.9 3.10
+except ImportError:  # pragma: specific no cover 3.10
     Self = TypeVar("Self", bound="Function")
 
 SomeExceptionType = TypeVar("SomeExceptionType", bound=Exception)
@@ -96,12 +96,12 @@ class Function(metaclass=_FunctionMeta):
         self._warn_redefinition = warn_redefinition
 
         # Initialise pending and resolved methods.
-        self._pending: List[Tuple[Callable, Optional[Signature], int]] = []
+        self._pending: list[tuple[Callable, Optional[Signature], int]] = []
         self._resolver = Resolver(
             self.__name__,
             warn_redefinition=self._warn_redefinition,
         )
-        self._resolved: List[Tuple[Callable, Signature, int]] = []
+        self._resolved: list[tuple[Callable, Signature, int]] = []
 
     @property
     def owner(self):
@@ -125,7 +125,7 @@ class Function(metaclass=_FunctionMeta):
         """
         try:
             self._resolve_pending_registrations()
-        except NameError:  # pragma: specific no cover 3.7 3.8 3.9
+        except NameError:  # pragma: specific no cover 3.9
             # When `staticmethod` is combined with
             # `from __future__ import annotations`, in Python 3.10 and higher
             # `staticmethod` will attempt to inherit `__doc__` (see
@@ -176,7 +176,7 @@ class Function(metaclass=_FunctionMeta):
         self._doc = value if value else ""
 
     @property
-    def methods(self) -> List[Signature]:
+    def methods(self) -> list[Signature]:
         """list[:class:`.signature.Signature`]: All available methods."""
         self._resolve_pending_registrations()
         return self._resolver.methods
@@ -199,7 +199,7 @@ class Function(metaclass=_FunctionMeta):
         return self
 
     def dispatch_multi(
-        self: Self, *signatures: Union[Signature, Tuple[TypeHint, ...]]
+        self: Self, *signatures: Union[Signature, tuple[TypeHint, ...]]
     ) -> Callable[[Callable], Self]:
         """Decorator to extend the function with multiple signatures at once.
 
@@ -296,8 +296,8 @@ class Function(metaclass=_FunctionMeta):
             self.clear_cache(reregister=False)
 
     def resolve_method(
-        self, target: Union[Tuple[object, ...], Signature]
-    ) -> Tuple[Callable, TypeHint]:
+        self, target: Union[tuple[object, ...], Signature]
+    ) -> tuple[Callable, TypeHint]:
         """Find the method and return type for arguments.
 
         Args:
@@ -336,7 +336,7 @@ class Function(metaclass=_FunctionMeta):
 
     def _handle_not_found_lookup_error(
         self, ex: NotFoundLookupError
-    ) -> Tuple[Callable, TypeHint]:
+    ) -> tuple[Callable, TypeHint]:
         if not self.owner:
             # Not in a class. Nothing we can do.
             raise ex from None
@@ -384,9 +384,9 @@ class Function(metaclass=_FunctionMeta):
 
     def _resolve_method_with_cache(
         self,
-        args: Union[Tuple[object, ...], Signature, None] = None,
-        types: Optional[Tuple[TypeHint, ...]] = None,
-    ) -> Tuple[Callable, TypeHint]:
+        args: Union[tuple[object, ...], Signature, None] = None,
+        types: Optional[tuple[TypeHint, ...]] = None,
+    ) -> tuple[Callable, TypeHint]:
         if args is None and types is None:
             raise ValueError(
                 "Arguments `args` and `types` cannot both be `None`. "
@@ -525,7 +525,7 @@ class _BoundFunction:
         return wrapped_method
 
     @property
-    def methods(self) -> List[Signature]:
+    def methods(self) -> list[Signature]:
         """list[:class:`.signature.Signature`]: All available methods."""
         return self._f.methods
 
