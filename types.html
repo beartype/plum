@@ -417,7 +417,7 @@ You can use anything from <code class="docutils literal notranslate"><span class
 Under the hood, Plum uses <a class="reference external" href="https://github.com/beartype/beartype">Beartype</a>, which means
 that all types and type hints supported by Beartype are also supported by Plum.
 Here are a few examples:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">dispatch</span>
 
@@ -443,7 +443,7 @@ Here are a few examples:</p>
 
 
 <span class="nd">@dispatch</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="k">return</span> <span class="s2">&quot;list of int&quot;</span>
 
 
@@ -453,11 +453,11 @@ Here are a few examples:</p>
 
 
 <span class="nd">@dispatch</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
    <span class="k">return</span> <span class="s2">&quot;dict of int to str&quot;</span>
 </pre></div>
 </div>
-<p>Although parametric types such as <code class="docutils literal notranslate"><span class="pre">List[int]</span></code> and <code class="docutils literal notranslate"><span class="pre">Dict[int,</span> <span class="pre">str]</span></code> are fully
+<p>Although parametric types such as <code class="docutils literal notranslate"><span class="pre">list[int]</span></code> and <code class="docutils literal notranslate"><span class="pre">dict[int,</span> <span class="pre">str]</span></code> are fully
 supported, they do incur a performance penalty.
 For optimal performance, is recommended to use parametric types only where necessary.
 <code class="docutils literal notranslate"><span class="pre">Union</span></code> and <code class="docutils literal notranslate"><span class="pre">Optional</span></code> do not incur a performance penalty.</p>
@@ -490,7 +490,7 @@ Plum already opts into this behaviour and will use it once it becomes available.
 </div>
 <p>The type system is <em>covariant</em>, as opposed to Julia’s type
 system, which is <em>invariant</em>.
-For example, this means that <code class="docutils literal notranslate"><span class="pre">List[T1]</span></code> is a subtype of <code class="docutils literal notranslate"><span class="pre">List[T2]</span></code> whenever
+For example, this means that <code class="docutils literal notranslate"><span class="pre">list[T1]</span></code> is a subtype of <code class="docutils literal notranslate"><span class="pre">list[T2]</span></code> whenever
 <code class="docutils literal notranslate"><span class="pre">T1</span></code> is a subtype of <code class="docutils literal notranslate"><span class="pre">T2</span></code>.</p>
 <section id="performance-and-faithful-types">
 <h2>Performance and Faithful Types<a class="headerlink" href="#performance-and-faithful-types" title="Link to this heading">#</a></h2>

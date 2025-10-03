@@ -350,7 +350,7 @@ document.write(`
                   
   <h1>Source code for plum.parametric</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Type</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">deprecated</span>
 
@@ -834,7 +834,7 @@ document.write(`
 
 <div class="viewcode-block" id="type_nonparametric">
 <a class="viewcode-back" href="../../api.html#plum.parametric.type_nonparametric">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">type_nonparametric</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">type_nonparametric</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the non-parametric type of an object.</span>
 
 <span class="sd">    :mod:`plum.parametric` produces parametric subtypes of classes. This method</span>
@@ -905,7 +905,7 @@ document.write(`
 
 <div class="viewcode-block" id="type_unparametrized">
 <a class="viewcode-back" href="../../api.html#plum.parametric.type_unparametrized">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">type_unparametrized</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">type_unparametrized</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the unparametrized type of an object.</span>
 
 <span class="sd">    :mod:`plum.parametric` produces parametric subtypes of classes.  This</span>

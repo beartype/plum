@@ -359,7 +359,7 @@ document.write(`
     <span class="s2">&quot;promote&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">TypeVar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">TypeVar</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeAlias</span>
 
@@ -421,8 +421,8 @@ document.write(`
 <div class="viewcode-block" id="add_conversion_method">
 <a class="viewcode-back" href="../../api.html#plum.promotion.add_conversion_method">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">add_conversion_method</span><span class="p">(</span>
-    <span class="n">type_from</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">T</span><span class="p">],</span>
-    <span class="n">type_to</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">R</span><span class="p">],</span>
+    <span class="n">type_from</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">],</span>
+    <span class="n">type_to</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">R</span><span class="p">],</span>
     <span class="n">f</span><span class="p">:</span> <span class="n">_ConversionCallable</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">R</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Add a conversion method to convert an object from one type to another.</span>
@@ -443,7 +443,7 @@ document.write(`
 <div class="viewcode-block" id="conversion_method">
 <a class="viewcode-back" href="../../api.html#plum.promotion.conversion_method">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">conversion_method</span><span class="p">(</span>
-    <span class="n">type_from</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">type_to</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">R</span><span class="p">]</span>
+    <span class="n">type_from</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">type_to</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">R</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">_ConversionCallable</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">R</span><span class="p">]],</span> <span class="n">_ConversionCallable</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">R</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Decorator to add a conversion method to convert an object from one</span>
 <span class="sd">    type to another.</span>

@@ -354,8 +354,9 @@ document.write(`
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">types</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">typing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">TypeVar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TypeVar</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">rich</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">rich.color</span><span class="w"> </span><span class="kn">import</span> <span class="n">Color</span>
@@ -422,7 +423,7 @@ document.write(`
 <span class="sd">        str: Shorter representation of `x`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># :func:`typing._type_repr` is an internal function, but it should be available in</span>
-    <span class="c1"># Python versions 3.8 through 3.11.</span>
+    <span class="c1"># Python versions 3.9 through 3.11.</span>
     <span class="k">return</span> <span class="n">typing</span><span class="o">.</span><span class="n">_type_repr</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
 
 
@@ -542,7 +543,7 @@ document.write(`
     <span class="n">include</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">exclude</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="o">**</span><span class="n">kw_args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implementation of `_repr_mimebundle_` for better rendering in Jupyter.</span>
 
 <span class="sd">    Args:</span>
@@ -569,7 +570,7 @@ document.write(`
 
 <div class="viewcode-block" id="rich_repr">
 <a class="viewcode-back" href="../../api.html#plum.repr.rich_repr">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">rich_repr</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">T</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">rich_repr</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Class decorator defining a `__repr__` method that calls :mod:`rich.`</span>
 
 <span class="sd">    This also sets `_repr_mimebundle_` for better rendering in Jupyter.</span>

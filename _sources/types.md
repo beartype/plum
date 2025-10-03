@@ -8,7 +8,7 @@ that all types and type hints supported by Beartype are also supported by Plum.
 Here are a few examples:
 
 ```python
-from typing import Union, Optional, List, Dict
+from typing import Union, Optional
 
 from plum import dispatch
 
@@ -34,7 +34,7 @@ def f(x: list) -> str:
 
 
 @dispatch
-def f(x: List[int]) -> str:
+def f(x: list[int]) -> str:
     return "list of int"
 
 
@@ -44,11 +44,11 @@ def f(x: Optional[dict]) -> Optional[str]:
 
 
 @dispatch
-def f(x: Dict[int, str]) -> str:
+def f(x: dict[int, str]) -> str:
    return "dict of int to str"
 ```
 
-Although parametric types such as `List[int]` and `Dict[int, str]` are fully
+Although parametric types such as `list[int]` and `dict[int, str]` are fully
 supported, they do incur a performance penalty.
 For optimal performance, is recommended to use parametric types only where necessary.
 `Union` and `Optional` do not incur a performance penalty.
@@ -85,7 +85,7 @@ Plum already opts into this behaviour and will use it once it becomes available.
 
 The type system is *covariant*, as opposed to Julia's type
 system, which is *invariant*.
-For example, this means that `List[T1]` is a subtype of `List[T2]` whenever
+For example, this means that `list[T1]` is a subtype of `list[T2]` whenever
 `T1` is a subtype of `T2`.
 
 ## Performance and Faithful Types

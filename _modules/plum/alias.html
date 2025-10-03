@@ -378,9 +378,7 @@ document.write(`
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">_type_repr</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_args</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">_type_repr</span><span class="p">,</span> <span class="n">get_args</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;activate_union_aliases&quot;</span><span class="p">,</span> <span class="s2">&quot;deactivate_union_aliases&quot;</span><span class="p">,</span> <span class="s2">&quot;set_union_alias&quot;</span><span class="p">]</span>
 
@@ -498,7 +496,7 @@ document.write(`
 
 
 
-<span class="n">_ALIASED_UNIONS</span><span class="p">:</span> <span class="n">List</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">_ALIASED_UNIONS</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[]</span>
 
 
 <div class="viewcode-block" id="set_union_alias">

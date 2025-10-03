@@ -354,7 +354,7 @@ document.write(`
 <span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">copy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">MethodType</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.method</span><span class="w"> </span><span class="kn">import</span> <span class="n">Method</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.resolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">AmbiguousLookupError</span><span class="p">,</span> <span class="n">NotFoundLookupError</span><span class="p">,</span> <span class="n">Resolver</span>
@@ -371,7 +371,7 @@ document.write(`
 <span class="c1"># `typing.Self` is available for Python 3.11 and higher.</span>
 <span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.11</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.8 3.9 3.10</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.10</span>
     <span class="n">Self</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;Self&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="s2">&quot;Function&quot;</span><span class="p">)</span>
 
 <span class="n">SomeExceptionType</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;SomeExceptionType&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="ne">Exception</span><span class="p">)</span>
@@ -449,12 +449,12 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">_warn_redefinition</span> <span class="o">=</span> <span class="n">warn_redefinition</span>
 
         <span class="c1"># Initialise pending and resolved methods.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_pending</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Signature</span><span class="p">],</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pending</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Signature</span><span class="p">],</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span> <span class="o">=</span> <span class="n">Resolver</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
             <span class="n">warn_redefinition</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_warn_redefinition</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_resolved</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Signature</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_resolved</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Signature</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">owner</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -478,7 +478,7 @@ document.write(`
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_pending_registrations</span><span class="p">()</span>
-        <span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.7 3.8 3.9</span>
+        <span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.9</span>
             <span class="c1"># When `staticmethod` is combined with</span>
             <span class="c1"># `from __future__ import annotations`, in Python 3.10 and higher</span>
             <span class="c1"># `staticmethod` will attempt to inherit `__doc__` (see</span>
@@ -529,7 +529,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">_doc</span> <span class="o">=</span> <span class="n">value</span> <span class="k">if</span> <span class="n">value</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">methods</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Signature</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">methods</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Signature</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;list[:class:`.signature.Signature`]: All available methods.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_pending_registrations</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="o">.</span><span class="n">methods</span>
@@ -557,7 +557,7 @@ document.write(`
 <div class="viewcode-block" id="Function.dispatch_multi">
 <a class="viewcode-back" href="../../api.html#plum.function.Function.dispatch_multi">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">dispatch_multi</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">:</span> <span class="n">Self</span><span class="p">,</span> <span class="o">*</span><span class="n">signatures</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Signature</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">TypeHint</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span>
+        <span class="bp">self</span><span class="p">:</span> <span class="n">Self</span><span class="p">,</span> <span class="o">*</span><span class="n">signatures</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Signature</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TypeHint</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">],</span> <span class="n">Self</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Decorator to extend the function with multiple signatures at once.</span>
 
@@ -663,8 +663,8 @@ document.write(`
 <div class="viewcode-block" id="Function.resolve_method">
 <a class="viewcode-back" href="../../api.html#plum.function.Function.resolve_method">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">resolve_method</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">Signature</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">TypeHint</span><span class="p">]:</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">Signature</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">TypeHint</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Find the method and return type for arguments.</span>
 
 <span class="sd">        Args:</span>
@@ -704,7 +704,7 @@ document.write(`
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_handle_not_found_lookup_error</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">ex</span><span class="p">:</span> <span class="n">NotFoundLookupError</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">TypeHint</span><span class="p">]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">TypeHint</span><span class="p">]:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">owner</span><span class="p">:</span>
             <span class="c1"># Not in a class. Nothing we can do.</span>
             <span class="k">raise</span> <span class="n">ex</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
@@ -752,9 +752,9 @@ document.write(`
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_method_with_cache</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">args</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">Signature</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">types</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">TypeHint</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">TypeHint</span><span class="p">]:</span>
+        <span class="n">args</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">Signature</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">types</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">TypeHint</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">TypeHint</span><span class="p">]:</span>
         <span class="k">if</span> <span class="n">args</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">types</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">&quot;Arguments `args` and `types` cannot both be `None`. &quot;</span>
@@ -897,7 +897,7 @@ document.write(`
         <span class="k">return</span> <span class="n">wrapped_method</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">methods</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Signature</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">methods</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Signature</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;list[:class:`.signature.Signature`]: All available methods.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_f</span><span class="o">.</span><span class="n">methods</span>
 

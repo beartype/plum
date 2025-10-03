@@ -353,15 +353,14 @@ document.write(`
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">typing</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hashable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span><span class="p">,</span> <span class="n">get_args</span><span class="p">,</span> <span class="n">get_origin</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span><span class="p">,</span> <span class="n">TypeGuard</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">beartype.vale._core._valecore</span><span class="w"> </span><span class="kn">import</span> <span class="n">BeartypeValidator</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_args</span><span class="p">,</span> <span class="n">get_origin</span>
-
-<span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.8 3.9</span>
+<span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.9</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnionType</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.10 3.11</span>
 
@@ -493,7 +492,7 @@ document.write(`
 <span class="sd">        bool: `True` if `x` is a type hint and `False` otherwise.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">==</span> <span class="s2">&quot;builtins&quot;</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.8</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">==</span> <span class="s2">&quot;builtins&quot;</span><span class="p">:</span>
             <span class="c1"># Check if `x` is a subscripted built-in. We do this by checking the module</span>
             <span class="c1"># of the type of `x`.</span>
             <span class="n">x</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
@@ -550,7 +549,7 @@ document.write(`
             <span class="c1"># hint itself.</span>
             <span class="k">return</span> <span class="n">x</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">origin</span> <span class="ow">is</span> <span class="n">UnionType</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.8 3.9</span>
+            <span class="k">if</span> <span class="n">origin</span> <span class="ow">is</span> <span class="n">UnionType</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.9</span>
                 <span class="c1"># The new union syntax was used.</span>
                 <span class="n">y</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                 <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
@@ -560,18 +559,8 @@ document.write(`
                 <span class="c1"># Do not resolve the arguments for `Literal`s.</span>
                 <span class="k">if</span> <span class="n">origin</span> <span class="o">!=</span> <span class="n">typing</span><span class="o">.</span><span class="n">Literal</span><span class="p">:</span>
                     <span class="n">args</span> <span class="o">=</span> <span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="n">origin</span><span class="p">[</span><span class="n">args</span><span class="p">]</span>
-                <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.9 3.10 3.11</span>
-                    <span class="c1"># In Python 3.8, the origin might be a type that cannot be</span>
-                    <span class="c1"># subscripted. As a workaround, we get the name of the type,</span>
-                    <span class="c1"># capitalize it, and try to get it from `typing`. So far, this</span>
-                    <span class="c1"># seems to have worked fine.</span>
-                    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="o">.</span><span class="n">minor</span> <span class="o">&lt;=</span> <span class="mi">8</span><span class="p">:</span>
-                        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">typing</span><span class="p">,</span> <span class="n">origin</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">capitalize</span><span class="p">())[</span><span class="n">args</span><span class="p">]</span>
-                    <span class="k">else</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
-                        <span class="c1"># This branch can never be reached.</span>
-                        <span class="k">raise</span> <span class="n">e</span>
+
+                <span class="k">return</span> <span class="n">origin</span><span class="p">[</span><span class="n">args</span><span class="p">]</span>
 
     <span class="k">elif</span> <span class="n">x</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">x</span> <span class="ow">is</span> <span class="bp">Ellipsis</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">x</span>
