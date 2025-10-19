@@ -49,7 +49,7 @@ def f(x: int):
 
 @dispatch
 def f(x: Number):
-    return "This is a general number, but I don't know which type."
+    return "This is a number, but I don't know which type."
 ```
 
 ```python
