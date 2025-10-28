@@ -226,6 +226,32 @@ plum.type.ModuleType[tensorflow.python.framework.ops.EagerTensor]
 tensorflow.python.framework.ops.EagerTensor
 ```
 
+You might run into a scenario where an import is only possible when a certain condition
+is satisfied, e.g. a constraint on the package version.
+You can specify a condition with the keyword argument `condition`.
+
+Example:
+
+```python
+>>> def jax_version():
+...     import sys
+...     version_string = sys.modules["jax.version"].__version__
+...     return tuple(int(x) for x in version_string.split("."))
+
+>>> ArrayImpl = Union[
+...     ModuleType(
+...         "jaxlib.xla_extension",
+...         "ArrayImpl",
+...         condition=lambda: jax_version() < (0, 6, 0),
+...     ),
+...     ModuleType(
+...         "jaxlib._jax",
+...         "ArrayImpl",
+...         condition=lambda: jax_version() >= (0, 6, 0),
+...     ),
+... ]
+```
+
 % skip: end
 
 (promisedtype)=

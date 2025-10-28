@@ -2,8 +2,8 @@ import abc
 import sys
 import typing
 import warnings
-from collections.abc import Hashable
-from typing import Union, get_args, get_origin
+from collections.abc import Callable, Hashable
+from typing import Optional, Union, get_args, get_origin
 
 from typing_extensions import Self, TypeGuard
 
@@ -91,17 +91,34 @@ class ModuleType(ResolvableType):
         name (str): Name of the type that is promised.
         allow_fail (bool, optional): If the type is does not exist in `module`,
             do not raise an `AttributeError`.
+        condition (Callable[[], bool], optional): A callable that can check a condition,
+            like a package version. This callable will be run whenever `module` has been
+            imported. Only if the callable returns `True`, `name` will be imported
+            from `module`.
     """
 
-    def __init__(self, module: str, name: str, allow_fail: bool = False) -> None:
+    def __init__(
+        self,
+        module: str,
+        name: str,
+        allow_fail: bool = False,
+        condition: Optional[Callable[[], bool]] = None,
+    ) -> None:
         if module in {"__builtin__", "__builtins__"}:
             module = "builtins"
         ResolvableType.__init__(self, f"ModuleType[{module}.{name}]")
         self._name = name
         self._module = module
         self._allow_fail = allow_fail
+        self._condition = condition
 
-    def __new__(cls, module: str, name: str, allow_fail: bool = False) -> Self:
+    def __new__(
+        cls,
+        module: str,
+        name: str,
+        allow_fail: bool = False,
+        condition: Optional[Callable[[], bool]] = None,
+    ) -> Self:
         return ResolvableType.__new__(cls, f"ModuleType[{module}.{name}]")
 
     def retrieve(self) -> bool:
@@ -111,6 +128,10 @@ class ModuleType(ResolvableType):
             bool: Whether the retrieval succeeded.
         """
         if self._type is None and self._module in sys.modules:
+            # If a condition is given, check the condition before attempting to import.
+            if self._condition is not None and not self._condition():
+                return False
+
             type = sys.modules[self._module]
             for name in self._name.split("."):
                 # If `type` does not contain `name` and `self._allow_fail` is
