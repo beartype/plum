@@ -86,6 +86,14 @@ def test_moduletype_allow_fail():
     assert not t_allowed.retrieve()
 
 
+def test_moduletype_condition():
+    store = {"condition": False}
+    t = ModuleType("builtins", "int", condition=lambda: store["condition"])
+    assert not t.retrieve()
+    store["condition"] = True
+    assert t.retrieve()
+
+
 def test_is_hint():
     assert not _is_hint(int)
     assert _is_hint(typing.Union[int, float])
