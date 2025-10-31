@@ -1,7 +1,7 @@
 # [Plum: Multiple Dispatch in Python](https://github.com/beartype/plum)
 
 [![DOI](https://zenodo.org/badge/110279931.svg)](https://zenodo.org/badge/latestdoi/110279931)
-[![CI](https://github.com/beartype/plum/workflows/CI/badge.svg?branch=master)](https://github.com/beartype/plum/actions?query=workflow%3ACI)
+[![CI](https://github.com/beartype/plum/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/beartype/plum/actions/workflows/ci.yml)
 [![Coverage Status](https://coveralls.io/repos/github/beartype/plum/badge.svg?branch=master&service=github)](https://coveralls.io/github/beartype/plum?branch=master)
 [![Latest Docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://beartype.github.io/plum)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
