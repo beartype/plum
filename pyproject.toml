@@ -35,7 +35,7 @@ dev = [
     { include-group = "test" },
 ]
 docs = [
-    "jupyter-book>=1.0.0",
+    "jupyter-book>=1.0.0,<2.0.0",
 ]
 lint = [
     "pre-commit>=4.3.0",
