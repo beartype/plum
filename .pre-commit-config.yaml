@@ -11,7 +11,7 @@ repos:
       - id: check-useless-excludes
 
   - repo: https://github.com/abravalheri/validate-pyproject
-    rev: v0.16
+    rev: v0.23
     hooks:
       - id: validate-pyproject
 
