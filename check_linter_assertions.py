@@ -216,6 +216,10 @@ def check_linter(source_dir: Path, linter: str) -> bool:
     """
     stdout = run_linter(linter)
 
+    # Debug: print raw stdout in CI to see what's happening
+    if not stdout.strip():
+        print(f"WARNING: {linter} produced no output!")
+
     errors = parse_output(stdout, linter)
     assertions = parse_assertions(source_dir, linter)
 
@@ -242,6 +246,13 @@ def check_linter(source_dir: Path, linter: str) -> bool:
                     f"{linter}:{path}:{line_number}: "
                     f"Missed assertion: {assertion.strip()}"
                 )
+                # Show what errors were actually found on this line
+                if path in errors and line_number in errors[path]:
+                    print(f"  Actual errors on line {line_number}:")
+                    for error in errors[path][line_number]:
+                        print(f"    - {error.strip()}")
+                else:
+                    print(f"  No errors found on line {line_number}")
 
     return not missed_errors and not missed_assertions
 

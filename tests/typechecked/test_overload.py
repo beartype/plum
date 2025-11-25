@@ -16,7 +16,9 @@ def f(x: str) -> str:
 
 
 @dispatch
-def f(x):  # E: pyright(overloaded implementation is not consistent)
+# E: pyright(Overloaded implementation is not consistent)
+# E: pyright(Overloaded implementation is not consistent)
+def f(x):
     pass
 
 
