@@ -28,6 +28,7 @@ parsing how unions print.
 
 from functools import wraps
 from typing import TypeVar, Union, _type_repr, get_args
+from typing_extensions import assert_never
 
 __all__ = ["activate_union_aliases", "deactivate_union_aliases", "set_union_alias"]
 
@@ -55,19 +56,14 @@ def _new_repr(self: object) -> str:
     for union, alias in reversed(_ALIASED_UNIONS):
         union_set = set(union)
         if union_set <= args_set:
-            found = False
             for i, arg in enumerate(args):
                 if arg in union_set:
                     found_unions.append(union_set)
                     found_positions.append(i)
                     found_aliases.append(alias)
-                    found = True
                     break
-            if not found:  # pragma: no cover
-                # This branch should never be reached.
-                raise AssertionError(
-                    "Could not identify union. This should never happen."
-                )
+            else:  # pragma: no cover
+                assert_never(union)
 
     # Delete any unions that are contained in strictly bigger unions. We check for
     # strictly inequality because any union includes itself.
