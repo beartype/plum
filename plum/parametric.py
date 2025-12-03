@@ -168,8 +168,7 @@ class CovariantMeta(ParametricTypeMeta):
             return False
         # Check every pair of parameters.
         return all(
-            _default_le_type_par(p1, p2)
-            for p1, p2 in zip(p_left, p_right, strict=False)
+            _default_le_type_par(p1, p2) for p1, p2 in zip(p_left, p_right, strict=True)
         )
 
 
