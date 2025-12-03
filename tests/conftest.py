@@ -5,6 +5,12 @@ from plum.promotion import _convert, _promotion_rule
 
 
 @pytest.fixture
+def dispatch() -> plum.Dispatcher:
+    """Provide a fresh Dispatcher for testing."""
+    return plum.Dispatcher()
+
+
+@pytest.fixture
 def convert():
     # Save methods.
     _convert._resolve_pending_registrations()

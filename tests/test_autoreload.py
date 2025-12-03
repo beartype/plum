@@ -1,7 +1,7 @@
 import pytest
 
-from plum import Dispatcher, autoreload as ar
-from plum.function import NotFoundLookupError
+import plum
+import plum.autoreload as ar
 
 
 def test_autoreload_activate_deactivate():
@@ -10,9 +10,9 @@ def test_autoreload_activate_deactivate():
         RuntimeError,
         match=r"(?i)plum autoreload module was never activated",
     ):
-        ar.deactivate_autoreload()
+        plum.deactivate_autoreload()
 
-    ar.activate_autoreload()
+    plum.activate_autoreload()
 
     from IPython.extensions import autoreload as iar
 
@@ -21,7 +21,7 @@ def test_autoreload_activate_deactivate():
     assert ar._update_instances_original.__module__ == "IPython.extensions.autoreload"
     assert iar.update_instances.__module__ == "plum.autoreload"
 
-    ar.deactivate_autoreload()
+    plum.deactivate_autoreload()
 
     # Check that it is deactivated.
     assert ar._update_instances_original.__module__ == "IPython.extensions.autoreload"
@@ -29,9 +29,7 @@ def test_autoreload_activate_deactivate():
     assert iar.update_instances == ar._update_instances_original
 
 
-def test_autoreload_correctness():
-    dispatch = Dispatcher()
-
+def test_autoreload_correctness(dispatch: plum.Dispatcher):
     class A1:
         pass
 
@@ -51,9 +49,9 @@ def test_autoreload_correctness():
     assert test(a) == 1
 
     assert test(A1()) == 1
-    with pytest.raises(NotFoundLookupError):
+    with pytest.raises(plum.NotFoundLookupError):
         test(A2())
-    with pytest.raises(NotFoundLookupError):
+    with pytest.raises(plum.NotFoundLookupError):
         test(A3())
 
     ar._update_instances(A1, A2)
@@ -61,10 +59,10 @@ def test_autoreload_correctness():
     assert isinstance(a, A2)
     assert test(a) == 1
 
-    with pytest.raises(NotFoundLookupError):
+    with pytest.raises(plum.NotFoundLookupError):
         test(A1())
     assert test(A2()) == 1
-    with pytest.raises(NotFoundLookupError):
+    with pytest.raises(plum.NotFoundLookupError):
         test(A3())
 
     ar._update_instances(A2, A3)
@@ -72,8 +70,8 @@ def test_autoreload_correctness():
     assert isinstance(a, A3)
     assert test(a) == 1
 
-    with pytest.raises(NotFoundLookupError):
+    with pytest.raises(plum.NotFoundLookupError):
         test(A1())
-    with pytest.raises(NotFoundLookupError):
+    with pytest.raises(plum.NotFoundLookupError):
         test(A2())
     assert test(A3()) == 1

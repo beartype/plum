@@ -7,7 +7,7 @@ import pytest
 
 from beartype.door import TypeHint
 
-from plum.dispatcher import Dispatcher
+import plum
 from plum.resolver import AmbiguousLookupError
 from plum.signature import Signature as Sig, append_default_args, inspect_signature
 from plum.util import Missing
@@ -130,7 +130,7 @@ def test_expand_varargs():
     assert s.expand_varargs(4) == (int, int, float, float)
 
 
-def test_varargs_tie_breaking():
+def test_varargs_tie_breaking(dispatch: plum.Dispatcher):
     # These are related to bug #117.
 
     assert Sig(int) < Sig(int, varargs=int)
@@ -140,8 +140,6 @@ def test_varargs_tie_breaking():
     assert not Sig(int) >= Sig(int, varargs=int)
     assert not Sig(int, varargs=int) >= Sig(int, Num)
     assert not Sig(int, int, varargs=int) >= Sig(int, Num)
-
-    dispatch = Dispatcher()
 
     @dispatch
     def f(*xs: int):
@@ -200,9 +198,7 @@ def test_varargs_tie_breaking():
     assert f(1.0, 1, 1) == "num and ints"
 
 
-def test_117_case1():
-    dispatch = Dispatcher()
-
+def test_117_case1(dispatch: plum.Dispatcher):
     class A:
         pass
 
@@ -224,9 +220,7 @@ def test_117_case1():
 
 
 @pytest.mark.xfail(reason="bug #117")
-def test_117_case2():
-    dispatch = Dispatcher()
-
+def test_117_case2(dispatch: plum.Dispatcher):
     class A:
         pass
 
@@ -247,9 +241,7 @@ def test_117_case2():
     assert f(1.0, B()) == "num and Bs"
 
 
-def test_117_case3():
-    dispatch = Dispatcher()
-
+def test_117_case3(dispatch: plum.Dispatcher):
     class A:
         pass
 

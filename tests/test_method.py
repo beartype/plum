@@ -1,8 +1,8 @@
 import textwrap
 from copy import copy
 
+import plum
 from .util import rich_render
-from plum import Dispatcher
 from plum.method import Method
 from plum.signature import Signature
 
@@ -138,9 +138,7 @@ def test_repr_complex():
     assert rich_render(m.repr_mismatch({0}, False)).startswith(result)
 
 
-def test_methodlist_repr(monkeypatch):
-    dispatch = Dispatcher()
-
+def test_methodlist_repr(monkeypatch, dispatch: plum.Dispatcher):
     @dispatch
     def f(x: int):
         pass

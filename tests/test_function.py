@@ -5,7 +5,7 @@ import typing
 
 import pytest
 
-from plum import Dispatcher
+import plum
 from plum.function import Function, _convert, _owner_transfer
 from plum.method import Method
 from plum.resolver import (
@@ -49,9 +49,7 @@ def test_function():
     assert Function._instances[-1] == g
 
 
-def test_repr():
-    dispatch = Dispatcher()
-
+def test_repr(dispatch: plum.Dispatcher):
     @dispatch
     def f(x: int):
         return "int"
@@ -265,9 +263,7 @@ def test_simple_doc(monkeypatch):
     assert f.__doc__ == textwrap.dedent(expected_doc).strip()
 
 
-def test_methods():
-    dispatch = Dispatcher()
-
+def test_methods(dispatch: plum.Dispatcher):
     def f(x: int):
         pass
 
@@ -285,9 +281,7 @@ def test_methods():
     assert list(f_dispatch.methods) == methods
 
 
-def test_function_dispatch():
-    dispatch = Dispatcher()
-
+def test_function_dispatch(dispatch: plum.Dispatcher):
     @dispatch
     def f(x: int):
         return "int"
@@ -306,9 +300,7 @@ def test_function_dispatch():
     assert f._resolver.resolve(("1",)).signature.precedence == 1
 
 
-def test_function_multi_dispatch():
-    dispatch = Dispatcher()
-
+def test_function_multi_dispatch(dispatch: plum.Dispatcher):
     @dispatch
     def f(x: int):
         return "int"
@@ -339,9 +331,7 @@ def test_register():
     assert len(g._resolver) == 0
 
 
-def test_resolve_pending_registrations():
-    dispatch = Dispatcher()
-
+def test_resolve_pending_registrations(dispatch: plum.Dispatcher):
     @dispatch
     def f(x: int):
         return "int"
@@ -388,9 +378,7 @@ def test_resolve_pending_registrations():
     assert g(1, 1.0, z=1j) == "ok"
 
 
-def test_call_dispatch_error():
-    dispatch = Dispatcher()
-
+def test_call_dispatch_error(dispatch: plum.Dispatcher):
     @dispatch
     def f(x: int, y):
         pass
@@ -415,7 +403,7 @@ def test_call_dispatch_error():
 # We already defined an `A` above. The classes below again need to be in the global
 # scope.
 
-dispatch = Dispatcher()
+dispatch = plum.Dispatcher()
 
 
 class B(metaclass=abc.ABCMeta):
@@ -505,7 +493,7 @@ def test_call_object():
         C()(1)
 
 
-dispatch = Dispatcher()
+dispatch = plum.Dispatcher()
 
 
 class D(type):
@@ -544,9 +532,7 @@ def test_call_type():
         E("Test", (object,), {})(1)
 
 
-def test_call_convert():
-    dispatch = Dispatcher()
-
+def test_call_convert(dispatch: plum.Dispatcher):
     @dispatch
     def f(x) -> tuple:
         return x
@@ -554,9 +540,7 @@ def test_call_convert():
     assert f(1) == (1,)
 
 
-def test_invoke():
-    dispatch = Dispatcher()
-
+def test_invoke(dispatch: plum.Dispatcher):
     @dispatch
     def f(x: int):
         return "int"
@@ -574,9 +558,7 @@ def test_invoke():
     assert f.invoke(str)(None) == "str"
 
 
-def test_invoke_convert():
-    dispatch = Dispatcher()
-
+def test_invoke_convert(dispatch: plum.Dispatcher):
     @dispatch
     def f(x: int) -> tuple:
         return x
@@ -584,9 +566,7 @@ def test_invoke_convert():
     assert f.invoke(int)(1) == (1,)
 
 
-def test_invoke_wrapping():
-    dispatch = Dispatcher()
-
+def test_invoke_wrapping(dispatch: plum.Dispatcher):
     @dispatch
     def f(x: int):
         """Docs"""
@@ -595,9 +575,7 @@ def test_invoke_wrapping():
     assert f.invoke(int).__doc__ == "Docs"
 
 
-def test_invoke_implementation_unwrapping():
-    dispatch = Dispatcher()
-
+def test_invoke_implementation_unwrapping(dispatch: plum.Dispatcher):
     def f(x: int):
         return type(x)
 
@@ -616,9 +594,7 @@ def test_invoke_implementation_unwrapping():
     assert _unwrap_invoked_methods(f.methods[1].implementation) is f_orig
 
 
-def test_bound():
-    dispatch = Dispatcher()
-
+def test_bound(dispatch: plum.Dispatcher):
     class A:
         @dispatch
         def do(self, x: int):
@@ -636,9 +612,7 @@ def test_bound():
     assert A.do.invoke(A, int).__doc__ == "Docs"
 
 
-def test_name_after_clearing_cache():
-    dispatch = Dispatcher()
-
+def test_name_after_clearing_cache(dispatch: plum.Dispatcher):
     @dispatch
     def some_function_name(x: int):
         pass

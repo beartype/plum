@@ -1,12 +1,10 @@
 import pytest
 
-from plum import Dispatcher
+import plum
 from plum.signature import Signature as Sig
 
 
-def test_dispatch_function():
-    dispatch = Dispatcher()
-
+def test_dispatch_function(dispatch: plum.Dispatcher):
     @dispatch
     def f(x: int):
         pass
@@ -20,9 +18,7 @@ def test_dispatch_function():
     assert dispatch.functions["g"].methods[0].signature == Sig(float, precedence=1)
 
 
-def test_dispatch_class():
-    dispatch = Dispatcher()
-
+def test_dispatch_class(dispatch: plum.Dispatcher):
     class A:
         @dispatch
         def f(x: int):
@@ -40,9 +36,8 @@ def test_dispatch_class():
     assert dispatch.classes[b]["g"].methods[0].signature == Sig(float, precedence=1)
 
 
-def test_bound_function_attributes():
+def test_bound_function_attributes(dispatch: plum.Dispatcher):
     """Test the attributes on a bound function."""
-    dispatch = Dispatcher()
 
     class A:
         @dispatch
@@ -59,9 +54,7 @@ def test_bound_function_attributes():
     assert hash(a.f.dispatch) == hash(a.f._f.dispatch)
 
 
-def test_dispatch_multi():
-    dispatch = Dispatcher()
-
+def test_dispatch_multi(dispatch: plum.Dispatcher):
     @dispatch
     def f(x: int):
         return "int"
@@ -80,9 +73,7 @@ def test_dispatch_multi():
         dispatch.multi(1)
 
 
-def test_abstract():
-    dispatch = Dispatcher()
-
+def test_abstract(dispatch: plum.Dispatcher):
     @dispatch.abstract
     def f(x):
         """Docs"""

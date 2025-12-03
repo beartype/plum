@@ -6,25 +6,21 @@ from typing import Union
 
 import pytest
 
-from plum import Dispatcher, Function, NotFoundLookupError
+import plum
 
 
-def test_keywords():
-    dispatch = Dispatcher()
-
+def test_keywords(dispatch: plum.Dispatcher):
     @dispatch
     def f(x: int, *, option=None):
         return x
 
     assert f(2) == 2
     assert f(2, option=None) == 2
-    with pytest.raises(NotFoundLookupError):
+    with pytest.raises(plum.NotFoundLookupError):
         f(2, None)
 
 
-def test_defaults():
-    dispatch = Dispatcher()
-
+def test_defaults(dispatch: plum.Dispatcher):
     y_default = 3
 
     @dispatch
@@ -44,10 +40,10 @@ def test_defaults():
     assert f(2.0) == y_default**2
     assert f(2.0, y=4) == 4**2
 
-    with pytest.raises(NotFoundLookupError):
+    with pytest.raises(plum.NotFoundLookupError):
         f(2, 4.0)
 
-    with pytest.raises(NotFoundLookupError):
+    with pytest.raises(plum.NotFoundLookupError):
         f(2, 4.0, option=2)
 
     # Check that a wrong default type is caught.
@@ -62,7 +58,7 @@ def test_defaults():
 
     # Remove this function from global tracking. Otherwise, it might interfere with
     # other tests.
-    Function._instances.pop(-1)
+    plum.Function._instances.pop(-1)
 
     # Try multiple arguments.
 
@@ -73,9 +69,7 @@ def test_defaults():
     assert g(2) == (y_default, 3.0)
 
 
-def test_redefinition():
-    dispatch = Dispatcher()
-
+def test_redefinition(dispatch: plum.Dispatcher):
     @dispatch
     def f(x: int):
         return "first"
@@ -89,9 +83,7 @@ def test_redefinition():
     assert f(1) == "second"
 
 
-def test_metadata_and_printing():
-    dispatch = Dispatcher()
-
+def test_metadata_and_printing(dispatch: plum.Dispatcher):
     class A:
         @dispatch
         def g(self):
@@ -123,9 +115,7 @@ def test_metadata_and_printing():
         assert g.invoke(*ts).__doc__ == "Docs of g"
 
 
-def test_invoke():
-    dispatch = Dispatcher()
-
+def test_invoke(dispatch: plum.Dispatcher):
     @dispatch()
     def f():
         return "fallback"
@@ -154,7 +144,7 @@ def test_invoke():
     assert f.invoke(Union[int, str, float])(1) == "int, str, or float"
 
 
-dispatch = Dispatcher()
+dispatch = plum.Dispatcher()
 
 
 class A:
@@ -196,7 +186,7 @@ def test_unassignable_annotations():
 
     # `A.create` will have an attribute `__annotations__`, but it cannot be assigned.
 
-    f = Function(lambda: None)
+    f = plum.Function(lambda: None)
     f.dispatch(A.create)
     f()
 
@@ -210,7 +200,7 @@ def test_unassignable_annotations():
     ],
 )
 def test_strange_functions(f, x, res):
-    g = Function(lambda: None)
+    g = plum.Function(lambda: None)
     g.dispatch(f)
     assert g(x) == res
 
@@ -269,9 +259,7 @@ def dec(f):
     return f_wrapped
 
 
-def test_decorator():
-    dispatch = Dispatcher()
-
+def test_decorator(dispatch: plum.Dispatcher):
     @dec
     @dispatch
     @dec
@@ -325,13 +313,11 @@ def test_property():
 
     assert a.name == "name"
     a.name = "another name"
-    with pytest.raises(NotFoundLookupError):
+    with pytest.raises(plum.NotFoundLookupError):
         a.name = 1
 
 
-def test_none():
-    dispatch = Dispatcher()
-
+def test_none(dispatch: plum.Dispatcher):
     @dispatch
     def f(x: None) -> None:
         return x
@@ -356,15 +342,13 @@ def test_staticmethod():
     assert A6().f(1) == "int"
     assert A6.f("1") == "str"
     assert A6().f("1") == "str"
-    with pytest.raises(NotFoundLookupError):
+    with pytest.raises(plum.NotFoundLookupError):
         A6.f(1.0)
-    with pytest.raises(NotFoundLookupError):
+    with pytest.raises(plum.NotFoundLookupError):
         A6().f(1.0)
 
 
-def test_equivalent_method_override():
-    dispatch = Dispatcher()
-
+def test_equivalent_method_override(dispatch: plum.Dispatcher):
     @dispatch
     def f(x: int):
         pass
