@@ -29,7 +29,6 @@ from .util import *  # noqa: F401, F403
 # Deprecated
 # isort: split
 from .parametric import Val  # noqa: F401, F403
-from .util import multihash  # noqa: F401, F403
 
 # Ensure that type checking is always entirely correct! The default O(1) strategy
 # is super fast, but might yield unpredictable dispatch behaviour. The O(n) strategy

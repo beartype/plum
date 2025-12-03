@@ -1,7 +1,6 @@
 import abc
 import sys
-from collections.abc import Callable, Hashable, Sequence
-from typing_extensions import deprecated
+from collections.abc import Callable, Sequence
 
 __all__ = [
     "Callable",
@@ -40,19 +39,6 @@ class Missing(metaclass=_MissingType):
 
     def __init__(self):
         raise TypeError("`Missing` cannot be instantiated.")
-
-
-@deprecated("Use `hash(tuple_of_args)` instead.")
-def multihash(*args: Hashable) -> int:
-    """Multi-argument order-sensitive hash.
-
-    Args:
-        *args: Objects to hash.
-
-    Returns:
-        int: Hash.
-    """
-    return hash(args)
 
 
 class Comparable(metaclass=abc.ABCMeta):
