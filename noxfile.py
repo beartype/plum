@@ -55,3 +55,9 @@ def pytest(s: nox.Session, /) -> None:
 
     # Run pytest
     s.run("pytest", *s.posargs)
+
+
+@session(uv_groups=["test_runtime"], reuse_venv=True)
+def benchmark(s: nox.Session, /) -> None:
+    """Run the benchmarks."""
+    s.run("python", "tests/benchmark.py", *s.posargs)
