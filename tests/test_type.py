@@ -137,9 +137,8 @@ def test_resolve_type_hint(pseudo_int):
     assert resolve_type_hint((pseudo_int, pseudo_int)) == (int, int)
     assert resolve_type_hint([pseudo_int, pseudo_int]) == [int, int]
 
-    # FIXME: resolve_type_hint(types.UnionType) is strange.
-    # def _combo0(fake, real):
-    #     return fake | float, real | float
+    def _combo0(fake, real):
+        return fake | float, real | float
 
     def _combo1(fake, real):
         return typing.Union[fake, float], typing.Union[real, float]  # noqa: UP007
@@ -153,7 +152,7 @@ def test_resolve_type_hint(pseudo_int):
     def _combo4(fake, real):
         return _combo3(*_combo2(*_combo1(fake, real)))
 
-    for combo in [_combo1, _combo2, _combo3, _combo4]:
+    for combo in [_combo0, _combo1, _combo2, _combo3, _combo4]:
         fake, real = combo(pseudo_int, int)
         assert resolve_type_hint(fake) == real
 
