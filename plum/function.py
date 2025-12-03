@@ -53,7 +53,7 @@ class _FunctionMeta(type):
     docstring of the class."""
 
     @property
-    def __doc__(self):
+    def __doc__(self) -> Optional[str]:
         return self._class_doc
 
 
@@ -104,7 +104,7 @@ class Function(metaclass=_FunctionMeta):
         self._resolved: list[tuple[Callable, Signature, int]] = []
 
     @property
-    def owner(self):
+    def owner(self) -> Optional[object]:
         """object or None: Owner of the function. If `None`, then there is no owner."""
         if self._owner is None and self._owner_name is not None:
             name = self._owner_name.split(".")[-1]
