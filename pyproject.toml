@@ -28,6 +28,11 @@ repository = "https://github.com/beartype/plum"
 documentation = "https://beartype.github.io/plum"
 
 
+[build-system]
+requires = ["hatchling>=1.8.0", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+
 [dependency-groups]
 dev = [
     { include-group = "docs" },
@@ -60,12 +65,6 @@ test_runtime = [
     "pytest-cov>=7.0.0",
     "sybil[pytest]>=9.2.0",
 ]
-
-
-[build-system]
-requires = ["hatchling>=1.8.0", "hatch-vcs"]
-build-backend = "hatchling.build"
-
 
 [tool.hatch]
 version.source = "vcs"
