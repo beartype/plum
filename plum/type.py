@@ -3,6 +3,8 @@ import sys
 import typing
 import warnings
 from collections.abc import Callable, Hashable
+from functools import reduce
+from operator import or_
 from types import UnionType
 from typing import Literal, TypeGuard, get_args, get_origin
 from typing_extensions import Self
@@ -199,12 +201,8 @@ def resolve_type_hint(x: object, /) -> object:
             # is `None`. Since the hint wasn't subscripted, the right thing is
             # to right the hint itself.
             return x
-        if origin is UnionType:
-            # The new union syntax was used.
-            y = args[0]
-            for arg in args[1:]:
-                y = y | arg
-            return y
+        if origin is UnionType:  # The new union syntax was used.
+            return reduce(or_, (resolve_type_hint(arg) for arg in args))
         else:
             # Do not resolve the arguments for `Literal`s.
             if origin is not Literal:
