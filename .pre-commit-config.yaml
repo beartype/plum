@@ -3,7 +3,7 @@ ci:
   autofix_commit_msg: "style: pre-commit fixes"
 
 default_language_version:
-  python: python3.9
+  python: "3.10"
 
 repos:
   - repo: meta

@@ -16,9 +16,6 @@ jobs:
       fail-fast: false
       matrix:
         value:
-          - name: "3.9"
-            python-version: "3.9"
-            extra-install: ""
           - name: "3.10"
             python-version: "3.10"
             extra-install: ""

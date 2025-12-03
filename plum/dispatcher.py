@@ -1,7 +1,6 @@
-import sys
 from dataclasses import dataclass, field
 from functools import partial
-from typing import Any, Optional, TypeVar, Union, overload
+from typing import Any, TypeVar, overload
 
 from .function import Function
 from .overload import get_overloads
@@ -13,12 +12,7 @@ __all__ = ["Dispatcher", "dispatch", "clear_all_cache"]
 T = TypeVar("T", bound=Callable[..., Any])
 
 
-_dataclass_kw_args: dict[str, Any] = {}
-if sys.version_info >= (3, 10):  # pragma: specific no cover 3.9
-    _dataclass_kw_args |= {"slots": True}
-
-
-@dataclass(frozen=True, **_dataclass_kw_args)
+@dataclass(frozen=True, slots=True)
 class Dispatcher:
     """A namespace for functions.
 
@@ -46,8 +40,8 @@ class Dispatcher:
     ) -> Callable[[T], T]: ...
 
     def __call__(
-        self, method: Optional[T] = None, /, *, precedence: int = 0
-    ) -> Union[T, Callable[[T], T]]:
+        self, method: T | None = None, /, *, precedence: int = 0
+    ) -> T | Callable[[T], T]:
         """Decorator to register for a particular signature.
 
         Args:
@@ -74,7 +68,7 @@ class Dispatcher:
         return self._add_method(method, None, precedence=precedence)
 
     def multi(
-        self, *signatures: Union[Signature, tuple[TypeHint, ...]]
+        self, *signatures: Signature | tuple[TypeHint, ...]
     ) -> Callable[[Callable], Function]:
         """Decorator to register multiple signatures at once.
 
@@ -134,8 +128,8 @@ class Dispatcher:
     def _add_method(
         self,
         method: Callable,
-        *signatures: Optional[Signature],
-        precedence: Optional[int],
+        *signatures: Signature | None,
+        precedence: int | None,
     ) -> Function:
         f = self._get_function(method)
         for signature in signatures:

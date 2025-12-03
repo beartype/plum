@@ -25,12 +25,13 @@ class _MissingType(type):
     """The type of :class:`Missing`."""
 
     def __bool__(self):
-        # For some reason, Sphinx does attempt to evaluate `bool(Missing)`. Let's try
-        # to keep Sphinx working correctly by not raising an exception.
+        # For some reason, Sphinx does attempt to evaluate `bool(Missing)`.
+        # Let's try to keep Sphinx working correctly by not raising an
+        # exception.
         if "sphinx" in sys.modules:
             return False
-        else:
-            raise TypeError("`Missing` has no boolean value.")
+
+        raise TypeError("`Missing` has no boolean value.")
 
 
 class Missing(metaclass=_MissingType):

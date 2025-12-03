@@ -8,8 +8,8 @@ __all__ = [
     "promote",
 ]
 
-from typing import TYPE_CHECKING, Any, Callable, Protocol, TypeVar
-from typing_extensions import TypeAlias
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, Protocol, TypeAlias, TypeVar
 
 from beartype.door import TypeHint
 

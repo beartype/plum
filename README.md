@@ -17,7 +17,7 @@ If you notice any issues with the new release, please open an issue.
 
 # Installation
 
-Plum requires Python 3.9 or higher.
+Plum requires Python 3.10 or higher.
 
 ```bash
 pip install plum-dispatch

@@ -3,18 +3,11 @@ import sys
 import typing
 import warnings
 from collections.abc import Callable, Hashable
-from typing import Optional, Union, get_args, get_origin
-from typing_extensions import Self, TypeGuard
+from types import UnionType
+from typing import Literal, TypeGuard, get_args, get_origin
+from typing_extensions import Self
 
 from beartype.vale._core._valecore import BeartypeValidator
-
-try:  # pragma: specific no cover 3.9
-    from types import UnionType
-except ImportError:  # pragma: specific no cover 3.10 3.11
-
-    class UnionType:
-        """Replacement for :class:`types.UnionType`."""
-
 
 __all__ = [
     "PromisedType",
@@ -52,7 +45,7 @@ class ResolvableType(type):
         self._type = type
         return self
 
-    def resolve(self) -> Union[type, Self]:
+    def resolve(self) -> type | Self:
         """Resolve the type.
 
         Returns:
@@ -101,7 +94,7 @@ class ModuleType(ResolvableType):
         module: str,
         name: str,
         allow_fail: bool = False,
-        condition: Optional[Callable[[], bool]] = None,
+        condition: Callable[[], bool] | None = None,
     ) -> None:
         if module in {"__builtin__", "__builtins__"}:
             module = "builtins"
@@ -116,7 +109,7 @@ class ModuleType(ResolvableType):
         module: str,
         name: str,
         allow_fail: bool = False,
-        condition: Optional[Callable[[], bool]] = None,
+        condition: Callable[[], bool] | None = None,
     ) -> Self:
         return ResolvableType.__new__(cls, f"ModuleType[{module}.{name}]")
 
@@ -202,23 +195,22 @@ def resolve_type_hint(x: object, /) -> object:
         origin = get_origin(x)
         args = get_args(x)
         if args == ():
-            # `origin` might not make sense here. For example, `get_origin(Any)` is
-            # `None`. Since the hint wasn't subscripted, the right thing is to right the
-            # hint itself.
+            # `origin` might not make sense here. For example, `get_origin(Any)`
+            # is `None`. Since the hint wasn't subscripted, the right thing is
+            # to right the hint itself.
             return x
+        if origin is UnionType:
+            # The new union syntax was used.
+            y = args[0]
+            for arg in args[1:]:
+                y = y | arg
+            return y
         else:
-            if origin is UnionType:  # pragma: specific no cover 3.9
-                # The new union syntax was used.
-                y = args[0]
-                for arg in args[1:]:
-                    y = y | arg
-                return y
-            else:
-                # Do not resolve the arguments for `Literal`s.
-                if origin != typing.Literal:
-                    args = resolve_type_hint(args)
+            # Do not resolve the arguments for `Literal`s.
+            if origin is not Literal:
+                args = resolve_type_hint(args)
 
-                return origin[args]
+            return origin[args]
 
     elif x is None or x is Ellipsis:
         return x
@@ -226,7 +218,7 @@ def resolve_type_hint(x: object, /) -> object:
     elif isinstance(x, tuple):
         return tuple(resolve_type_hint(arg) for arg in x)
     elif isinstance(x, list):
-        return list(resolve_type_hint(arg) for arg in x)
+        return [resolve_type_hint(arg) for arg in x]
     elif isinstance(x, type):
         if isinstance(x, ResolvableType):
             if isinstance(x, ModuleType) and not x.retrieve():
