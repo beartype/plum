@@ -1,5 +1,5 @@
 import sys
-import typing
+from typing import Union
 
 import numpy as np
 import pytest
@@ -21,7 +21,8 @@ def test_repr_short():
 
     assert repr_short(int) == "int"
     assert repr_short(A) == "tests.test_util.test_repr_short.<locals>.A"
-    assert repr_short(typing.Union[int, float]) == "typing.Union[int, float]"
+    assert repr_short(Union[int, float]) == "typing.Union[int, float]"  # noqa: UP007
+    assert repr_short(int | float) == "int | float"
 
 
 def test_missing():

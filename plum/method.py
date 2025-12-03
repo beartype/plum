@@ -1,7 +1,6 @@
 import inspect
 import typing
 from collections.abc import Callable
-from typing import Optional
 
 from rich.padding import Padding
 from rich.text import Text
@@ -32,8 +31,8 @@ class Method:
         implementation: Callable,
         signature: Signature,
         *,
-        function_name: Optional[str] = None,
-        return_type: Optional[TypeHint] = None,
+        function_name: str | None = None,
+        return_type: TypeHint | None = None,
     ):
         """Instantiate a method.
 
@@ -121,7 +120,7 @@ class Method:
 
         # Walk through the positional arguments.
         if sig.types:
-            for i, (arg_name, t) in enumerate(zip(arg_names, sig.types)):
+            for i, (arg_name, t) in enumerate(zip(arg_names, sig.types, strict=False)):
                 arg_txt = Text(f"{arg_name}: ")
                 type_txt = repr_type(t)
                 if i in mismatches:
@@ -169,7 +168,7 @@ class MethodList(list):
             yield Padding(sum(method_repr, Text(f"[{i}] ")), (0, 4))
 
 
-def extract_arg_names(f: Callable, /) -> tuple[list[str], list[str], Optional[str]]:
+def extract_arg_names(f: Callable, /) -> tuple[list[str], list[str], str | None]:
     """Extract the argument names for a function.
 
     Args:

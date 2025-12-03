@@ -1,5 +1,5 @@
 import contextlib
-from typing import TypeVar, Union
+from typing import TypeVar
 from typing_extensions import deprecated
 
 import beartype.door
@@ -121,9 +121,7 @@ class ParametricTypeMeta(type):
             )
 
 
-def _default_le_type_par(
-    p_left: Union[TypeHint, object], p_right: Union[TypeHint, object]
-) -> bool:
+def _default_le_type_par(p_left: TypeHint | object, p_right: TypeHint | object) -> bool:
     if is_type(p_left) and is_type(p_right):
         p_left = beartype.door.TypeHint(resolve_type_hint(p_left))
         p_right = beartype.door.TypeHint(resolve_type_hint(p_right))
@@ -169,7 +167,10 @@ class CovariantMeta(ParametricTypeMeta):
         if len(p_left) != len(p_right):
             return False
         # Check every pair of parameters.
-        return all(_default_le_type_par(p1, p2) for p1, p2 in zip(p_left, p_right))
+        return all(
+            _default_le_type_par(p1, p2)
+            for p1, p2 in zip(p_left, p_right, strict=False)
+        )
 
 
 def parametric(original_class=None):

@@ -1,7 +1,8 @@
 import inspect
 import operator
+from collections.abc import Callable
 from copy import copy
-from typing import Any, Callable, ClassVar, Union, get_type_hints
+from typing import Any, ClassVar, get_type_hints
 from typing_extensions import Self
 
 from rich.segment import Segment
@@ -12,11 +13,9 @@ from beartype.peps import resolve_pep563 as beartype_resolve_pep563
 from . import _is_bearable
 from .repr import repr_short, rich_repr
 from .type import is_faithful, resolve_type_hint
-from .util import Comparable, Missing, TypeHint, wrap_lambda
+from .util import Comparable, Missing, TypeHint, _MissingType, wrap_lambda
 
 __all__ = ["Signature", "append_default_args"]
-
-OptionalType = Union[TypeHint, type(Missing)]
 
 
 @rich_repr
@@ -48,7 +47,7 @@ class Signature(Comparable):
     def __init__(
         self,
         *types: tuple[TypeHint, ...],
-        varargs: OptionalType = _default_varargs,
+        varargs: TypeHint | _MissingType = _default_varargs,
         precedence: int = _default_precedence,
     ) -> None:
         """Instantiate a signature, which contains exactly the information necessary for
@@ -172,7 +171,7 @@ class Signature(Comparable):
         if all(
             [
                 beartype.door.TypeHint(x) == beartype.door.TypeHint(y)
-                for x, y in zip(self_types, other_types)
+                for x, y in zip(self_types, other_types, strict=False)
             ]
         ):
             if self.has_varargs and other.has_varargs:
@@ -192,7 +191,7 @@ class Signature(Comparable):
         elif all(
             [
                 beartype.door.TypeHint(x) <= beartype.door.TypeHint(y)
-                for x, y in zip(self_types, other_types)
+                for x, y in zip(self_types, other_types, strict=False)
             ]
         ):
             # In this case, we have that `other >= self` is `False`, so returning `True`
@@ -251,7 +250,7 @@ class Signature(Comparable):
             return False
         else:
             types = self.expand_varargs(len(values))
-            return all(_is_bearable(v, t) for v, t in zip(values, types))
+            return all(_is_bearable(v, t) for v, t in zip(values, types, strict=False))
 
     def compute_distance(self, values: tuple[object, ...]) -> int:
         """For given values, computes the edit distance between these vales and this
@@ -271,7 +270,7 @@ class Signature(Comparable):
         distance += abs(len(types) - len(values))
 
         # Additionally count one for every mismatching value.
-        for v, t in zip(values, types):
+        for v, t in zip(values, types, strict=False):
             if not _is_bearable(v, t):
                 distance += 1
 
@@ -295,7 +294,7 @@ class Signature(Comparable):
         # there is an explicit mismatch.
         varargs_matched = True
 
-        for i, (v, t) in enumerate(zip(values, types)):
+        for i, (v, t) in enumerate(zip(values, types, strict=False)):
             if not _is_bearable(v, t):
                 if i < len(self.types):
                     mismatches.add(i)

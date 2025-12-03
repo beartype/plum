@@ -129,7 +129,7 @@ def test_invoke(dispatch: plum.Dispatcher):
         return "str"
 
     @dispatch
-    def f(x: Union[int, str, float]):
+    def f(x: int | str | float):
         return "int, str, or float"
 
     assert f() == "fallback"
@@ -140,8 +140,10 @@ def test_invoke(dispatch: plum.Dispatcher):
     assert f.invoke(int)("1") == "int"
     assert f.invoke(str)(1) == "str"
     assert f.invoke(float)(1) == "int, str, or float"
-    assert f.invoke(Union[int, str])(1) == "int, str, or float"
-    assert f.invoke(Union[int, str, float])(1) == "int, str, or float"
+    assert f.invoke(Union[int, str])(1) == "int, str, or float"  # noqa: UP007
+    assert f.invoke(Union[int, str, float])(1) == "int, str, or float"  # noqa: UP007
+    assert f.invoke(int | str)(1) == "int, str, or float"
+    assert f.invoke(int | str | float)(1) == "int, str, or float"
 
 
 dispatch = plum.Dispatcher()
@@ -354,7 +356,7 @@ def test_equivalent_method_override(dispatch: plum.Dispatcher):
         pass
 
     @dispatch
-    def f(x: Union[int, bool]):
+    def f(x: int | bool):
         pass
 
     assert len(f.methods) == 1
