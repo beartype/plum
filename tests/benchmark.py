@@ -1,19 +1,20 @@
 import numpy as np
-from tests.util import benchmark
 
-from plum import Dispatcher, dispatch
+from util import benchmark
+
+import plum
 
 
 def f(x):
     pass
 
 
-@dispatch
+@plum.dispatch
 def g(x: int):
     pass
 
 
-@dispatch
+@plum.dispatch
 def g(x: str):
     pass
 
@@ -32,12 +33,12 @@ def f2(x):
     pass
 
 
-@dispatch
+@plum.dispatch
 def g2(x: tuple[int]):
     pass
 
 
-@dispatch
+@plum.dispatch
 def g2(x: tuple[str]):
     pass
 
@@ -61,7 +62,7 @@ class A:
 
 
 class B:
-    _dispatch = Dispatcher()
+    _dispatch = plum.Dispatcher()
 
     @_dispatch
     def __call__(self, x: int):
