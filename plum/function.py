@@ -4,6 +4,7 @@ from copy import copy
 from functools import wraps
 from types import MethodType
 from typing import Any, Callable, Optional, Protocol, TypeVar, Union
+from typing_extensions import Self
 
 from .method import Method
 from .resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
@@ -16,12 +17,6 @@ __all__ = ["Function"]
 
 _promised_convert = None
 """function or None: This will be set to :func:`.parametric.convert`."""
-
-# `typing.Self` is available for Python 3.11 and higher.
-try:  # pragma: specific no cover 3.11
-    from typing import Self
-except ImportError:  # pragma: specific no cover 3.10
-    Self = TypeVar("Self", bound="Function")
 
 SomeExceptionType = TypeVar("SomeExceptionType", bound=Exception)
 
