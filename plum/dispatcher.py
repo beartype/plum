@@ -97,18 +97,18 @@ class Dispatcher:
                     f"`plum.signature.Signature`."
                 )
 
-        def decorator(method: Callable) -> Function:
+        def decorator(method: Callable, /) -> Function:
             # The precedence will not be used, so we can safely set it to `None`.
             return self._add_method(method, *resolved_signatures, precedence=None)
 
         return decorator
 
-    def abstract(self, method: Callable) -> Function:
+    def abstract(self, method: Callable, /) -> Function:
         """Decorator for an abstract function definition. The abstract function
         definition does not implement any methods."""
         return self._get_function(method)
 
-    def _get_function(self, method: Callable) -> Function:
+    def _get_function(self, method: Callable, /) -> Function:
         # If a class is the owner, use a namespace specific for that class. Otherwise,
         # use the global namespace.
         if is_in_class(method):

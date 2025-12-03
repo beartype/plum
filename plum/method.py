@@ -79,11 +79,11 @@ class Method:
             )
         return False
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         s = (self.function_name, self.implementation, self.signature, self.return_type)
         return hash(s)
 
-    def __str__(self):
+    def __str__(self) -> str:
         function_name = self.function_name
         signature = self.signature
         return_type = self.return_type
@@ -169,7 +169,7 @@ class MethodList(list):
             yield Padding(sum(method_repr, Text(f"[{i}] ")), (0, 4))
 
 
-def extract_arg_names(f: Callable) -> tuple[list[str], list[str], Optional[str]]:
+def extract_arg_names(f: Callable, /) -> tuple[list[str], list[str], Optional[str]]:
     """Extract the argument names for a function.
 
     Args:
@@ -201,7 +201,7 @@ def extract_arg_names(f: Callable) -> tuple[list[str], list[str], Optional[str]]
     return regular_args, kw_only_args, var_kw_name
 
 
-def extract_return_type(f: Callable) -> TypeHint:
+def extract_return_type(f: Callable, /) -> TypeHint:
     """Extract the return type from a function.
 
     Assumes that PEP563-style already have been resolved.
