@@ -199,7 +199,7 @@ def resolve_type_hint(x: object, /) -> object:
         if args == ():
             # `origin` might not make sense here. For example, `get_origin(Any)`
             # is `None`. Since the hint wasn't subscripted, the right thing is
-            # to right the hint itself.
+            # to return the hint itself.
             return x
         if origin is UnionType:  # The new union syntax was used.
             return reduce(or_, (resolve_type_hint(arg) for arg in args))
