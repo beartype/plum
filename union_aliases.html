@@ -409,8 +409,8 @@ want to implement it for all NumPy scalar types:</p>
 <span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">dispatch</span>
 
 
-<span class="n">scalar_types</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">sctypes</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="p">[])</span>  <span class="c1"># All NumPy scalar types</span>
-<span class="n">Scalar</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">scalar_types</span><span class="p">)]</span>  <span class="c1"># Union of all NumPy scalar types</span>
+<span class="n">scalar_types</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sctypeDict</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>  <span class="c1"># All NumPy scalar types</span>
+<span class="n">Scalar</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">scalar_types</span><span class="p">]</span>  <span class="c1"># Union of all NumPy scalar types</span>
 
 
 <span class="nd">@dispatch</span>
