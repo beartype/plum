@@ -5,9 +5,9 @@ from typing import Union
 
 import pytest
 
-from plum import Dispatcher, NotFoundLookupError
+import plum
 
-dispatch = Dispatcher()
+dispatch = plum.Dispatcher()
 
 
 class Number:
@@ -41,7 +41,7 @@ def test_forward_reference():
     assert isinstance(three, Number)
     assert three.value == 3
 
-    with pytest.raises(NotFoundLookupError):
+    with pytest.raises(plum.NotFoundLookupError):
         three = one + 2.0
 
 
@@ -58,15 +58,13 @@ def test_staticmethod(one):
     assert len(Number.add_one.__doc__.splitlines()) == 3
 
 
-def test_extension():
-    dispatch = Dispatcher()
-
+def test_extension(dispatch: plum.Dispatcher):
     @dispatch
     def f(x: int):
         return "int"
 
     assert f(1) == "int"
-    with pytest.raises(NotFoundLookupError):
+    with pytest.raises(plum.NotFoundLookupError):
         f("1")
 
     def g(x: str):
@@ -85,15 +83,13 @@ def test_extension():
     assert f("1") == "str"
 
 
-def test_extension_c():
-    dispatch = Dispatcher()
-
+def test_extension_c(dispatch: plum.Dispatcher):
     @dispatch
     def f(x: int):
         return x
 
     assert f(1) == 1
-    with pytest.raises(NotFoundLookupError):
+    with pytest.raises(plum.NotFoundLookupError):
         f(4.0)
 
     f.dispatch(math.sqrt)

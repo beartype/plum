@@ -1,9 +1,8 @@
 import pytest
 
-from plum import AmbiguousLookupError, Dispatcher, NotFoundLookupError
-from plum.type import PromisedType
+import plum
 
-dispatch = Dispatcher()
+dispatch = plum.Dispatcher()
 
 
 class Num:
@@ -58,8 +57,8 @@ class Device:
         return "another result"
 
 
-PromisedCalculator = PromisedType("Calculator")
-PromisedHammer = PromisedType("Hammer")
+PromisedCalculator = plum.PromisedType("Calculator")
+PromisedHammer = plum.PromisedType("Hammer")
 
 
 class Hammer(Device):
@@ -136,15 +135,15 @@ def test_inheritance_exceptions():
     o = ComputableObject()
 
     # Test instantiation.
-    with pytest.raises(NotFoundLookupError):
+    with pytest.raises(plum.NotFoundLookupError):
         Calculator("1")
 
     # Test method lookup.
-    with pytest.raises(NotFoundLookupError):
+    with pytest.raises(plum.NotFoundLookupError):
         calc.compute(1)
 
     # Test method ambiguity.
-    with pytest.raises(AmbiguousLookupError):
+    with pytest.raises(plum.AmbiguousLookupError):
         calc.compute(o, o)
     assert calc.compute(object, o) == "a result"
     assert calc.compute(o, object) == "another result"

@@ -2,12 +2,10 @@ from typing import Union
 
 import pytest
 
-from plum import Dispatcher, add_conversion_method
+import plum
 
 
-def test_return_type():
-    dispatch = Dispatcher()
-
+def test_return_type(dispatch: plum.Dispatcher):
     @dispatch
     def f(x: Union[int, str]) -> int:
         return x
@@ -25,7 +23,7 @@ class A:
         return "hello from A"
 
 
-dispatch = Dispatcher()
+dispatch = plum.Dispatcher()
 
 
 class B(A):
@@ -44,7 +42,7 @@ def test_inheritance():
     assert b.do(1.0) == "hello from A"
 
 
-dispatch = Dispatcher()
+dispatch = plum.Dispatcher()
 
 
 class A2:
@@ -63,9 +61,7 @@ def test_inheritance_self_return():
         a.do(a, ok=False)
 
 
-def test_conversion(convert):
-    dispatch = Dispatcher()
-
+def test_conversion(convert, dispatch: plum.Dispatcher):
     @dispatch
     def f(x: Union[int, str]) -> int:
         return x
@@ -74,7 +70,7 @@ def test_conversion(convert):
     with pytest.raises(TypeError):
         f("1")
 
-    add_conversion_method(str, int, int)
+    plum.add_conversion_method(str, int, int)
 
     assert f(1) == 1
     assert f("1") == 1

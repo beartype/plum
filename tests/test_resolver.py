@@ -4,25 +4,21 @@ import warnings
 
 import pytest
 
-import plum.resolver
-from plum.dispatcher import Dispatcher
+import plum
 from plum.method import Method
 from plum.resolver import (
-    AmbiguousLookupError,
     MethodRedefinitionWarning,
-    NotFoundLookupError,
     Resolver,
     _document,
     _render_function_call,
 )
-from plum.signature import Signature
 
 
 def test_render_function_call():
     assert _render_function_call("f", (1,)) == "f(1)"
     assert _render_function_call("f", (1, 1)) == "f(1, 1)"
-    assert _render_function_call("f", Signature(int)) == "f(int)"
-    assert _render_function_call("f", Signature(int, int)) == "f(int, int)"
+    assert _render_function_call("f", plum.Signature(int)) == "f(int)"
+    assert _render_function_call("f", plum.Signature(int, int)) == "f(int, int)"
 
 
 def test_initialisation():
@@ -137,14 +133,14 @@ def test_register():
         return xs
 
     # Test that faithfulness is tracked correctly.
-    r.register(Method(f, Signature(int)))
-    r.register(Method(f, Signature(float)))
+    r.register(Method(f, plum.Signature(int)))
+    r.register(Method(f, plum.Signature(float)))
     assert r.is_faithful
-    r.register(Method(f, Signature(tuple[int])))
+    r.register(Method(f, plum.Signature(tuple[int])))
     assert not r.is_faithful
 
     # Test that signatures can be replaced.
-    new_m = Method(f, Signature(float))
+    new_m = Method(f, plum.Signature(float))
     assert len(r) == 3
     assert r.methods[1] is not new_m
     r.register(new_m)
@@ -152,12 +148,12 @@ def test_register():
     assert r.methods[1] is new_m
 
     # Test the edge case that should never happen.
-    r.methods[2] = Method(f, Signature(float))
+    r.methods[2] = Method(f, plum.Signature(float))
     with pytest.raises(
         AssertionError,
         match=r"(?i)the added method `(.*)` is equal to 2 existing methods",
     ):
-        r.register(Method(f, Signature(float)))
+        r.register(Method(f, plum.Signature(float)))
 
 
 def test_len():
@@ -166,11 +162,11 @@ def test_len():
 
     r = Resolver()
     assert len(r) == 0
-    r.register(Method(f, Signature(int)))
+    r.register(Method(f, plum.Signature(int)))
     assert len(r) == 1
-    r.register(Method(f, Signature(float)))
+    r.register(Method(f, plum.Signature(float)))
     assert len(r) == 2
-    r.register(Method(f, Signature(float)))
+    r.register(Method(f, plum.Signature(float)))
     assert len(r) == 2
 
 
@@ -199,13 +195,13 @@ def test_resolve():
     def f(x):
         return x
 
-    m_a = Method(f, Signature(A))
-    m_b1 = Method(f, Signature(B1))
-    m_b2 = Method(f, Signature(B2))
-    m_c1 = Method(f, Signature(C1))
-    m_c2 = Method(f, Signature(C2))
-    m_u = Method(f, Signature(Unrelated))
-    m_m = Method(f, Signature(Missing))
+    m_a = Method(f, plum.Signature(A))
+    m_b1 = Method(f, plum.Signature(B1))
+    m_b2 = Method(f, plum.Signature(B2))
+    m_c1 = Method(f, plum.Signature(C1))
+    m_c2 = Method(f, plum.Signature(C2))
+    m_u = Method(f, plum.Signature(Unrelated))
+    m_m = Method(f, plum.Signature(Missing))
 
     r = Resolver()
     r.register(m_b1)
@@ -221,22 +217,22 @@ def test_resolve():
     assert r.resolve(m_a.signature) == m_a
     assert r.resolve(m_b1.signature) == m_b1
     assert r.resolve(m_b2.signature) == m_b2
-    with pytest.raises(AmbiguousLookupError):
+    with pytest.raises(plum.AmbiguousLookupError):
         r.resolve(m_c1.signature)
     assert r.resolve(m_c2.signature) == m_c2
     assert r.resolve(m_u.signature) == m_u
-    with pytest.raises(NotFoundLookupError):
+    with pytest.raises(plum.NotFoundLookupError):
         r.resolve(m_m.signature)
 
     # Resolve by type.
     assert r.resolve((A(),)) == m_a
     assert r.resolve((B1(),)) == m_b1
     assert r.resolve((B2(),)) == m_b2
-    with pytest.raises(AmbiguousLookupError):
+    with pytest.raises(plum.AmbiguousLookupError):
         r.resolve((C1(),))
     assert r.resolve((C2(),)) == m_c2
     assert r.resolve((Unrelated(),)) == m_u
-    with pytest.raises(NotFoundLookupError):
+    with pytest.raises(plum.NotFoundLookupError):
         r.resolve((Missing(),))
 
     # Test that precedence can correctly break the ambiguity.
@@ -248,7 +244,7 @@ def test_resolve():
 
 @pytest.mark.parametrize("warn_redefinition", [False, True])
 def test_redefinition_warning(warn_redefinition):
-    dispatch = Dispatcher(warn_redefinition=warn_redefinition)
+    dispatch = plum.Dispatcher(warn_redefinition=warn_redefinition)
 
     with warnings.catch_warnings():
         warnings.simplefilter("error")
@@ -289,7 +285,7 @@ def test_redefinition_warning(warn_redefinition):
 
 
 def test_redefinition_warning_unwrapping():
-    dispatch = Dispatcher(warn_redefinition=True)
+    dispatch = plum.Dispatcher(warn_redefinition=True)
 
     @dispatch
     def f(x: int):

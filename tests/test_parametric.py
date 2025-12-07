@@ -5,34 +5,27 @@ from typing import Optional, Union
 import numpy as np
 import pytest
 
+import plum
 from plum import (
-    Dispatcher,
     Kind,
     ModuleType,
     NotFoundLookupError,
     Val,
     kind,
     parametric,
-    type_parameter,
 )
-from plum.parametric import (
-    CovariantMeta,
-    is_concrete,
-    is_type,
-    type_nonparametric,
-    type_unparametrized,
-)
+from plum.parametric import is_concrete, is_type
 
 
 def test_covariantmeta():
-    class A(metaclass=CovariantMeta):
+    class A(metaclass=plum.CovariantMeta):
         pass
 
     with pytest.raises(RuntimeError):
         A.concrete
 
 
-class MyType(CovariantMeta):
+class MyType(plum.CovariantMeta):
     pass
 
 
@@ -84,13 +77,13 @@ def test_parametric(metaclass):
         return all(x is y for x, y in zip(tup1, tup2))
 
     # Test type parameter extraction.
-    assert type_parameter(A[1]()) == 1
-    assert type_parameter(A["1"]()) == "1"
-    assert type_parameter(A[1.0]()) == 1.0
-    assert type_parameter(A[1, 2]()) == (1, 2)
-    assert type_parameter(A[a1]()) is a1
-    assert tuples_are_identical(type_parameter(A[a1, a2]()), (a1, a2))
-    assert tuples_are_identical(type_parameter(A[1, a2]()), (1, a2))
+    assert plum.type_parameter(A[1]()) == 1
+    assert plum.type_parameter(A["1"]()) == "1"
+    assert plum.type_parameter(A[1.0]()) == 1.0
+    assert plum.type_parameter(A[1, 2]()) == (1, 2)
+    assert plum.type_parameter(A[a1]()) is a1
+    assert tuples_are_identical(plum.type_parameter(A[a1, a2]()), (a1, a2))
+    assert tuples_are_identical(plum.type_parameter(A[1, a2]()), (1, a2))
 
     # Test that an error is raised if type parameters are specified twice.
     T = A[1]
@@ -99,7 +92,7 @@ def test_parametric(metaclass):
 
 
 def test_parametric_inheritance():
-    class A(metaclass=CovariantMeta):
+    class A(metaclass=plum.CovariantMeta):
         def __init__(self, x):
             self.x = x
 
@@ -200,13 +193,11 @@ def test_parametric_covariance():
     assert not isinstance(A[2, int](), A[1, Number])
 
 
-def test_parametric_covariance_test_case():
+def test_parametric_covariance_test_case(dispatch: plum.Dispatcher):
     @parametric
     class A:
         def __init__(self, x):
             self.x = x
-
-    dispatch = Dispatcher()
 
     @dispatch
     def f(a: object):
@@ -259,19 +250,19 @@ def test_parametric_constructor():
     assert a1.y == 3
     assert a2.y == 3
 
-    assert type_parameter(a1) is float
-    assert type_parameter(a2) is float
+    assert plum.type_parameter(a1) is float
+    assert plum.type_parameter(a2) is float
     assert type(a1) is type(a2)
     assert type(a1).__name__ == type(a2).__name__ == "A[float]"
 
 
 @parametric
 class NTuple:
-    dispatch = Dispatcher()
+    dispatch = plum.Dispatcher()
 
     def __init__(self, *args):
         # Check that the arguments satisfy the type specification.
-        n, t = type_parameter(self)
+        n, t = plum.type_parameter(self)
         if len(args) != n or any(not isinstance(arg, t) for arg in args):
             raise ValueError("Incorrect arguments!")
 
@@ -331,7 +322,7 @@ class NDArrayMeta(type):
         )
 
 
-dispatch = Dispatcher()
+dispatch = plum.Dispatcher()
 
 
 @parametric
@@ -370,16 +361,16 @@ def test_parametric_override_init_type_parameter():
     assert issubclass(NDArray[None, None], np.ndarray)
 
     # Construct it in an incorrect way.
-    with pytest.raises(NotFoundLookupError):
+    with pytest.raises(plum.NotFoundLookupError):
         NDArray[None]
-    with pytest.raises(NotFoundLookupError):
+    with pytest.raises(plum.NotFoundLookupError):
         NDArray[1, int]
-    with pytest.raises(NotFoundLookupError):
+    with pytest.raises(plum.NotFoundLookupError):
         NDArray[(2, 2), 1]
 
 
 def test_parametric_override_le_type_parameter():
-    dispatch = Dispatcher()
+    dispatch = plum.Dispatcher()
 
     @dispatch
     def f(x: np.ndarray):
@@ -457,7 +448,7 @@ def test_parametric_custom_metaclass_name_metaclass():
 
 @parametric
 class A:
-    dispatch = Dispatcher()
+    dispatch = plum.Dispatcher()
 
     @dispatch
     def f(self):
@@ -501,21 +492,21 @@ def test_type_parameter():
     class B:
         pass
 
-    assert type_parameter(A()) == ()
-    assert type_parameter(A[1]) == 1
-    assert type_parameter(A[1]()) == 1
-    assert type_parameter(A["1"]) == "1"
-    assert type_parameter(A["1"]()) == "1"
+    assert plum.type_parameter(A()) == ()
+    assert plum.type_parameter(A[1]) == 1
+    assert plum.type_parameter(A[1]()) == 1
+    assert plum.type_parameter(A["1"]) == "1"
+    assert plum.type_parameter(A["1"]()) == "1"
 
     with pytest.raises(
         RuntimeError,
         match=r"(?i)cannot get the type parameter of non-instantiated parametric",
     ):
-        type_parameter(A)
+        plum.type_parameter(A)
     with pytest.raises(ValueError, match=r"not a concrete parametric type"):
-        type_parameter(B)
+        plum.type_parameter(B)
     with pytest.raises(ValueError, match=r"not a concrete parametric type"):
-        type_parameter(B())
+        plum.type_parameter(B())
 
 
 def test_kind():
@@ -608,8 +599,8 @@ def test_type_unparametrized():
     pobj = Obj(1)
 
     assert type(pobj) is Obj[int]
-    assert type_unparametrized(pobj) is not Obj[int]
-    assert type_unparametrized(pobj) is Obj
+    assert plum.type_unparametrized(pobj) is not Obj[int]
+    assert plum.type_unparametrized(pobj) is Obj
 
 
 def test_type_nonparametric():
@@ -631,6 +622,6 @@ def test_type_nonparametric():
     pobj = Obj(1)
 
     assert type(pobj) is Obj[int]
-    assert type_nonparametric(pobj) is not Obj[int]
-    assert type_nonparametric(pobj) is not Obj
-    assert type_nonparametric(pobj) is NonParametricObj
+    assert plum.type_nonparametric(pobj) is not Obj[int]
+    assert plum.type_nonparametric(pobj) is not Obj
+    assert plum.type_nonparametric(pobj) is NonParametricObj

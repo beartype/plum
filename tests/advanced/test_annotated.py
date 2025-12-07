@@ -4,12 +4,10 @@ import pytest
 
 from beartype.vale import Is
 
-from plum import Dispatcher, NotFoundLookupError
+import plum
 
 
-def test_simple_annotated():
-    dispatch = Dispatcher()
-
+def test_simple_annotated(dispatch: plum.Dispatcher):
     positive_int = Annotated[int, Is[lambda value: value > 0]]
 
     @dispatch
@@ -18,8 +16,8 @@ def test_simple_annotated():
 
     assert f(1) == 1
 
-    with pytest.raises(NotFoundLookupError):
+    with pytest.raises(plum.NotFoundLookupError):
         f("my string")
 
-    with pytest.raises(NotFoundLookupError):
+    with pytest.raises(plum.NotFoundLookupError):
         f(-1)

@@ -1,8 +1,8 @@
 import pytest
 
-from plum import AmbiguousLookupError, Dispatcher
+import plum
 
-dispatch = Dispatcher()
+dispatch = plum.Dispatcher()
 
 
 class Element:
@@ -48,7 +48,7 @@ def test_precedence():
 
     assert type(mul(zero, el)) is ZeroElement
     assert type(mul(el, spel)) is SpecialisedElement
-    with pytest.raises(AmbiguousLookupError):
+    with pytest.raises(plum.AmbiguousLookupError):
         mul(zero, spel)
 
     assert type(mul_precedence(zero, el)) is ZeroElement

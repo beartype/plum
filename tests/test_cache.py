@@ -1,7 +1,7 @@
 from typing import Union
 
+import plum
 from .util import benchmark
-from plum import Dispatcher, Function, clear_all_cache
 
 
 def assert_cache_performance(f, f_native):
@@ -9,18 +9,18 @@ def assert_cache_performance(f, f_native):
     dur_native = benchmark(f_native, (1,), n=250, burn=10)
 
     def resolve_registrations():
-        for f in Function._instances:
+        for f in plum.Function._instances:
             f._resolve_pending_registrations()
 
     def setup_no_cache():
-        clear_all_cache()
+        plum.clear_all_cache()
         resolve_registrations()
 
     # Time the performance of a cache miss.
     dur_first = benchmark(f, (1,), n=250, burn=10, setup=setup_no_cache)
 
     # Time the performance of a cache hit.
-    clear_all_cache()
+    plum.clear_all_cache()
     resolve_registrations()
     dur = benchmark(f, (1,), n=250, burn=10)
 
@@ -34,9 +34,7 @@ def assert_cache_performance(f, f_native):
     assert dur <= dur_first / 4
 
 
-def test_cache_function():
-    dispatch = Dispatcher()
-
+def test_cache_function(dispatch: plum.Dispatcher):
     def f_native(x):
         pass
 
@@ -70,7 +68,7 @@ def test_cache_function():
 
 
 class A:
-    _dispatch = Dispatcher()
+    _dispatch = plum.Dispatcher()
 
     @_dispatch
     def __call__(self, x: int):
@@ -124,9 +122,7 @@ def test_cache_class():
     )
 
 
-def test_cache_clearing():
-    dispatch = Dispatcher()
-
+def test_cache_clearing(dispatch: plum.Dispatcher):
     @dispatch
     def f(x: int):
         return 1
@@ -154,7 +150,7 @@ def test_cache_clearing():
     assert len(f._resolver) == 2
 
     # Clear via `clear_all_cache`.
-    clear_all_cache()
+    plum.clear_all_cache()
     assert len(f._cache) == 0
     assert len(f._resolver) == 0
 
@@ -164,9 +160,7 @@ def test_cache_clearing():
     assert len(f._resolver) == 2
 
 
-def test_cache_unfaithful():
-    dispatch = Dispatcher()
-
+def test_cache_unfaithful(dispatch: plum.Dispatcher):
     @dispatch
     def f(x: int):
         return 1
