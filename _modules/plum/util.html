@@ -351,9 +351,7 @@ document.write(`
   <h1>Source code for plum.util</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">abc</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">Sequence</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">deprecated</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;Callable&quot;</span><span class="p">,</span>
@@ -397,19 +395,6 @@ document.write(`
 
 
 
-<span class="nd">@deprecated</span><span class="p">(</span><span class="s2">&quot;Use `hash(tuple_of_args)` instead.&quot;</span><span class="p">)</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">multihash</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Hashable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Multi-argument order-sensitive hash.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        *args: Objects to hash.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        int: Hash.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
-
-
 <div class="viewcode-block" id="Comparable">
 <a class="viewcode-back" href="../../api.html#plum.util.Comparable">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Comparable</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">abc</span><span class="o">.</span><span class="n">ABCMeta</span><span class="p">):</span>
@@ -439,7 +424,7 @@ document.write(`
 
 <div class="viewcode-block" id="Comparable.is_comparable">
 <a class="viewcode-back" href="../../api.html#plum.util.Comparable.is_comparable">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">is_comparable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_comparable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether this object is comparable with another one.</span>
 
 <span class="sd">        Args:</span>
@@ -455,7 +440,7 @@ document.write(`
 
 <div class="viewcode-block" id="wrap_lambda">
 <a class="viewcode-back" href="../../api.html#plum.util.wrap_lambda">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">wrap_lambda</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">wrap_lambda</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrap a callable in a lambda function.</span>
 
 <span class="sd">    Args:</span>
@@ -470,7 +455,7 @@ document.write(`
 
 <div class="viewcode-block" id="is_in_class">
 <a class="viewcode-back" href="../../api.html#plum.util.is_in_class">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">is_in_class</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_in_class</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if a function is part of a class.</span>
 
 <span class="sd">    Args:</span>
@@ -484,7 +469,7 @@ document.write(`
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_split_parts</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_split_parts</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
     <span class="c1"># Under edge cases, `f.__module__` can be `None`. In this case we, skip it.</span>
     <span class="c1"># Otherwise, the fully-qualified name is the name of the module plus the qualified</span>
     <span class="c1"># name of the function.</span>
@@ -494,7 +479,7 @@ document.write(`
 
 <div class="viewcode-block" id="get_class">
 <a class="viewcode-back" href="../../api.html#plum.util.get_class">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">get_class</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_class</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Assuming that `f` is part of a class, get the fully qualified name of the</span>
 <span class="sd">    class.</span>
 
@@ -511,12 +496,12 @@ document.write(`
 
 <div class="viewcode-block" id="get_context">
 <a class="viewcode-back" href="../../api.html#plum.util.get_context">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">get_context</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_context</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the fully qualified name of the context for `f`.</span>
 
-<span class="sd">    If `f` is part of a class, then the context corresponds to the scope of the class.</span>
-<span class="sd">    If `f` is not part of a class, then the context corresponds to the scope of the</span>
-<span class="sd">    function.</span>
+<span class="sd">    If `f` is part of a class, then the context corresponds to the scope of the</span>
+<span class="sd">    class.  If `f` is not part of a class, then the context corresponds to the</span>
+<span class="sd">    scope of the function.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        f (function): Method to get context for.</span>
@@ -536,7 +521,7 @@ document.write(`
 
 <div class="viewcode-block" id="argsort">
 <a class="viewcode-back" href="../../api.html#plum.util.argsort">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">argsort</span><span class="p">(</span><span class="n">seq</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">argsort</span><span class="p">(</span><span class="n">seq</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the indices that sort a sequence.</span>
 
 <span class="sd">    Args:</span>

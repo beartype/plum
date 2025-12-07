@@ -452,7 +452,7 @@ document.write(`
                     <span class="sa">f</span><span class="s2">&quot;`plum.signature.Signature`.&quot;</span>
                 <span class="p">)</span>
 
-        <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Function</span><span class="p">:</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Function</span><span class="p">:</span>
             <span class="c1"># The precedence will not be used, so we can safely set it to `None`.</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_method</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="o">*</span><span class="n">resolved_signatures</span><span class="p">,</span> <span class="n">precedence</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 
@@ -461,13 +461,13 @@ document.write(`
 
 <div class="viewcode-block" id="Dispatcher.abstract">
 <a class="viewcode-back" href="../../api.html#plum.dispatcher.Dispatcher.abstract">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">abstract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Function</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">abstract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Function</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Decorator for an abstract function definition. The abstract function</span>
 <span class="sd">        definition does not implement any methods.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_function</span><span class="p">(</span><span class="n">method</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_get_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Function</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Function</span><span class="p">:</span>
         <span class="c1"># If a class is the owner, use a namespace specific for that class. Otherwise,</span>
         <span class="c1"># use the global namespace.</span>
         <span class="k">if</span> <span class="n">is_in_class</span><span class="p">(</span><span class="n">method</span><span class="p">):</span>

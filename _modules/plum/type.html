@@ -355,7 +355,6 @@ document.write(`
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Hashable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">get_args</span><span class="p">,</span> <span class="n">get_origin</span>
-
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span><span class="p">,</span> <span class="n">TypeGuard</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">beartype.vale._core._valecore</span><span class="w"> </span><span class="kn">import</span> <span class="n">BeartypeValidator</span>
@@ -550,7 +549,7 @@ document.write(`
 
 <div class="viewcode-block" id="resolve_type_hint">
 <a class="viewcode-back" href="../../api.html#plum.type.resolve_type_hint">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">resolve_type_hint</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_type_hint</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve all :class:`ResolvableType` in a type or type hint.</span>
 
 <span class="sd">    Args:</span>
@@ -620,7 +619,7 @@ document.write(`
 
 <div class="viewcode-block" id="is_faithful">
 <a class="viewcode-back" href="../../api.html#plum.type.is_faithful">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">is_faithful</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_faithful</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Check whether a type hint is faithful.</span>
 
 <span class="sd">    A type or type hint `t` is defined _faithful_ if, for all `x`, the following holds</span>
@@ -644,20 +643,23 @@ document.write(`
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_is_faithful</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="n">UNION_TYPES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="n">typing</span><span class="o">.</span><span class="n">Union</span><span class="p">,</span> <span class="n">UnionType</span><span class="p">,</span> <span class="n">typing</span><span class="o">.</span><span class="n">Optional</span><span class="p">})</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_faithful</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
     <span class="k">if</span> <span class="n">_is_hint</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
         <span class="n">origin</span> <span class="o">=</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">args</span> <span class="o">=</span> <span class="n">get_args</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">args</span> <span class="o">==</span> <span class="p">():</span>
-            <span class="c1"># Unsubscripted type hints tend to be faithful. For example, `Any`, `List`,</span>
-            <span class="c1"># `Tuple`, `Dict`, `Callable`, and `Generator` are. When we come across a</span>
-            <span class="c1"># counter-example, we will refine this logic.</span>
+            <span class="c1"># Unsubscripted type hints tend to be faithful. For example, `Any`,</span>
+            <span class="c1"># `List`, `Tuple`, `Dict`, `Callable`, and `Generator` are. When we</span>
+            <span class="c1"># come across a counter-example, we will refine this logic.</span>
             <span class="k">return</span> <span class="kc">True</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="p">{</span><span class="n">typing</span><span class="o">.</span><span class="n">Union</span><span class="p">,</span> <span class="n">UnionType</span><span class="p">,</span> <span class="n">typing</span><span class="o">.</span><span class="n">Optional</span><span class="p">}:</span>
-                <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">is_faithful</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="n">UNION_TYPES</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">is_faithful</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="kc">False</span>
 
     <span class="k">elif</span> <span class="n">x</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">x</span> <span class="o">==</span> <span class="bp">Ellipsis</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">True</span>
