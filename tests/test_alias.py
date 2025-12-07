@@ -3,7 +3,7 @@ from typing import Union
 import pytest
 
 from plum import activate_union_aliases, deactivate_union_aliases, set_union_alias
-from plum.alias import _ALIASED_UNIONS
+from plum._alias import _ALIASED_UNIONS
 
 
 @pytest.fixture()

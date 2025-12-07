@@ -7,7 +7,7 @@ import pytest
 
 import plum
 from plum import add_conversion_method, add_promotion_rule, conversion_method
-from plum.promotion import _promotion_rule
+from plum._promotion import _promotion_rule
 
 
 class Num:

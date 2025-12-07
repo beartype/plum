@@ -8,9 +8,8 @@ import pytest
 from beartype.door import TypeHint
 
 import plum
-from plum.resolver import AmbiguousLookupError
-from plum.signature import Signature as Sig, append_default_args, inspect_signature
-from plum.util import Missing
+from plum import Signature as Sig
+from plum._util import Missing
 
 
 def test_instantiation_copy():
@@ -221,7 +220,7 @@ def test_117_case1(dispatch: plum.Dispatcher):
     def f(x: int, *a: B):
         return "int and Bs"
 
-    with pytest.raises(AmbiguousLookupError):
+    with pytest.raises(plum.AmbiguousLookupError):
         f(1)
     assert f(1, A()) == "int and As"
     assert f(1, B()) == "int and Bs"
@@ -268,7 +267,7 @@ def test_117_case3(dispatch: plum.Dispatcher):
     def f(x: Num, *a: B):
         return "num and Bs"
 
-    with pytest.raises(AmbiguousLookupError):
+    with pytest.raises(plum.AmbiguousLookupError):
         f(1)
     assert f(1, A()) == "int and As"
     assert f(1, B()) == "int and Bs"
@@ -385,10 +384,10 @@ def test_compute_mismatches():
 
 
 def test_inspect_signature():
-    assert isinstance(inspect_signature(lambda x: x), inspect.Signature)
-    assert len(inspect_signature(lambda x: x).parameters) == 1
-    assert len(inspect_signature(operator.itemgetter(1)).parameters) == 1
-    assert len(inspect_signature(operator.attrgetter("x")).parameters) == 1
+    assert isinstance(plum.inspect_signature(lambda x: x), inspect.Signature)
+    assert len(plum.inspect_signature(lambda x: x).parameters) == 1
+    assert len(plum.inspect_signature(operator.itemgetter(1)).parameters) == 1
+    assert len(plum.inspect_signature(operator.attrgetter("x")).parameters) == 1
 
 
 def assert_signature(f, *types, varargs=Missing):
@@ -435,21 +434,21 @@ def test_append_default_args():
     def f(a: int, b=1, c: float = 1.0, *d: complex, option=None, **other_options):
         pass
 
-    sigs = append_default_args(Sig.from_callable(f), f)
+    sigs = plum.append_default_args(Sig.from_callable(f), f)
     assert len(sigs) == 3
     assert (sigs[0].types, sigs[0].varargs) == ((int, Any, float), complex)
     assert (sigs[1].types, sigs[1].varargs) == ((int, Any), Missing)
     assert (sigs[2].types, sigs[2].varargs) == ((int,), Missing)
 
     # Test the case of more argument names than types.
-    sigs = append_default_args(Sig(int, Any), f)
+    sigs = plum.append_default_args(Sig(int, Any), f)
     assert len(sigs) == 2
     assert (sigs[0].types, sigs[0].varargs) == ((int, Any), Missing)
     assert (sigs[1].types, sigs[1].varargs) == ((int,), Missing)
-    sigs = append_default_args(Sig(int), f)
+    sigs = plum.append_default_args(Sig(int), f)
     assert len(sigs) == 1
     assert (sigs[0].types, sigs[0].varargs) == ((int,), Missing)
 
     # Test that `itemgetter` is supported.
     f = operator.itemgetter(0)
-    assert len(append_default_args(Sig.from_callable(f), f)) == 1
+    assert len(plum.append_default_args(Sig.from_callable(f), f)) == 1

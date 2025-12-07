@@ -5,10 +5,10 @@ from collections.abc import Callable
 from rich.padding import Padding
 from rich.text import Text
 
+from ._signature import Signature, inspect_signature
+from ._type import resolve_type_hint
+from ._util import TypeHint
 from .repr import repr_pyfunction, repr_type, rich_repr
-from .signature import Signature, inspect_signature
-from .type import resolve_type_hint
-from .util import TypeHint
 
 __all__ = ["Method", "extract_return_type"]
 

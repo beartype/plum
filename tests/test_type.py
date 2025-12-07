@@ -1,24 +1,11 @@
 import abc
 import sys
 import typing
-
-try:
-    from typing import Literal
-except ImportError:
-
-    class LiteralMeta(type):
-        """A simple proxy for :class:`typing.Literal`."""
-
-        def __getitem__(self, item):
-            return self
-
-    class Literal(metaclass=LiteralMeta):
-        __faithful__ = False
-
+from typing_extensions import Literal
 
 import pytest
 
-from plum.type import (
+from plum._type import (
     ModuleType,
     PromisedType,
     ResolvableType,
@@ -27,7 +14,7 @@ from plum.type import (
     resolve_type_hint,
     type_mapping,
 )
-from plum.util import Callable
+from plum._util import Callable
 
 skip_if_less_than_py310 = pytest.mark.skipif(
     sys.version_info < (3, 10),

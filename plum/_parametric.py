@@ -1,17 +1,4 @@
-import contextlib
-from typing import TypeVar
-from typing_extensions import deprecated
-
-import beartype.door
-from beartype.roar import BeartypeDoorNonpepException
-
-from .dispatcher import Dispatcher
-from .function import _owner_transfer
-from .repr import repr_short
-from .type import resolve_type_hint
-from .util import TypeHint
-
-__all__ = [
+__all__ = (
     "CovariantMeta",
     "parametric",
     "type_parameter",
@@ -19,7 +6,20 @@ __all__ = [
     "type_unparametrized",
     "kind",
     "Kind",
-]
+)
+
+import contextlib
+from typing import TypeVar, final
+from typing_extensions import deprecated
+
+import beartype.door
+from beartype.roar import BeartypeDoorNonpepException
+
+from ._dispatcher import Dispatcher
+from ._function import _owner_transfer
+from ._type import resolve_type_hint
+from ._util import TypeHint
+from .repr import repr_short
 
 T = TypeVar("T")
 
@@ -447,9 +447,10 @@ def is_type(x: object, /) -> bool:
     """
     try:
         beartype.door.TypeHint(x)
-        return True
     except BeartypeDoorNonpepException:
         return False
+    else:
+        return True
 
 
 def type_parameter(x: object, /) -> object:
@@ -631,6 +632,7 @@ def kind(SuperClass=object):
 Kind = kind()  #: A default kind provided for convenience.
 
 
+@final
 @deprecated("Use `typing.Literal[val]` instead.")
 @parametric
 class Val:
@@ -668,7 +670,7 @@ class Val:
             raise ValueError("The value must be specified.")
 
     def __repr__(self) -> str:
-        return repr_short(type(self)) + "()"
+        return repr_short(type(self)).replace("._parametric", "") + "()"
 
     def __eq__(self, other):
         return type(self) is type(other)

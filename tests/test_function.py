@@ -6,15 +6,15 @@ import typing
 import pytest
 
 import plum
-from plum.function import Function, _convert, _owner_transfer
-from plum.method import Method
-from plum.resolver import (
+from plum._function import Function, _convert, _owner_transfer
+from plum._method import Method
+from plum._resolver import (
     AmbiguousLookupError,
     NotFoundLookupError,
     _change_function_name,
     _unwrap_invoked_methods,
 )
-from plum.signature import Signature
+from plum._signature import Signature
 
 
 def test_convert_reference():

@@ -5,8 +5,8 @@ import warnings
 import pytest
 
 import plum
-from plum.method import Method
-from plum.resolver import (
+from plum._method import Method
+from plum._resolver import (
     MethodRedefinitionWarning,
     Resolver,
     _document,
@@ -93,7 +93,7 @@ def test_document_sphinx(monkeypatch):
 def test_doc(monkeypatch):
     # Let the `pydoc` documenter simply return the docstring. This makes testing
     # simpler.
-    monkeypatch.setattr(plum.resolver, "_document", lambda x, _: x.__doc__)
+    monkeypatch.setattr(plum._resolver, "_document", lambda x, _: x.__doc__)
 
     r = Resolver()
 

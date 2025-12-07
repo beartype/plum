@@ -7,10 +7,10 @@ from functools import wraps
 from rich.padding import Padding
 from rich.text import Text
 
-from .util import argsort
-from plum.method import Method, MethodList
+from ._util import argsort
+from plum._method import Method, MethodList
+from plum._signature import Signature
 from plum.repr import repr_source_path, rich_repr
-from plum.signature import Signature
 
 __all__ = ["AmbiguousLookupError", "NotFoundLookupError"]
 

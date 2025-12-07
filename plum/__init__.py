@@ -12,24 +12,24 @@ from beartype import (
 )
 from beartype.door import TypeHint as _TypeHint, is_bearable as _is_bearable
 
+from ._alias import *  # noqa: F401, F403
+from ._autoreload import *  # noqa: F401, F403
+from ._dispatcher import *  # noqa: F401, F403
+from ._function import *  # noqa: F401, F403
+from ._method import *  # noqa: F401, F403
+from ._overload import *  # noqa: F401, F403
+from ._parametric import *  # noqa: F401, F403
+from ._promotion import *  # noqa: F401, F403
+from ._resolver import *  # noqa: F401, F403
+from ._signature import *  # noqa: F401, F403
+from ._type import *  # noqa: F401, F403
+from ._type import resolve_type_hint
+from ._util import *  # noqa: F401, F403
 from ._version import __version__  # noqa: F401
-from .alias import *  # noqa: F401, F403
-from .autoreload import *  # noqa: F401, F403
-from .dispatcher import *  # noqa: F401, F403
-from .function import *  # noqa: F401, F403
-from .method import *  # noqa: F401, F403
-from .overload import *  # noqa: F401, F403
-from .parametric import *  # noqa: F401, F403
-from .promotion import *  # noqa: F401, F403
-from .resolver import *  # noqa: F401, F403
-from .signature import *  # noqa: F401, F403
-from .type import *  # noqa: F401, F403
-from .type import resolve_type_hint
-from .util import *  # noqa: F401, F403
 
 # Deprecated
 # isort: split
-from .parametric import Val  # noqa: F401, F403
+from ._parametric import Val as Val  # noqa: F401, F403
 
 # Ensure that type checking is always entirely correct! The default O(1) strategy
 # is super fast, but might yield unpredictable dispatch behaviour. The O(n) strategy
