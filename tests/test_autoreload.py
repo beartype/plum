@@ -1,7 +1,7 @@
 import pytest
 
 import plum
-import plum.autoreload as ar
+import plum._autoreload as ar
 
 
 def test_autoreload_activate_deactivate():
@@ -19,7 +19,7 @@ def test_autoreload_activate_deactivate():
     # Check that it is activated.
     assert ar._update_instances_original is not None
     assert ar._update_instances_original.__module__ == "IPython.extensions.autoreload"
-    assert iar.update_instances.__module__ == "plum.autoreload"
+    assert iar.update_instances.__module__ == "plum._autoreload"
 
     plum.deactivate_autoreload()
 

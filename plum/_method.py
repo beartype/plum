@@ -1,4 +1,4 @@
-__all__ = ["Method", "extract_return_type"]
+__all__ = ("Method", "extract_return_type")
 
 
 import inspect
@@ -9,10 +9,10 @@ from rich.console import Console, ConsoleOptions
 from rich.padding import Padding
 from rich.text import Text
 
+from ._signature import Signature, inspect_signature
 from ._type import resolve_type_hint
+from ._util import TypeHint
 from .repr import repr_pyfunction, repr_type, rich_repr
-from .signature import Signature, inspect_signature
-from .util import TypeHint
 
 
 @rich_repr

@@ -1,9 +1,9 @@
+__all__ = ("activate_autoreload", "deactivate_autoreload")
+
 import os
 
+from ._dispatcher import clear_all_cache
 from ._type import type_mapping
-from .dispatcher import clear_all_cache
-
-__all__ = ["activate_autoreload", "deactivate_autoreload"]
 
 
 def _update_instances(old: type, new: type) -> None:

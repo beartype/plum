@@ -26,7 +26,11 @@ Note that `IntOrFloat` prints to `typing.Union[IntOrFloat]` rather than just
 parsing how unions print.
 """
 
-__all__ = ["activate_union_aliases", "deactivate_union_aliases", "set_union_alias"]
+__all__ = (
+    "activate_union_aliases",
+    "deactivate_union_aliases",
+    "set_union_alias",
+)
 
 from functools import wraps
 from typing import Any, TypeVar, Union, _type_repr, get_args

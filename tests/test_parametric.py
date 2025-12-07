@@ -6,15 +6,8 @@ import numpy as np
 import pytest
 
 import plum
-from plum import (
-    Kind,
-    ModuleType,
-    NotFoundLookupError,
-    Val,
-    kind,
-    parametric,
-)
-from plum.parametric import is_concrete, is_type
+from plum import Val
+from plum._parametric import is_concrete, is_type
 
 
 def test_covariantmeta():
@@ -37,7 +30,7 @@ def test_parametric(metaclass):
     class Base2:
         pass
 
-    @parametric
+    @plum.parametric
     class A(Base1, metaclass=metaclass):
         pass
 
@@ -63,7 +56,7 @@ def test_parametric(metaclass):
     assert a2.__class_unparametrized__() is A
 
     # Here we are testing that the class returned by `__class_nonparametric__`
-    # is the 'original' class that the @parametric decorator was applied to.
+    # is the 'original' class that the @plum.parametric decorator was applied to.
     assert a1.__class_nonparametric__() is A.mro()[1]
     assert issubclass(a2.__class_nonparametric__(), Base1)
     assert a2.__class_nonparametric__() is not Base1
@@ -96,7 +89,7 @@ def test_parametric_inheritance():
         def __init__(self, x):
             self.x = x
 
-    @parametric
+    @plum.parametric
     class B(A):
         def __init__(self, x, y):
             pass
@@ -105,12 +98,12 @@ def test_parametric_inheritance():
         def __init__(self, x, y, z):
             pass
 
-    @parametric
+    @plum.parametric
     class D(C):
         def __init__(self, w, x, y, z):
             pass
 
-    @parametric
+    @plum.parametric
     class E(D):
         def __init__(self, v, w, x, y, z):
             pass
@@ -158,7 +151,7 @@ def test_parametric_inheritance():
 
 
 def test_parametric_covariance():
-    @parametric
+    @plum.parametric
     class A:
         pass
 
@@ -178,12 +171,12 @@ def test_parametric_covariance():
 
     # Test that type parameters are resolved.
     assert issubclass(
-        A[ModuleType("builtins", "int")],
-        A[ModuleType("numbers", "Number")],
+        A[plum.ModuleType("builtins", "int")],
+        A[plum.ModuleType("numbers", "Number")],
     )
     assert isinstance(
-        A[ModuleType("builtins", "int")](),
-        A[ModuleType("numbers", "Number")],
+        A[plum.ModuleType("builtins", "int")](),
+        A[plum.ModuleType("numbers", "Number")],
     )
 
     # Check a mix between equatable objects and types.
@@ -194,7 +187,7 @@ def test_parametric_covariance():
 
 
 def test_parametric_covariance_test_case(dispatch: plum.Dispatcher):
-    @parametric
+    @plum.parametric
     class A:
         def __init__(self, x):
             self.x = x
@@ -227,7 +220,7 @@ def test_parametric_covariance_test_case(dispatch: plum.Dispatcher):
 
 
 def test_parametric_constructor():
-    @parametric
+    @plum.parametric
     class A:
         def __init__(self, x, *, y=3):
             self.x = x
@@ -256,7 +249,7 @@ def test_parametric_constructor():
     assert type(a1).__name__ == type(a2).__name__ == "A[float]"
 
 
-@parametric
+@plum.parametric
 class NTuple:
     dispatch = plum.Dispatcher()
 
@@ -291,9 +284,9 @@ def test_parametric_override_infer_type_parameter():
     assert isinstance(NTuple(1, 2, 3), NTuple[3, int])
 
     # Check type parameter initialisation.
-    with pytest.raises(NotFoundLookupError):
+    with pytest.raises(plum.NotFoundLookupError):
         NTuple[2, "int"]
-    with pytest.raises(NotFoundLookupError):
+    with pytest.raises(plum.NotFoundLookupError):
         NTuple[None, int]
 
     # Check argument validation.
@@ -325,7 +318,7 @@ class NDArrayMeta(type):
 dispatch = plum.Dispatcher()
 
 
-@parametric
+@plum.parametric
 class NDArray(np.ndarray, metaclass=NDArrayMeta):
     @classmethod
     @dispatch
@@ -392,12 +385,12 @@ def test_parametric_override_le_type_parameter():
     assert f(np.ones((3, 3), int)) == "int array"
     assert f(np.ones((2, 2))) == "2x2 array"
     assert f(np.ones((2, 2), int)) == "2x2 int array"
-    with pytest.raises(NotFoundLookupError):
+    with pytest.raises(plum.NotFoundLookupError):
         assert f(1.0)
 
 
 def test_parametric_custom_metaclass():
-    @parametric
+    @plum.parametric
     class A(metaclass=abc.ABCMeta):
         @abc.abstractmethod
         def method(self):
@@ -409,7 +402,7 @@ def test_parametric_custom_metaclass():
     class C(B):
         pass
 
-    @parametric
+    @plum.parametric
     class D(C):
         def method(self):
             pass
@@ -431,14 +424,14 @@ def test_parametric_custom_metaclass():
 def test_parametric_custom_metaclass_name_metaclass():
     """Test that the name of the new metaclass is right."""
 
-    @parametric
+    @plum.parametric
     class A(metaclass=abc.ABCMeta):  # noqa: B024
         pass
 
     class B(A):
         pass
 
-    @parametric
+    @plum.parametric
     class C(B, metaclass=abc.ABCMeta):
         pass
 
@@ -446,7 +439,7 @@ def test_parametric_custom_metaclass_name_metaclass():
         assert type(c).__name__ == "CovariantMeta[abc.ABCMeta]"
 
 
-@parametric
+@plum.parametric
 class A:
     dispatch = plum.Dispatcher()
 
@@ -456,7 +449,7 @@ class A:
 
 
 def test_parametric_owner_inference():
-    # The owner should not be what's returned by `@parametric`, which is a proxy.
+    # The owner should not be what's returned by `@plum.parametric`, which is a proxy.
     # Rather, the owner should be the class that really owns the methods, which should
     # be the direct superclass of the proxy class.
     assert A.f.owner != A
@@ -469,7 +462,7 @@ def test_is_concrete():
     class A:
         pass
 
-    @parametric
+    @plum.parametric
     class B:
         pass
 
@@ -486,7 +479,7 @@ def test_is_type():
 
 
 def test_type_parameter():
-    @parametric
+    @plum.parametric
     class A:
         pass
 
@@ -511,21 +504,21 @@ def test_type_parameter():
 
 
 def test_kind():
-    assert Kind[1] == Kind[1]
-    assert Kind[1] != Kind[2]
-    assert Kind[1](1).get() == 1
-    assert Kind[2](1, 2).get() == (1, 2)
+    assert plum.Kind[1] == plum.Kind[1]
+    assert plum.Kind[1] != plum.Kind[2]
+    assert plum.Kind[1](1).get() == 1
+    assert plum.Kind[2](1, 2).get() == (1, 2)
 
-    Kind2 = kind()
-    assert Kind2[1] != Kind[1]
-    assert Kind[1] == Kind[1]
+    Kind2 = plum.kind()
+    assert Kind2[1] != plum.Kind[1]
+    assert plum.Kind[1] == plum.Kind[1]
     assert Kind2[1] == Kind2[1]
 
     # Test providing a superclass, where the default should be `object`.
     class SuperClass:
         pass
 
-    Kind3 = kind(SuperClass)
+    Kind3 = plum.kind(SuperClass)
     assert issubclass(Kind3[1], SuperClass)
     assert not issubclass(Kind2[1], SuperClass)
     assert issubclass(Kind2[1], object)
@@ -557,15 +550,13 @@ def test_val():
     with pytest.raises(ValueError):
         Val[1].__init__(MockVal())
 
-    assert repr(Val[1]()) == "plum.parametric.Val[1]()"
+    assert repr(Val[1]()) == "plum.Val[1]()"
 
 
 def test_init_subclass_correct_args():
     # See the following issue:
     #
     #   https://github.com/beartype/plum/issues/105
-
-    from plum import parametric
 
     register = set()
 
@@ -574,7 +565,7 @@ def test_init_subclass_correct_args():
             assert cls not in register, "Duplicate!"
             register.add(cls)
 
-    @parametric
+    @plum.parametric
     class Wrapper(Pytree):
         pass
 
@@ -585,7 +576,7 @@ def test_init_subclass_correct_args():
 def test_type_unparametrized():
     """Test the `type_unparametrized` function."""
 
-    @parametric
+    @plum.parametric
     class Obj:
         @classmethod
         def __infer_type_parameter__(cls, *arg):
@@ -618,7 +609,7 @@ def test_type_nonparametric():
         def __repr__(self):
             return f"Obj({self.x})"
 
-    Obj = parametric(NonParametricObj)
+    Obj = plum.parametric(NonParametricObj)
 
     pobj = Obj(1)
 

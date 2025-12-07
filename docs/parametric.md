@@ -210,7 +210,7 @@ make a parametric wrapper object:
 >>> this = Kind["This"](1)
 
 >>> this
-<plum.parametric.Kind['This'] object at ...>
+<plum...Kind['This'] object at ...>
 
 >>> this.get()
 1
@@ -218,7 +218,7 @@ make a parametric wrapper object:
 >>> that = Kind["That"]("some", "args", "here")
 
 >>> that
-<plum.parametric.Kind['That'] object at ...>
+<plum...Kind['That'] object at ...>
 
 >>> that.get()
 ('some', 'args', 'here')
