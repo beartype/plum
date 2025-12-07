@@ -33,7 +33,8 @@ dev = [
     { include-group = "docs" },
     { include-group = "lint" },
     { include-group = "nox" },
-    { include-group = "test" },
+    { include-group = "test_static" },
+    { include-group = "test_runtime" },
 ]
 docs = [
     "jupyter-book>=1.0.0,<2.0.0",
@@ -46,12 +47,14 @@ nox = [
     "nox-uv>=0.6.3",
     "uv>=0.9.16",
 ]
-test = [
+test_static = [
+    "mypy>=1.18.2",
+    "pyright>=1.1.331",
+]
+test_runtime = [
     "coveralls>=4.0.1",
     "ipython>=8.18.1",
-    "mypy>=1.18.2",
     "numpy>=2.0.2",
-    "pyright>=1.1.331",
     "pytest>=8.4.2",
     "pytest-cov>=7.0.0",
     "sybil[pytest]>=9.2.0",

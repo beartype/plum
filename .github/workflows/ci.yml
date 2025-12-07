@@ -49,8 +49,7 @@ jobs:
           python -m pip install --no-cache-dir -e .
           ${{ matrix.value.extra-install }}
       - name: Test linter assertions
-        run: |
-          python check_linter_assertions.py tests/typechecked
+        run: nox -s typecheck
       - name: Run tests
         run: |
           PRAGMA_VERSION=`python -c "import sys; print('.'.join(map(str, sys.version_info[:2])))"` \
