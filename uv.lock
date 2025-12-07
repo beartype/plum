@@ -2094,21 +2094,23 @@ nox = [
     { name = "nox-uv" },
     { name = "uv" },
 ]
-test = [
+test-runtime = [
     { name = "coveralls", version = "4.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "coveralls", version = "4.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "ipython", version = "8.18.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "ipython", version = "8.37.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
     { name = "ipython", version = "9.8.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "mypy" },
     { name = "numpy", version = "2.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
     { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "pyright" },
     { name = "pytest", version = "8.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "pytest", version = "9.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "pytest-cov" },
     { name = "sybil", extra = ["pytest"] },
+]
+test-static = [
+    { name = "mypy" },
+    { name = "pyright" },
 ]
 
 [package.metadata]
@@ -2141,15 +2143,17 @@ nox = [
     { name = "nox-uv", specifier = ">=0.6.3" },
     { name = "uv", specifier = ">=0.9.16" },
 ]
-test = [
+test-runtime = [
     { name = "coveralls", specifier = ">=4.0.1" },
     { name = "ipython", specifier = ">=8.18.1" },
-    { name = "mypy", specifier = ">=1.18.2" },
     { name = "numpy", specifier = ">=2.0.2" },
-    { name = "pyright", specifier = ">=1.1.331" },
     { name = "pytest", specifier = ">=8.4.2" },
     { name = "pytest-cov", specifier = ">=7.0.0" },
     { name = "sybil", extras = ["pytest"], specifier = ">=9.2.0" },
+]
+test-static = [
+    { name = "mypy", specifier = ">=1.18.2" },
+    { name = "pyright", specifier = ">=1.1.331" },
 ]
 
 [[package]]
