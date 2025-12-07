@@ -7,6 +7,8 @@ from beartype import (
 )
 from beartype.door import TypeHint as _TypeHint, is_bearable as _is_bearable
 
+from ._type import *  # noqa: F401, F403
+from ._type import resolve_type_hint
 from ._version import __version__  # noqa: F401
 from .alias import *  # noqa: F401, F403
 from .autoreload import *  # noqa: F401, F403
@@ -18,8 +20,6 @@ from .parametric import *  # noqa: F401, F403
 from .promotion import *  # noqa: F401, F403
 from .resolver import *  # noqa: F401, F403
 from .signature import *  # noqa: F401, F403
-from .type import *  # noqa: F401, F403
-from .type import resolve_type_hint
 from .util import *  # noqa: F401, F403
 
 # isort: split

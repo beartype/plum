@@ -1,7 +1,7 @@
 import os
 
+from ._type import type_mapping
 from .dispatcher import clear_all_cache
-from .type import type_mapping
 
 __all__ = ["activate_autoreload", "deactivate_autoreload"]
 

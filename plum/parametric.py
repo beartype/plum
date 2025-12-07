@@ -5,10 +5,10 @@ from typing_extensions import deprecated
 import beartype.door
 from beartype.roar import BeartypeDoorNonpepException
 
+from ._type import resolve_type_hint
 from .dispatcher import Dispatcher
 from .function import _owner_transfer
 from .repr import repr_short
-from .type import resolve_type_hint
 from .util import TypeHint
 
 __all__ = [

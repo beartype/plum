@@ -3,7 +3,7 @@ Application Programming Interface
 
 Types
 -----
-.. automodule:: plum.type
+.. automodule:: plum._type
     :members:
 
 Signatures

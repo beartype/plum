@@ -5,7 +5,7 @@ from typing import Literal
 
 import pytest
 
-from plum.type import (
+from plum._type import (
     ModuleType,
     PromisedType,
     ResolvableType,

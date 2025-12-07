@@ -36,16 +36,16 @@ class ResolvableType(type):
     def __new__(cls: type[T], name: str) -> T:
         return type.__new__(cls, name, (), {})
 
-    def deliver(self: T, typ: type, /) -> T:
+    def deliver(self: T, delivered_type: type, /) -> T:
         """Deliver the type.
 
         Args:
-            type (type): Type to deliver.
+            delivered_type (type): Type to deliver.
 
         Returns:
             :class:`ResolvableType`: `self`.
         """
-        self._type = typ
+        self._type = delivered_type
         return self
 
     def resolve(self: T) -> type | T:
@@ -74,6 +74,9 @@ class PromisedType(ResolvableType):
 
     def __new__(cls, name: str = "SomeType") -> "PromisedType":
         return super().__new__(cls, f"PromisedType[{name}]")
+
+    def __repr__(self) -> str:
+        return f"<class 'plum.PromisedType[{self._name}]'>"
 
 
 @final
