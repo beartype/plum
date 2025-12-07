@@ -1,14 +1,16 @@
+from typing import overload
+
 import plum
 
-@plum.overload
+@overload
 def f(x: int) -> int:
     return x
 
-@plum.overload
+@overload
 def f(x: str) -> str:
     return x
 
-@plum.dispatch  # type: ignore[misc, no-redef]  # "An implementation for an overloaded function is not allowed in a stub file"
+@plum.dispatch  # type: ignore[misc]  # "An implementation for an overloaded function is not allowed in a stub file"
 def f(x):
     pass
 

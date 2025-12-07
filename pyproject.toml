@@ -93,7 +93,6 @@ follow_imports = "skip"  # TODO: set to "normal" when mypy errors are fixed
 show_error_codes = true
 exclude = [  # TODO: fix the mypy errors in all these files
     "plum/alias\\.py",
-    "plum/dispatcher\\.py",
     "plum/function\\.py",
     "plum/method\\.py",
     "plum/parametric\\.py",
