@@ -39,13 +39,14 @@ def pylint(s: nox.Session, /) -> None:
 # Testing
 
 
-@session(uv_groups=["test"], reuse_venv=True)
+@session(uv_groups=["test_static"], reuse_venv=True)
 def typecheck(s: nox.Session, /) -> None:
     """Run the type checker."""
-    s.run("python", "check_linter_assertions.py", "tests/typechecked", *s.posargs)
+    s.run("mypy", "tests/static", *s.posargs)
+    s.run("pyright", "tests/static", *s.posargs)
 
 
-@session(uv_groups=["test"], reuse_venv=True)
+@session(uv_groups=["test_runtime"], reuse_venv=True)
 def pytest(s: nox.Session, /) -> None:
     """Run the unit and regular tests."""
     # Compute from the Python in this nox/uv environment
