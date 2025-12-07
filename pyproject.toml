@@ -23,29 +23,34 @@ dependencies = [
     "rich>=10.0"
 ]
 
-[project.optional-dependencies]
-dev = [
-    "numpy",
-    "pytest>=6",
-    "pytest-cov",
-    "coveralls",
-    "pre-commit",
-    "IPython",
-    "black==23.9.0",
-    "ghp-import",
-    "wheel",
-    "build",
-    "tox",
-    "jupyter-book",
-    "mypy",
-    "pyright>=1.1.331",
-    "ruff>=0.2.1",
-    "sybil",
-]
-
 [project.urls]
 repository = "https://github.com/beartype/plum"
 documentation = "https://beartype.github.io/plum"
+
+
+[dependency-groups]
+dev = [
+    { include-group = "docs" },
+    { include-group = "lint" },
+    { include-group = "test" },
+]
+docs = [
+    "jupyter-book>=1.0.0,<2.0.0",
+]
+lint = [
+    "pre-commit>=4.3.0",
+]
+test = [
+    "coveralls>=4.0.1",
+    "ipython>=8.18.1",
+    "mypy>=1.18.2",
+    "numpy>=2.0.2",
+    "pyright>=1.1.331",
+    "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
+    "sybil[pytest]>=9.2.0",
+    "tox>=4.30.3",
+]
 
 
 [build-system]
@@ -101,6 +106,7 @@ ignore = ["F811", "B018"]
 combine-as-imports = true
 known-first-party = ["beartype"]
 known-local-folder = ["plum"]
+extra-standard-library = ["typing_extensions"]
 
 [tool.ruff.format]
 docstring-code-format = true

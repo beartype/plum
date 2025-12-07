@@ -4,7 +4,6 @@ import typing
 import warnings
 from collections.abc import Callable, Hashable
 from typing import Optional, Union, get_args, get_origin
-
 from typing_extensions import Self, TypeGuard
 
 from beartype.vale._core._valecore import BeartypeValidator
@@ -188,7 +187,7 @@ type_mapping = {}
 values."""
 
 
-def resolve_type_hint(x):
+def resolve_type_hint(x: object, /) -> object:
     """Resolve all :class:`ResolvableType` in a type or type hint.
 
     Args:
@@ -255,7 +254,7 @@ def resolve_type_hint(x):
         return x
 
 
-def is_faithful(x) -> bool:
+def is_faithful(x: object, /) -> bool:
     """Check whether a type hint is faithful.
 
     A type or type hint `t` is defined _faithful_ if, for all `x`, the following holds
@@ -278,20 +277,23 @@ def is_faithful(x) -> bool:
     return _is_faithful(resolve_type_hint(x))
 
 
-def _is_faithful(x) -> bool:
+UNION_TYPES = frozenset({typing.Union, UnionType, typing.Optional})
+
+
+def _is_faithful(x: object, /) -> bool:
     if _is_hint(x):
         origin = get_origin(x)
         args = get_args(x)
         if args == ():
-            # Unsubscripted type hints tend to be faithful. For example, `Any`, `List`,
-            # `Tuple`, `Dict`, `Callable`, and `Generator` are. When we come across a
-            # counter-example, we will refine this logic.
+            # Unsubscripted type hints tend to be faithful. For example, `Any`,
+            # `List`, `Tuple`, `Dict`, `Callable`, and `Generator` are. When we
+            # come across a counter-example, we will refine this logic.
             return True
-        else:
-            if origin in {typing.Union, UnionType, typing.Optional}:
-                return all(is_faithful(arg) for arg in args)
-            else:
-                return False
+
+        if origin in UNION_TYPES:
+            return all(is_faithful(arg) for arg in args)
+
+        return False
 
     elif x is None or x == Ellipsis:
         return True

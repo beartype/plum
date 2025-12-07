@@ -1,6 +1,5 @@
 import contextlib
 from typing import TypeVar, Union
-
 from typing_extensions import deprecated
 
 import beartype.door
@@ -434,7 +433,7 @@ def is_concrete(t):
     return getattr(t, "parametric", False) and t.concrete
 
 
-def is_type(x):
+def is_type(x: object, /) -> bool:
     """Check whether `x` is a type or a type hint.
 
     Under the hood, this attempts to construct a :class:`beartype.door.TypeHint` from
@@ -453,7 +452,7 @@ def is_type(x):
         return False
 
 
-def type_parameter(x):
+def type_parameter(x: object, /) -> object:
     """Get the type parameter of concrete parametric type or an instance of a concrete
     parametric type.
 
@@ -472,7 +471,7 @@ def type_parameter(x):
     )
 
 
-def type_nonparametric(q: T) -> type[T]:
+def type_nonparametric(q: T, /) -> type[T]:
     """Return the non-parametric type of an object.
 
     :mod:`plum.parametric` produces parametric subtypes of classes. This method
@@ -540,7 +539,7 @@ def type_nonparametric(q: T) -> type[T]:
     )
 
 
-def type_unparametrized(q: T) -> type[T]:
+def type_unparametrized(q: T, /) -> type[T]:
     """Return the unparametrized type of an object.
 
     :mod:`plum.parametric` produces parametric subtypes of classes.  This

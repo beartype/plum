@@ -20,7 +20,7 @@ class MethodRedefinitionWarning(Warning):
     """A method is redefined."""
 
 
-def _render_function_call(f: str, target: Union[tuple, Signature]) -> str:
+def _render_function_call(f: str, target: Union[tuple, Signature], /) -> str:
     """Render a function call.
 
     Args:
@@ -132,7 +132,7 @@ class NotFoundLookupError(LookupError):
                 yield Padding(m.repr_mismatch(misses, varargs_matched), (0, 4))
 
 
-def _change_function_name(f: Callable, name: str) -> Callable:
+def _change_function_name(f: Callable, name: str, /) -> Callable:
     """It is not always the case that `f.__name__` is writable. To solve this, first
     create a temporary function that wraps `f` and then change the name.
 
@@ -152,7 +152,7 @@ def _change_function_name(f: Callable, name: str) -> Callable:
     return f_renamed
 
 
-def _document(f: Callable, f_name: Optional[str] = None) -> str:
+def _document(f: Callable, f_name: Optional[str] = None, /) -> str:
     """Generate documentation for a function `f`.
 
     The generated documentation contains both the function definition and the
@@ -203,7 +203,7 @@ def _document(f: Callable, f_name: Optional[str] = None) -> str:
     return "\n".join([title] + body).rstrip()
 
 
-def _unwrap_invoked_methods(f):
+def _unwrap_invoked_methods(f: Callable, /) -> Callable:
     """Undo wrapping of :meth:`Function.invoke`d methods.
 
     :meth:`Function.invoke` uses :func:`functools.wraps` to wrap the function and

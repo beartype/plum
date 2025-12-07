@@ -11,7 +11,6 @@ from plum.util import (
     get_class,
     get_context,
     is_in_class,
-    multihash,
     wrap_lambda,
 )
 
@@ -39,12 +38,6 @@ def test_missing():
     sys.modules["sphinx"] = None
     assert not Missing
     del sys.modules["sphinx"]
-
-
-def test_multihash():
-    assert multihash(1, 2) == multihash(1, 2)
-    assert multihash(2, 2) != multihash(1, 2)
-    assert multihash(2, 1) != multihash(1, 2)
 
 
 class Number(Comparable):

@@ -1,8 +1,6 @@
 import abc
 import sys
-from collections.abc import Callable, Hashable, Sequence
-
-from typing_extensions import deprecated
+from collections.abc import Callable, Sequence
 
 __all__ = [
     "Callable",
@@ -43,19 +41,6 @@ class Missing(metaclass=_MissingType):
         raise TypeError("`Missing` cannot be instantiated.")
 
 
-@deprecated("Use `hash(tuple_of_args)` instead.")
-def multihash(*args: Hashable) -> int:
-    """Multi-argument order-sensitive hash.
-
-    Args:
-        *args: Objects to hash.
-
-    Returns:
-        int: Hash.
-    """
-    return hash(args)
-
-
 class Comparable(metaclass=abc.ABCMeta):
     """A mixin that makes instances of the class comparable.
 
@@ -81,7 +66,7 @@ class Comparable(metaclass=abc.ABCMeta):
     def __gt__(self, other):
         return self >= other and self != other
 
-    def is_comparable(self, other):
+    def is_comparable(self, other, /) -> bool:
         """Check whether this object is comparable with another one.
 
         Args:
@@ -93,7 +78,7 @@ class Comparable(metaclass=abc.ABCMeta):
         return self < other or self == other or self > other
 
 
-def wrap_lambda(f: Callable) -> Callable:
+def wrap_lambda(f: Callable, /) -> Callable:
     """Wrap a callable in a lambda function.
 
     Args:
@@ -105,7 +90,7 @@ def wrap_lambda(f: Callable) -> Callable:
     return lambda x: f(x)
 
 
-def is_in_class(f: Callable) -> bool:
+def is_in_class(f: Callable, /) -> bool:
     """Check if a function is part of a class.
 
     Args:
@@ -118,7 +103,7 @@ def is_in_class(f: Callable) -> bool:
     return len(parts) >= 2 and parts[-2] != "<locals>"
 
 
-def _split_parts(f: Callable) -> list[str]:
+def _split_parts(f: Callable, /) -> list[str]:
     # Under edge cases, `f.__module__` can be `None`. In this case we, skip it.
     # Otherwise, the fully-qualified name is the name of the module plus the qualified
     # name of the function.
@@ -126,7 +111,7 @@ def _split_parts(f: Callable) -> list[str]:
     return (module + f.__qualname__).split(".")
 
 
-def get_class(f: Callable) -> str:
+def get_class(f: Callable, /) -> str:
     """Assuming that `f` is part of a class, get the fully qualified name of the
     class.
 
@@ -140,12 +125,12 @@ def get_class(f: Callable) -> str:
     return ".".join(parts[:-1])
 
 
-def get_context(f) -> str:
+def get_context(f: Callable, /) -> str:
     """Get the fully qualified name of the context for `f`.
 
-    If `f` is part of a class, then the context corresponds to the scope of the class.
-    If `f` is not part of a class, then the context corresponds to the scope of the
-    function.
+    If `f` is part of a class, then the context corresponds to the scope of the
+    class.  If `f` is not part of a class, then the context corresponds to the
+    scope of the function.
 
     Args:
         f (function): Method to get context for.
@@ -162,7 +147,7 @@ def get_context(f) -> str:
         return ".".join(parts[:-1])
 
 
-def argsort(seq: Sequence) -> list[int]:
+def argsort(seq: Sequence, /) -> list[int]:
     """Compute the indices that sort a sequence.
 
     Args:
