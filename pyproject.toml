@@ -16,7 +16,7 @@ classifiers = [
 ]
 dynamic = ["version"]
 
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "beartype>=0.16.2",
     "typing-extensions>=4.9.0",
@@ -28,11 +28,18 @@ repository = "https://github.com/beartype/plum"
 documentation = "https://beartype.github.io/plum"
 
 
+[build-system]
+requires = ["hatchling>=1.8.0", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+
 [dependency-groups]
 dev = [
     { include-group = "docs" },
     { include-group = "lint" },
-    { include-group = "test" },
+    { include-group = "nox" },
+    { include-group = "test_static" },
+    { include-group = "test_runtime" },
 ]
 docs = [
     "jupyter-book>=1.0.0,<2.0.0",
@@ -40,23 +47,23 @@ docs = [
 lint = [
     "pre-commit>=4.3.0",
 ]
-test = [
+nox = [
+    "nox>=2025.11.12",
+    "nox-uv>=0.6.3",
+    "uv>=0.9.16",
+]
+test_static = [
+    "mypy>=1.18.2",
+    "pyright>=1.1.331",
+]
+test_runtime = [
     "coveralls>=4.0.1",
     "ipython>=8.18.1",
-    "mypy>=1.18.2",
     "numpy>=2.0.2",
-    "pyright>=1.1.331",
     "pytest>=8.4.2",
     "pytest-cov>=7.0.0",
     "sybil[pytest]>=9.2.0",
-    "tox>=4.30.3",
 ]
-
-
-[build-system]
-requires = ["hatchling>=1.8.0", "hatch-vcs"]
-build-backend = "hatchling.build"
-
 
 [tool.hatch]
 version.source = "vcs"
@@ -87,7 +94,7 @@ minversion = "6.0"
 
 [tool.ruff]
 src = ["plum"]
-target-version = "py39"
+target-version = "py310"
 line-length = 88
 
 [tool.ruff.lint]
@@ -100,7 +107,7 @@ select = [
     "SIM",  # flake8-simplify
     "UP",  # pyupgrade
 ]
-ignore = ["F811", "B018"]
+ignore = ["F811", "B018", "UP038"]
 
 [tool.ruff.lint.isort]
 combine-as-imports = true

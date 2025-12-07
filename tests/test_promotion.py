@@ -118,14 +118,6 @@ def test_promote(convert, promote):
     with pytest.raises(TypeError):
         promote("1", 1.0)
 
-    add_promotion_rule(str, Union[int, float], float)
-    add_conversion_method(str, Union[int, float], float)
-
-    assert promote(1, "1", "1") == (2.0, 1.0, 1.0)
-    assert promote("1", 1, 1) == (1.0, 2.0, 2.0)
-    assert promote(1.0, "1", 1) == (1.0, 1.0, 2.0)
-    assert promote("1", 1.0, 1) == (1.0, 1.0, 2.0)
-
     add_promotion_rule(str, int, float)
     add_promotion_rule(str, float, float)
     add_conversion_method(str, float, lambda x: "lel")
@@ -134,6 +126,26 @@ def test_promote(convert, promote):
     assert promote("1", 1, 1.0) == ("lel", 2.0, 1.0)
     assert promote(1.0, "1", 1) == (1.0, "lel", 2.0)
     assert promote("1", 1.0, "1") == ("lel", 1.0, "lel")
+
+
+@pytest.mark.parametrize("use_uniontype_union", [True, False])
+def test_promote_union(convert, promote, use_uniontype_union):
+    # Baseline promotion rules.
+    add_promotion_rule(int, float, float)
+    add_conversion_method(int, float, float)
+
+    # Union promotion rules.
+    if use_uniontype_union:
+        add_promotion_rule(str, int | float, float)
+        add_conversion_method(str, int | float, float)
+    else:
+        add_promotion_rule(str, Union[int, float], float)  # noqa: UP007
+        add_conversion_method(str, Union[int, float], float)  # noqa: UP007
+
+    assert promote(1, "1", "1") == (1.0, 1.0, 1.0)
+    assert promote("1", 1, 1) == (1.0, 1.0, 1.0)
+    assert promote(1.0, "1", 1) == (1.0, 1.0, 1.0)
+    assert promote("1", 1.0, 1) == (1.0, 1.0, 1.0)
 
 
 def test_promote_resolve_type_hints(convert, promote):
@@ -173,10 +185,20 @@ def test_self_promotion(convert, promote):
         n = Num()
         assert promote(n, n) == (n, n)
 
+        # Also test a more complicated scenario where the types are equal, but
+        # not identical.
+        t1 = typing.Union[int, float]  # noqa: UP007
+        t2 = typing.Union[float, int]  # noqa: UP007
+        assert t1 is not t2
+        add_promotion_rule(t1, t2, str)
+        add_conversion_method(int, str, str)
+        add_conversion_method(float, str, str)
+        assert promote(1, 1.0) == ("1", "1.0")
+
         # Also test a more complicated scenario where the types are equal, but not
         # identical.
-        t1 = typing.Union[int, float]
-        t2 = typing.Union[float, int]
+        t1 = int | float
+        t2 = float | int
         assert t1 is not t2
         add_promotion_rule(t1, t2, str)
         add_conversion_method(int, str, str)

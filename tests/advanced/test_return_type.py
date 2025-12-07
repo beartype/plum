@@ -7,7 +7,7 @@ import plum
 
 def test_return_type(dispatch: plum.Dispatcher):
     @dispatch
-    def f(x: Union[int, str]) -> int:
+    def f(x: int | str) -> int:
         return x
 
     assert f(1) == 1
@@ -63,7 +63,7 @@ def test_inheritance_self_return():
 
 def test_conversion(convert, dispatch: plum.Dispatcher):
     @dispatch
-    def f(x: Union[int, str]) -> int:
+    def f(x: int | str) -> int:
         return x
 
     assert f(1) == 1

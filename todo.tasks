@@ -13,7 +13,3 @@ Features:
             ☐ Show method to break ambiguity.
         ☐ Improved formatting of error messages.
         ☐ Type check keyword arguments.
-
-    Tooling:
-        ☐ Make package work with `mypy` and linters.
-            Use `@overload`?

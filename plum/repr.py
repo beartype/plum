@@ -3,9 +3,9 @@ import os
 import sys
 import types
 import typing
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from functools import partial
-from typing import Any, Callable, Optional, TypeVar
+from typing import Any, TypeVar
 
 import rich
 from rich.color import Color
@@ -67,7 +67,7 @@ def repr_short(x) -> str:
         str: Shorter representation of `x`.
     """
     # :func:`typing._type_repr` is an internal function, but it should be available in
-    # Python versions 3.9 through 3.11.
+    # Python versions 3.9 through 3.13.
     return typing._type_repr(x)
 
 
@@ -205,7 +205,7 @@ def _repr_mimebundle_from_rich_(
     return data
 
 
-def rich_repr(cls: Optional[type[T]] = None, str: bool = False) -> type[T]:
+def rich_repr(cls: type[T] | None = None, str: bool = False) -> type[T]:
     """Class decorator defining a `__repr__` method that calls :mod:`rich.`
 
     This also sets `_repr_mimebundle_` for better rendering in Jupyter.

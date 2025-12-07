@@ -96,7 +96,8 @@ def test_moduletype_condition():
 
 def test_is_hint():
     assert not _is_hint(int)
-    assert _is_hint(typing.Union[int, float])
+    assert _is_hint(typing.Union[int, float])  # noqa: UP007
+    assert _is_hint(int | float)
     assert _is_hint(Callable)
 
 
@@ -136,8 +137,11 @@ def test_resolve_type_hint(pseudo_int):
     assert resolve_type_hint((pseudo_int, pseudo_int)) == (int, int)
     assert resolve_type_hint([pseudo_int, pseudo_int]) == [int, int]
 
+    def _combo0(fake, real):
+        return fake | float, real | float
+
     def _combo1(fake, real):
-        return typing.Union[fake, float], typing.Union[real, float]
+        return typing.Union[fake, float], typing.Union[real, float]  # noqa: UP007
 
     def _combo2(fake, real):
         return Callable[[fake, float], fake], Callable[[real, float], real]
@@ -148,7 +152,7 @@ def test_resolve_type_hint(pseudo_int):
     def _combo4(fake, real):
         return _combo3(*_combo2(*_combo1(fake, real)))
 
-    for combo in [_combo1, _combo2, _combo3, _combo4]:
+    for combo in [_combo0, _combo1, _combo2, _combo3, _combo4]:
         fake, real = combo(pseudo_int, int)
         assert resolve_type_hint(fake) == real
 
@@ -191,8 +195,10 @@ def test_is_faithful():
     # `Callable`:
     assert not is_faithful(Callable[[int], int])
     # `Union`:
-    assert is_faithful(typing.Union[int, float])
-    assert not is_faithful(typing.Union[int, t_nf])
+    assert is_faithful(typing.Union[int, float])  # noqa: UP007
+    assert not is_faithful(typing.Union[int, t_nf])  # noqa: UP007
+    assert is_faithful(int | float)  # noqa: UP007
+    assert not is_faithful(int | t_nf)
 
     # Test warning.
     with pytest.warns(
