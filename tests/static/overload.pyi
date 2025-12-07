@@ -1,10 +1,12 @@
+from typing import overload
+
 import plum
 
-@plum.overload
+@overload
 def f(x: int) -> int:
     return x
 
-@plum.overload
+@overload
 def f(x: str) -> str:
     return x
 

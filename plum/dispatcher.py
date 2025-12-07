@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from functools import partial
-from typing import Any, TypeVar, overload
+from typing import Any, TypeVar, cast, overload
 
 from .function import Function
 from .overload import get_overloads
@@ -31,17 +31,16 @@ class Dispatcher:
     functions: dict[str, Function] = field(default_factory=dict)
     classes: dict[str, dict[str, Function]] = field(default_factory=dict)
 
+    # TODO: Correctly type return value as Function[T]
+    @overload
+    def __call__(self, method: None, /, *, precedence: int = ...) -> partial[T]: ...
+
     @overload
     def __call__(self, method: T, /, *, precedence: int = ...) -> T: ...
 
-    @overload
-    def __call__(
-        self, method: None = ..., /, *, precedence: int
-    ) -> Callable[[T], T]: ...
-
     def __call__(
         self, method: T | None = None, /, *, precedence: int = 0
-    ) -> T | Callable[[T], T]:
+    ) -> T | partial[T]:
         """Decorator to register for a particular signature.
 
         Args:
@@ -61,15 +60,15 @@ class Dispatcher:
                 # All `f` returned by `self._add_method` are the same.
                 f = self._add_method(overload_method, None, precedence=precedence)
             # We do not need to register `method`, because it is not an implementation.
-            return f
+            return cast(T, f)
 
-        # The signature will be automatically derived from `method`, so we can safely
-        # set the signature argument to `None`.
-        return self._add_method(method, None, precedence=precedence)
+        # The signature will be automatically derived from `method`, so we can
+        # safely set the signature argument to `None`.
+        return cast(T, self._add_method(method, None, precedence=precedence))
 
     def multi(
         self, *signatures: Signature | tuple[TypeHint, ...]
-    ) -> Callable[[Callable], Function]:
+    ) -> Callable[[Callable[..., Any]], Function]:
         """Decorator to register multiple signatures at once.
 
         Args:
@@ -91,18 +90,18 @@ class Dispatcher:
                     f"`plum.signature.Signature`."
                 )
 
-        def decorator(method: Callable, /) -> Function:
+        def decorator(method: Callable[..., Any], /) -> Function:
             # The precedence will not be used, so we can safely set it to `None`.
             return self._add_method(method, *resolved_signatures, precedence=None)
 
         return decorator
 
-    def abstract(self, method: Callable, /) -> Function:
+    def abstract(self, method: Callable[..., Any], /) -> Function:
         """Decorator for an abstract function definition. The abstract function
         definition does not implement any methods."""
         return self._get_function(method)
 
-    def _get_function(self, method: Callable, /) -> Function:
+    def _get_function(self, method: Callable[..., Any], /) -> Function:
         # If a class is the owner, use a namespace specific for that class. Otherwise,
         # use the global namespace.
         if is_in_class(method):
@@ -127,7 +126,7 @@ class Dispatcher:
 
     def _add_method(
         self,
-        method: Callable,
+        method: Callable[..., Any],
         *signatures: Signature | None,
         precedence: int | None,
     ) -> Function:
@@ -136,17 +135,17 @@ class Dispatcher:
             f.register(method, signature, precedence)
         return f
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear cache."""
         for f in self.functions.values():
             f.clear_cache()
 
 
-def clear_all_cache():
+def clear_all_cache() -> None:
     """Clear all cache, including the cache of subclass checks. This should be called
     if types are modified."""
     for f in Function._instances:
         f.clear_cache()
 
 
-dispatch = Dispatcher()  #: A default dispatcher for convenience purposes.
+dispatch: Dispatcher = Dispatcher()  #: A default dispatcher for convenience purposes.
