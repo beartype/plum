@@ -75,6 +75,9 @@ class PromisedType(ResolvableType):
     def __new__(cls, name: str = "SomeType") -> "PromisedType":
         return super().__new__(cls, f"PromisedType[{name}]")
 
+    def __repr__(self) -> str:
+        return f"<class 'plum.PromisedType[{self._name}]'>"
+
 
 @final
 class ModuleType(ResolvableType):

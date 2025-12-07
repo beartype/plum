@@ -7,10 +7,10 @@ from types import MethodType
 from typing import Any, Protocol, TypeVar
 from typing_extensions import Self
 
+from ._type import resolve_type_hint
 from .method import Method
 from .resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
 from .signature import Signature, append_default_args
-from .type import resolve_type_hint
 from .util import TypeHint
 
 __all__ = ["Function"]
