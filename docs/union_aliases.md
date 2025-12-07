@@ -13,8 +13,8 @@ from typing import Union
 from plum import dispatch
 
 
-scalar_types = sum(np.core.sctypes.values(), [])  # All NumPy scalar types
-Scalar = Union[tuple(scalar_types)]  # Union of all NumPy scalar types
+scalar_types = tuple(np.sctypeDict.values())  # All NumPy scalar types
+Scalar = Union[scalar_types]  # Union of all NumPy scalar types
 
 
 @dispatch
