@@ -1,8 +1,4 @@
-import abc
-import sys
-from collections.abc import Callable, Sequence
-
-__all__ = [
+__all__ = (
     "Callable",
     "TypeHint",
     "Missing",
@@ -12,19 +8,26 @@ __all__ = [
     "get_class",
     "get_context",
     "argsort",
-]
+)
 
-# We use this to indicate a reader that we expect a type hint. Using just `object` as a
-# type hint is technically correct for `int | None` for example, but does not convey the
-# intention to a reader. Furthermore, if later on, Python has a proper type for type
-# hints, we can just replace it here.
-TypeHint = object
+import abc
+import sys
+from collections.abc import Callable, Sequence
+from typing import Any, TypeAlias, TypeVar
+
+# We use this to indicate a reader that we expect a type hint. Using just
+# `object` as a type hint is technically correct for `int | None` for example,
+# but does not convey the intention to a reader. Furthermore, if later on,
+# Python has a proper type for type hints, we can just replace it here.
+TypeHint: TypeAlias = object
+T = TypeVar("T")
+R = TypeVar("R")  # return type
 
 
 class _MissingType(type):
     """The type of :class:`Missing`."""
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         # For some reason, Sphinx does attempt to evaluate `bool(Missing)`.
         # Let's try to keep Sphinx working correctly by not raising an
         # exception.
@@ -38,7 +41,7 @@ class Missing(metaclass=_MissingType):
     """A class that can be used to indicate that a value is missing. This class cannot
     be instantiated and has no boolean value."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         raise TypeError("`Missing` cannot be instantiated.")
 
 
@@ -48,26 +51,26 @@ class Comparable(metaclass=abc.ABCMeta):
     Requires the subclass to just implement `__le__`.
     """
 
-    def __eq__(self, other):
+    def __eq__(self, other: object, /) -> bool:
         return self <= other <= self
 
-    def __ne__(self, other):
+    def __ne__(self, other: object, /) -> bool:
         return not self == other
 
     @abc.abstractmethod
-    def __le__(self, other):
+    def __le__(self, other: object, /) -> bool:
         pass  # pragma: no cover
 
-    def __lt__(self, other):
+    def __lt__(self, other: object, /) -> bool:
         return self <= other and self != other
 
-    def __ge__(self, other):
-        return other.__le__(self)
+    def __ge__(self, other: object, /) -> bool:
+        return other.__le__(self)  # type: ignore[no-any-return,operator]
 
-    def __gt__(self, other):
+    def __gt__(self, other: object, /) -> bool:
         return self >= other and self != other
 
-    def is_comparable(self, other, /) -> bool:
+    def is_comparable(self, other: object, /) -> bool:
         """Check whether this object is comparable with another one.
 
         Args:
@@ -79,7 +82,7 @@ class Comparable(metaclass=abc.ABCMeta):
         return self < other or self == other or self > other
 
 
-def wrap_lambda(f: Callable, /) -> Callable:
+def wrap_lambda(f: Callable[[T], R], /) -> Callable[[T], R]:
     """Wrap a callable in a lambda function.
 
     Args:
@@ -91,7 +94,7 @@ def wrap_lambda(f: Callable, /) -> Callable:
     return lambda x: f(x)
 
 
-def is_in_class(f: Callable, /) -> bool:
+def is_in_class(f: Callable[..., Any], /) -> bool:
     """Check if a function is part of a class.
 
     Args:
@@ -104,7 +107,7 @@ def is_in_class(f: Callable, /) -> bool:
     return len(parts) >= 2 and parts[-2] != "<locals>"
 
 
-def _split_parts(f: Callable, /) -> list[str]:
+def _split_parts(f: Callable[..., Any], /) -> list[str]:
     # Under edge cases, `f.__module__` can be `None`. In this case we, skip it.
     # Otherwise, the fully-qualified name is the name of the module plus the qualified
     # name of the function.
@@ -112,7 +115,7 @@ def _split_parts(f: Callable, /) -> list[str]:
     return (module + f.__qualname__).split(".")
 
 
-def get_class(f: Callable, /) -> str:
+def get_class(f: Callable[..., Any], /) -> str:
     """Assuming that `f` is part of a class, get the fully qualified name of the
     class.
 
@@ -126,7 +129,7 @@ def get_class(f: Callable, /) -> str:
     return ".".join(parts[:-1])
 
 
-def get_context(f: Callable, /) -> str:
+def get_context(f: Callable[..., Any], /) -> str:
     """Get the fully qualified name of the context for `f`.
 
     If `f` is part of a class, then the context corresponds to the scope of the
@@ -148,11 +151,12 @@ def get_context(f: Callable, /) -> str:
         return ".".join(parts[:-1])
 
 
-def argsort(seq: Sequence, /) -> list[int]:
-    """Compute the indices that sort a sequence.
+def argsort(seq: Sequence[Any], /) -> list[int]:
+    """Compute the indices that sort an integer sequence.
 
     Args:
-        seq (Sequence): Sequence to sort.
+        seq (Sequence[Any]): Sequence to sort.
+            The elements of `seq` must support rich comparison methods.
 
     Returns:
         list[int]: Indices that sort `seq`.
