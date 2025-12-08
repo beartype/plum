@@ -18,15 +18,20 @@ def test_isinstance():
     # Check that subscripted generics work and types are resolved.
     assert plum.isinstance(
         1,
-        Union[float, ModuleType("builtins", "int")],  # noqa: F821
+        Union[float, ModuleType("builtins", "int")],  # noqa: F821, UP007
     )
+    assert plum.isinstance(1, float | ModuleType("builtins", "int"))  # noqa: F821
 
 
 def test_issubclass():
     # Check that subscripted generics work and types are resolved.
     assert plum.issubclass(
-        Union[ModuleType("builtins", "int"), float],  # noqa: F821
-        Union[ModuleType("numbers", "Number"), complex],  # noqa: F821
+        Union[ModuleType("builtins", "int"), float],  # noqa: F821, UP007
+        Union[ModuleType("numbers", "Number"), complex],  # noqa: F821, UP007
+    )
+    assert plum.issubclass(
+        ModuleType("builtins", "int") | float,
+        ModuleType("numbers", "Number") | complex,
     )
 
 

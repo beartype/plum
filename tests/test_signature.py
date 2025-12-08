@@ -111,7 +111,15 @@ def test_equality():
     assert Sig(varargs=int) == Sig(varargs=int)
 
     # Test equivalent but not identical types.
-    t1 = Union[int, bool]
+    t1 = Union[int, bool]  # noqa: UP007
+    t2 = int
+    assert t1 is not t2 and t1 != t2
+    assert TypeHint(t1) == TypeHint(t2)
+    assert Sig(t1) == Sig(t2)
+    assert Sig(varargs=t1) == Sig(varargs=t2)
+
+    # Test equivalent but not identical types.
+    t1 = int | bool
     t2 = int
     assert t1 is not t2 and t1 != t2
     assert TypeHint(t1) == TypeHint(t2)

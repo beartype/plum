@@ -1,5 +1,3 @@
-from typing import Union
-
 import plum
 from .util import benchmark
 
@@ -43,11 +41,11 @@ def test_cache_function(dispatch: plum.Dispatcher):
         pass
 
     @dispatch
-    def f(x: Union[int, float]):
+    def f(x: int | float):
         pass
 
     @dispatch
-    def f(x: Union[int, float, str]):
+    def f(x: int | float | str):
         pass
 
     # Test performance.

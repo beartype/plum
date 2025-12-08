@@ -1,6 +1,6 @@
 import abc
 from numbers import Number
-from typing import Optional, Union
+from typing import Union
 
 import numpy as np
 import pytest
@@ -74,7 +74,7 @@ def test_parametric(metaclass):
     def tuples_are_identical(tup1, tup2):
         if len(tup1) != len(tup2):
             return False
-        return all(x is y for x, y in zip(tup1, tup2))
+        return all(x is y for x, y in zip(tup1, tup2, strict=True))
 
     # Test type parameter extraction.
     assert plum.type_parameter(A[1]()) == 1
@@ -331,8 +331,8 @@ class NDArray(np.ndarray, metaclass=NDArrayMeta):
     @dispatch
     def __init_type_parameter__(
         cls,
-        shape: Optional[tuple[int, ...]],
-        dtype: Optional[type],
+        shape: tuple[int, ...] | None,
+        dtype: type | None,
     ):
         """Validate the type parameter."""
         return shape, dtype
@@ -341,8 +341,8 @@ class NDArray(np.ndarray, metaclass=NDArrayMeta):
     @dispatch
     def __le_type_parameter__(
         cls,
-        left: tuple[Optional[tuple[int, ...]], Optional[type]],
-        right: tuple[Optional[tuple[int, ...]], Optional[type]],
+        left: tuple[tuple[int, ...] | None, type | None],
+        right: tuple[tuple[int, ...] | None, type | None],
     ):
         """Define an order on type parameters. That is, check whether `left <= right`
         or not."""
@@ -480,7 +480,8 @@ def test_is_concrete():
 
 def test_is_type():
     assert is_type(int)
-    assert is_type(Union[int, float])
+    assert is_type(Union[int, float])  # noqa: UP007
+    assert is_type(int | float)
     assert not is_type(1)
 
 
