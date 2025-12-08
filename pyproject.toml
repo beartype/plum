@@ -32,6 +32,7 @@ documentation = "https://beartype.github.io/plum"
 dev = [
     { include-group = "docs" },
     { include-group = "lint" },
+    { include-group = "nox" },
     { include-group = "test" },
 ]
 docs = [
@@ -39,6 +40,11 @@ docs = [
 ]
 lint = [
     "pre-commit>=4.3.0",
+]
+nox = [
+    "nox>=2025.11.12",
+    "nox-uv>=0.6.3",
+    "uv>=0.9.16",
 ]
 test = [
     "coveralls>=4.0.1",
@@ -49,7 +55,6 @@ test = [
     "pytest>=8.4.2",
     "pytest-cov>=7.0.0",
     "sybil[pytest]>=9.2.0",
-    "tox>=4.30.3",
 ]
 
 
