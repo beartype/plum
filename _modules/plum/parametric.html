@@ -350,7 +350,7 @@ document.write(`
                   
   <h1>Source code for plum.parametric</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeVar</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">deprecated</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">beartype.door</span>
@@ -472,9 +472,7 @@ document.write(`
             <span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_default_le_type_par</span><span class="p">(</span>
-    <span class="n">p_left</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">TypeHint</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span> <span class="n">p_right</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">TypeHint</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_default_le_type_par</span><span class="p">(</span><span class="n">p_left</span><span class="p">:</span> <span class="n">TypeHint</span> <span class="o">|</span> <span class="nb">object</span><span class="p">,</span> <span class="n">p_right</span><span class="p">:</span> <span class="n">TypeHint</span> <span class="o">|</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
     <span class="k">if</span> <span class="n">is_type</span><span class="p">(</span><span class="n">p_left</span><span class="p">)</span> <span class="ow">and</span> <span class="n">is_type</span><span class="p">(</span><span class="n">p_right</span><span class="p">):</span>
         <span class="n">p_left</span> <span class="o">=</span> <span class="n">beartype</span><span class="o">.</span><span class="n">door</span><span class="o">.</span><span class="n">TypeHint</span><span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">p_left</span><span class="p">))</span>
         <span class="n">p_right</span> <span class="o">=</span> <span class="n">beartype</span><span class="o">.</span><span class="n">door</span><span class="o">.</span><span class="n">TypeHint</span><span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">p_right</span><span class="p">))</span>
@@ -522,7 +520,9 @@ document.write(`
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_left</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_right</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">False</span>
         <span class="c1"># Check every pair of parameters.</span>
-        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">_default_le_type_par</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">)</span> <span class="k">for</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">p_left</span><span class="p">,</span> <span class="n">p_right</span><span class="p">))</span></div>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span>
+            <span class="n">_default_le_type_par</span><span class="p">(</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">)</span> <span class="k">for</span> <span class="n">p1</span><span class="p">,</span> <span class="n">p2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">p_left</span><span class="p">,</span> <span class="n">p_right</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 

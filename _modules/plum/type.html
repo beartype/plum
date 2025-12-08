@@ -354,18 +354,13 @@ document.write(`
 <span class="kn">import</span><span class="w"> </span><span class="nn">typing</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Hashable</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">get_args</span><span class="p">,</span> <span class="n">get_origin</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span><span class="p">,</span> <span class="n">TypeGuard</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">reduce</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">operator</span><span class="w"> </span><span class="kn">import</span> <span class="n">or_</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnionType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">TypeGuard</span><span class="p">,</span> <span class="n">get_args</span><span class="p">,</span> <span class="n">get_origin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">beartype.vale._core._valecore</span><span class="w"> </span><span class="kn">import</span> <span class="n">BeartypeValidator</span>
-
-<span class="k">try</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.9</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnionType</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.10 3.11</span>
-
-    <span class="k">class</span><span class="w"> </span><span class="nc">UnionType</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Replacement for :class:`types.UnionType`.&quot;&quot;&quot;</span>
-
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;PromisedType&quot;</span><span class="p">,</span>
@@ -403,7 +398,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="o">=</span> <span class="nb">type</span>
         <span class="k">return</span> <span class="bp">self</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">type</span><span class="p">,</span> <span class="n">Self</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span> <span class="o">|</span> <span class="n">Self</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve the type.</span>
 
 <span class="sd">        Returns:</span>
@@ -457,7 +452,7 @@ document.write(`
         <span class="n">module</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">allow_fail</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">condition</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">condition</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">module</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;__builtin__&quot;</span><span class="p">,</span> <span class="s2">&quot;__builtins__&quot;</span><span class="p">}:</span>
             <span class="n">module</span> <span class="o">=</span> <span class="s2">&quot;builtins&quot;</span>
@@ -472,7 +467,7 @@ document.write(`
         <span class="n">module</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">allow_fail</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">condition</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">condition</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">ResolvableType</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;ModuleType[</span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
 
@@ -564,23 +559,18 @@ document.write(`
         <span class="n">origin</span> <span class="o">=</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">args</span> <span class="o">=</span> <span class="n">get_args</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">args</span> <span class="o">==</span> <span class="p">():</span>
-            <span class="c1"># `origin` might not make sense here. For example, `get_origin(Any)` is</span>
-            <span class="c1"># `None`. Since the hint wasn&#39;t subscripted, the right thing is to right the</span>
-            <span class="c1"># hint itself.</span>
+            <span class="c1"># `origin` might not make sense here. For example, `get_origin(Any)`</span>
+            <span class="c1"># is `None`. Since the hint wasn&#39;t subscripted, the right thing is</span>
+            <span class="c1"># to return the hint itself.</span>
             <span class="k">return</span> <span class="n">x</span>
+        <span class="k">if</span> <span class="n">origin</span> <span class="ow">is</span> <span class="n">UnionType</span><span class="p">:</span>  <span class="c1"># The new union syntax was used.</span>
+            <span class="k">return</span> <span class="n">reduce</span><span class="p">(</span><span class="n">or_</span><span class="p">,</span> <span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">origin</span> <span class="ow">is</span> <span class="n">UnionType</span><span class="p">:</span>  <span class="c1"># pragma: specific no cover 3.9</span>
-                <span class="c1"># The new union syntax was used.</span>
-                <span class="n">y</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-                <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
-                    <span class="n">y</span> <span class="o">=</span> <span class="n">y</span> <span class="o">|</span> <span class="n">arg</span>
-                <span class="k">return</span> <span class="n">y</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># Do not resolve the arguments for `Literal`s.</span>
-                <span class="k">if</span> <span class="n">origin</span> <span class="o">!=</span> <span class="n">typing</span><span class="o">.</span><span class="n">Literal</span><span class="p">:</span>
-                    <span class="n">args</span> <span class="o">=</span> <span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+            <span class="c1"># Do not resolve the arguments for `Literal`s.</span>
+            <span class="k">if</span> <span class="n">origin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Literal</span><span class="p">:</span>
+                <span class="n">args</span> <span class="o">=</span> <span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
 
-                <span class="k">return</span> <span class="n">origin</span><span class="p">[</span><span class="n">args</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">origin</span><span class="p">[</span><span class="n">args</span><span class="p">]</span>
 
     <span class="k">elif</span> <span class="n">x</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">x</span> <span class="ow">is</span> <span class="bp">Ellipsis</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">x</span>
@@ -588,7 +578,7 @@ document.write(`
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">x</span><span class="p">)</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ResolvableType</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ModuleType</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">x</span><span class="o">.</span><span class="n">retrieve</span><span class="p">():</span>

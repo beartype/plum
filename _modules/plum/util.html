@@ -376,12 +376,13 @@ document.write(`
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The type of :class:`Missing`.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c1"># For some reason, Sphinx does attempt to evaluate `bool(Missing)`. Let&#39;s try</span>
-        <span class="c1"># to keep Sphinx working correctly by not raising an exception.</span>
+        <span class="c1"># For some reason, Sphinx does attempt to evaluate `bool(Missing)`.</span>
+        <span class="c1"># Let&#39;s try to keep Sphinx working correctly by not raising an</span>
+        <span class="c1"># exception.</span>
         <span class="k">if</span> <span class="s2">&quot;sphinx&quot;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;`Missing` has no boolean value.&quot;</span><span class="p">)</span>
+
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;`Missing` has no boolean value.&quot;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="Missing">
