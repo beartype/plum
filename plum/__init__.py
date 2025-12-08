@@ -17,6 +17,7 @@ from .alias import *  # noqa: F401, F403
 from .autoreload import *  # noqa: F401, F403
 from .dispatcher import *  # noqa: F401, F403
 from .function import *  # noqa: F401, F403
+from .method import *  # noqa: F401, F403
 from .overload import *  # noqa: F401, F403
 from .parametric import *  # noqa: F401, F403
 from .promotion import *  # noqa: F401, F403
