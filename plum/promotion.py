@@ -15,9 +15,9 @@ from beartype.door import TypeHint
 
 import plum.function
 from . import _is_bearable
+from ._type import resolve_type_hint
 from .dispatcher import Dispatcher
 from .repr import repr_short
-from .type import resolve_type_hint
 
 T = TypeVar("T")
 R = TypeVar("R")

@@ -32,7 +32,9 @@ documentation = "https://beartype.github.io/plum"
 dev = [
     { include-group = "docs" },
     { include-group = "lint" },
-    { include-group = "test" },
+    { include-group = "nox" },
+    { include-group = "test_static" },
+    { include-group = "test_runtime" },
 ]
 docs = [
     "jupyter-book>=1.0.0,<2.0.0",
@@ -40,16 +42,22 @@ docs = [
 lint = [
     "pre-commit>=4.3.0",
 ]
-test = [
+nox = [
+    "nox>=2025.11.12",
+    "nox-uv>=0.6.3",
+    "uv>=0.9.16",
+]
+test_static = [
+    "mypy>=1.18.2",
+    "pyright>=1.1.331",
+]
+test_runtime = [
     "coveralls>=4.0.1",
     "ipython>=8.18.1",
-    "mypy>=1.18.2",
     "numpy>=2.0.2",
-    "pyright>=1.1.331",
     "pytest>=8.4.2",
     "pytest-cov>=7.0.0",
     "sybil[pytest]>=9.2.0",
-    "tox>=4.30.3",
 ]
 
 
@@ -74,6 +82,27 @@ report.exclude_also = [
   'if TYPE_CHECKING:',
   'if typing.TYPE_CHECKING:',
 ]
+
+
+[tool.mypy]
+disable_error_code = ["no-redef"]
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
+files = ["plum"]
+strict = true
+follow_imports = "skip"  # TODO: set to "normal" when mypy errors are fixed
+show_error_codes = true
+exclude = [  # TODO: fix the mypy errors in all these files
+    "plum/alias\\.py",
+    "plum/function\\.py",
+    "plum/method\\.py",
+    "plum/parametric\\.py",
+    "plum/promotion\\.py",
+    "plum/repr\\.py",
+    "plum/resolver\\.py",
+    "plum/signature\\.py",
+    "plum/_type\\.py",
+]
+
 
 [tool.pytest.ini_options]
 testpaths = ["tests/", "plum", "docs"]
