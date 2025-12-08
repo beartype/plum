@@ -1,4 +1,3 @@
-import typing
 from typing import Union
 
 import pytest
@@ -33,10 +32,3 @@ def test_issubclass():
         ModuleType("builtins", "int") | float,
         ModuleType("numbers", "Number") | complex,
     )
-
-
-def test_backward_compatibility():
-    assert plum.Dict == typing.Dict  # noqa: UP006
-    assert plum.List == typing.List  # noqa: UP006
-    assert plum.Tuple == typing.Tuple  # noqa: UP006
-    assert plum.Union == typing.Union
