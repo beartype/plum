@@ -41,6 +41,7 @@ docs = [
 ]
 lint = [
     "pre-commit>=4.3.0",
+    "pylint>=4.0.4",
 ]
 nox = [
     "nox>=2025.11.12",

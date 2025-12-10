@@ -18,8 +18,8 @@ DIR = Path(__file__).parent.resolve()
 @session(uv_groups=["lint"], reuse_venv=True)
 def lint(s: nox.Session, /) -> None:
     """Run the linter."""
-    precommit(s)  # Reuse `pre-commit` session.
-    pylint(s)  # Reuse `pylint` session.
+    s.notify("precommit")
+    s.notify("pylint")
 
 
 @session(uv_groups=["lint"], reuse_venv=True)
@@ -31,12 +31,19 @@ def precommit(s: nox.Session, /) -> None:
 @session(uv_groups=["lint"], reuse_venv=True)
 def pylint(s: nox.Session, /) -> None:
     """Run PyLint."""
-    s.install(".", "pylint")
     s.run("pylint", "plum", *s.posargs)
 
 
 # =============================================================================
 # Testing
+
+
+@session(uv_groups=["test_static", "test_runtime"], reuse_venv=True)
+def test(s: nox.Session, /) -> None:
+    """Run all tests."""
+    s.notify("typecheck")
+    s.notify("pytest", posargs=s.posargs)
+    s.notify("benchmark", posargs=s.posargs)
 
 
 @session(uv_groups=["test_static"], reuse_venv=True)
