@@ -18,8 +18,8 @@ DIR = Path(__file__).parent.resolve()
 @session(uv_groups=["lint"], reuse_venv=True)
 def lint(s: nox.Session, /) -> None:
     """Run the linter."""
-    precommit(s)  # reuse pre-commit session
-    pylint(s)  # reuse pylint session
+    precommit(s)  # Reuse `pre-commit` session.
+    pylint(s)  # Reuse `pylint` session.
 
 
 @session(uv_groups=["lint"], reuse_venv=True)
@@ -49,11 +49,11 @@ def typecheck(s: nox.Session, /) -> None:
 @session(uv_groups=["test_runtime"], reuse_venv=True)
 def pytest(s: nox.Session, /) -> None:
     """Run the unit and regular tests."""
-    # Compute from the Python in this nox/uv environment
+    # Compute from the Python in this `nox`/`uv` environment.
     pragma_version = ".".join(map(str, sys.version_info[:2]))
     s.env["PRAGMA_VERSION"] = pragma_version
 
-    # Run pytest
+    # Run `pytest`.
     s.run("pytest", *s.posargs)
 
 
