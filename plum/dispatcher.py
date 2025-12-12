@@ -36,7 +36,7 @@ class Dispatcher:
 
     @overload
     def __call__(
-        self, method: None, /, *, precedence: int = ...
+        self, method: None = ..., /, *, precedence: int
     ) -> Callable[[T], T]: ...
 
     def __call__(
