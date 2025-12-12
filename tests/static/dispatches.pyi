@@ -13,7 +13,7 @@ def f(x: int) -> str:  # pyright: ignore[reportRedeclaration]
 assert_type(f(1), str)  # type: ignore[assert-type]
 
 # Mypy errors:
-#   - `Name "f" already defined on line ...`
+#   - Name "f" already defined on line ...
 @plum.dispatch  # type: ignore[no-redef]
 def f(x: str) -> str:
     return x
