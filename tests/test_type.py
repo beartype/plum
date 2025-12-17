@@ -1,20 +1,7 @@
 import abc
 import sys
 import typing
-
-try:
-    from typing import Literal
-except ImportError:
-
-    class LiteralMeta(type):
-        """A simple proxy for :class:`typing.Literal`."""
-
-        def __getitem__(self, item):
-            return self
-
-    class Literal(metaclass=LiteralMeta):
-        __faithful__ = False
-
+from typing import Literal
 
 import pytest
 

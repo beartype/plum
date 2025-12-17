@@ -1,9 +1,3 @@
-# Plum previously exported a number of types. As of recently, the user can use
-# the versions from `typing`. To not break backward compatibility, we still
-# export these types.
-from typing import Dict, List, Tuple, Union  # noqa: F401, UP035
-
-# isort: split
 from functools import partial
 
 from beartype import (
@@ -26,6 +20,12 @@ from .signature import *  # noqa: F401, F403
 from .type import *  # noqa: F401, F403
 from .type import resolve_type_hint
 from .util import *  # noqa: F401, F403
+
+# isort: split
+# Plum previously exported a number of types. As of recently, the user can use
+# the versions from `typing`. To not break backward compatibility, we still
+# export these types.
+from typing import Dict, List, Tuple, Union  # noqa: F401, UP035
 
 # Deprecated
 # isort: split
