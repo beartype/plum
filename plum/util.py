@@ -21,7 +21,7 @@ from typing import Any, TypeAlias, TypeVar
 # Python has a proper type for type hints, we can just replace it here.
 TypeHint: TypeAlias = object
 T = TypeVar("T")
-R = TypeVar("R")  # return type
+R = TypeVar("R")  # Return type
 
 
 class _MissingType(type):
@@ -151,12 +151,11 @@ def get_context(f: Callable[..., Any], /) -> str:
         return ".".join(parts[:-1])
 
 
-def argsort(seq: Sequence[Any], /) -> list[int]:
+def argsort(seq: Sequence[int], /) -> list[int]:
     """Compute the indices that sort an integer sequence.
 
     Args:
-        seq (Sequence[Any]): Sequence to sort.
-            The elements of `seq` must support rich comparison methods.
+        seq (Sequence[int]): Sequence of integers to sort.
 
     Returns:
         list[int]: Indices that sort `seq`.
