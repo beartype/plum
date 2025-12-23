@@ -1,4 +1,5 @@
 from functools import partial
+from typing import TypeGuard, TypeVar
 
 from beartype import (
     BeartypeConf as _BeartypeConf,
@@ -6,6 +7,8 @@ from beartype import (
 )
 from beartype.door import TypeHint as _TypeHint, is_bearable as _is_bearable
 
+from ._type import *  # noqa: F401, F403
+from ._type import resolve_type_hint
 from ._version import __version__  # noqa: F401
 from .alias import *  # noqa: F401, F403
 from .autoreload import *  # noqa: F401, F403
@@ -17,9 +20,13 @@ from .parametric import *  # noqa: F401, F403
 from .promotion import *  # noqa: F401, F403
 from .resolver import *  # noqa: F401, F403
 from .signature import *  # noqa: F401, F403
-from .type import *  # noqa: F401, F403
-from .type import resolve_type_hint
 from .util import *  # noqa: F401, F403
+
+# isort: split
+# Plum previously exported a number of types. As of recently, the user can use
+# the versions from `typing`. To not break backward compatibility, we still
+# export these types.
+from typing import Dict, List, Tuple, Union  # noqa: F401, UP035
 
 # Deprecated
 # isort: split
@@ -30,12 +37,15 @@ from .parametric import Val  # noqa: F401, F403
 # actually is not yet available, but we can already opt in to use it.
 _is_bearable = partial(_is_bearable, conf=_BeartypeConf(strategy=_BeartypeStrategy.On))
 
+T = TypeVar("T")
+T2 = TypeVar("T2")
 
-def isinstance(instance, c):
+
+def isinstance(instance: object, c: type[T] | _TypeHint[T]) -> TypeGuard[T]:
     """Check if `instance` is of type or type hint `c`.
 
-    This is a drop-in replace for the built-in :func:`ininstance` which supports type
-    hints.
+    This is a drop-in replace for the built-in :func:`isinstance` which supports
+    type hints.
 
     Args:
         instance (object): Instance.
@@ -44,10 +54,13 @@ def isinstance(instance, c):
     Returns:
         bool: Whether `instance` is of type or type hint `c`.
     """
-    return _is_bearable(instance, resolve_type_hint(c))
+    pred: bool = _is_bearable(instance, resolve_type_hint(c))
+    return pred
 
 
-def issubclass(c1, c2):
+def issubclass(
+    c1: type[T] | _TypeHint[T], c2: type[T2] | _TypeHint[T2]
+) -> TypeGuard[type[T2] | _TypeHint[T2]]:
     """Check if `c1` is a subclass or sub-type hint of `c2`.
 
     This is a drop-in replace for the built-in :func:`issubclass` which supports type
@@ -60,4 +73,5 @@ def issubclass(c1, c2):
     Returns:
         bool: Whether `c1` is a subtype or sub-type hint of `c2`.
     """
-    return _TypeHint(resolve_type_hint(c1)) <= _TypeHint(resolve_type_hint(c2))
+    pred: bool = _TypeHint(resolve_type_hint(c1)) <= _TypeHint(resolve_type_hint(c2))
+    return pred

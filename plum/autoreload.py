@@ -1,12 +1,12 @@
 import os
 
+from ._type import type_mapping
 from .dispatcher import clear_all_cache
-from .type import type_mapping
 
 __all__ = ["activate_autoreload", "deactivate_autoreload"]
 
 
-def _update_instances(old, new):
+def _update_instances(old: type, new: type) -> None:
     """First call the original implementation of Autoreload's :meth:`update_instances`,
     and then use :obj:`.type._type_mapping` to map type `old` to the type `new`.
 
@@ -14,7 +14,7 @@ def _update_instances(old, new):
         old (type): Old type.
         new (type): New type.
     """
-    _update_instances_original(old, new)
+    _update_instances_original(old, new)  # type: ignore[misc]
 
     type_mapping[old] = new
 
@@ -33,10 +33,10 @@ _update_instances_original = None
 """function: Original implementation of :func:`update_instances`."""
 
 
-def activate_autoreload():
+def activate_autoreload() -> None:
     """Pirate Autoreload's `update_instance` function to have Plum work with
     Autoreload."""
-    from IPython.extensions import autoreload  # type: ignore
+    from IPython.extensions import autoreload  # type: ignore[import-not-found]
 
     # First, cache the original method so we can deactivate ourselves.
     global _update_instances_original
@@ -47,7 +47,7 @@ def activate_autoreload():
     autoreload.update_instances = _update_instances
 
 
-def deactivate_autoreload():
+def deactivate_autoreload() -> None:
     """Disable Plum's autoreload hack. This undoes what
     :func:`.autoreload.activate_autoreload` did."""
     global _update_instances_original
@@ -66,7 +66,7 @@ if _autoload in ("y", "yes", "t", "true", "on", "1"):  # pragma: no cover
     try:
         # Try to load iPython and get the iPython session, but don't crash if
         # this does not work (for example IPython not installed, or python shell)
-        from IPython import get_ipython  # type: ignore
+        from IPython import get_ipython  # type: ignore[import-not-found]
 
         ip = get_ipython()
         ext_loaded = "IPython.extensions.storemagic" in ip.extension_manager.loaded

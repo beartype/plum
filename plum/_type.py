@@ -1,3 +1,11 @@
+__all__ = (
+    "PromisedType",
+    "ModuleType",
+    "type_mapping",
+    "resolve_type_hint",
+    "is_faithful",
+)
+
 import abc
 import sys
 import typing
@@ -6,18 +14,11 @@ from collections.abc import Callable, Hashable
 from functools import reduce
 from operator import or_
 from types import UnionType
-from typing import Literal, TypeGuard, get_args, get_origin
-from typing_extensions import Self
+from typing import Literal, TypeGuard, TypeVar, final, get_args, get_origin
 
 from beartype.vale._core._valecore import BeartypeValidator
 
-__all__ = [
-    "PromisedType",
-    "ModuleType",
-    "type_mapping",
-    "resolve_type_hint",
-    "is_faithful",
-]
+T = TypeVar("T", bound="ResolvableType")
 
 
 class ResolvableType(type):
@@ -28,26 +29,26 @@ class ResolvableType(type):
         name (str): Name of the type to be delivered.
     """
 
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str, /) -> None:
         type.__init__(self, name, (), {})
-        self._type = None
+        self._type: type | None = None
 
-    def __new__(self, name: str) -> Self:
-        return type.__new__(self, name, (), {})
+    def __new__(cls: type[T], name: str) -> T:
+        return type.__new__(cls, name, (), {})
 
-    def deliver(self, type: type) -> Self:
+    def deliver(self: T, delivered_type: type, /) -> T:
         """Deliver the type.
 
         Args:
-            type (type): Type to deliver.
+            delivered_type (type): Type to deliver.
 
         Returns:
             :class:`ResolvableType`: `self`.
         """
-        self._type = type
+        self._type = delivered_type
         return self
 
-    def resolve(self) -> type | Self:
+    def resolve(self: T) -> type | T:
         """Resolve the type.
 
         Returns:
@@ -55,12 +56,10 @@ class ResolvableType(type):
                 `type` has been delivered via :meth:`.ResolvableType.deliver`, this will
                 return that type.
         """
-        if self._type is None:
-            return self
-        else:
-            return self._type
+        return self if self._type is None else self._type
 
 
+@final
 class PromisedType(ResolvableType):
     """A type that is promised to be available when you will you need it.
 
@@ -73,10 +72,14 @@ class PromisedType(ResolvableType):
         ResolvableType.__init__(self, f"PromisedType[{name}]")
         self._name = name
 
-    def __new__(cls, name: str = "SomeType") -> Self:
-        return ResolvableType.__new__(cls, f"PromisedType[{name}]")
+    def __new__(cls, name: str = "SomeType") -> "PromisedType":
+        return super().__new__(cls, f"PromisedType[{name}]")
+
+    def __repr__(self) -> str:
+        return f"<class 'plum.PromisedType[{self._name}]'>"
 
 
+@final
 class ModuleType(ResolvableType):
     """A type from another module.
 
@@ -100,20 +103,14 @@ class ModuleType(ResolvableType):
     ) -> None:
         if module in {"__builtin__", "__builtins__"}:
             module = "builtins"
-        ResolvableType.__init__(self, f"ModuleType[{module}.{name}]")
+        super().__init__(f"ModuleType[{module}.{name}]")
         self._name = name
         self._module = module
         self._allow_fail = allow_fail
         self._condition = condition
 
-    def __new__(
-        cls,
-        module: str,
-        name: str,
-        allow_fail: bool = False,
-        condition: Callable[[], bool] | None = None,
-    ) -> Self:
-        return ResolvableType.__new__(cls, f"ModuleType[{module}.{name}]")
+    def __new__(cls: type[T], module: str, name: str, **kwargs: object) -> T:
+        return super().__new__(cls, f"ModuleType[{module}.{name}]")
 
     def retrieve(self) -> bool:
         """Attempt to retrieve the type from the reference module.
@@ -270,6 +267,15 @@ def is_faithful(x: object, /) -> bool:
 UNION_TYPES = frozenset({typing.Union, UnionType, typing.Optional})
 
 
+class _SupportsDunderFaithful(typing.Protocol):
+    __faithful__: bool
+
+
+def _has_dunder_faithful(x: type, /) -> TypeGuard[_SupportsDunderFaithful]:
+    """Check whether `x` has the `__faithful__` attribute."""
+    return hasattr(x, "__faithful__")
+
+
 def _is_faithful(x: object, /) -> bool:
     if _is_hint(x):
         origin = get_origin(x)
@@ -291,7 +297,7 @@ def _is_faithful(x: object, /) -> bool:
     elif isinstance(x, (tuple, list)):
         return all(is_faithful(arg) for arg in x)
     elif isinstance(x, type):
-        if hasattr(x, "__faithful__"):
+        if _has_dunder_faithful(x):
             return x.__faithful__
         else:
             # This is the fallback method. Check whether `__instancecheck__` is default

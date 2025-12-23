@@ -49,7 +49,7 @@ def test(s: nox.Session, /) -> None:
 @session(uv_groups=["test_static"], reuse_venv=True)
 def typecheck(s: nox.Session, /) -> None:
     """Run the type checker."""
-    s.run("mypy", "tests/static", *s.posargs)
+    s.run("mypy", "--enable-error-code=no-redef", "plum", "tests/static", *s.posargs)
     s.run("pyright", "tests/static", *s.posargs)
 
 

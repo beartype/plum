@@ -293,7 +293,7 @@ You can resolve it to what it points to with `resolve_type_hint`:
 
 ```python
 >>> ProxyInt
-<class 'plum.type.PromisedType[SpecialInt]'>
+<class 'plum.PromisedType[SpecialInt]'>
 
 >>> from plum import resolve_type_hint
 
