@@ -351,7 +351,7 @@ document.write(`
   <h1>Source code for plum.dispatcher</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">overload</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">overload</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.function</span><span class="w"> </span><span class="kn">import</span> <span class="n">Function</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.overload</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_overloads</span>
@@ -384,17 +384,16 @@ document.write(`
     <span class="n">functions</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Function</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">classes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Function</span><span class="p">]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
 
+    <span class="c1"># TODO: Correctly type return value as Function[T]</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">precedence</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">...</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">partial</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span> <span class="o">...</span>
+
     <span class="nd">@overload</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">precedence</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">...</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span> <span class="o">...</span>
 
-    <span class="nd">@overload</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="kc">None</span> <span class="o">=</span> <span class="o">...</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">precedence</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="n">T</span><span class="p">]:</span> <span class="o">...</span>
-
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="n">T</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">precedence</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="n">T</span><span class="p">]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span> <span class="o">|</span> <span class="n">partial</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Decorator to register for a particular signature.</span>
 
 <span class="sd">        Args:</span>
@@ -414,17 +413,17 @@ document.write(`
                 <span class="c1"># All `f` returned by `self._add_method` are the same.</span>
                 <span class="n">f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_method</span><span class="p">(</span><span class="n">overload_method</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">precedence</span><span class="o">=</span><span class="n">precedence</span><span class="p">)</span>
             <span class="c1"># We do not need to register `method`, because it is not an implementation.</span>
-            <span class="k">return</span> <span class="n">f</span>
+            <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
 
-        <span class="c1"># The signature will be automatically derived from `method`, so we can safely</span>
-        <span class="c1"># set the signature argument to `None`.</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_method</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">precedence</span><span class="o">=</span><span class="n">precedence</span><span class="p">)</span>
+        <span class="c1"># The signature will be automatically derived from `method`, so we can</span>
+        <span class="c1"># safely set the signature argument to `None`.</span>
+        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_method</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">precedence</span><span class="o">=</span><span class="n">precedence</span><span class="p">))</span>
 
 <div class="viewcode-block" id="Dispatcher.multi">
 <a class="viewcode-back" href="../../api.html#plum.dispatcher.Dispatcher.multi">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">multi</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">signatures</span><span class="p">:</span> <span class="n">Signature</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TypeHint</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">],</span> <span class="n">Function</span><span class="p">]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">Function</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Decorator to register multiple signatures at once.</span>
 
 <span class="sd">        Args:</span>
@@ -446,7 +445,7 @@ document.write(`
                     <span class="sa">f</span><span class="s2">&quot;`plum.signature.Signature`.&quot;</span>
                 <span class="p">)</span>
 
-        <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Function</span><span class="p">:</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Function</span><span class="p">:</span>
             <span class="c1"># The precedence will not be used, so we can safely set it to `None`.</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_method</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="o">*</span><span class="n">resolved_signatures</span><span class="p">,</span> <span class="n">precedence</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 
@@ -455,13 +454,13 @@ document.write(`
 
 <div class="viewcode-block" id="Dispatcher.abstract">
 <a class="viewcode-back" href="../../api.html#plum.dispatcher.Dispatcher.abstract">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">abstract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Function</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">abstract</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Function</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Decorator for an abstract function definition. The abstract function</span>
 <span class="sd">        definition does not implement any methods.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_function</span><span class="p">(</span><span class="n">method</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_get_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Function</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Function</span><span class="p">:</span>
         <span class="c1"># If a class is the owner, use a namespace specific for that class. Otherwise,</span>
         <span class="c1"># use the global namespace.</span>
         <span class="k">if</span> <span class="n">is_in_class</span><span class="p">(</span><span class="n">method</span><span class="p">):</span>
@@ -486,7 +485,7 @@ document.write(`
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_add_method</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
         <span class="o">*</span><span class="n">signatures</span><span class="p">:</span> <span class="n">Signature</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">precedence</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Function</span><span class="p">:</span>
@@ -497,7 +496,7 @@ document.write(`
 
 <div class="viewcode-block" id="Dispatcher.clear_cache">
 <a class="viewcode-back" href="../../api.html#plum.dispatcher.Dispatcher.clear_cache">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">clear_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Clear cache.&quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">functions</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="n">f</span><span class="o">.</span><span class="n">clear_cache</span><span class="p">()</span></div>
@@ -507,7 +506,7 @@ document.write(`
 
 <div class="viewcode-block" id="clear_all_cache">
 <a class="viewcode-back" href="../../api.html#plum.dispatcher.clear_all_cache">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">clear_all_cache</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">clear_all_cache</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Clear all cache, including the cache of subclass checks. This should be called</span>
 <span class="sd">    if types are modified.&quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">Function</span><span class="o">.</span><span class="n">_instances</span><span class="p">:</span>
@@ -515,7 +514,7 @@ document.write(`
 
 
 
-<span class="n">dispatch</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">()</span>  <span class="c1">#: A default dispatcher for convenience purposes.</span>
+<span class="n">dispatch</span><span class="p">:</span> <span class="n">Dispatcher</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">()</span>  <span class="c1">#: A default dispatcher for convenience purposes.</span>
 </pre></div>
 
                 </article>
