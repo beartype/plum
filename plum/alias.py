@@ -26,135 +26,185 @@ Note that `IntOrFloat` prints to `typing.Union[IntOrFloat]` rather than just
 parsing how unions print.
 """
 
+import sys
 from functools import wraps
 from typing import TypeVar, Union, _type_repr, get_args
 from typing_extensions import assert_never
+
+from typing_extensions import deprecated
 
 __all__ = ["activate_union_aliases", "deactivate_union_aliases", "set_union_alias"]
 
 UnionT = TypeVar("UnionT")
 
-_union_type = type(Union[int, float])  # noqa: UP007
-_original_repr = _union_type.__repr__
-_original_str = _union_type.__str__
 
+if sys.version_info < (3, 14):
+    _union_type = type(Union[int, float])
+    _original_repr = _union_type.__repr__
+    _original_str = _union_type.__str__
 
-@wraps(_original_repr)
-def _new_repr(self: object) -> str:
-    """Print a `typing.Union`, replacing all aliased unions by their aliased names.
+    @wraps(_original_repr)
+    def _new_repr(self: object) -> str:
+        """Print a `typing.Union`, replacing all aliased unions by their aliased names.
 
-    Returns:
-        str: Representation of a `typing.Union` taking into account union aliases.
-    """
-    args = get_args(self)
-    args_set = set(args)
+        Returns:
+            str: Representation of a `typing.Union` taking into account union aliases.
+        """
+        args = get_args(self)
+        args_set = set(args)
 
-    # Find all aliased unions contained in this union.
-    found_unions = []
-    found_positions = []
-    found_aliases = []
-    for union, alias in reversed(_ALIASED_UNIONS):
-        union_set = set(union)
-        if union_set <= args_set:
-            for i, arg in enumerate(args):
-                if arg in union_set:
-                    found_unions.append(union_set)
-                    found_positions.append(i)
-                    found_aliases.append(alias)
+        # Find all aliased unions contained in this union.
+        found_unions = []
+        found_positions = []
+        found_aliases = []
+        for union, alias in reversed(_ALIASED_UNIONS):
+            union_set = set(union)
+            if union_set <= args_set:
+                found = False
+                for i, arg in enumerate(args):
+                    if arg in union_set:
+                        found_unions.append(union_set)
+                        found_positions.append(i)
+                        found_aliases.append(alias)
+                        found = True
+                        break
+                if not found:  # pragma: no cover
+                    # This branch should never be reached.
+                    raise AssertionError(
+                        "Could not identify union. This should never happen."
+                    )
+
+        # Delete any unions that are contained in strictly bigger unions. We check for
+        # strictly inequality because any union includes itself.
+        for i in range(len(found_unions) - 1, -1, -1):
+            for union in found_unions:
+                if found_unions[i] < union:
+                    del found_unions[i]
+                    del found_positions[i]
+                    del found_aliases[i]
                     break
-            else:  # pragma: no cover
-                assert_never(union)
 
-    # Delete any unions that are contained in strictly bigger unions. We check
-    # for strictly inequality because any union includes itself.
-    for i in range(len(found_unions) - 1, -1, -1):
+        # Create a set with all arguments of all found unions.
+        found_args = set()
         for union in found_unions:
-            if found_unions[i] < union:
-                del found_unions[i]
-                del found_positions[i]
-                del found_aliases[i]
-                break
+            found_args |= union
 
-    # Create a set with all arguments of all found unions.
-    found_args = set()
-    for union in found_unions:
-        found_args |= union
+        # Insert the aliases right before the first found argument. When we insert an
+        # element, the positions of following insertions need to be appropriately
+        # incremented.
+        args = list(args)
+        # Sort by insertion position to ensure that all following insertions are
+        # at higher indices. This makes the bookkeeping simple.
+        for delta, (i, alias) in enumerate(
+            sorted(zip(found_positions, found_aliases), key=lambda x: x[0])
+        ):
+            args.insert(i + delta, alias)
 
-    # Insert the aliases right before the first found argument. When we insert
-    # an element, the positions of following insertions need to be appropriately
-    # incremented.
-    args = list(args)
-    # Sort by insertion position to ensure that all following insertions are at
-    # higher indices. This makes the bookkeeping simple.
-    for delta, (i, alias) in enumerate(
-        sorted(zip(found_positions, found_aliases, strict=True), key=lambda x: x[0])
-    ):
-        args.insert(i + delta, alias)
+        # Filter all elements of unions that are aliased.
+        new_args = ()
+        for arg in args:
+            if arg not in found_args:
+                new_args += (arg,)
+        args = new_args
 
-    # Filter all elements of unions that are aliased.
-    new_args = ()
-    for arg in args:
-        if arg not in found_args:
-            new_args += (arg,)
-    args = new_args
+        # Generate a string representation.
+        args_repr = [a if isinstance(a, str) else _type_repr(a) for a in args]
+        # Like `typing` does, print `Optional` whenever possible.
+        if len(args) == 2:
+            if args[0] is type(None):  # noqa: E721
+                return f"typing.Optional[{args_repr[1]}]"
+            elif args[1] is type(None):  # noqa: E721
+                return f"typing.Optional[{args_repr[0]}]"
+        # We would like to just print `args_repr[0]` whenever `len(args) == 1`, but
+        # this might break code that parses how unions print.
+        return "typing.Union[" + ", ".join(args_repr) + "]"
 
-    # Generate a string representation.
-    args_repr = [a if isinstance(a, str) else _type_repr(a) for a in args]
-    # Like `typing` does, print `Optional` whenever possible.
-    if len(args) == 2:
-        if args[0] is type(None):  # noqa: E721
-            return f"typing.Optional[{args_repr[1]}]"
-        elif args[1] is type(None):  # noqa: E721
-            return f"typing.Optional[{args_repr[0]}]"
-    # We would like to just print `args_repr[0]` whenever `len(args) == 1`, but
-    # this might break code that parses how unions print.
-    return "typing.Union[" + ", ".join(args_repr) + "]"
+    @wraps(_original_str)
+    def _new_str(self: object) -> str:
+        """Does the same as :func:`_new_repr`.
+
+        Returns:
+            str: Representation of the `typing.Union` taking into account union aliases.
+        """
+        return _new_repr(self)
+
+    def activate_union_aliases() -> None:
+        """When printing `typing.Union`s, replace aliased unions by the aliased names.
+        This monkey patches `__repr__` and `__str__` for `typing.Union`."""
+        _union_type.__repr__ = _new_repr
+        _union_type.__str__ = _new_str
+
+    def deactivate_union_aliases() -> None:
+        """Undo what :func:`.alias.activate` did. This restores the original  `__repr__`
+        and `__str__` for `typing.Union`."""
+        _union_type.__repr__ = _original_repr
+        _union_type.__str__ = _original_str
+
+    _ALIASED_UNIONS: list = []
+
+    def set_union_alias(union: UnionT, alias: str) -> UnionT:
+        """Change how a `typing.Union` is printed. This does not modify `union`.
+
+        Args:
+            union (type or type hint): A union.
+            alias (str): How to print `union`.
+
+        Returns:
+            type or type hint: `union`.
+        """
+        if sys.version_info >= (3, 14):
+            return union
+
+        args = get_args(union) if isinstance(union, _union_type) else (union,)
+        for existing_union, existing_alias in _ALIASED_UNIONS:
+            if set(existing_union) == set(args) and alias != existing_alias:
+                if isinstance(union, _union_type):
+                    union_str = _original_str(union)
+                else:
+                    union_str = repr(union)
+                raise RuntimeError(
+                    f"`{union_str}` already has alias `{existing_alias}`."
+                )
+        _ALIASED_UNIONS.append((args, alias))
+        return union
 
 
-@wraps(_original_str)
-def _new_str(self: object) -> str:
-    """Does the same as :func:`_new_repr`.
+else:
 
-    Returns:
-        str: Representation of the `typing.Union` taking into account union aliases.
-    """
-    return _new_repr(self)
+    @deprecated(
+        "Plum's union aliasing is not supported on Python 3.14 and later.",
+        category=RuntimeWarning,
+        stacklevel=2,
+    )
+    def activate_union_aliases() -> None:
+        """When printing `typing.Union`s, replace aliased unions by the aliased names.
+        This monkey patches `__repr__` and `__str__` for `typing.Union`."""
 
+    @deprecated(
+        "Plum's union aliasing is not supported on Python 3.14 and later.",
+        category=RuntimeWarning,
+        stacklevel=2,
+    )
+    def deactivate_union_aliases() -> None:
+        """Undo what :func:`.alias.activate` did. This restores the original  `__repr__`
+        and `__str__` for `typing.Union`."""
+        if sys.version_info < (3, 14):
+            _union_type.__repr__ = _original_repr
+            _union_type.__str__ = _original_str
 
-def activate_union_aliases() -> None:
-    """When printing `typing.Union`s, replace all aliased unions by the aliased names.
-    This monkey patches `__repr__` and `__str__` for `typing.Union`."""
-    _union_type.__repr__ = _new_repr
-    _union_type.__str__ = _new_str
+    @deprecated(
+        "Plum's union aliasing is not supported on Python 3.14 and later.",
+        category=RuntimeWarning,
+        stacklevel=2,
+    )
+    def set_union_alias(union: UnionT, alias: str) -> UnionT:
+        """Change how a `typing.Union` is printed. This does not modify `union`.
 
+        Args:
+            union (type or type hint): A union.
+            alias (str): How to print `union`.
 
-def deactivate_union_aliases() -> None:
-    """Undo what :func:`.alias.activate` did. This restores the original  `__repr__`
-    and `__str__` for `typing.Union`."""
-    _union_type.__repr__ = _original_repr
-    _union_type.__str__ = _original_str
-
-
-_ALIASED_UNIONS: list = []
-
-
-def set_union_alias(union: UnionT, alias: str) -> UnionT:
-    """Change how a `typing.Union` is printed. This does not modify `union`.
-
-    Args:
-        union (type or type hint): A union.
-        alias (str): How to print `union`.
-
-    Returns:
-        type or type hint: `union`.
-    """
-    args = get_args(union) if isinstance(union, _union_type) else (union,)
-    for existing_union, existing_alias in _ALIASED_UNIONS:
-        if set(existing_union) == set(args) and alias != existing_alias:
-            if isinstance(union, _union_type):
-                union_str = _original_str(union)
-            else:
-                union_str = repr(union)
-            raise RuntimeError(f"`{union_str}` already has alias `{existing_alias}`.")
-    _ALIASED_UNIONS.append((args, alias))
-    return union
+        Returns:
+            type or type hint: `union`.
+        """
+        return union
