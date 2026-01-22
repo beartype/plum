@@ -2,9 +2,9 @@ __all__ = ["Signature", "append_default_args"]
 
 import inspect
 import operator
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from copy import copy
-from typing import Any, ClassVar, Iterable, get_type_hints
+from typing import Any, ClassVar, get_type_hints
 from typing_extensions import Self
 
 from rich.console import Console, ConsoleOptions
