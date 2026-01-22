@@ -101,7 +101,6 @@ exclude = [  # TODO: Fix the mypy errors in all these files
     "plum/repr\\.py",
     "plum/resolver\\.py",
     "plum/signature\\.py",
-    "plum/_type\\.py",
 ]
 
 

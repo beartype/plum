@@ -36,7 +36,7 @@ _update_instances_original = None
 def activate_autoreload() -> None:
     """Pirate Autoreload's `update_instance` function to have Plum work with
     Autoreload."""
-    from IPython.extensions import autoreload  # type: ignore[import-not-found]
+    from IPython.extensions import autoreload  # type: ignore[import-not-found,unused-ignore]  # noqa: I001
 
     # First, cache the original method so we can deactivate ourselves.
     global _update_instances_original
@@ -54,7 +54,7 @@ def deactivate_autoreload() -> None:
     if _update_instances_original is None:
         raise RuntimeError("Plum Autoreload module was never activated.")
 
-    from IPython.extensions import autoreload
+    from IPython.extensions import autoreload  # noqa: I001  # type: ignore[import-not-found,unused-ignore]
 
     autoreload.update_instances = _update_instances_original
 
@@ -66,7 +66,7 @@ if _autoload in ("y", "yes", "t", "true", "on", "1"):  # pragma: no cover
     try:
         # Try to load iPython and get the iPython session, but don't crash if
         # this does not work (for example IPython not installed, or python shell)
-        from IPython import get_ipython  # type: ignore[import-not-found]
+        from IPython import get_ipython  # type: ignore[import-not-found,unused-ignore]
 
         ip = get_ipython()
         ext_loaded = "IPython.extensions.storemagic" in ip.extension_manager.loaded
