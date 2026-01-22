@@ -26,11 +26,10 @@ Note that `IntOrFloat` prints to `typing.Union[IntOrFloat]` rather than just
 parsing how unions print.
 """
 
-from functools import wraps
-from typing import TypeVar, Union, _type_repr, get_args
-from typing_extensions import assert_never
-
 __all__ = ["activate_union_aliases", "deactivate_union_aliases", "set_union_alias"]
+
+from functools import wraps
+from typing import Any, TypeVar, Union, _type_repr, get_args
 
 UnionT = TypeVar("UnionT")
 
@@ -46,44 +45,47 @@ def _new_repr(self: object) -> str:
     Returns:
         str: Representation of a `typing.Union` taking into account union aliases.
     """
-    args = get_args(self)
-    args_set = set(args)
+    args_tuple = get_args(self)
+    args_set = set(args_tuple)
 
     # Find all aliased unions contained in this union.
-    found_unions = []
-    found_positions = []
-    found_aliases = []
+    found_unions: list[set[Any]] = []
+    found_positions: list[int] = []
+    found_aliases: list[str] = []
     for union, alias in reversed(_ALIASED_UNIONS):
         union_set = set(union)
         if union_set <= args_set:
-            for i, arg in enumerate(args):
+            for i, arg in enumerate(args_tuple):
                 if arg in union_set:
                     found_unions.append(union_set)
                     found_positions.append(i)
                     found_aliases.append(alias)
                     break
             else:  # pragma: no cover
-                assert_never(union)
+                # This should never be reached - if union_set <= args_set, we
+                # should find at least one arg
+                msg = f"Unexpectedly failed to find argument for union {union}"
+                raise AssertionError(msg)
 
     # Delete any unions that are contained in strictly bigger unions. We check
     # for strictly inequality because any union includes itself.
     for i in range(len(found_unions) - 1, -1, -1):
-        for union in found_unions:
-            if found_unions[i] < union:
+        for union_candidate in found_unions:
+            if found_unions[i] < union_candidate:
                 del found_unions[i]
                 del found_positions[i]
                 del found_aliases[i]
                 break
 
     # Create a set with all arguments of all found unions.
-    found_args = set()
-    for union in found_unions:
-        found_args |= union
+    found_args: set[Any] = set()
+    for union_set in found_unions:
+        found_args |= union_set
 
     # Insert the aliases right before the first found argument. When we insert
     # an element, the positions of following insertions need to be appropriately
     # incremented.
-    args = list(args)
+    args: list[Any] = list(args_tuple)
     # Sort by insertion position to ensure that all following insertions are at
     # higher indices. This makes the bookkeeping simple.
     for delta, (i, alias) in enumerate(
@@ -92,10 +94,10 @@ def _new_repr(self: object) -> str:
         args.insert(i + delta, alias)
 
     # Filter all elements of unions that are aliased.
-    new_args = ()
+    new_args: list[Any] = []
     for arg in args:
         if arg not in found_args:
-            new_args += (arg,)
+            new_args.append(arg)
     args = new_args
 
     # Generate a string representation.
@@ -124,18 +126,18 @@ def _new_str(self: object) -> str:
 def activate_union_aliases() -> None:
     """When printing `typing.Union`s, replace all aliased unions by the aliased names.
     This monkey patches `__repr__` and `__str__` for `typing.Union`."""
-    _union_type.__repr__ = _new_repr
-    _union_type.__str__ = _new_str
+    _union_type.__repr__ = _new_repr  # type: ignore[method-assign]
+    _union_type.__str__ = _new_str  # type: ignore[method-assign]
 
 
 def deactivate_union_aliases() -> None:
     """Undo what :func:`.alias.activate` did. This restores the original  `__repr__`
     and `__str__` for `typing.Union`."""
-    _union_type.__repr__ = _original_repr
-    _union_type.__str__ = _original_str
+    _union_type.__repr__ = _original_repr  # type: ignore[method-assign]
+    _union_type.__str__ = _original_str  # type: ignore[method-assign]
 
 
-_ALIASED_UNIONS: list = []
+_ALIASED_UNIONS: list[tuple[tuple[Any, ...], str]] = []
 
 
 def set_union_alias(union: UnionT, alias: str) -> UnionT:
