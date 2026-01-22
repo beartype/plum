@@ -1,12 +1,8 @@
-from functools import partial
 from typing import TypeGuard, TypeVar
 
-from beartype import (
-    BeartypeConf as _BeartypeConf,
-    BeartypeStrategy as _BeartypeStrategy,
-)
-from beartype.door import TypeHint as _TypeHint, is_bearable as _is_bearable
+from beartype.door import TypeHint as _TypeHint
 
+from ._bear import is_bearable as _is_bearable
 from ._type import *  # noqa: F401, F403
 from ._type import resolve_type_hint
 from ._version import __version__  # noqa: F401
@@ -31,11 +27,6 @@ from typing import Dict, List, Tuple, Union  # noqa: F401, UP035
 # Deprecated
 # isort: split
 from .parametric import Val  # noqa: F401, F403
-
-# Ensure that type checking is always entirely correct! The default O(1) strategy
-# is super fast, but might yield unpredictable dispatch behaviour. The O(n) strategy
-# actually is not yet available, but we can already opt in to use it.
-_is_bearable = partial(_is_bearable, conf=_BeartypeConf(strategy=_BeartypeStrategy.On))
 
 T = TypeVar("T")
 T2 = TypeVar("T2")

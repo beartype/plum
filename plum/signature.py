@@ -1,21 +1,22 @@
+__all__ = ["Signature", "append_default_args"]
+
 import inspect
 import operator
 from collections.abc import Callable
 from copy import copy
-from typing import Any, ClassVar, get_type_hints
+from typing import Any, ClassVar, Iterable, get_type_hints
 from typing_extensions import Self
 
+from rich.console import Console, ConsoleOptions
 from rich.segment import Segment
 
 import beartype.door
 from beartype.peps import resolve_pep563 as beartype_resolve_pep563
 
-from . import _is_bearable
+from ._bear import is_bearable
 from ._type import is_faithful, resolve_type_hint
 from .repr import repr_short, rich_repr
 from .util import Comparable, Missing, TypeHint, _MissingType, wrap_lambda
-
-__all__ = ["Signature", "append_default_args"]
 
 
 @rich_repr
@@ -46,7 +47,7 @@ class Signature(Comparable):
 
     def __init__(
         self,
-        *types: tuple[TypeHint, ...],
+        *types: TypeHint,
         varargs: TypeHint | _MissingType = _default_varargs,
         precedence: int = _default_precedence,
     ) -> None:
@@ -67,7 +68,7 @@ class Signature(Comparable):
         self.is_faithful = types_are_faithful and varargs_are_faithful
 
     @staticmethod
-    def from_callable(f: Callable, precedence: int = 0) -> "Signature":
+    def from_callable(f: Callable[..., Any], precedence: int = 0) -> "Signature":
         """Construct a signature from a callable.
 
         Args:
@@ -96,7 +97,9 @@ class Signature(Comparable):
 
         return copy
 
-    def __rich_console__(self, console, options) -> Segment:
+    def __rich_console__(
+        self, console: Console, options: ConsoleOptions, /
+    ) -> Iterable[Segment]:
         yield Segment("Signature(")
         show_comma = True
         if self.types:
@@ -136,7 +139,7 @@ class Signature(Comparable):
             )
         return False
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((Signature, *self.types, self.varargs))
 
     def expand_varargs(self, n: int) -> tuple[TypeHint, ...]:
@@ -154,7 +157,9 @@ class Signature(Comparable):
         else:
             return self.types
 
-    def __le__(self, other: "Signature") -> bool:
+    def __le__(self, other: object, /) -> bool:
+        if not isinstance(other, Signature):
+            return NotImplemented
         # If the number of types of the signatures are unequal, then the signature
         # with the fewer number of types must be expanded using variable arguments.
         if not (
@@ -177,7 +182,7 @@ class Signature(Comparable):
             if self.has_varargs and other.has_varargs:
                 self_varargs = beartype.door.TypeHint(self.varargs)
                 other_varargs = beartype.door.TypeHint(other.varargs)
-                return self_varargs <= other_varargs
+                return bool(self_varargs <= other_varargs)
 
             # Having variable arguments makes you slightly larger.
             elif self.has_varargs:
@@ -208,7 +213,7 @@ class Signature(Comparable):
                 #       than `(Number, *B)`.
                 self_varargs = beartype.door.TypeHint(self.varargs)
                 other_varargs = beartype.door.TypeHint(other.varargs)
-                return self_varargs <= other_varargs
+                return bool(self_varargs <= other_varargs)
 
             elif self.has_varargs:
                 # Previously, this returned `False`, which would implement the subset
@@ -232,7 +237,7 @@ class Signature(Comparable):
         else:
             return False
 
-    def match(self, values: tuple, /) -> bool:
+    def match(self, values: tuple[object, ...], /) -> bool:
         """Check whether values match the signature.
 
         Args:
@@ -250,7 +255,7 @@ class Signature(Comparable):
             return False
         else:
             types = self.expand_varargs(len(values))
-            return all(_is_bearable(v, t) for v, t in zip(values, types, strict=True))
+            return all(is_bearable(v, t) for v, t in zip(values, types, strict=True))
 
     def compute_distance(self, values: tuple[object, ...], /) -> int:
         """For given values, computes the edit distance between these vales and this
@@ -271,12 +276,14 @@ class Signature(Comparable):
         # Additionally count one for every mismatching value above the
         # extra/missing arguments. There can be fewer types than values.
         for v, t in zip(values, types, strict=False):
-            if not _is_bearable(v, t):
+            if not is_bearable(v, t):
                 distance += 1
 
         return distance
 
-    def compute_mismatches(self, values: tuple, /) -> tuple[set[int], bool]:
+    def compute_mismatches(
+        self, values: tuple[object, ...], /
+    ) -> tuple[set[int], bool]:
         """For given `values`, find the indices of the arguments that are mismatched.
         Also return whether the varargs is matched.
 
@@ -296,7 +303,7 @@ class Signature(Comparable):
         varargs_matched = True
 
         for i, (v, t) in enumerate(zip(values, types, strict=False)):
-            if not _is_bearable(v, t):
+            if not is_bearable(v, t):
                 if i < n_types:
                     mismatches.add(i)
                 else:
@@ -305,7 +312,7 @@ class Signature(Comparable):
         return mismatches, varargs_matched
 
 
-def inspect_signature(f: Callable, /) -> inspect.Signature:
+def inspect_signature(f: Callable[..., Any], /) -> inspect.Signature:
     """Wrapper of :func:`inspect.signature` which adds support for certain non-function
     objects.
 
@@ -320,7 +327,7 @@ def inspect_signature(f: Callable, /) -> inspect.Signature:
     return inspect.signature(f)
 
 
-def resolve_pep563(f: Callable, /) -> None:
+def resolve_pep563(f: Callable[..., Any], /) -> None:
     """Utility function to resolve PEP563-style annotations and make editable.
 
     This function mutates `f`.
@@ -336,7 +343,9 @@ def resolve_pep563(f: Callable, /) -> None:
             f.__annotations__[k] = v
 
 
-def _extract_signature(f: Callable, /, precedence: int = 0) -> Signature:
+def _extract_signature(
+    f: Callable[..., Any], /, precedence: int = 0
+) -> tuple[list[TypeHint], TypeHint | _MissingType]:
     """Extract the signature from a function.
 
     Args:
@@ -344,7 +353,7 @@ def _extract_signature(f: Callable, /, precedence: int = 0) -> Signature:
         precedence (int, optional): Precedence of the method.
 
     Returns:
-        :class:`.Signature`: Signature.
+        tuple: A tuple of (types_list, varargs).
     """
     resolve_pep563(f)
 
@@ -352,14 +361,14 @@ def _extract_signature(f: Callable, /, precedence: int = 0) -> Signature:
     sig = inspect_signature(f)
 
     # Get types of arguments.
-    types = []
-    varargs = Missing
+    types: list[TypeHint] = []
+    varargs: TypeHint | _MissingType = Missing
     for arg in sig.parameters:
         p = sig.parameters[arg]
 
         # Parse and resolve annotation.
         if p.annotation is inspect.Parameter.empty:
-            annotation = Any
+            annotation: TypeHint = Any
         else:
             annotation = resolve_type_hint(p.annotation)
 
@@ -376,7 +385,7 @@ def _extract_signature(f: Callable, /, precedence: int = 0) -> Signature:
 
         # If there is a default parameter, make sure that it is of the annotated type.
         default_is_empty = p.default is inspect.Parameter.empty
-        if not default_is_empty and not _is_bearable(p.default, annotation):
+        if not default_is_empty and not is_bearable(p.default, annotation):
             raise TypeError(
                 f"Default value `{p.default}` is not an instance "
                 f"of the annotated type `{repr_short(annotation)}`."
@@ -385,7 +394,7 @@ def _extract_signature(f: Callable, /, precedence: int = 0) -> Signature:
     return types, varargs
 
 
-def append_default_args(signature: Signature, f: Callable) -> list[Signature]:
+def append_default_args(signature: Signature, f: Callable[..., Any]) -> list[Signature]:
     """Returns a list of signatures of function `f`, where those signatures are derived
     from the input arguments of `f` by treating every non-keyword-only argument with a
     default value as a keyword-only argument turn by turn.
