@@ -83,7 +83,7 @@ class Dispatcher:
             if isinstance(signature, Signature):
                 resolved_signatures.append(signature)
             elif isinstance(signature, tuple):
-                resolved_signatures.append(Signature(*[t for t in signature]))
+                resolved_signatures.append(Signature(*signature))
             else:
                 raise ValueError(
                     f"Signature `{signature}` must be a tuple or of type "
