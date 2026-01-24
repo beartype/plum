@@ -106,7 +106,7 @@ def _safe_getfile(obj: object, /) -> str:
         raise OSError("Source code not available.") from None
 
 
-def repr_source_path(function: Callable[..., Any], /) -> Text:
+def repr_source_path(function: Callable[..., Any], /) -> Text | None:
     """Create a :class:`rich.Text` object with an hyperlink to the function definition.
 
     Args:
@@ -114,8 +114,8 @@ def repr_source_path(function: Callable[..., Any], /) -> Text:
 
     Returns:
         :class:`rich.Text` or None:
-            Representation with a hyperlink to the source. If the introspection failed,
-            it returns :obj:`None`.
+            Representation with a hyperlink to the source. If the introspection
+            failed, it returns :obj:`None`.
     """
 
     try:
