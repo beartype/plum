@@ -410,9 +410,10 @@ class Function(metaclass=_FunctionMeta):
         if self._pending:
             self._resolve_pending_registrations()
 
-        # Compute cache key. When called from `__call__`, types will be actual runtime
-        # types from `map(type, args)`. When called from `invoke`, types may be `TypeHints`
-        # like `Union[int, str]`. Both are hashable and work as cache keys.
+        # Compute cache key. When called from `__call__`, types will be actual
+        # runtime types from `map(type, args)`. When called from `invoke`, types
+        # may be `TypeHints` like `Union[int, str]`. Both are hashable and work
+        # as cache keys.
         if types is None:
             # Attempt to use the cache based on the types of the arguments.
             # At this point, `args` must be a tuple (not `Signature` or `None`).

@@ -283,7 +283,7 @@ class Signature(Comparable):
 
     def compute_mismatches(
         self, values: tuple[object, ...], /
-    ) -> tuple[set[int], bool]:
+    ) -> tuple[frozenset[int], bool]:
         """For given `values`, find the indices of the arguments that are mismatched.
         Also return whether the varargs is matched.
 
@@ -291,7 +291,7 @@ class Signature(Comparable):
             values (tuple[object, ...]): Values.
 
         Returns:
-            set[int]: Indices of invalid values.
+            frozenset[int]: Indices of invalid values.
             bool: Whether the varargs was matched or not.
         """
         types = self.expand_varargs(len(values))
@@ -309,7 +309,7 @@ class Signature(Comparable):
                 else:
                     varargs_matched = False
 
-        return mismatches, varargs_matched
+        return frozenset(mismatches), varargs_matched
 
 
 def inspect_signature(f: Callable[..., Any], /) -> inspect.Signature:
