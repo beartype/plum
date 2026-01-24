@@ -208,7 +208,7 @@ def resolve_type_hint(x: object, /) -> object:
                 assert isinstance(resolved_args, tuple)
                 args = resolved_args
 
-            # Ensure origin is not None before indexing
+            # Ensure origin is not `None` before indexing.
             assert origin is not None
             return origin[args]
 

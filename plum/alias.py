@@ -62,9 +62,9 @@ def _new_repr(self: object) -> str:
                     found_aliases.append(alias)
                     break
             else:  # pragma: no cover
-                # This should never be reached - if union_set <= args_set, we
-                # should find at least one arg
-                msg = f"Unexpectedly failed to find argument for union {union}"
+                # This should never be reached! If `union_set <= args_set`, we
+                # should find at least one argument.
+                msg = f"Unexpectedly failed to find argument for union `{union}`."
                 raise AssertionError(msg)
 
     # Delete any unions that are contained in strictly bigger unions. We check

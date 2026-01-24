@@ -81,8 +81,8 @@ class Function(metaclass=_FunctionMeta):
         Function._instances.append(self)
 
         self._f: Callable[..., Any] = f
-        # Cache maps type tuples to (method, return_type). Keys can be either
-        # actual types (from __call__) or TypeHints (from invoke).
+        # Cache maps type tuples to `(method, return_type)`. Keys can be either
+        # actual types (from `__call__`) or `TypeHints` (from `invoke`).
         self._cache: dict[tuple[TypeHint, ...], tuple[Callable[..., Any], TypeHint]]
         self._cache = {}
         wraps(f)(self)  # Sets `self._doc`.
@@ -287,7 +287,7 @@ class Function(metaclass=_FunctionMeta):
 
             # Obtain the signature if it is not available.
             if signature is None:
-                # When signature is None, precedence should always be set.
+                # When signature is `None`, precedence should always be set.
                 assert precedence is not None
                 signature = Signature.from_callable(f, precedence=precedence)
             else:
@@ -410,12 +410,12 @@ class Function(metaclass=_FunctionMeta):
         if self._pending:
             self._resolve_pending_registrations()
 
-        # Compute cache key. When called from __call__, types will be actual runtime
-        # types from map(type, args). When called from invoke(), types may be TypeHints
-        # like Union[int, str]. Both are hashable and work as cache keys.
+        # Compute cache key. When called from `__call__`, types will be actual runtime
+        # types from `map(type, args)`. When called from `invoke`, types may be `TypeHints`
+        # like `Union[int, str]`. Both are hashable and work as cache keys.
         if types is None:
             # Attempt to use the cache based on the types of the arguments.
-            # At this point, `args` must be a tuple (not Signature or None).
+            # At this point, `args` must be a tuple (not `Signature` or `None`).
             assert isinstance(args, tuple)
             types = tuple(map(type, args))
         try:
