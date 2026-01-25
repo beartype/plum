@@ -352,13 +352,13 @@ class Resolver:
 
             def check(m: Method, /) -> bool:
                 # `target` are concrete arguments.
-                return m.signature.match(target)
+                return bool(m.signature.match(target))
 
         else:
 
             def check(m: Method, /) -> bool:
                 # `target` is a signature that must be encompassed.
-                return target <= m.signature
+                return bool(target <= m.signature)
 
         candidates: list[Method] = []
         for method in [m for m in self.methods if check(m)]:

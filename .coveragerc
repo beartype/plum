@@ -1,5 +1,5 @@
 [run]
-omit = plum/_version.py
+omit = src/plum/_version.py
 
 [report]
 exclude_lines =

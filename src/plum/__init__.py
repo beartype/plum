@@ -1,3 +1,4 @@
+import importlib.util
 from typing import TypeGuard, TypeVar
 
 from beartype.door import TypeHint as _TypeHint
@@ -17,6 +18,20 @@ from .promotion import *  # noqa: F401, F403
 from .resolver import *  # noqa: F401, F403
 from .signature import *  # noqa: F401, F403
 from .util import *  # noqa: F401, F403
+
+# Detect if we're running a mypyc-compiled version
+# Check the dispatcher module since __init__ is not compiled
+try:
+    from . import dispatcher as _dispatcher_module  # noqa: F401
+
+    _spec = importlib.util.find_spec("plum.dispatcher")
+    COMPILED = (
+        _spec is not None
+        and _spec.origin is not None
+        and _spec.origin.endswith((".pyd", ".so"))
+    )
+except Exception:
+    COMPILED = False
 
 # isort: split
 # Plum previously exported a number of types. As of recently, the user can use

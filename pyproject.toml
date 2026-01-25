@@ -41,6 +41,14 @@ dev = [
     { include-group = "test_static" },
     { include-group = "test_runtime" },
 ]
+build = [
+    "hatch>=1.15.1",
+    "hatch-mypyc>=0.16.0",
+    "hatch-vcs",
+]
+wheels = [
+    "cibuildwheel>=2.22.0",
+]
 docs = [
     "jupyter-book>=1.0.0,<2.0.0",
 ]
@@ -68,15 +76,71 @@ test_runtime = [
 
 [tool.hatch]
 version.source = "vcs"
-build.include = ["plum*"]
-build.hooks.vcs.version-file = "plum/_version.py"
+build.hooks.vcs.version-file = "src/plum/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/plum"]
+
+[tool.hatch.build.targets.wheel.hooks.mypyc]
+enable-by-default = false
+dependencies = ["hatch-mypyc>=0.16.0", "mypy>=1.18.2"]
+require-runtime-dependencies = true
+# Only compile the core performance-sensitive modules
+include = [
+    "src/plum/_bear.py",
+    "src/plum/dispatcher.py",
+    "src/plum/method.py",
+    "src/plum/overload.py",
+    "src/plum/resolver.py",
+]
+mypy-args = [
+    "--ignore-missing-imports",
+    "--disable-error-code=assignment",
+    "--disable-error-code=attr-defined",
+    "--disable-error-code=return-value",
+    "--disable-error-code=arg-type",
+    "--disable-error-code=type-var",
+    "--disable-error-code=misc",
+    "--disable-error-code=valid-type",
+    "--disable-error-code=no-redef",
+]
+options = { debug_level = "0" }
+
+[tool.cibuildwheel]
+build-verbosity = 1
+
+# Target environments:
+# - Python: CPython 3.10+ only
+# - Architecture (64-bit only): amd64 / x86_64, universal2, and arm64
+# - OS: Linux (no musl), Windows, and macOS
+build = "cp310-* cp311-* cp312-* cp313-*"
+skip = [
+    "*-manylinux_i686",
+    "*-musllinux_*",
+    "*-win32",
+    "pp*",
+]
+
+test-command = 'pytest {project}/tests -k "not incompatible_with_mypyc" --ignore={project}/tests/advanced'
+test-requires = ["pytest>=8.4.2"]
+# Skip testing arm64 builds on Intel Macs
+test-skip = ["*-macosx_arm64", "*-macosx_universal2:arm64"]
+
+[tool.cibuildwheel.environment]
+HATCH_BUILD_HOOKS_ENABLE = "1"
+MYPYC_OPT_LEVEL = "3"
+MYPYC_DEBUG_LEVEL = "0"
+
+[tool.cibuildwheel.linux]
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
 
 
 # Development tools
 [tool.coverage]
 run.branch = true
 run.command_line = "-m pytest --verbose test"
-run.source = ["plum"]
+run.source = ["src/plum"]
 report.exclude_also = [
   '\.\.\.',
   'if TYPE_CHECKING:',
@@ -87,28 +151,31 @@ report.exclude_also = [
 [tool.mypy]
 disable_error_code = ["no-redef"]
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
-files = ["plum"]
+files = ["src/plum"]
 strict = true
 follow_imports = "skip"  # TODO: Set to "normal" when mypy errors are fixed
 show_error_codes = true
 exclude = [  # TODO: Fix the mypy errors in all these files
-    "plum/parametric\\.py",
-    "plum/promotion\\.py",
+    "src/plum/parametric\\.py",
+    "src/plum/promotion\\.py",
 ]
 
 
 [tool.pytest.ini_options]
-testpaths = ["tests/", "plum", "docs"]
+testpaths = ["tests/", "src/plum", "docs"]
 addopts = [
     "-ra",
     "-p",
     "no:doctest",
 ]
 minversion = "6.0"
+markers = [
+    "incompatible_with_mypyc: marks tests as incompatible with mypyc-compiled code",
+]
 
 
 [tool.ruff]
-src = ["plum"]
+src = ["src/plum"]
 target-version = "py310"
 line-length = 88
 
