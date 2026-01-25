@@ -1,3 +1,5 @@
+__all__ = ["Function"]
+
 import os
 import textwrap
 from collections.abc import Callable
@@ -8,13 +10,10 @@ from typing import Any, Protocol, TypeVar
 from typing_extensions import Self
 
 from ._type import resolve_type_hint
-from .method import Method
+from .method import Method, MethodList
 from .resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
 from .signature import Signature, append_default_args
 from .util import TypeHint
-
-__all__ = ["Function"]
-
 
 _promised_convert = None
 """function or None: This will be set to :func:`.parametric.convert`."""
@@ -22,7 +21,7 @@ _promised_convert = None
 SomeExceptionType = TypeVar("SomeExceptionType", bound=Exception)
 
 
-def _convert(obj: Any, target_type: TypeHint) -> Any:
+def _convert(obj: Any, target_type: TypeHint, /) -> Any:
     """Convert an object to a particular type. Only converts if `target_type` is set.
 
     Args:
@@ -35,10 +34,11 @@ def _convert(obj: Any, target_type: TypeHint) -> Any:
     if target_type is Any:
         return obj
     else:
+        assert _promised_convert is not None
         return _promised_convert(obj, target_type)
 
 
-_owner_transfer = {}
+_owner_transfer: dict[type, type] = {}
 """dict[type, type]: When the keys of this dictionary are detected as the owner of
 a function (see :meth:`Function.owner`), make the corresponding value the owner."""
 
@@ -48,8 +48,10 @@ class _FunctionMeta(type):
     class. This simple metaclass ensures that `Function.__doc__` still prints as the
     docstring of the class."""
 
+    _class_doc: str | None
+
     @property
-    def __doc__(self) -> str | None:
+    def __doc__(self) -> str | None:  # type: ignore[override]
         return self._class_doc
 
 
@@ -67,17 +69,21 @@ class Function(metaclass=_FunctionMeta):
     # Correctly printing the docstring is handled by :class:`_FunctionMeta`.
     _class_doc = __doc__
 
-    _instances = []
+    _instances: list["Function"] = []
 
     def __init__(
         self,
-        f: Callable,
+        f: Callable[..., Any],
+        /,
         owner: str | None = None,
         warn_redefinition: bool = False,
     ) -> None:
         Function._instances.append(self)
 
-        self._f: Callable = f
+        self._f: Callable[..., Any] = f
+        # Cache maps type tuples to `(method, return_type)`. Keys can be either
+        # actual types (from `__call__`) or `TypeHints` (from `invoke`).
+        self._cache: dict[tuple[TypeHint, ...], tuple[Callable[..., Any], TypeHint]]
         self._cache = {}
         wraps(f)(self)  # Sets `self._doc`.
 
@@ -92,15 +98,19 @@ class Function(metaclass=_FunctionMeta):
         self._warn_redefinition = warn_redefinition
 
         # Initialise pending and resolved methods.
-        self._pending: list[tuple[Callable, Signature | None, int]] = []
+        self._pending: list[
+            tuple[Callable[..., Any], Signature | None, int | None]
+        ] = []
         self._resolver = Resolver(
             self.__name__,
             warn_redefinition=self._warn_redefinition,
         )
-        self._resolved: list[tuple[Callable, Signature, int]] = []
+        self._resolved: list[
+            tuple[Callable[..., Any], Signature | None, int | None]
+        ] = []
 
     @property
-    def owner(self) -> object | None:
+    def owner(self) -> type | None:
         """object or None: Owner of the function. If `None`, then there is no owner."""
         if self._owner is None and self._owner_name is not None:
             name = self._owner_name.split(".")[-1]
@@ -168,19 +178,19 @@ class Function(metaclass=_FunctionMeta):
         return doc if doc else None
 
     @__doc__.setter
-    def __doc__(self, value: str) -> None:
+    def __doc__(self, value: str | None, /) -> None:
         # Ensure that `self._doc` remains a string.
         self._doc = value if value else ""
 
     @property
-    def methods(self) -> list[Signature]:
-        """list[:class:`.signature.Signature`]: All available methods."""
+    def methods(self) -> MethodList:
+        """list[:class:`.method.Method`]: All available methods."""
         self._resolve_pending_registrations()
         return self._resolver.methods
 
     def dispatch(
-        self: Self, method: Callable | None = None, precedence=0
-    ) -> Self | Callable[[Callable], Self]:
+        self: Self, method: Callable[..., Any] | None = None, precedence: int = 0
+    ) -> Self | Callable[[Callable[..., Any]], Self]:
         """Decorator to extend the function with another signature.
 
         Args:
@@ -190,14 +200,14 @@ class Function(metaclass=_FunctionMeta):
             function: Decorator.
         """
         if method is None:
-            return lambda m: self.dispatch(m, precedence=precedence)
+            return lambda m: self.dispatch(m, precedence=precedence)  # type: ignore[return-value]
 
         self.register(method, precedence=precedence)
         return self
 
     def dispatch_multi(
         self: Self, *signatures: Signature | tuple[TypeHint, ...]
-    ) -> Callable[[Callable], Self]:
+    ) -> Callable[[Callable[..., Any]], Self]:
         """Decorator to extend the function with multiple signatures at once.
 
         Args:
@@ -219,13 +229,13 @@ class Function(metaclass=_FunctionMeta):
                     f"`plum.signature.Signature`."
                 )
 
-        def decorator(method):
+        def decorator(method: Callable[..., Any]) -> "Function":
             # The precedence will not be used, so we can safely set it to `None`.
             for signature in resolved_signatures:
                 self.register(method, signature=signature, precedence=None)
             return self
 
-        return decorator
+        return decorator  # type: ignore[return-value]
 
     def clear_cache(self, reregister: bool = True) -> None:
         """Clear cache.
@@ -248,7 +258,10 @@ class Function(metaclass=_FunctionMeta):
             )
 
     def register(
-        self, f: Callable, signature: Signature | None = None, precedence=0
+        self,
+        f: Callable[..., Any],
+        signature: Signature | None = None,
+        precedence: int | None = 0,
     ) -> None:
         """Register a method.
 
@@ -274,6 +287,8 @@ class Function(metaclass=_FunctionMeta):
 
             # Obtain the signature if it is not available.
             if signature is None:
+                # When signature is `None`, precedence should always be set.
+                assert precedence is not None
                 signature = Signature.from_callable(f, precedence=precedence)
             else:
                 # Ensure that the implementation is `f`, but make a copy before
@@ -294,7 +309,7 @@ class Function(metaclass=_FunctionMeta):
 
     def resolve_method(
         self, target: tuple[object, ...] | Signature
-    ) -> tuple[Callable, TypeHint]:
+    ) -> tuple[Callable[..., Any], TypeHint]:
         """Find the method and return type for arguments.
 
         Args:
@@ -332,16 +347,16 @@ class Function(metaclass=_FunctionMeta):
         return impl, return_type
 
     def _handle_not_found_lookup_error(
-        self, ex: NotFoundLookupError
-    ) -> tuple[Callable, TypeHint]:
+        self, ex: NotFoundLookupError, /
+    ) -> tuple[Callable[..., Any], TypeHint]:
         if not self.owner:
             # Not in a class. Nothing we can do.
             raise ex from None
 
         # In a class. Walk through the classes in the class's MRO, except for this
         # class, and try to get the method.
-        method = None
-        return_type = object
+        method: Callable[..., Any] | None = None
+        return_type: TypeHint = object
 
         for c in self.owner.__mro__[1:]:
             # Skip the top of the type hierarchy given by `object` and `type`. We do
@@ -374,16 +389,16 @@ class Function(metaclass=_FunctionMeta):
             raise ex from None
         return method, return_type
 
-    def __call__(self, *args, **kw_args):
+    def __call__(self, *args: object, **kw: object) -> object:
         __tracebackhide__ = True
         method, return_type = self._resolve_method_with_cache(args=args)
-        return _convert(method(*args, **kw_args), return_type)
+        return _convert(method(*args, **kw), return_type)
 
     def _resolve_method_with_cache(
         self,
         args: tuple[object, ...] | Signature | None = None,
         types: tuple[TypeHint, ...] | None = None,
-    ) -> tuple[Callable, TypeHint]:
+    ) -> tuple[Callable[..., Any], TypeHint]:
         if args is None and types is None:
             raise ValueError(
                 "Arguments `args` and `types` cannot both be `None`. "
@@ -395,8 +410,14 @@ class Function(metaclass=_FunctionMeta):
         if self._pending:
             self._resolve_pending_registrations()
 
+        # Compute cache key. When called from `__call__`, types will be actual
+        # runtime types from `map(type, args)`. When called from `invoke`, types
+        # may be `TypeHints` like `Union[int, str]`. Both are hashable and work
+        # as cache keys.
         if types is None:
             # Attempt to use the cache based on the types of the arguments.
+            # At this point, `args` must be a tuple (not `Signature` or `None`).
+            assert isinstance(args, tuple)
             types = tuple(map(type, args))
         try:
             return self._cache[types]
@@ -414,7 +435,7 @@ class Function(metaclass=_FunctionMeta):
                 self._cache[types] = method, return_type
             return method, return_type
 
-    def invoke(self, *types: TypeHint) -> Callable:
+    def invoke(self, *types: TypeHint) -> Callable[..., Any]:
         """Invoke a particular method.
 
         Args:
@@ -426,14 +447,14 @@ class Function(metaclass=_FunctionMeta):
         method, return_type = self._resolve_method_with_cache(types=types)
 
         @wraps(self._f)
-        def wrapped_method(*args, **kw_args):
-            return _convert(method(*args, **kw_args), return_type)
+        def wrapped_method(*args: Any, **kw: Any) -> Any:
+            return _convert(method(*args, **kw), return_type)
 
-        wrapped_method.__wrapped_by_plum__ = method
+        wrapped_method.__wrapped_by_plum__ = method  # type: ignore[attr-defined]
 
         return wrapped_method
 
-    def __get__(self, instance, owner):
+    def __get__(self, instance: object, owner: type, /) -> "Function | MethodType":
         if instance is not None:
             return MethodType(_BoundFunction(self, instance), instance)
         else:
@@ -447,7 +468,7 @@ class Function(metaclass=_FunctionMeta):
         )
 
 
-def _generate_qualname(f: Callable) -> str:
+def _generate_qualname(f: Callable[..., Any], /) -> str:
     """Generate a qualified name for a function.
 
     This function can be interpreted as an improved version of `f.__qualname__`
@@ -474,8 +495,8 @@ class _DispatchFunction(Protocol):
     """Protocol for the `dispatch` method of a function."""
 
     def __call__(
-        self, method: Callable | None, precedence: int
-    ) -> Self | Callable[[Callable], Self]: ...
+        self, method: Callable[..., Any] | None, precedence: int
+    ) -> Self | Callable[[Callable[..., Any]], Self]: ...
 
 
 class _BoundFunction:
@@ -486,47 +507,51 @@ class _BoundFunction:
         instance (object): Instance to which the function is bound.
     """
 
-    def __init__(self, f, instance):
+    _f: "Function"
+    _instance: object
+
+    def __init__(self, f: "Function", instance: object) -> None:
         self._f = f
         wraps(f._f)(self)  # This will call the setter for `__doc__`.
         self._instance = instance
 
     @property
-    def __doc__(self):
+    def __doc__(self) -> str | None:
         return self._f.__doc__
 
     @__doc__.setter
-    def __doc__(self, value):
+    def __doc__(self, value: str | None, /) -> None:
         # Don't need to do anything here. The docstring will be derived from `self._f`.
         # We, however, do need to implement this method, because :func:`wraps` calls
         # it.
         pass
 
-    def __call__(self, _, *args, **kw_args):
-        return self._f(self._instance, *args, **kw_args)
+    def __call__(self, _: object, *args: object, **kw: object) -> object:
+        return self._f(self._instance, *args, **kw)
 
-    def invoke(self, *types):
+    def invoke(self, *types: TypeHint) -> Callable[..., Any]:
         """See :meth:`.Function.invoke`."""
 
-        @wraps(self._f._f)
-        def wrapped_method(*args, **kw_args):
+        @wraps(self._f._f)  # type: ignore[union-attr]
+        def wrapped_method(*args: Any, **kw: Any) -> Any:
             # TODO: Can we do this without `type` here?
-            method = self._f.invoke(type(self._instance), *types)
-            return method(self._instance, *args, **kw_args)
+            method = self._f.invoke(type(self._instance), *types)  # type: ignore[union-attr]
+            return method(self._instance, *args, **kw)
 
-        # We set `f.__wrapped_by_plum__` for :func:`Function.invoke`, but here we do
-        # not: this method has `self._instance` prepended to its arguments, so there
-        # is no "wrapped method". In addition, bound functions cannot be directly
-        # extended, so unwrapping is likely never desired.
+        # We set `f.__wrapped_by_plum__` for :func:`Function.invoke`, but here
+        # we do not: this method has `self._instance` prepended to its
+        # arguments, so there is no "wrapped method". In addition, bound
+        # functions cannot be directly extended, so unwrapping is likely never
+        # desired.
 
         return wrapped_method
 
     @property
-    def methods(self) -> list[Signature]:
-        """list[:class:`.signature.Signature`]: All available methods."""
-        return self._f.methods
+    def methods(self) -> MethodList:
+        """list[:class:`.method.Method`]: All available methods."""
+        return self._f.methods  # type: ignore[union-attr]
 
     @property
     def dispatch(self) -> _DispatchFunction:
         """See :meth:`.Function.dispatch`."""
-        return self._f.dispatch
+        return self._f.dispatch  # type: ignore[union-attr, return-value]

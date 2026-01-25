@@ -14,7 +14,7 @@ from collections.abc import Callable, Hashable
 from functools import reduce
 from operator import or_
 from types import UnionType
-from typing import Literal, TypeGuard, TypeVar, final, get_args, get_origin
+from typing import Literal, TypeGuard, TypeVar, cast, final, get_args, get_origin
 
 from beartype.vale._core._valecore import BeartypeValidator
 
@@ -110,7 +110,7 @@ class ModuleType(ResolvableType):
         self._condition = condition
 
     def __new__(cls: type[T], module: str, name: str, **kwargs: object) -> T:
-        return super().__new__(cls, f"ModuleType[{module}.{name}]")
+        return ResolvableType.__new__(cls, f"ModuleType[{module}.{name}]")
 
     def retrieve(self) -> bool:
         """Attempt to retrieve the type from the reference module.
@@ -123,14 +123,15 @@ class ModuleType(ResolvableType):
             if self._condition is not None and not self._condition():
                 return False
 
-            type = sys.modules[self._module]
+            retrieved: object = sys.modules[self._module]
             for name in self._name.split("."):
-                # If `type` does not contain `name` and `self._allow_fail` is
+                # If `retrieved` does not contain `name` and `self._allow_fail` is
                 # set, then silently fail.
-                if not hasattr(type, name) and self._allow_fail:
+                if not hasattr(retrieved, name) and self._allow_fail:
                     return False
-                type = getattr(type, name)
-            self.deliver(type)
+                retrieved = getattr(retrieved, name)
+            # We expect this to be a type, so we cast it.
+            self.deliver(cast(type, retrieved))
         return self._type is not None
 
 
@@ -158,7 +159,7 @@ def _is_hint(x: object) -> bool:
         return False
 
 
-def _hashable(x: object) -> TypeGuard[Hashable]:
+def _hashable(x: object | type) -> TypeGuard[Hashable]:
     """Check if an object is hashable.
 
     Args:
@@ -174,7 +175,7 @@ def _hashable(x: object) -> TypeGuard[Hashable]:
         return False
 
 
-type_mapping = {}
+type_mapping: dict[type, type] = {}
 """dict: When running :func:`resolve_type_hint`, map keys in this dictionary to the
 values."""
 
@@ -188,7 +189,7 @@ def resolve_type_hint(x: object, /) -> object:
     Returns:
         type or type hint: `x`, but with all :class:`ResolvableType`\\s resolved.
     """
-    if _hashable(x) and x in type_mapping:
+    if _hashable(x) and isinstance(x, type) and x in type_mapping:
         return resolve_type_hint(type_mapping[x])
     elif _is_hint(x):
         origin = get_origin(x)
@@ -203,8 +204,12 @@ def resolve_type_hint(x: object, /) -> object:
         else:
             # Do not resolve the arguments for `Literal`s.
             if origin is not Literal:
-                args = resolve_type_hint(args)
+                resolved_args = resolve_type_hint(args)
+                assert isinstance(resolved_args, tuple)
+                args = resolved_args
 
+            # Ensure origin is not `None` before indexing.
+            assert origin is not None
             return origin[args]
 
     elif x is None or x is Ellipsis:
@@ -238,7 +243,7 @@ def resolve_type_hint(x: object, /) -> object:
             f"Please open an issue at https://github.com/beartype/plum.",
             stacklevel=2,
         )
-        return x
+    return x
 
 
 def is_faithful(x: object, /) -> bool:
@@ -314,4 +319,4 @@ def _is_faithful(x: object, /) -> bool:
             f"Please open an issue at https://github.com/beartype/plum.",
             stacklevel=2,
         )
-        return False
+    return False

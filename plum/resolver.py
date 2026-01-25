@@ -1,9 +1,10 @@
 import pydoc
 import sys
 import warnings
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from functools import wraps
 
+from rich.console import Console, ConsoleOptions
 from rich.padding import Padding
 from rich.text import Text
 
@@ -19,7 +20,7 @@ class MethodRedefinitionWarning(Warning):
     """A method is redefined."""
 
 
-def _render_function_call(f: str, target: tuple | Signature, /) -> str:
+def _render_function_call(f: str, target: tuple[object, ...] | Signature, /) -> str:
     """Render a function call.
 
     Args:
@@ -45,7 +46,7 @@ class AmbiguousLookupError(LookupError):
     def __init__(
         self,
         f_name: str | None,
-        target: tuple | Signature,
+        target: tuple[object, ...] | Signature,
         methods: MethodList,
     ):
         """Create a new :class:`AmbiguousLookupError`.
@@ -61,7 +62,9 @@ class AmbiguousLookupError(LookupError):
         self.target = target
         self.methods = methods
 
-    def __rich_console__(self, console, options):
+    def __rich_console__(
+        self, console: Console, options: ConsoleOptions, /
+    ) -> Iterable[Text | Padding]:
         yield Text(f"`{_render_function_call(self.f_name, self.target)}` is ambiguous.")
         yield Text()
         yield Text("Candidates:")
@@ -79,7 +82,7 @@ class NotFoundLookupError(LookupError):
     def __init__(
         self,
         f_name: str | None,
-        target: tuple | Signature,
+        target: tuple[object, ...] | Signature,
         methods: MethodList,
         *,
         max_suggestions: int = 3,
@@ -101,7 +104,9 @@ class NotFoundLookupError(LookupError):
 
         self.max_suggestions = max_suggestions
 
-    def __rich_console__(self, console, options):
+    def __rich_console__(
+        self, console: Console, options: ConsoleOptions, /
+    ) -> Iterable[Text | Padding]:
         """Generate a string of the top `self.max_suggestions` methods that are closest
         to the given one."""
         yield Text(
@@ -128,10 +133,14 @@ class NotFoundLookupError(LookupError):
             yield Text("Closest candidates are the following:")
             for m in methods:
                 misses, varargs_matched = m.signature.compute_mismatches(self.target)
-                yield Padding(m.repr_mismatch(misses, varargs_matched), (0, 4))
+                yield Padding(
+                    m.repr_mismatch(frozenset(misses), varargs_matched), (0, 4)
+                )
 
 
-def _change_function_name(f: Callable, name: str, /) -> Callable:
+def _change_function_name(
+    f: Callable[..., object], name: str, /
+) -> Callable[..., object]:
     """It is not always the case that `f.__name__` is writable. To solve this, first
     create a temporary function that wraps `f` and then change the name.
 
@@ -144,14 +153,14 @@ def _change_function_name(f: Callable, name: str, /) -> Callable:
     """
 
     @wraps(f)
-    def f_renamed(*args, **kw_args):
+    def f_renamed(*args: object, **kw_args: object) -> object:
         return f(*args, **kw_args)  # pragma: no cover
 
     f_renamed.__name__ = name
     return f_renamed
 
 
-def _document(f: Callable, f_name: str | None = None, /) -> str:
+def _document(f: Callable[..., object], f_name: str | None = None, /) -> str:
     """Generate documentation for a function `f`.
 
     The generated documentation contains both the function definition and the
@@ -180,7 +189,7 @@ def _document(f: Callable, f_name: str | None = None, /) -> str:
 
     # :class:`pydoc._PlainTextDoc` removes styling. This styling will display
     # erroneously in Sphinx.
-    parts = pydoc._PlainTextDoc().document(f).rstrip().split("\n")
+    parts = pydoc._PlainTextDoc().document(f).rstrip().split("\n")  # type: ignore[attr-defined]
 
     # Separate out the function definition and the lines corresponding to the body.
     title = parts[0]
@@ -202,7 +211,7 @@ def _document(f: Callable, f_name: str | None = None, /) -> str:
     return "\n".join([title] + body).rstrip()
 
 
-def _unwrap_invoked_methods(f: Callable, /) -> Callable:
+def _unwrap_invoked_methods(f: Callable[..., object], /) -> Callable[..., object]:
     """Undo wrapping of :meth:`Function.invoke`d methods.
 
     :meth:`Function.invoke` uses :func:`functools.wraps` to wrap the function and
@@ -258,7 +267,7 @@ class Resolver:
         self.is_faithful: bool = True
         self.warn_redefinition = warn_redefinition
 
-    def doc(self, exclude: Callable | None = None) -> str:
+    def doc(self, exclude: Callable[..., object] | None = None) -> str:
         """Concatenate the docstrings of all methods of this function. Remove duplicate
         docstrings before concatenating.
 
@@ -341,17 +350,17 @@ class Resolver:
         """
         if isinstance(target, tuple):
 
-            def check(m):
+            def check(m: Method, /) -> bool:
                 # `target` are concrete arguments.
                 return m.signature.match(target)
 
         else:
 
-            def check(m):
+            def check(m: Method, /) -> bool:
                 # `target` is a signature that must be encompassed.
                 return target <= m.signature
 
-        candidates = []
+        candidates: list[Method] = []
         for method in [m for m in self.methods if check(m)]:
             # If none of the candidates are comparable, then add the method as
             # a new candidate and continue.
@@ -388,4 +397,6 @@ class Resolver:
                 return candidates[precedences.index(max_precendence)]
             else:
                 # Could not resolve the ambiguity, so error.
-                raise AmbiguousLookupError(self.function_name, target, candidates)
+                raise AmbiguousLookupError(
+                    self.function_name, target, MethodList(candidates)
+                )

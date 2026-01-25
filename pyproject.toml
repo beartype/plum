@@ -93,15 +93,8 @@ strict = true
 follow_imports = "skip"  # TODO: Set to "normal" when mypy errors are fixed
 show_error_codes = true
 exclude = [  # TODO: Fix the mypy errors in all these files
-    "plum/alias\\.py",
-    "plum/function\\.py",
-    "plum/method\\.py",
     "plum/parametric\\.py",
     "plum/promotion\\.py",
-    "plum/repr\\.py",
-    "plum/resolver\\.py",
-    "plum/signature\\.py",
-    "plum/_type\\.py",
 ]
 
 

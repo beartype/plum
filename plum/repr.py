@@ -1,17 +1,3 @@
-import inspect
-import os
-import sys
-import types
-import typing
-from collections.abc import Callable, Iterable
-from functools import partial
-from typing import Any, TypeVar
-
-import rich
-from rich.color import Color
-from rich.style import Style
-from rich.text import Text
-
 __all__ = [
     "repr_short",
     "repr_type",
@@ -19,6 +5,20 @@ __all__ = [
     "repr_pyfunction",
     "rich_repr",
 ]
+
+import inspect
+import os
+import sys
+import types
+import typing
+from collections.abc import Callable, Iterable
+from functools import partial
+from typing import Any, TypeVar, overload
+
+import rich
+from rich.color import Color
+from rich.style import Style
+from rich.text import Text
 
 T = TypeVar("T")
 
@@ -29,7 +29,7 @@ module_style = Style(color="grey66")
 class_style = Style(bold=True)
 
 
-def repr_type(x) -> Text:
+def repr_type(x: object, /) -> Text:
     """Returns a :class:`rich.Text` representation of a type or module.
 
     Does some light syntax highlighting mimicking Julia, boldening class names and
@@ -56,7 +56,7 @@ def repr_type(x) -> Text:
     return Text(repr(x), style=class_style)
 
 
-def repr_short(x) -> str:
+def repr_short(x: object, /) -> str:
     """Representation as a string, but in shorter form. This just calls
     :func:`typing._type_repr`.
 
@@ -71,7 +71,7 @@ def repr_short(x) -> str:
     return typing._type_repr(x)
 
 
-def _safe_getfile(obj) -> str:
+def _safe_getfile(obj: object, /) -> str:
     """Safer version of :func:`inspect.getfile`.
 
     Classes defined in PyBind, even if they pretend hard to be functions, like
@@ -92,28 +92,30 @@ def _safe_getfile(obj) -> str:
         OSError: File that defines `obj` cannot be found.
     """
     try:
-        return inspect.getfile(obj)
+        return inspect.getfile(obj)  # type: ignore[arg-type]
     except TypeError:
         # Raised when the function passed is a C-defined class. It might still contain
         # `__module__`, which can be used to backtrace the file that defines `obj`.
         if hasattr(obj, "__module__"):
             module = sys.modules.get(obj.__module__, None)
-            if hasattr(module, "__file__"):
-                return module.__file__
+            if module is not None and hasattr(module, "__file__"):
+                file_path = module.__file__
+                if file_path is not None:
+                    return file_path
 
         raise OSError("Source code not available.") from None
 
 
-def repr_source_path(function: Callable) -> Text:
+def repr_source_path(function: Callable[..., Any], /) -> Text | None:
     """Create a :class:`rich.Text` object with an hyperlink to the function definition.
 
     Args:
-        function (Callable): A function.
+        function (Callable[..., Any]): A function.
 
     Returns:
         :class:`rich.Text` or None:
-            Representation with a hyperlink to the source. If the introspection failed,
-            it returns :obj:`None`.
+            Representation with a hyperlink to the source. If the introspection
+            failed, it returns :obj:`None`.
     """
 
     try:
@@ -139,12 +141,12 @@ def repr_source_path(function: Callable) -> Text:
         return None
 
 
-def repr_pyfunction(f: Callable) -> Text:
+def repr_pyfunction(f: Callable[..., Any]) -> Text:
     """Create a :class:`rich.Text` object representation a function, including a link
     to the source definition created with :func:`repr_source_path`.
 
     Args:
-        f (Callable): A function.
+        f (Callable[..., Any]): A function.
 
     Returns:
         :class:`rich.Text`: Representation of `f`.
@@ -162,7 +164,7 @@ def repr_pyfunction(f: Callable) -> Text:
 ########################
 
 
-def __repr_from_rich__(self) -> str:
+def __repr_from_rich__(self: object, /) -> str:
     """Default implementation of `__repr__` that calls :mod:`rich`.
 
     Returns:
@@ -171,15 +173,12 @@ def __repr_from_rich__(self) -> str:
     console = rich.get_console()
     with console.capture() as capture:
         console.print(self, end="")
-    res = capture.get()
+    res: str = capture.get()
     return res
 
 
 def _repr_mimebundle_from_rich_(
-    self,
-    include: Iterable[str],
-    exclude: Iterable[str],
-    **kw_args: Any,
+    self: object, include: Iterable[str], exclude: Iterable[str], **kw_args: Any
 ) -> dict[str, str]:
     """Implementation of `_repr_mimebundle_` for better rendering in Jupyter.
 
@@ -194,7 +193,7 @@ def _repr_mimebundle_from_rich_(
     from rich.jupyter import _render_segments
 
     console = rich.get_console()
-    segments = list(console.render(self, console.options))  # type: ignore
+    segments = list(console.render(self, console.options))
     html = _render_segments(segments)
     text = console._render_buffer(segments)
     data = {"text/plain": text, "text/html": html}
@@ -205,7 +204,15 @@ def _repr_mimebundle_from_rich_(
     return data
 
 
-def rich_repr(cls: type[T] | None = None, str: bool = False) -> type[T]:
+@overload
+def rich_repr(cls: type[T], str: bool = False) -> type[T]: ...
+@overload
+def rich_repr(cls: None = None, str: bool = False) -> Callable[[type[T]], type[T]]: ...
+
+
+def rich_repr(
+    cls: type[T] | None = None, str: bool = False
+) -> type[T] | Callable[[type[T]], type[T]]:
     """Class decorator defining a `__repr__` method that calls :mod:`rich.`
 
     This also sets `_repr_mimebundle_` for better rendering in Jupyter.
@@ -221,8 +228,8 @@ def rich_repr(cls: type[T] | None = None, str: bool = False) -> type[T]:
     """
     if cls is None:
         return partial(rich_repr, str=str)
-    cls.__repr__ = __repr_from_rich__
-    cls._repr_mimebundle_ = _repr_mimebundle_from_rich_
+    cls.__repr__ = __repr_from_rich__  # type: ignore[method-assign]
+    cls._repr_mimebundle_ = _repr_mimebundle_from_rich_  # type: ignore[attr-defined]
     if str:
-        cls.__str__ = __repr_from_rich__
+        cls.__str__ = __repr_from_rich__  # type: ignore[method-assign]
     return cls

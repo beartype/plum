@@ -1,7 +1,11 @@
-import inspect
-import typing
-from collections.abc import Callable
+__all__ = ["Method", "extract_return_type"]
 
+
+import inspect
+from collections.abc import Callable, Iterable
+from typing import Any
+
+from rich.console import Console, ConsoleOptions
 from rich.padding import Padding
 from rich.text import Text
 
@@ -9,8 +13,6 @@ from ._type import resolve_type_hint
 from .repr import repr_pyfunction, repr_type, rich_repr
 from .signature import Signature, inspect_signature
 from .util import TypeHint
-
-__all__ = ["Method", "extract_return_type"]
 
 
 @rich_repr
@@ -22,13 +24,13 @@ class Method:
         implementation (function or None): Implementation.
     """
 
-    _default_return_type = typing.Any
+    _default_return_type = Any
 
     __slots__ = ("function_name", "implementation", "signature", "return_type")
 
     def __init__(
         self,
-        implementation: Callable,
+        implementation: Callable[..., Any],
         signature: Signature,
         *,
         function_name: str | None = None,
@@ -55,7 +57,7 @@ class Method:
         self.function_name = function_name
         self.return_type = return_type
 
-    def __copy__(self):
+    def __copy__(self) -> "Method":
         return Method(
             self.implementation,
             self.signature,
@@ -63,7 +65,7 @@ class Method:
             return_type=self.return_type,
         )
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, Method):
             return (
                 self.function_name,
@@ -91,22 +93,25 @@ class Method:
             f"Method({function_name=}, {signature=}, {return_type=}, {implementation=})"
         )
 
-    def __rich_console__(self, console, options):
+    def __rich_console__(
+        self, console: Console, options: ConsoleOptions, /
+    ) -> Iterable[Text]:
         yield self.repr_mismatch()
 
     def repr_mismatch(
         self,
-        mismatches: set[int] = frozenset(),
+        mismatches: frozenset[int] = frozenset(),
         varargs_matched: bool = True,
-    ) -> str:
+    ) -> Text:
         """Version of `__repr__` that can print which arguments are mismatched. This
         is mainly used in hints.
 
         Args:
-            mismatches (set[int], optional): Indices of the positional arguments which
-                are mismatched. Defaults to no mismatched arguments.
-            varargs_matched (bool, optional): Whether the varargs are matched. Defaults
-                to `True`.
+            mismatches (frozenset[int], optional): Indices of the positional
+                arguments which are mismatched. Defaults to no mismatched
+                arguments.
+            varargs_matched (bool, optional): Whether the varargs are matched.
+                Defaults to `True`.
 
         Returns:
             list:
@@ -158,17 +163,21 @@ class Method:
 
 
 @rich_repr
-class MethodList(list):
+class MethodList(list[Method]):
     "A list of :class:`Method`s which is nicely printed by :mod:`rich`."
 
-    def __rich_console__(self, console, options):
+    def __rich_console__(
+        self, console: Console, options: ConsoleOptions, /
+    ) -> Iterable[str | Text | Padding]:
         yield f"List of {len(self)} method(s):"
         for i, method in enumerate(self):
             method_repr = method.__rich_console__(console, options)
             yield Padding(sum(method_repr, Text(f"[{i}] ")), (0, 4))
 
 
-def extract_arg_names(f: Callable, /) -> tuple[list[str], list[str], str | None]:
+def extract_arg_names(
+    f: Callable[..., Any], /
+) -> tuple[list[str], list[str], str | None]:
     """Extract the argument names for a function.
 
     Args:
@@ -200,7 +209,7 @@ def extract_arg_names(f: Callable, /) -> tuple[list[str], list[str], str | None]
     return regular_args, kw_only_args, var_kw_name
 
 
-def extract_return_type(f: Callable, /) -> TypeHint:
+def extract_return_type(f: Callable[..., Any], /) -> TypeHint:
     """Extract the return type from a function.
 
     Assumes that PEP563-style already have been resolved.
@@ -217,7 +226,7 @@ def extract_return_type(f: Callable, /) -> TypeHint:
 
     # Get possible return type.
     if sig.return_annotation is inspect.Parameter.empty:
-        return_type = typing.Any
+        return_type: TypeHint = Any
     else:
         return_type = resolve_type_hint(sig.return_annotation)
 
