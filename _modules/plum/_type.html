@@ -29,7 +29,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
-    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=9c3e77be" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx-thebe.css?v=4fa983c6" />
@@ -49,7 +49,7 @@
     <script>let toggleHintShow = 'Click to show';</script>
     <script>let toggleHintHide = 'Click to hide';</script>
     <script>let toggleOpenOnPrint = 'true';</script>
-    <script src="../../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script src="../../_static/togglebutton.js?v=1ae7504c"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script src="../../_static/design-tabs.js?v=f930bc37"></script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
@@ -365,7 +365,7 @@ document.write(`
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">reduce</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">operator</span><span class="w"> </span><span class="kn">import</span> <span class="n">or_</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnionType</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">TypeGuard</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">final</span><span class="p">,</span> <span class="n">get_args</span><span class="p">,</span> <span class="n">get_origin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">TypeGuard</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">final</span><span class="p">,</span> <span class="n">get_args</span><span class="p">,</span> <span class="n">get_origin</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">beartype.vale._core._valecore</span><span class="w"> </span><span class="kn">import</span> <span class="n">BeartypeValidator</span>
 
@@ -466,7 +466,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span> <span class="o">=</span> <span class="n">condition</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">module</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;ModuleType[</span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ResolvableType</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;ModuleType[</span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ModuleType.retrieve">
 <a class="viewcode-back" href="../../api.html#plum._type.ModuleType.retrieve">[docs]</a>
@@ -481,14 +481,15 @@ document.write(`
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span><span class="p">():</span>
                 <span class="k">return</span> <span class="kc">False</span>
 
-            <span class="nb">type</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="p">]</span>
+            <span class="n">retrieved</span><span class="p">:</span> <span class="nb">object</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
-                <span class="c1"># If `type` does not contain `name` and `self._allow_fail` is</span>
+                <span class="c1"># If `retrieved` does not contain `name` and `self._allow_fail` is</span>
                 <span class="c1"># set, then silently fail.</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allow_fail</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">retrieved</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allow_fail</span><span class="p">:</span>
                     <span class="k">return</span> <span class="kc">False</span>
-                <span class="nb">type</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">deliver</span><span class="p">(</span><span class="nb">type</span><span class="p">)</span>
+                <span class="n">retrieved</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">retrieved</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="c1"># We expect this to be a type, so we cast it.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">deliver</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">retrieved</span><span class="p">))</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
 </div>
 
@@ -518,7 +519,7 @@ document.write(`
         <span class="k">return</span> <span class="kc">False</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_hashable</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TypeGuard</span><span class="p">[</span><span class="n">Hashable</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_hashable</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">object</span> <span class="o">|</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TypeGuard</span><span class="p">[</span><span class="n">Hashable</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if an object is hashable.</span>
 
 <span class="sd">    Args:</span>
@@ -534,7 +535,7 @@ document.write(`
         <span class="k">return</span> <span class="kc">False</span>
 
 
-<span class="n">type_mapping</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">type_mapping</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">type</span><span class="p">,</span> <span class="nb">type</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 <span class="sd">&quot;&quot;&quot;dict: When running :func:`resolve_type_hint`, map keys in this dictionary to the</span>
 <span class="sd">values.&quot;&quot;&quot;</span>
 
@@ -550,7 +551,7 @@ document.write(`
 <span class="sd">    Returns:</span>
 <span class="sd">        type or type hint: `x`, but with all :class:`ResolvableType`\\s resolved.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">_hashable</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">and</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">type_mapping</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">_hashable</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">type_mapping</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">type_mapping</span><span class="p">[</span><span class="n">x</span><span class="p">])</span>
     <span class="k">elif</span> <span class="n">_is_hint</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
         <span class="n">origin</span> <span class="o">=</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
@@ -565,8 +566,12 @@ document.write(`
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># Do not resolve the arguments for `Literal`s.</span>
             <span class="k">if</span> <span class="n">origin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Literal</span><span class="p">:</span>
-                <span class="n">args</span> <span class="o">=</span> <span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+                <span class="n">resolved_args</span> <span class="o">=</span> <span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+                <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">resolved_args</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span>
+                <span class="n">args</span> <span class="o">=</span> <span class="n">resolved_args</span>
 
+            <span class="c1"># Ensure origin is not `None` before indexing.</span>
+            <span class="k">assert</span> <span class="n">origin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="k">return</span> <span class="n">origin</span><span class="p">[</span><span class="n">args</span><span class="p">]</span>
 
     <span class="k">elif</span> <span class="n">x</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">x</span> <span class="ow">is</span> <span class="bp">Ellipsis</span><span class="p">:</span>
@@ -600,7 +605,7 @@ document.write(`
             <span class="sa">f</span><span class="s2">&quot;Please open an issue at https://github.com/beartype/plum.&quot;</span><span class="p">,</span>
             <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">x</span></div>
+    <span class="k">return</span> <span class="n">x</span></div>
 
 
 
@@ -680,7 +685,7 @@ document.write(`
             <span class="sa">f</span><span class="s2">&quot;Please open an issue at https://github.com/beartype/plum.&quot;</span><span class="p">,</span>
             <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">False</span>
 </pre></div>
 
                 </article>

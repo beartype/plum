@@ -29,7 +29,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
-    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=9c3e77be" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx-thebe.css?v=4fa983c6" />
@@ -49,7 +49,7 @@
     <script>let toggleHintShow = 'Click to show';</script>
     <script>let toggleHintHide = 'Click to hide';</script>
     <script>let toggleOpenOnPrint = 'true';</script>
-    <script src="../../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script src="../../_static/togglebutton.js?v=1ae7504c"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script src="../../_static/design-tabs.js?v=f930bc37"></script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
@@ -349,10 +349,14 @@ document.write(`
                 <article class="bd-article">
                   
   <h1>Source code for plum.method</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">typing</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span></span><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Method&quot;</span><span class="p">,</span> <span class="s2">&quot;extract_return_type&quot;</span><span class="p">]</span>
 
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">rich.console</span><span class="w"> </span><span class="kn">import</span> <span class="n">Console</span><span class="p">,</span> <span class="n">ConsoleOptions</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">rich.padding</span><span class="w"> </span><span class="kn">import</span> <span class="n">Padding</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">rich.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">Text</span>
 
@@ -360,8 +364,6 @@ document.write(`
 <span class="kn">from</span><span class="w"> </span><span class="nn">.repr</span><span class="w"> </span><span class="kn">import</span> <span class="n">repr_pyfunction</span><span class="p">,</span> <span class="n">repr_type</span><span class="p">,</span> <span class="n">rich_repr</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.signature</span><span class="w"> </span><span class="kn">import</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">inspect_signature</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeHint</span>
-
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Method&quot;</span><span class="p">,</span> <span class="s2">&quot;extract_return_type&quot;</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="Method">
@@ -375,13 +377,13 @@ document.write(`
 <span class="sd">        implementation (function or None): Implementation.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">_default_return_type</span> <span class="o">=</span> <span class="n">typing</span><span class="o">.</span><span class="n">Any</span>
+    <span class="n">_default_return_type</span> <span class="o">=</span> <span class="n">Any</span>
 
     <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;function_name&quot;</span><span class="p">,</span> <span class="s2">&quot;implementation&quot;</span><span class="p">,</span> <span class="s2">&quot;signature&quot;</span><span class="p">,</span> <span class="s2">&quot;return_type&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">implementation</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">implementation</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
         <span class="n">signature</span><span class="p">:</span> <span class="n">Signature</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">function_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -408,7 +410,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">function_name</span> <span class="o">=</span> <span class="n">function_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span> <span class="o">=</span> <span class="n">return_type</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Method&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Method</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">implementation</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">signature</span><span class="p">,</span>
@@ -416,7 +418,7 @@ document.write(`
             <span class="n">return_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">return_type</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Method</span><span class="p">):</span>
             <span class="k">return</span> <span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">function_name</span><span class="p">,</span>
@@ -444,24 +446,27 @@ document.write(`
             <span class="sa">f</span><span class="s2">&quot;Method(</span><span class="si">{</span><span class="n">function_name</span><span class="si">=}</span><span class="s2">, </span><span class="si">{</span><span class="n">signature</span><span class="si">=}</span><span class="s2">, </span><span class="si">{</span><span class="n">return_type</span><span class="si">=}</span><span class="s2">, </span><span class="si">{</span><span class="n">implementation</span><span class="si">=}</span><span class="s2">)&quot;</span>
         <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">__rich_console__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">console</span><span class="p">,</span> <span class="n">options</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__rich_console__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">console</span><span class="p">:</span> <span class="n">Console</span><span class="p">,</span> <span class="n">options</span><span class="p">:</span> <span class="n">ConsoleOptions</span><span class="p">,</span> <span class="o">/</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Text</span><span class="p">]:</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">repr_mismatch</span><span class="p">()</span>
 
 <div class="viewcode-block" id="Method.repr_mismatch">
 <a class="viewcode-back" href="../../api.html#plum.method.Method.repr_mismatch">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">repr_mismatch</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">mismatches</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(),</span>
+        <span class="n">mismatches</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(),</span>
         <span class="n">varargs_matched</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Text</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Version of `__repr__` that can print which arguments are mismatched. This</span>
 <span class="sd">        is mainly used in hints.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            mismatches (set[int], optional): Indices of the positional arguments which</span>
-<span class="sd">                are mismatched. Defaults to no mismatched arguments.</span>
-<span class="sd">            varargs_matched (bool, optional): Whether the varargs are matched. Defaults</span>
-<span class="sd">                to `True`.</span>
+<span class="sd">            mismatches (frozenset[int], optional): Indices of the positional</span>
+<span class="sd">                arguments which are mismatched. Defaults to no mismatched</span>
+<span class="sd">                arguments.</span>
+<span class="sd">            varargs_matched (bool, optional): Whether the varargs are matched.</span>
+<span class="sd">                Defaults to `True`.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            list:</span>
@@ -515,17 +520,21 @@ document.write(`
 
 
 <span class="nd">@rich_repr</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">MethodList</span><span class="p">(</span><span class="nb">list</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MethodList</span><span class="p">(</span><span class="nb">list</span><span class="p">[</span><span class="n">Method</span><span class="p">]):</span>
     <span class="s2">&quot;A list of :class:`Method`s which is nicely printed by :mod:`rich`.&quot;</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">__rich_console__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">console</span><span class="p">,</span> <span class="n">options</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__rich_console__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">console</span><span class="p">:</span> <span class="n">Console</span><span class="p">,</span> <span class="n">options</span><span class="p">:</span> <span class="n">ConsoleOptions</span><span class="p">,</span> <span class="o">/</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="n">Text</span> <span class="o">|</span> <span class="n">Padding</span><span class="p">]:</span>
         <span class="k">yield</span> <span class="sa">f</span><span class="s2">&quot;List of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="si">}</span><span class="s2"> method(s):&quot;</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">method</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
             <span class="n">method_repr</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">__rich_console__</span><span class="p">(</span><span class="n">console</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
             <span class="k">yield</span> <span class="n">Padding</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">method_repr</span><span class="p">,</span> <span class="n">Text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">] &quot;</span><span class="p">)),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">extract_arg_names</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_arg_names</span><span class="p">(</span>
+    <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">/</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract the argument names for a function.</span>
 
 <span class="sd">    Args:</span>
@@ -559,7 +568,7 @@ document.write(`
 
 <div class="viewcode-block" id="extract_return_type">
 <a class="viewcode-back" href="../../api.html#plum.method.extract_return_type">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">extract_return_type</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TypeHint</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_return_type</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TypeHint</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract the return type from a function.</span>
 
 <span class="sd">    Assumes that PEP563-style already have been resolved.</span>
@@ -576,7 +585,7 @@ document.write(`
 
     <span class="c1"># Get possible return type.</span>
     <span class="k">if</span> <span class="n">sig</span><span class="o">.</span><span class="n">return_annotation</span> <span class="ow">is</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-        <span class="n">return_type</span> <span class="o">=</span> <span class="n">typing</span><span class="o">.</span><span class="n">Any</span>
+        <span class="n">return_type</span><span class="p">:</span> <span class="n">TypeHint</span> <span class="o">=</span> <span class="n">Any</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">return_type</span> <span class="o">=</span> <span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">sig</span><span class="o">.</span><span class="n">return_annotation</span><span class="p">)</span>
 

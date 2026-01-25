@@ -29,7 +29,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
-    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=9c3e77be" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx-thebe.css?v=4fa983c6" />
@@ -49,7 +49,7 @@
     <script>let toggleHintShow = 'Click to show';</script>
     <script>let toggleHintHide = 'Click to hide';</script>
     <script>let toggleOpenOnPrint = 'true';</script>
-    <script src="../../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script src="../../_static/togglebutton.js?v=1ae7504c"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script src="../../_static/design-tabs.js?v=f930bc37"></script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
@@ -377,11 +377,10 @@ document.write(`
 <span class="sd">parsing how unions print.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">_type_repr</span><span class="p">,</span> <span class="n">get_args</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">assert_never</span>
-
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;activate_union_aliases&quot;</span><span class="p">,</span> <span class="s2">&quot;deactivate_union_aliases&quot;</span><span class="p">,</span> <span class="s2">&quot;set_union_alias&quot;</span><span class="p">]</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">_type_repr</span><span class="p">,</span> <span class="n">get_args</span>
 
 <span class="n">UnionT</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;UnionT&quot;</span><span class="p">)</span>
 
@@ -397,44 +396,47 @@ document.write(`
 <span class="sd">    Returns:</span>
 <span class="sd">        str: Representation of a `typing.Union` taking into account union aliases.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">args</span> <span class="o">=</span> <span class="n">get_args</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-    <span class="n">args_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    <span class="n">args_tuple</span> <span class="o">=</span> <span class="n">get_args</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+    <span class="n">args_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">args_tuple</span><span class="p">)</span>
 
     <span class="c1"># Find all aliased unions contained in this union.</span>
-    <span class="n">found_unions</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">found_positions</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">found_aliases</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">found_unions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">found_positions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">found_aliases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">union</span><span class="p">,</span> <span class="n">alias</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">_ALIASED_UNIONS</span><span class="p">):</span>
         <span class="n">union_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">union</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">union_set</span> <span class="o">&lt;=</span> <span class="n">args_set</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">args_tuple</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">union_set</span><span class="p">:</span>
                     <span class="n">found_unions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">union_set</span><span class="p">)</span>
                     <span class="n">found_positions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
                     <span class="n">found_aliases</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">alias</span><span class="p">)</span>
                     <span class="k">break</span>
             <span class="k">else</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
-                <span class="n">assert_never</span><span class="p">(</span><span class="n">union</span><span class="p">)</span>
+                <span class="c1"># This should never be reached! If `union_set &lt;= args_set`, we</span>
+                <span class="c1"># should find at least one argument.</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Unexpectedly failed to find argument for union `</span><span class="si">{</span><span class="n">union</span><span class="si">}</span><span class="s2">`.&quot;</span>
+                <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
     <span class="c1"># Delete any unions that are contained in strictly bigger unions. We check</span>
     <span class="c1"># for strictly inequality because any union includes itself.</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">found_unions</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">union</span> <span class="ow">in</span> <span class="n">found_unions</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">found_unions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">union</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">union_candidate</span> <span class="ow">in</span> <span class="n">found_unions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">found_unions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">union_candidate</span><span class="p">:</span>
                 <span class="k">del</span> <span class="n">found_unions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
                 <span class="k">del</span> <span class="n">found_positions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
                 <span class="k">del</span> <span class="n">found_aliases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
                 <span class="k">break</span>
 
     <span class="c1"># Create a set with all arguments of all found unions.</span>
-    <span class="n">found_args</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">union</span> <span class="ow">in</span> <span class="n">found_unions</span><span class="p">:</span>
-        <span class="n">found_args</span> <span class="o">|=</span> <span class="n">union</span>
+    <span class="n">found_args</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">union_set</span> <span class="ow">in</span> <span class="n">found_unions</span><span class="p">:</span>
+        <span class="n">found_args</span> <span class="o">|=</span> <span class="n">union_set</span>
 
     <span class="c1"># Insert the aliases right before the first found argument. When we insert</span>
     <span class="c1"># an element, the positions of following insertions need to be appropriately</span>
     <span class="c1"># incremented.</span>
-    <span class="n">args</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    <span class="n">args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">args_tuple</span><span class="p">)</span>
     <span class="c1"># Sort by insertion position to ensure that all following insertions are at</span>
     <span class="c1"># higher indices. This makes the bookkeeping simple.</span>
     <span class="k">for</span> <span class="n">delta</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">alias</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
@@ -443,10 +445,10 @@ document.write(`
         <span class="n">args</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="n">delta</span><span class="p">,</span> <span class="n">alias</span><span class="p">)</span>
 
     <span class="c1"># Filter all elements of unions that are aliased.</span>
-    <span class="n">new_args</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">new_args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">arg</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">found_args</span><span class="p">:</span>
-            <span class="n">new_args</span> <span class="o">+=</span> <span class="p">(</span><span class="n">arg</span><span class="p">,)</span>
+            <span class="n">new_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
     <span class="n">args</span> <span class="o">=</span> <span class="n">new_args</span>
 
     <span class="c1"># Generate a string representation.</span>
@@ -477,8 +479,8 @@ document.write(`
 <span class="k">def</span><span class="w"> </span><span class="nf">activate_union_aliases</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;When printing `typing.Union`s, replace all aliased unions by the aliased names.</span>
 <span class="sd">    This monkey patches `__repr__` and `__str__` for `typing.Union`.&quot;&quot;&quot;</span>
-    <span class="n">_union_type</span><span class="o">.</span><span class="fm">__repr__</span> <span class="o">=</span> <span class="n">_new_repr</span>
-    <span class="n">_union_type</span><span class="o">.</span><span class="fm">__str__</span> <span class="o">=</span> <span class="n">_new_str</span></div>
+    <span class="n">_union_type</span><span class="o">.</span><span class="fm">__repr__</span> <span class="o">=</span> <span class="n">_new_repr</span>  <span class="c1"># type: ignore[method-assign]</span>
+    <span class="n">_union_type</span><span class="o">.</span><span class="fm">__str__</span> <span class="o">=</span> <span class="n">_new_str</span>  <span class="c1"># type: ignore[method-assign]</span></div>
 
 
 
@@ -487,12 +489,12 @@ document.write(`
 <span class="k">def</span><span class="w"> </span><span class="nf">deactivate_union_aliases</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Undo what :func:`.alias.activate` did. This restores the original  `__repr__`</span>
 <span class="sd">    and `__str__` for `typing.Union`.&quot;&quot;&quot;</span>
-    <span class="n">_union_type</span><span class="o">.</span><span class="fm">__repr__</span> <span class="o">=</span> <span class="n">_original_repr</span>
-    <span class="n">_union_type</span><span class="o">.</span><span class="fm">__str__</span> <span class="o">=</span> <span class="n">_original_str</span></div>
+    <span class="n">_union_type</span><span class="o">.</span><span class="fm">__repr__</span> <span class="o">=</span> <span class="n">_original_repr</span>  <span class="c1"># type: ignore[method-assign]</span>
+    <span class="n">_union_type</span><span class="o">.</span><span class="fm">__str__</span> <span class="o">=</span> <span class="n">_original_str</span>  <span class="c1"># type: ignore[method-assign]</span></div>
 
 
 
-<span class="n">_ALIASED_UNIONS</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">_ALIASED_UNIONS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
 
 
 <div class="viewcode-block" id="set_union_alias">

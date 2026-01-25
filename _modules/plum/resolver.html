@@ -29,7 +29,7 @@
 
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
-    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=9c3e77be" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx-thebe.css?v=4fa983c6" />
@@ -49,7 +49,7 @@
     <script>let toggleHintShow = 'Click to show';</script>
     <script>let toggleHintHide = 'Click to hide';</script>
     <script>let toggleOpenOnPrint = 'true';</script>
-    <script src="../../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script src="../../_static/togglebutton.js?v=1ae7504c"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script src="../../_static/design-tabs.js?v=f930bc37"></script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
@@ -352,9 +352,10 @@ document.write(`
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pydoc</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">rich.console</span><span class="w"> </span><span class="kn">import</span> <span class="n">Console</span><span class="p">,</span> <span class="n">ConsoleOptions</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">rich.padding</span><span class="w"> </span><span class="kn">import</span> <span class="n">Padding</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">rich.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">Text</span>
 
@@ -370,7 +371,7 @@ document.write(`
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A method is redefined.&quot;&quot;&quot;</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_render_function_call</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">|</span> <span class="n">Signature</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_render_function_call</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="n">Signature</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a function call.</span>
 
 <span class="sd">    Args:</span>
@@ -398,7 +399,7 @@ document.write(`
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">f_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">target</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">|</span> <span class="n">Signature</span><span class="p">,</span>
+        <span class="n">target</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="n">Signature</span><span class="p">,</span>
         <span class="n">methods</span><span class="p">:</span> <span class="n">MethodList</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a new :class:`AmbiguousLookupError`.</span>
@@ -414,7 +415,9 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">target</span> <span class="o">=</span> <span class="n">target</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">methods</span> <span class="o">=</span> <span class="n">methods</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">__rich_console__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">console</span><span class="p">,</span> <span class="n">options</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__rich_console__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">console</span><span class="p">:</span> <span class="n">Console</span><span class="p">,</span> <span class="n">options</span><span class="p">:</span> <span class="n">ConsoleOptions</span><span class="p">,</span> <span class="o">/</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Text</span> <span class="o">|</span> <span class="n">Padding</span><span class="p">]:</span>
         <span class="k">yield</span> <span class="n">Text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">_render_function_call</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">f_name</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">)</span><span class="si">}</span><span class="s2">` is ambiguous.&quot;</span><span class="p">)</span>
         <span class="k">yield</span> <span class="n">Text</span><span class="p">()</span>
         <span class="k">yield</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;Candidates:&quot;</span><span class="p">)</span>
@@ -435,7 +438,7 @@ document.write(`
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">f_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">target</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">|</span> <span class="n">Signature</span><span class="p">,</span>
+        <span class="n">target</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="n">Signature</span><span class="p">,</span>
         <span class="n">methods</span><span class="p">:</span> <span class="n">MethodList</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">max_suggestions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
@@ -457,7 +460,9 @@ document.write(`
 
         <span class="bp">self</span><span class="o">.</span><span class="n">max_suggestions</span> <span class="o">=</span> <span class="n">max_suggestions</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">__rich_console__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">console</span><span class="p">,</span> <span class="n">options</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__rich_console__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">console</span><span class="p">:</span> <span class="n">Console</span><span class="p">,</span> <span class="n">options</span><span class="p">:</span> <span class="n">ConsoleOptions</span><span class="p">,</span> <span class="o">/</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Text</span> <span class="o">|</span> <span class="n">Padding</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a string of the top `self.max_suggestions` methods that are closest</span>
 <span class="sd">        to the given one.&quot;&quot;&quot;</span>
         <span class="k">yield</span> <span class="n">Text</span><span class="p">(</span>
@@ -484,11 +489,15 @@ document.write(`
             <span class="k">yield</span> <span class="n">Text</span><span class="p">(</span><span class="s2">&quot;Closest candidates are the following:&quot;</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">methods</span><span class="p">:</span>
                 <span class="n">misses</span><span class="p">,</span> <span class="n">varargs_matched</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">signature</span><span class="o">.</span><span class="n">compute_mismatches</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">)</span>
-                <span class="k">yield</span> <span class="n">Padding</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">repr_mismatch</span><span class="p">(</span><span class="n">misses</span><span class="p">,</span> <span class="n">varargs_matched</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span></div>
+                <span class="k">yield</span> <span class="n">Padding</span><span class="p">(</span>
+                    <span class="n">m</span><span class="o">.</span><span class="n">repr_mismatch</span><span class="p">(</span><span class="nb">frozenset</span><span class="p">(</span><span class="n">misses</span><span class="p">),</span> <span class="n">varargs_matched</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+                <span class="p">)</span></div>
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_change_function_name</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_change_function_name</span><span class="p">(</span>
+    <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">/</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">object</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;It is not always the case that `f.__name__` is writable. To solve this, first</span>
 <span class="sd">    create a temporary function that wraps `f` and then change the name.</span>
 
@@ -501,14 +510,14 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nd">@wraps</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">f_renamed</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">f_renamed</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw_args</span><span class="p">)</span>  <span class="c1"># pragma: no cover</span>
 
     <span class="n">f_renamed</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">=</span> <span class="n">name</span>
     <span class="k">return</span> <span class="n">f_renamed</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_document</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">f_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_document</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span> <span class="n">f_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate documentation for a function `f`.</span>
 
 <span class="sd">    The generated documentation contains both the function definition and the</span>
@@ -537,7 +546,7 @@ document.write(`
 
     <span class="c1"># :class:`pydoc._PlainTextDoc` removes styling. This styling will display</span>
     <span class="c1"># erroneously in Sphinx.</span>
-    <span class="n">parts</span> <span class="o">=</span> <span class="n">pydoc</span><span class="o">.</span><span class="n">_PlainTextDoc</span><span class="p">()</span><span class="o">.</span><span class="n">document</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="n">pydoc</span><span class="o">.</span><span class="n">_PlainTextDoc</span><span class="p">()</span><span class="o">.</span><span class="n">document</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># type: ignore[attr-defined]</span>
 
     <span class="c1"># Separate out the function definition and the lines corresponding to the body.</span>
     <span class="n">title</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -559,7 +568,7 @@ document.write(`
     <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">title</span><span class="p">]</span> <span class="o">+</span> <span class="n">body</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_unwrap_invoked_methods</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_unwrap_invoked_methods</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">object</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">object</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Undo wrapping of :meth:`Function.invoke`d methods.</span>
 
 <span class="sd">    :meth:`Function.invoke` uses :func:`functools.wraps` to wrap the function and</span>
@@ -615,7 +624,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">is_faithful</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">warn_redefinition</span> <span class="o">=</span> <span class="n">warn_redefinition</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">doc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exclude</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">doc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exclude</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Concatenate the docstrings of all methods of this function. Remove duplicate</span>
 <span class="sd">        docstrings before concatenating.</span>
 
@@ -698,17 +707,17 @@ document.write(`
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
 
-            <span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">Method</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
                 <span class="c1"># `target` are concrete arguments.</span>
                 <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">signature</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
 
         <span class="k">else</span><span class="p">:</span>
 
-            <span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">Method</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
                 <span class="c1"># `target` is a signature that must be encompassed.</span>
                 <span class="k">return</span> <span class="n">target</span> <span class="o">&lt;=</span> <span class="n">m</span><span class="o">.</span><span class="n">signature</span>
 
-        <span class="n">candidates</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">candidates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Method</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="p">[</span><span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">methods</span> <span class="k">if</span> <span class="n">check</span><span class="p">(</span><span class="n">m</span><span class="p">)]:</span>
             <span class="c1"># If none of the candidates are comparable, then add the method as</span>
             <span class="c1"># a new candidate and continue.</span>
@@ -745,7 +754,9 @@ document.write(`
                 <span class="k">return</span> <span class="n">candidates</span><span class="p">[</span><span class="n">precedences</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">max_precendence</span><span class="p">)]</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># Could not resolve the ambiguity, so error.</span>
-                <span class="k">raise</span> <span class="n">AmbiguousLookupError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">function_name</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">candidates</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">AmbiguousLookupError</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">function_name</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">MethodList</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
+                <span class="p">)</span>
 </pre></div>
 
                 </article>
