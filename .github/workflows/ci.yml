@@ -51,12 +51,13 @@ jobs:
       - name: Run tests
         run: |
           PRAGMA_VERSION=`uv run python -c "import sys; print('.'.join(map(str, sys.version_info[:2])))"` \
-          uv run --frozen pytest -v --cov=plum --cov-report term-missing
+          uv run --frozen pytest -v --cov=plum --cov-report term-missing --cov-report lcov:coverage.lcov
       - name: Coveralls parallel
         uses: coverallsapp/github-action@v2
         with:
           flag-name: run-${{ matrix.value.name }}
           parallel: true
+          file: coverage.lcov
 
   finish:
     name: Finish coverage
