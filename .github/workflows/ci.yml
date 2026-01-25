@@ -37,7 +37,7 @@ jobs:
 
     name: Test ${{ matrix.value.name }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.value.python-version }}
         uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
         with:
@@ -51,13 +51,44 @@ jobs:
       - name: Run tests
         run: |
           PRAGMA_VERSION=`uv run python -c "import sys; print('.'.join(map(str, sys.version_info[:2])))"` \
-          uv run --frozen pytest -v --cov=plum --cov-report term-missing --cov-report lcov:coverage.lcov
+          uv run --frozen pytest -v --cov=src/plum --cov-report term-missing --cov-report lcov:coverage.lcov
       - name: Coveralls parallel
         uses: coverallsapp/github-action@v2
         with:
           flag-name: run-${{ matrix.value.name }}
           parallel: true
           file: coverage.lcov
+
+  # Test that mypyc-compiled wheels work
+  test-mypyc:
+    name: Test mypyc wheel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867 # v7.1.6
+        with:
+          python-version: "3.12"
+
+      - name: Install build & test dependencies
+        run: uv sync --locked --no-install-project --no-default-groups --group build --group wheels --group test_static --group test_runtime
+
+      - name: Build mypyc wheel
+        run: uv run --no-sync python -m build --wheel
+        env:
+          HATCH_BUILD_HOOKS_ENABLE: "1"
+
+      - name: Install wheel
+        run: uv pip install dist/*.whl
+
+      - name: Verify compiled
+        run: uv run --no-sync python -c "from plum import COMPILED; print(f'COMPILED={COMPILED}'); assert COMPILED"
+
+      - name: Run tests
+        run: uv run --no-sync pytest tests/ -v -k "not incompatible_with_mypyc" --ignore=tests/advanced
 
   finish:
     name: Finish coverage

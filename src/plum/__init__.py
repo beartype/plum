@@ -55,8 +55,11 @@ __all__ = (
     "get_class",
     "get_context",
     "argsort",
+    # Compilation
+    "COMPILED",
 )
 
+import importlib.util
 from typing import TypeGuard, TypeVar
 
 from beartype.door import TypeHint as _TypeHint
@@ -106,15 +109,23 @@ from ._util import (
 )
 from ._version import __version__  # noqa: F401  # noqa: F401
 
+# If mypyc compiled, one of the core modules will be a native extension
+spec = importlib.util.find_spec("plum._bear")
+COMPILED = (
+    spec is not None
+    and spec.origin is not None
+    and spec.origin.endswith((".so", ".pyd", ".dylib"))
+)
+
 # isort: split
 # Plum previously exported a number of types. As of recently, the user can use
 # the versions from `typing`. To not break backward compatibility, we still
 # export these types.
-from typing import Dict, List, Tuple, Union  # noqa: F401, UP035
+from typing import Dict, List, Tuple, Union  # noqa: E402, F401, UP035
 
 # Deprecated
 # isort: split
-from ._parametric import Val as Val  # noqa: F401, F403
+from ._parametric import Val as Val  # noqa: E402, F401, F403
 
 T = TypeVar("T")
 T2 = TypeVar("T2")
