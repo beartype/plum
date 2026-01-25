@@ -31,7 +31,7 @@ def precommit(s: nox.Session, /) -> None:
 @session(uv_groups=["lint"], reuse_venv=True)
 def pylint(s: nox.Session, /) -> None:
     """Run PyLint."""
-    s.run("pylint", "plum", *s.posargs)
+    s.run("pylint", "src/plum", *s.posargs)
 
 
 # =============================================================================
@@ -49,7 +49,9 @@ def test(s: nox.Session, /) -> None:
 @session(uv_groups=["test_static"], reuse_venv=True)
 def typecheck(s: nox.Session, /) -> None:
     """Run the type checker."""
-    s.run("mypy", "--enable-error-code=no-redef", "plum", "tests/static", *s.posargs)
+    s.run(
+        "mypy", "--enable-error-code=no-redef", "src/plum", "tests/static", *s.posargs
+    )
     s.run("pyright", "tests/static", *s.posargs)
 
 

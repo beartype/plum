@@ -27,38 +27,71 @@ jobs:
             extra-install: ""
           - name: "3.12-pre-beartype"
             python-version: "3.12"
-            extra-install: "pip install --upgrade --pre beartype"
+            extra-install: "uv pip install --upgrade --pre beartype"
           - name: "3.13"
             python-version: "3.13"
             extra-install: ""
           - name: "3.13-pre-beartype"
             python-version: "3.13"
-            extra-install: "pip install --upgrade --pre beartype"
+            extra-install: "uv pip install --upgrade --pre beartype"
 
     name: Test ${{ matrix.value.name }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.value.python-version }}
-        uses: actions/setup-python@v2
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
         with:
           python-version: ${{ matrix.value.python-version }}
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install --no-cache-dir --group dev
-          python -m pip install --no-cache-dir -e .
+          uv sync --group dev --locked
           ${{ matrix.value.extra-install }}
       - name: Test linter assertions
-        run: nox -s typecheck
+        run: uv run --frozen nox -s typecheck
       - name: Run tests
         run: |
-          PRAGMA_VERSION=`python -c "import sys; print('.'.join(map(str, sys.version_info[:2])))"` \
-            pytest -v --cov=plum --cov-report term-missing
+          PRAGMA_VERSION=`uv run python -c "import sys; print('.'.join(map(str, sys.version_info[:2])))"` \
+          uv run --frozen pytest -v --cov=src/plum --cov-report term-missing --cov-report lcov:coverage.lcov
       - name: Coveralls parallel
         uses: coverallsapp/github-action@v2
         with:
           flag-name: run-${{ matrix.value.name }}
           parallel: true
+          file: coverage.lcov
+
+  # Test that mypyc-compiled wheels work
+  test-mypyc:
+    name: Test mypyc wheel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build dependencies
+        run: uv pip install build hatch-mypyc hatch-vcs mypy
+
+      - name: Build mypyc wheel
+        run: uv run python -m build --wheel
+        env:
+          HATCH_BUILD_HOOKS_ENABLE: "1"
+
+      - name: Install wheel and test dependencies
+        run: |
+          uv pip install dist/*.whl
+          uv pip install pytest numpy
+
+      - name: Verify compiled
+        run: |
+          uv run python -c "from plum import COMPILED; print(f'COMPILED={COMPILED}'); assert COMPILED"
+
+      - name: Run tests
+        run: uv run pytest tests/ -v -k "not incompatible_with_mypyc" --ignore=tests/advanced
 
   finish:
     name: Finish coverage
@@ -66,7 +99,7 @@ jobs:
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
-    - name: Coveralls finished
-      uses: coverallsapp/github-action@v2
-      with:
-        parallel-finished: true
+      - name: Coveralls finished
+        uses: coverallsapp/github-action@v2
+        with:
+          parallel-finished: true
