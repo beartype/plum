@@ -27,38 +27,37 @@ jobs:
             extra-install: ""
           - name: "3.12-pre-beartype"
             python-version: "3.12"
-            extra-install: "pip install --upgrade --pre beartype"
+            extra-install: "uv pip install --upgrade --pre beartype"
           - name: "3.13"
             python-version: "3.13"
             extra-install: ""
           - name: "3.13-pre-beartype"
             python-version: "3.13"
-            extra-install: "pip install --upgrade --pre beartype"
+            extra-install: "uv pip install --upgrade --pre beartype"
 
     name: Test ${{ matrix.value.name }}
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.value.python-version }}
-        uses: actions/setup-python@v2
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
         with:
           python-version: ${{ matrix.value.python-version }}
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install --no-cache-dir --group dev
-          python -m pip install --no-cache-dir -e .
+          uv sync --group dev --locked
           ${{ matrix.value.extra-install }}
       - name: Test linter assertions
-        run: nox -s typecheck
+        run: uv run --frozen nox -s typecheck
       - name: Run tests
         run: |
-          PRAGMA_VERSION=`python -c "import sys; print('.'.join(map(str, sys.version_info[:2])))"` \
-            pytest -v --cov=plum --cov-report term-missing
+          PRAGMA_VERSION=`uv run python -c "import sys; print('.'.join(map(str, sys.version_info[:2])))"` \
+          uv run --frozen pytest -v --cov=plum --cov-report term-missing --cov-report lcov:coverage.lcov
       - name: Coveralls parallel
         uses: coverallsapp/github-action@v2
         with:
           flag-name: run-${{ matrix.value.name }}
           parallel: true
+          file: coverage.lcov
 
   finish:
     name: Finish coverage
@@ -66,7 +65,7 @@ jobs:
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
-    - name: Coveralls finished
-      uses: coverallsapp/github-action@v2
-      with:
-        parallel-finished: true
+      - name: Coveralls finished
+        uses: coverallsapp/github-action@v2
+        with:
+          parallel-finished: true
