@@ -1,4 +1,6 @@
-__all__ = ["Signature", "append_default_args"]
+"""Signature and utilities for extracting signatures from callables."""
+
+__all__ = ("Signature", "append_default_args", "inspect_signature")
 
 import inspect
 import operator
@@ -15,8 +17,8 @@ from beartype.peps import resolve_pep563 as beartype_resolve_pep563
 
 from ._bear import is_bearable
 from ._type import is_faithful, resolve_type_hint
+from ._util import Comparable, Missing, TypeHint, _MissingType, wrap_lambda
 from .repr import repr_short, rich_repr
-from .util import Comparable, Missing, TypeHint, _MissingType, wrap_lambda
 
 
 @rich_repr

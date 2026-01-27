@@ -13,10 +13,10 @@ from typing import TYPE_CHECKING, Any, Protocol, TypeAlias, TypeVar
 
 from beartype.door import TypeHint
 
-import plum.function
+import plum._function
 from ._bear import is_bearable
+from ._dispatcher import Dispatcher
 from ._type import resolve_type_hint
-from .dispatcher import Dispatcher
 from .repr import repr_short
 
 T = TypeVar("T")
@@ -49,7 +49,7 @@ def convert(obj: object, type_to: typeTypeTo) -> TypeTo:
 
 
 # Deliver `convert`.
-plum.function._promised_convert = convert
+plum._function._promised_convert = convert
 
 
 @_dispatch

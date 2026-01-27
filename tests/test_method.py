@@ -3,8 +3,8 @@ from copy import copy
 
 import plum
 from .util import rich_render
-from plum.method import Method
-from plum.signature import Signature
+from plum._method import Method
+from plum._signature import Signature
 
 
 def test_instantiation_copy():

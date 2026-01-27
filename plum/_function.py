@@ -1,4 +1,4 @@
-__all__ = ["Function"]
+__all__ = ("Function",)
 
 import os
 import textwrap
@@ -9,11 +9,11 @@ from types import MethodType
 from typing import Any, Protocol, TypeVar
 from typing_extensions import Self
 
+from ._method import Method, MethodList
+from ._resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
+from ._signature import Signature, append_default_args
 from ._type import resolve_type_hint
-from .method import Method, MethodList
-from .resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
-from .signature import Signature, append_default_args
-from .util import TypeHint
+from ._util import TypeHint
 
 _promised_convert = None
 """function or None: This will be set to :func:`.parametric.convert`."""

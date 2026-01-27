@@ -4,8 +4,7 @@ from typing import Union
 import numpy as np
 import pytest
 
-from plum.repr import repr_short
-from plum.util import (
+from plum._util import (
     Comparable,
     Missing,
     get_class,
@@ -13,6 +12,7 @@ from plum.util import (
     is_in_class,
     wrap_lambda,
 )
+from plum.repr import repr_short
 
 
 def test_repr_short():

@@ -1,7 +1,7 @@
 import pytest
 
 import plum
-from plum.signature import Signature as Sig
+from plum._signature import Signature as Sig
 
 
 def test_dispatch_function(dispatch: plum.Dispatcher):

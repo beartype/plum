@@ -14,7 +14,7 @@ from plum._type import (
     resolve_type_hint,
     type_mapping,
 )
-from plum.util import Callable
+from plum._util import Callable
 
 skip_if_less_than_py310 = pytest.mark.skipif(
     sys.version_info < (3, 10),

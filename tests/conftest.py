@@ -1,7 +1,7 @@
 import pytest
 
 import plum
-from plum.promotion import _convert, _promotion_rule
+from plum._promotion import _convert, _promotion_rule
 
 
 @pytest.fixture

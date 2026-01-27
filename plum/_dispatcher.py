@@ -1,13 +1,13 @@
+__all__ = ("Dispatcher", "dispatch", "clear_all_cache")
+
 from dataclasses import dataclass, field
 from functools import partial
 from typing import Any, TypeVar, cast, overload
 
-from .function import Function
-from .overload import get_overloads
-from .signature import Signature
-from .util import Callable, TypeHint, get_class, is_in_class
-
-__all__ = ["Dispatcher", "dispatch", "clear_all_cache"]
+from ._function import Function
+from ._overload import get_overloads
+from ._signature import Signature
+from ._util import Callable, TypeHint, get_class, is_in_class
 
 T = TypeVar("T", bound=Callable[..., Any])
 

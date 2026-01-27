@@ -1,22 +1,110 @@
+__all__ = (
+    # Alias
+    "activate_union_aliases",
+    "deactivate_union_aliases",
+    "set_union_alias",
+    # Autoreload
+    "activate_autoreload",
+    "deactivate_autoreload",
+    # Dispatcher
+    "Dispatcher",
+    "dispatch",
+    "clear_all_cache",
+    # Functions
+    "Function",
+    # Method
+    "Method",
+    "extract_return_type",
+    # Overload
+    "overload",  # TODO: deprecate
+    "get_overloads",  # TODO: deprecate
+    # Parametric
+    "CovariantMeta",
+    "parametric",
+    "type_parameter",
+    "type_nonparametric",
+    "type_unparametrized",
+    "kind",
+    "Kind",
+    # Promotion
+    "convert",
+    "add_conversion_method",
+    "conversion_method",
+    "add_promotion_rule",
+    "promote",
+    # Resolver
+    "AmbiguousLookupError",
+    "NotFoundLookupError",
+    # Signature
+    "Signature",
+    "append_default_args",
+    "inspect_signature",
+    # Type
+    "PromisedType",
+    "ModuleType",
+    "type_mapping",
+    "resolve_type_hint",
+    "is_faithful",
+    # util
+    "Callable",  # TODO: deprecate
+    "TypeHint",
+    "Missing",
+    "Comparable",
+    "wrap_lambda",
+    "is_in_class",
+    "get_class",
+    "get_context",
+    "argsort",
+)
+
 from typing import TypeGuard, TypeVar
 
 from beartype.door import TypeHint as _TypeHint
 
+from ._alias import activate_union_aliases, deactivate_union_aliases, set_union_alias
+from ._autoreload import activate_autoreload, deactivate_autoreload
 from ._bear import is_bearable as _is_bearable
-from ._type import *  # noqa: F401, F403
-from ._type import resolve_type_hint
-from ._version import __version__  # noqa: F401
-from .alias import *  # noqa: F401, F403
-from .autoreload import *  # noqa: F401, F403
-from .dispatcher import *  # noqa: F401, F403
-from .function import *  # noqa: F401, F403
-from .method import *  # noqa: F401, F403
-from .overload import *  # noqa: F401, F403
-from .parametric import *  # noqa: F401, F403
-from .promotion import *  # noqa: F401, F403
-from .resolver import *  # noqa: F401, F403
-from .signature import *  # noqa: F401, F403
-from .util import *  # noqa: F401, F403
+from ._dispatcher import Dispatcher, clear_all_cache, dispatch
+from ._function import Function
+from ._method import Method, extract_return_type
+from ._overload import get_overloads, overload
+from ._parametric import (
+    CovariantMeta,
+    Kind,
+    kind,
+    parametric,
+    type_nonparametric,
+    type_parameter,
+    type_unparametrized,
+)
+from ._promotion import (
+    add_conversion_method,
+    add_promotion_rule,
+    conversion_method,
+    convert,
+    promote,
+)
+from ._resolver import AmbiguousLookupError, NotFoundLookupError
+from ._signature import Signature, append_default_args, inspect_signature
+from ._type import (
+    ModuleType,
+    PromisedType,
+    is_faithful,
+    resolve_type_hint,
+    type_mapping,
+)
+from ._util import (
+    Callable,
+    Comparable,
+    Missing,
+    TypeHint,
+    argsort,
+    get_class,
+    get_context,
+    is_in_class,
+    wrap_lambda,
+)
+from ._version import __version__  # noqa: F401  # noqa: F401
 
 # isort: split
 # Plum previously exported a number of types. As of recently, the user can use
@@ -26,7 +114,7 @@ from typing import Dict, List, Tuple, Union  # noqa: F401, UP035
 
 # Deprecated
 # isort: split
-from .parametric import Val  # noqa: F401, F403
+from ._parametric import Val as Val  # noqa: F401, F403
 
 T = TypeVar("T")
 T2 = TypeVar("T2")
