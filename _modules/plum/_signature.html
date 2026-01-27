@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>plum.signature &#8212; Plum</title>
+    <title>plum._signature &#8212; Plum</title>
   
   
   
@@ -56,7 +56,7 @@
     <script async="async" src="../../_static/sphinx-thebe.js?v=c100c467"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/plum/signature';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/plum/_signature';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -270,7 +270,7 @@
       
       
       
-      <li><a href="https://github.com/beartype/plum/issues/new?title=Issue%20on%20page%20%2F_modules/plum/signature.html&body=Your%20issue%20content%20here." target="_blank"
+      <li><a href="https://github.com/beartype/plum/issues/new?title=Issue%20on%20page%20%2F_modules/plum/_signature.html&body=Your%20issue%20content%20here." target="_blank"
    class="btn btn-sm btn-source-issues-button dropdown-item"
    title="Open an issue"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -348,8 +348,10 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <h1>Source code for plum.signature</h1><div class="highlight"><pre>
-<span></span><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Signature&quot;</span><span class="p">,</span> <span class="s2">&quot;append_default_args&quot;</span><span class="p">]</span>
+  <h1>Source code for plum._signature</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Signature and utilities for extracting signatures from callables.&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Signature&quot;</span><span class="p">,</span> <span class="s2">&quot;append_default_args&quot;</span><span class="p">,</span> <span class="s2">&quot;inspect_signature&quot;</span><span class="p">)</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">operator</span>
@@ -366,12 +368,12 @@ document.write(`
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">._bear</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_bearable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._type</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_faithful</span><span class="p">,</span> <span class="n">resolve_type_hint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._util</span><span class="w"> </span><span class="kn">import</span> <span class="n">Comparable</span><span class="p">,</span> <span class="n">Missing</span><span class="p">,</span> <span class="n">TypeHint</span><span class="p">,</span> <span class="n">_MissingType</span><span class="p">,</span> <span class="n">wrap_lambda</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.repr</span><span class="w"> </span><span class="kn">import</span> <span class="n">repr_short</span><span class="p">,</span> <span class="n">rich_repr</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">Comparable</span><span class="p">,</span> <span class="n">Missing</span><span class="p">,</span> <span class="n">TypeHint</span><span class="p">,</span> <span class="n">_MissingType</span><span class="p">,</span> <span class="n">wrap_lambda</span>
 
 
 <div class="viewcode-block" id="Signature">
-<a class="viewcode-back" href="../../api.html#plum.signature.Signature">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._signature.Signature">[docs]</a>
 <span class="nd">@rich_repr</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Signature</span><span class="p">(</span><span class="n">Comparable</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Object representing a call signature that may be used to dispatch a function</span>
@@ -421,7 +423,7 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">is_faithful</span> <span class="o">=</span> <span class="n">types_are_faithful</span> <span class="ow">and</span> <span class="n">varargs_are_faithful</span>
 
 <div class="viewcode-block" id="Signature.from_callable">
-<a class="viewcode-back" href="../../api.html#plum.signature.Signature.from_callable">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._signature.Signature.from_callable">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_callable</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">precedence</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Signature&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Construct a signature from a callable.</span>
@@ -499,7 +501,7 @@ document.write(`
         <span class="k">return</span> <span class="nb">hash</span><span class="p">((</span><span class="n">Signature</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">types</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">varargs</span><span class="p">))</span>
 
 <div class="viewcode-block" id="Signature.expand_varargs">
-<a class="viewcode-back" href="../../api.html#plum.signature.Signature.expand_varargs">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._signature.Signature.expand_varargs">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">expand_varargs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TypeHint</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Expand variable arguments.</span>
 
@@ -597,7 +599,7 @@ document.write(`
             <span class="k">return</span> <span class="kc">False</span>
 
 <div class="viewcode-block" id="Signature.match">
-<a class="viewcode-back" href="../../api.html#plum.signature.Signature.match">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._signature.Signature.match">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether values match the signature.</span>
 
@@ -620,7 +622,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="Signature.compute_distance">
-<a class="viewcode-back" href="../../api.html#plum.signature.Signature.compute_distance">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._signature.Signature.compute_distance">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_distance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;For given values, computes the edit distance between these vales and this</span>
 <span class="sd">        signature.</span>
@@ -647,7 +649,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="Signature.compute_mismatches">
-<a class="viewcode-back" href="../../api.html#plum.signature.Signature.compute_mismatches">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._signature.Signature.compute_mismatches">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_mismatches</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="o">/</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">frozenset</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]:</span>
@@ -681,6 +683,8 @@ document.write(`
 
 
 
+<div class="viewcode-block" id="inspect_signature">
+<a class="viewcode-back" href="../../api.html#plum._signature.inspect_signature">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">inspect_signature</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Signature</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrapper of :func:`inspect.signature` which adds support for certain non-function</span>
 <span class="sd">    objects.</span>
@@ -693,7 +697,8 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">itemgetter</span><span class="p">,</span> <span class="n">operator</span><span class="o">.</span><span class="n">attrgetter</span><span class="p">)):</span>
         <span class="n">f</span> <span class="o">=</span> <span class="n">wrap_lambda</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">f</span><span class="p">)</span></div>
+
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">resolve_pep563</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -764,7 +769,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="append_default_args">
-<a class="viewcode-back" href="../../api.html#plum.signature.append_default_args">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._signature.append_default_args">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">append_default_args</span><span class="p">(</span><span class="n">signature</span><span class="p">:</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Signature</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a list of signatures of function `f`, where those signatures are derived</span>
 <span class="sd">    from the input arguments of `f` by treating every non-keyword-only argument with a</span>

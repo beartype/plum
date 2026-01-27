@@ -8,49 +8,49 @@ Types
 
 Signatures
 ----------
-.. automodule:: plum.signature
+.. automodule:: plum._signature
     :members:
 
 Methods
 -------
-.. automodule:: plum.method
+.. automodule:: plum._method
     :members:
 
 Functions
 ---------
-.. automodule:: plum.function
+.. automodule:: plum._function
     :members:
 
 Dispatchers
 -----------
-.. automodule:: plum.dispatcher
+.. automodule:: plum._dispatcher
     :members:
-.. automodule:: plum.resolver
+.. automodule:: plum._resolver
     :members:
 
 Parametric Classes
 ------------------
-.. automodule:: plum.parametric
+.. automodule:: plum._parametric
     :members:
 
 Promotion and Conversion
 ------------------------
-.. automodule:: plum.promotion
+.. automodule:: plum._promotion
     :members:
 
 Union Aliases
 -------------
-.. automodule:: plum.alias
+.. automodule:: plum._alias
     :members:
 
 iPython AutoReload
 ------------------
-.. automodule:: plum.autoreload
+.. automodule:: plum._autoreload
     :members:
 
 Other Utilities
 ---------------
 .. automodule:: plum.repr
     :members:
-.. automodule:: plum.util
+.. automodule:: plum._util
     :members:

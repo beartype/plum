@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>plum.function &#8212; Plum</title>
+    <title>plum._function &#8212; Plum</title>
   
   
   
@@ -56,7 +56,7 @@
     <script async="async" src="../../_static/sphinx-thebe.js?v=c100c467"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/plum/function';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/plum/_function';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -270,7 +270,7 @@
       
       
       
-      <li><a href="https://github.com/beartype/plum/issues/new?title=Issue%20on%20page%20%2F_modules/plum/function.html&body=Your%20issue%20content%20here." target="_blank"
+      <li><a href="https://github.com/beartype/plum/issues/new?title=Issue%20on%20page%20%2F_modules/plum/_function.html&body=Your%20issue%20content%20here." target="_blank"
    class="btn btn-sm btn-source-issues-button dropdown-item"
    title="Open an issue"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -348,8 +348,8 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <h1>Source code for plum.function</h1><div class="highlight"><pre>
-<span></span><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Function&quot;</span><span class="p">]</span>
+  <h1>Source code for plum._function</h1><div class="highlight"><pre>
+<span></span><span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Function&quot;</span><span class="p">,)</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">textwrap</span>
@@ -360,11 +360,11 @@ document.write(`
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">TypeVar</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">._method</span><span class="w"> </span><span class="kn">import</span> <span class="n">Method</span><span class="p">,</span> <span class="n">MethodList</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._resolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">AmbiguousLookupError</span><span class="p">,</span> <span class="n">NotFoundLookupError</span><span class="p">,</span> <span class="n">Resolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._signature</span><span class="w"> </span><span class="kn">import</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">append_default_args</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._type</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_type_hint</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.method</span><span class="w"> </span><span class="kn">import</span> <span class="n">Method</span><span class="p">,</span> <span class="n">MethodList</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.resolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">AmbiguousLookupError</span><span class="p">,</span> <span class="n">NotFoundLookupError</span><span class="p">,</span> <span class="n">Resolver</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.signature</span><span class="w"> </span><span class="kn">import</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">append_default_args</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeHint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._util</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeHint</span>
 
 <span class="n">_promised_convert</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="sd">&quot;&quot;&quot;function or None: This will be set to :func:`.parametric.convert`.&quot;&quot;&quot;</span>
@@ -407,7 +407,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="Function">
-<a class="viewcode-back" href="../../api.html#plum.function.Function">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._function.Function">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Function</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">_FunctionMeta</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A function.</span>
 
@@ -542,7 +542,7 @@ document.write(`
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="o">.</span><span class="n">methods</span>
 
 <div class="viewcode-block" id="Function.dispatch">
-<a class="viewcode-back" href="../../api.html#plum.function.Function.dispatch">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._function.Function.dispatch">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">dispatch</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">:</span> <span class="n">Self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">precedence</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">Self</span><span class="p">]:</span>
@@ -562,7 +562,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="Function.dispatch_multi">
-<a class="viewcode-back" href="../../api.html#plum.function.Function.dispatch_multi">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._function.Function.dispatch_multi">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">dispatch_multi</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">:</span> <span class="n">Self</span><span class="p">,</span> <span class="o">*</span><span class="n">signatures</span><span class="p">:</span> <span class="n">Signature</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TypeHint</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">Self</span><span class="p">]:</span>
@@ -597,7 +597,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="Function.clear_cache">
-<a class="viewcode-back" href="../../api.html#plum.function.Function.clear_cache">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._function.Function.clear_cache">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">clear_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reregister</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Clear cache.</span>
 
@@ -620,7 +620,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="Function.register">
-<a class="viewcode-back" href="../../api.html#plum.function.Function.register">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._function.Function.register">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">register</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
@@ -673,7 +673,7 @@ document.write(`
             <span class="bp">self</span><span class="o">.</span><span class="n">clear_cache</span><span class="p">(</span><span class="n">reregister</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Function.resolve_method">
-<a class="viewcode-back" href="../../api.html#plum.function.Function.resolve_method">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._function.Function.resolve_method">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">resolve_method</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="n">Signature</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">TypeHint</span><span class="p">]:</span>
@@ -804,7 +804,7 @@ document.write(`
             <span class="k">return</span> <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span>
 
 <div class="viewcode-block" id="Function.invoke">
-<a class="viewcode-back" href="../../api.html#plum.function.Function.invoke">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._function.Function.invoke">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">invoke</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">types</span><span class="p">:</span> <span class="n">TypeHint</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Invoke a particular method.</span>
 

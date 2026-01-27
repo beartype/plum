@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>plum.parametric &#8212; Plum</title>
+    <title>plum._parametric &#8212; Plum</title>
   
   
   
@@ -56,7 +56,7 @@
     <script async="async" src="../../_static/sphinx-thebe.js?v=c100c467"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/plum/parametric';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/plum/_parametric';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -270,7 +270,7 @@
       
       
       
-      <li><a href="https://github.com/beartype/plum/issues/new?title=Issue%20on%20page%20%2F_modules/plum/parametric.html&body=Your%20issue%20content%20here." target="_blank"
+      <li><a href="https://github.com/beartype/plum/issues/new?title=Issue%20on%20page%20%2F_modules/plum/_parametric.html&body=Your%20issue%20content%20here." target="_blank"
    class="btn btn-sm btn-source-issues-button dropdown-item"
    title="Open an issue"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -348,21 +348,8 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <h1>Source code for plum.parametric</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeVar</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">deprecated</span>
-
-<span class="kn">import</span><span class="w"> </span><span class="nn">beartype.door</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">beartype.roar</span><span class="w"> </span><span class="kn">import</span> <span class="n">BeartypeDoorNonpepException</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">._type</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_type_hint</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.dispatcher</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dispatcher</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.function</span><span class="w"> </span><span class="kn">import</span> <span class="n">_owner_transfer</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.repr</span><span class="w"> </span><span class="kn">import</span> <span class="n">repr_short</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeHint</span>
-
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+  <h1>Source code for plum._parametric</h1><div class="highlight"><pre>
+<span></span><span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">&quot;CovariantMeta&quot;</span><span class="p">,</span>
     <span class="s2">&quot;parametric&quot;</span><span class="p">,</span>
     <span class="s2">&quot;type_parameter&quot;</span><span class="p">,</span>
@@ -370,7 +357,20 @@ document.write(`
     <span class="s2">&quot;type_unparametrized&quot;</span><span class="p">,</span>
     <span class="s2">&quot;kind&quot;</span><span class="p">,</span>
     <span class="s2">&quot;Kind&quot;</span><span class="p">,</span>
-<span class="p">]</span>
+<span class="p">)</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">final</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">deprecated</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">beartype.door</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">beartype.roar</span><span class="w"> </span><span class="kn">import</span> <span class="n">BeartypeDoorNonpepException</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">._dispatcher</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dispatcher</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._function</span><span class="w"> </span><span class="kn">import</span> <span class="n">_owner_transfer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._type</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_type_hint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._util</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeHint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.repr</span><span class="w"> </span><span class="kn">import</span> <span class="n">repr_short</span>
 
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
 
@@ -482,7 +482,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="CovariantMeta">
-<a class="viewcode-back" href="../../api.html#plum.parametric.CovariantMeta">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._parametric.CovariantMeta">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CovariantMeta</span><span class="p">(</span><span class="n">ParametricTypeMeta</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A metaclass that implements *covariance* of parametric types.&quot;&quot;&quot;</span>
 
@@ -527,7 +527,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="parametric">
-<a class="viewcode-back" href="../../api.html#plum.parametric.parametric">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._parametric.parametric">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">parametric</span><span class="p">(</span><span class="n">original_class</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A decorator for parametric classes.</span>
 
@@ -674,8 +674,7 @@ document.write(`
 <span class="sd">        &gt;&gt;&gt; PObj = parametric(Obj)</span>
 
 <span class="sd">        &gt;&gt;&gt; PObj.mro()</span>
-<span class="sd">        [&lt;class &#39;plum.parametric.Obj&#39;&gt;, &lt;class &#39;plum.parametric.Obj&#39;&gt;,</span>
-<span class="sd">         &lt;class &#39;object&#39;&gt;]</span>
+<span class="sd">        [&lt;class &#39;plum...Obj&#39;&gt;, &lt;class &#39;plum...Obj&#39;&gt;, &lt;class &#39;object&#39;&gt;]</span>
 
 <span class="sd">        Note that the class `Obj` appears twice in the MRO. The first one is the</span>
 <span class="sd">        parametric class, and the second one is the non-parametric class. The</span>
@@ -726,8 +725,7 @@ document.write(`
 <span class="sd">        &gt;&gt;&gt; PObj = parametric(Obj)</span>
 
 <span class="sd">        &gt;&gt;&gt; PObj.mro()</span>
-<span class="sd">        [&lt;class &#39;plum.parametric.Obj&#39;&gt;, &lt;class &#39;plum.parametric.Obj&#39;&gt;,</span>
-<span class="sd">         &lt;class &#39;object&#39;&gt;]</span>
+<span class="sd">        [&lt;class &#39;plum...Obj&#39;&gt;, &lt;class &#39;plum...Obj&#39;&gt;, &lt;class &#39;object&#39;&gt;]</span>
 
 <span class="sd">        Note that the class `Obj` appears twice in the MRO. The first one is the</span>
 <span class="sd">        non-concrete parametric class, and the second one is the non-parametric</span>
@@ -804,13 +802,14 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">beartype</span><span class="o">.</span><span class="n">door</span><span class="o">.</span><span class="n">TypeHint</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="k">return</span> <span class="kc">True</span>
     <span class="k">except</span> <span class="n">BeartypeDoorNonpepException</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
 
 
 <div class="viewcode-block" id="type_parameter">
-<a class="viewcode-back" href="../../api.html#plum.parametric.type_parameter">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._parametric.type_parameter">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">type_parameter</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the type parameter of concrete parametric type or an instance of a concrete</span>
 <span class="sd">    parametric type.</span>
@@ -832,7 +831,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="type_nonparametric">
-<a class="viewcode-back" href="../../api.html#plum.parametric.type_nonparametric">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._parametric.type_nonparametric">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">type_nonparametric</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the non-parametric type of an object.</span>
 
@@ -869,8 +868,8 @@ document.write(`
 <span class="sd">    &gt;&gt;&gt; pobj = PObj(1)</span>
 
 <span class="sd">    &gt;&gt;&gt; type(pobj).mro()</span>
-<span class="sd">    [&lt;class &#39;plum.parametric.Obj[int]&#39;&gt;, &lt;class &#39;plum.parametric.Obj&#39;&gt;,</span>
-<span class="sd">     &lt;class &#39;plum.parametric.Obj&#39;&gt;, &lt;class &#39;object&#39;&gt;]</span>
+<span class="sd">    [&lt;class &#39;plum...Obj[int]&#39;&gt;, &lt;class &#39;plum...Obj&#39;&gt;, &lt;class &#39;plum...Obj&#39;&gt;,</span>
+<span class="sd">     &lt;class &#39;object&#39;&gt;]</span>
 
 <span class="sd">    Note that the class `Obj` appears twice in the MRO. The first one is the</span>
 <span class="sd">    parametric class, and the second one is the non-parametric class. The</span>
@@ -903,7 +902,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="type_unparametrized">
-<a class="viewcode-back" href="../../api.html#plum.parametric.type_unparametrized">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._parametric.type_unparametrized">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">type_unparametrized</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the unparametrized type of an object.</span>
 
@@ -940,8 +939,8 @@ document.write(`
 <span class="sd">    &gt;&gt;&gt; pobj = PObj(1)</span>
 
 <span class="sd">    &gt;&gt;&gt; type(pobj).mro()</span>
-<span class="sd">    [&lt;class &#39;plum.parametric.Obj[int]&#39;&gt;, &lt;class &#39;plum.parametric.Obj&#39;&gt;,</span>
-<span class="sd">     &lt;class &#39;plum.parametric.Obj&#39;&gt;, &lt;class &#39;object&#39;&gt;]</span>
+<span class="sd">    [&lt;class &#39;plum...Obj[int]&#39;&gt;, &lt;class &#39;plum...Obj&#39;&gt;,</span>
+<span class="sd">     &lt;class &#39;plum...Obj&#39;&gt;, &lt;class &#39;object&#39;&gt;]</span>
 
 <span class="sd">    Note that the class `Obj` appears twice in the MRO. The first one is the</span>
 <span class="sd">    non-concrete parametric class, and the second one is the non-parametric</span>
@@ -974,7 +973,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="kind">
-<a class="viewcode-back" href="../../api.html#plum.parametric.kind">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._parametric.kind">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">kind</span><span class="p">(</span><span class="n">SuperClass</span><span class="o">=</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a parametric wrapper type for dispatch purposes.</span>
 
@@ -1000,6 +999,7 @@ document.write(`
 <span class="n">Kind</span> <span class="o">=</span> <span class="n">kind</span><span class="p">()</span>  <span class="c1">#: A default kind provided for convenience.</span>
 
 
+<span class="nd">@final</span>
 <span class="nd">@deprecated</span><span class="p">(</span><span class="s2">&quot;Use `typing.Literal[val]` instead.&quot;</span><span class="p">)</span>
 <span class="nd">@parametric</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Val</span><span class="p">:</span>
@@ -1037,7 +1037,7 @@ document.write(`
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The value must be specified.&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">repr_short</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot;()&quot;</span>
+        <span class="k">return</span> <span class="n">repr_short</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;._parametric&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;()&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>

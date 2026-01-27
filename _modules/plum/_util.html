@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>plum.util &#8212; Plum</title>
+    <title>plum._util &#8212; Plum</title>
   
   
   
@@ -56,7 +56,7 @@
     <script async="async" src="../../_static/sphinx-thebe.js?v=c100c467"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/plum/util';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/plum/_util';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -270,7 +270,7 @@
       
       
       
-      <li><a href="https://github.com/beartype/plum/issues/new?title=Issue%20on%20page%20%2F_modules/plum/util.html&body=Your%20issue%20content%20here." target="_blank"
+      <li><a href="https://github.com/beartype/plum/issues/new?title=Issue%20on%20page%20%2F_modules/plum/_util.html&body=Your%20issue%20content%20here." target="_blank"
    class="btn btn-sm btn-source-issues-button dropdown-item"
    title="Open an issue"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -348,7 +348,7 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <h1>Source code for plum.util</h1><div class="highlight"><pre>
+  <h1>Source code for plum._util</h1><div class="highlight"><pre>
 <span></span><span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">&quot;Callable&quot;</span><span class="p">,</span>
     <span class="s2">&quot;TypeHint&quot;</span><span class="p">,</span>
@@ -389,7 +389,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="Missing">
-<a class="viewcode-back" href="../../api.html#plum.util.Missing">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._util.Missing">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Missing</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">_MissingType</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A class that can be used to indicate that a value is missing. This class cannot</span>
 <span class="sd">    be instantiated and has no boolean value.&quot;&quot;&quot;</span>
@@ -400,7 +400,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="Comparable">
-<a class="viewcode-back" href="../../api.html#plum.util.Comparable">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._util.Comparable">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Comparable</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">abc</span><span class="o">.</span><span class="n">ABCMeta</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A mixin that makes instances of the class comparable.</span>
 
@@ -427,7 +427,7 @@ document.write(`
         <span class="k">return</span> <span class="bp">self</span> <span class="o">&gt;=</span> <span class="n">other</span> <span class="ow">and</span> <span class="bp">self</span> <span class="o">!=</span> <span class="n">other</span>
 
 <div class="viewcode-block" id="Comparable.is_comparable">
-<a class="viewcode-back" href="../../api.html#plum.util.Comparable.is_comparable">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._util.Comparable.is_comparable">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_comparable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether this object is comparable with another one.</span>
 
@@ -443,7 +443,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="wrap_lambda">
-<a class="viewcode-back" href="../../api.html#plum.util.wrap_lambda">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._util.wrap_lambda">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">wrap_lambda</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="n">R</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="n">R</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrap a callable in a lambda function.</span>
 
@@ -458,7 +458,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="is_in_class">
-<a class="viewcode-back" href="../../api.html#plum.util.is_in_class">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._util.is_in_class">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">is_in_class</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if a function is part of a class.</span>
 
@@ -482,7 +482,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="get_class">
-<a class="viewcode-back" href="../../api.html#plum.util.get_class">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._util.get_class">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_class</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Assuming that `f` is part of a class, get the fully qualified name of the</span>
 <span class="sd">    class.</span>
@@ -499,7 +499,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="get_context">
-<a class="viewcode-back" href="../../api.html#plum.util.get_context">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._util.get_context">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_context</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the fully qualified name of the context for `f`.</span>
 
@@ -524,7 +524,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="argsort">
-<a class="viewcode-back" href="../../api.html#plum.util.argsort">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._util.argsort">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">argsort</span><span class="p">(</span><span class="n">seq</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the indices that sort an integer sequence.</span>
 

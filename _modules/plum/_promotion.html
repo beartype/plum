@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>plum.promotion &#8212; Plum</title>
+    <title>plum._promotion &#8212; Plum</title>
   
   
   
@@ -56,7 +56,7 @@
     <script async="async" src="../../_static/sphinx-thebe.js?v=c100c467"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/plum/promotion';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/plum/_promotion';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -270,7 +270,7 @@
       
       
       
-      <li><a href="https://github.com/beartype/plum/issues/new?title=Issue%20on%20page%20%2F_modules/plum/promotion.html&body=Your%20issue%20content%20here." target="_blank"
+      <li><a href="https://github.com/beartype/plum/issues/new?title=Issue%20on%20page%20%2F_modules/plum/_promotion.html&body=Your%20issue%20content%20here." target="_blank"
    class="btn btn-sm btn-source-issues-button dropdown-item"
    title="Open an issue"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -348,7 +348,7 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <h1>Source code for plum.promotion</h1><div class="highlight"><pre>
+  <h1>Source code for plum._promotion</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Promotion and conversion functions.&quot;&quot;&quot;</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
@@ -364,10 +364,10 @@ document.write(`
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">beartype.door</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeHint</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">plum.function</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">plum._function</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._bear</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_bearable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._dispatcher</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dispatcher</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._type</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_type_hint</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.dispatcher</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dispatcher</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.repr</span><span class="w"> </span><span class="kn">import</span> <span class="n">repr_short</span>
 
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
@@ -384,7 +384,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="convert">
-<a class="viewcode-back" href="../../api.html#plum.promotion.convert">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._promotion.convert">[docs]</a>
 <span class="nd">@_dispatch</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">convert</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="n">type_to</span><span class="p">:</span> <span class="n">typeTypeTo</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TypeTo</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert an object to a particular type.</span>
@@ -403,7 +403,7 @@ document.write(`
 
 
 <span class="c1"># Deliver `convert`.</span>
-<span class="n">plum</span><span class="o">.</span><span class="n">function</span><span class="o">.</span><span class="n">_promised_convert</span> <span class="o">=</span> <span class="n">convert</span>
+<span class="n">plum</span><span class="o">.</span><span class="n">_function</span><span class="o">.</span><span class="n">_promised_convert</span> <span class="o">=</span> <span class="n">convert</span>
 
 
 <span class="nd">@_dispatch</span>
@@ -418,7 +418,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="add_conversion_method">
-<a class="viewcode-back" href="../../api.html#plum.promotion.add_conversion_method">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._promotion.add_conversion_method">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">add_conversion_method</span><span class="p">(</span>
     <span class="n">type_from</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">],</span>
     <span class="n">type_to</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">R</span><span class="p">],</span>
@@ -440,7 +440,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="conversion_method">
-<a class="viewcode-back" href="../../api.html#plum.promotion.conversion_method">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._promotion.conversion_method">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">conversion_method</span><span class="p">(</span>
     <span class="n">type_from</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">type_to</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">R</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">_ConversionCallable</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">R</span><span class="p">]],</span> <span class="n">_ConversionCallable</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">R</span><span class="p">]]:</span>
@@ -494,7 +494,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="add_promotion_rule">
-<a class="viewcode-back" href="../../api.html#plum.promotion.add_promotion_rule">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._promotion.add_promotion_rule">[docs]</a>
 <span class="nd">@_dispatch</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">add_promotion_rule</span><span class="p">(</span><span class="n">type1</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="n">type2</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="n">type_to</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Add a promotion rule.</span>
@@ -557,7 +557,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="promote">
-<a class="viewcode-back" href="../../api.html#plum.promotion.promote">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._promotion.promote">[docs]</a>
 <span class="nd">@_dispatch</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">promote</span><span class="p">():</span>  <span class="c1"># noqa: F811</span>
     <span class="k">return</span> <span class="p">()</span></div>

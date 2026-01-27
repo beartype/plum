@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>plum.resolver &#8212; Plum</title>
+    <title>plum._resolver &#8212; Plum</title>
   
   
   
@@ -56,7 +56,7 @@
     <script async="async" src="../../_static/sphinx-thebe.js?v=c100c467"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"; const thebe_selector = ".thebe,.cell"; const thebe_selector_input = "pre"; const thebe_selector_output = ".output, .cell_output"</script>
-    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/plum/resolver';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/plum/_resolver';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -270,7 +270,7 @@
       
       
       
-      <li><a href="https://github.com/beartype/plum/issues/new?title=Issue%20on%20page%20%2F_modules/plum/resolver.html&body=Your%20issue%20content%20here." target="_blank"
+      <li><a href="https://github.com/beartype/plum/issues/new?title=Issue%20on%20page%20%2F_modules/plum/_resolver.html&body=Your%20issue%20content%20here." target="_blank"
    class="btn btn-sm btn-source-issues-button dropdown-item"
    title="Open an issue"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -348,8 +348,10 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <h1>Source code for plum.resolver</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pydoc</span>
+  <h1>Source code for plum._resolver</h1><div class="highlight"><pre>
+<span></span><span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;AmbiguousLookupError&quot;</span><span class="p">,</span> <span class="s2">&quot;NotFoundLookupError&quot;</span><span class="p">)</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">pydoc</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span>
@@ -359,12 +361,10 @@ document.write(`
 <span class="kn">from</span><span class="w"> </span><span class="nn">rich.padding</span><span class="w"> </span><span class="kn">import</span> <span class="n">Padding</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">rich.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">Text</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">argsort</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">plum.method</span><span class="w"> </span><span class="kn">import</span> <span class="n">Method</span><span class="p">,</span> <span class="n">MethodList</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._util</span><span class="w"> </span><span class="kn">import</span> <span class="n">argsort</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">plum._method</span><span class="w"> </span><span class="kn">import</span> <span class="n">Method</span><span class="p">,</span> <span class="n">MethodList</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">plum._signature</span><span class="w"> </span><span class="kn">import</span> <span class="n">Signature</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">plum.repr</span><span class="w"> </span><span class="kn">import</span> <span class="n">repr_source_path</span><span class="p">,</span> <span class="n">rich_repr</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">plum.signature</span><span class="w"> </span><span class="kn">import</span> <span class="n">Signature</span>
-
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;AmbiguousLookupError&quot;</span><span class="p">,</span> <span class="s2">&quot;NotFoundLookupError&quot;</span><span class="p">]</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">MethodRedefinitionWarning</span><span class="p">(</span><span class="ne">Warning</span><span class="p">):</span>
@@ -391,7 +391,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="AmbiguousLookupError">
-<a class="viewcode-back" href="../../api.html#plum.resolver.AmbiguousLookupError">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._resolver.AmbiguousLookupError">[docs]</a>
 <span class="nd">@rich_repr</span><span class="p">(</span><span class="nb">str</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">AmbiguousLookupError</span><span class="p">(</span><span class="ne">LookupError</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A signature cannot be resolved due to ambiguity.&quot;&quot;&quot;</span>
@@ -427,7 +427,7 @@ document.write(`
 
 
 <div class="viewcode-block" id="NotFoundLookupError">
-<a class="viewcode-back" href="../../api.html#plum.resolver.NotFoundLookupError">[docs]</a>
+<a class="viewcode-back" href="../../api.html#plum._resolver.NotFoundLookupError">[docs]</a>
 <span class="nd">@rich_repr</span><span class="p">(</span><span class="nb">str</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">NotFoundLookupError</span><span class="p">(</span><span class="ne">LookupError</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A signature cannot be resolved because no applicable method can be found.</span>
