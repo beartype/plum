@@ -77,10 +77,14 @@ build.hooks.vcs.version-file = "plum/_version.py"
 run.branch = true
 run.command_line = "-m pytest --verbose test"
 run.source = ["plum"]
-report.exclude_also = [
-  '\.\.\.',
-  'if TYPE_CHECKING:',
-  'if typing.TYPE_CHECKING:',
+run.omit = ["plum/_version.py"]
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "pragma: specific no cover.*${PRAGMA_VERSION}",
+    '\.\.\.',
+    'if TYPE_CHECKING:',
+    'if typing.TYPE_CHECKING:',
 ]
 
 
