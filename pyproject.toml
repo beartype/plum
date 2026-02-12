@@ -67,19 +67,17 @@ test_runtime = [
 ]
 
 [tool.hatch]
+build.hooks.vcs.version-file = "src/plum/_version.py"
+build.targets.wheel.packages = ["src/plum"]
 version.source = "vcs"
-build.include = ["plum*"]
-build.hooks.vcs.version-file = "plum/_version.py"
-
 
 # Development tools
 [tool.coverage]
 run.branch = true
 run.command_line = "-m pytest --verbose test"
-run.source = ["plum"]
-run.omit = ["plum/_version.py"]
-[tool.coverage.report]
-exclude_lines = [
+run.source = ["src/plum"]
+run.omit = ["src/plum/_version.py"]
+report.exclude_lines = [
     "pragma: no cover",
     "pragma: specific no cover.*${PRAGMA_VERSION}",
     '\.\.\.',
@@ -91,13 +89,13 @@ exclude_lines = [
 [tool.mypy]
 disable_error_code = ["no-redef"]
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
-files = ["plum"]
+files = ["src/plum"]
 strict = true
 follow_imports = "skip"  # TODO: Set to "normal" when mypy errors are fixed
 show_error_codes = true
 exclude = [  # TODO: Fix the mypy errors in all these files
-    "plum/_parametric\\.py",
-    "plum/_promotion\\.py",
+    "src/plum/_parametric\\.py",
+    "src/plum/_promotion\\.py",
 ]
 
 [[tool.mypy.overrides]]
@@ -106,7 +104,7 @@ ignore_missing_imports = true
 
 
 [tool.pytest.ini_options]
-testpaths = ["tests/", "plum", "docs"]
+testpaths = ["tests/", "src/plum", "docs"]
 addopts = [
     "-ra",
     "-p",
@@ -116,7 +114,7 @@ minversion = "6.0"
 
 
 [tool.ruff]
-src = ["plum"]
+src = ["src/plum"]
 target-version = "py310"
 line-length = 88
 
