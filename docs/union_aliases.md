@@ -41,6 +41,22 @@ by aliasing a union, you change the way it is displayed.
 Union aliases must be activated explicitly, because the feature
 monkeypatches `Union.__str__` and `Union.__repr__`.
 
+% invisible-code-block: python
+%
+% import sys
+
+% skip: start if(sys.version_info < (3, 14), reason="Union repr changed in Python 3.14+")
+
+```python
+>>> from plum import set_union_alias
+>>> set_union_alias(Scalar, alias="Scalar")
+numpy.bool | numpy.float16 | ...
+```
+
+% skip: end
+
+% skip: start if(sys.version_info >= (3, 14), reason="Union repr changed in Python 3.14+")
+
 ```python
 >>> from plum import activate_union_aliases, set_union_alias
 
@@ -49,6 +65,8 @@ monkeypatches `Union.__str__` and `Union.__repr__`.
 >>> set_union_alias(Scalar, alias="Scalar")
 typing.Union[Scalar]
 ```
+
+% skip: end
 
 After this, `help(add)` now prints the following:
 
@@ -68,6 +86,30 @@ For example, printing just `Scalar` would omit the type parameter(s).
 
 Let's see with a few more examples how this works:
 
+% invisible-code-block: python
+%
+% import sys
+
+% skip: start if(sys.version_info < (3, 14), reason="Union repr changed in Python 3.14+")
+
+```python
+>>> Scalar
+numpy.bool | numpy.float16 | ...
+
+>>> Union[tuple(scalar_types)]
+numpy.bool | numpy.float16 | ...
+
+>>> Union[tuple(scalar_types) + (tuple,)]       # Scalar or tuple
+numpy.bool | numpy.float16 | ... | tuple
+
+>>> Union[tuple(scalar_types) + (tuple, list)]  # Scalar or tuple or list
+numpy.bool | numpy.float16 | ... | tuple | list
+```
+
+% skip: end
+
+% skip: start if(sys.version_info >= (3, 14), reason="Union repr changed in Python 3.14+")
+
 ```python
 >>> Scalar
 typing.Union[Scalar]
@@ -76,11 +118,13 @@ typing.Union[Scalar]
 typing.Union[Scalar]
 
 >>> Union[tuple(scalar_types) + (tuple,)]       # Scalar or tuple
-typing.Union[Scalar, tuple]
+ typing.Union[Scalar, tuple]
 
 >>> Union[tuple(scalar_types) + (tuple, list)]  # Scalar or tuple or list
-typing.Union[Scalar, tuple, list]
+ typing.Union[Scalar, tuple, list]
 ```
+
+% skip: end
 
 If we don't include all of `scalar_types`, we won't see `Scalar`, as desired:
 

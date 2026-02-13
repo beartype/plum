@@ -1,18 +1,28 @@
+import sys
 from typing import Union
 
 import pytest
 
-from plum import activate_union_aliases, deactivate_union_aliases, set_union_alias
+import plum
+from plum import set_union_alias
 from plum._alias import _ALIASED_UNIONS
+
+# These tests are for Python <= 3.13 only.
+pytestmark = [
+    pytest.mark.skipif(
+        sys.version_info >= (3, 14),
+        reason="Union aliasing tests for Python <= 3.13",
+    ),
+]
 
 
 @pytest.fixture()
 def union_aliases():
     """Activate union aliases during the test and remove all aliases after the test
     finishes."""
-    activate_union_aliases()
+    plum.activate_union_aliases()
     yield
-    deactivate_union_aliases()
+    plum.deactivate_union_aliases()
     _ALIASED_UNIONS.clear()
 
 
