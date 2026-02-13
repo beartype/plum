@@ -145,7 +145,8 @@ You can deactivate union aliases with `deactivate_union_aliases`:
 >>> import warnings
 >>> from plum import deactivate_union_aliases
 
->>> with warnings.catch_warnings(action="ignore"):
+>>> with warnings.catch_warnings():
+...     warnings.simplefilter("ignore")
 ...     deactivate_union_aliases()
 
 % skip: next "Result depends on NumPy version."

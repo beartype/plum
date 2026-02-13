@@ -34,17 +34,18 @@ __all__ = (
 
 import sys
 from functools import wraps
-from typing import TypeVar, Union, _type_repr, get_args
-from typing_extensions import deprecated
+from typing import Any, TypeVar, Union, _type_repr, get_args
+from typing_extensions import TypeAliasType, deprecated
 
 UnionT = TypeVar("UnionT")
 
-_ALIASED_UNIONS: list = []
+_union_type = type(Union[int, float])  # noqa: UP007
 
-if sys.version_info < (3, 14):
-    _union_type = type(Union[int, float])  # noqa: UP007
+if sys.version_info < (3, 14):  # pragma: specific no cover 3.14
     _original_repr = _union_type.__repr__
     _original_str = _union_type.__str__
+
+    _ALIASED_UNIONS: dict[tuple[Any, ...], str] = {}
 
     @wraps(_original_repr)
     def _new_repr(self: object) -> str:
@@ -60,7 +61,7 @@ if sys.version_info < (3, 14):
         found_unions = []
         found_positions = []
         found_aliases = []
-        for union, alias in reversed(_ALIASED_UNIONS):
+        for union, alias in reversed(_ALIASED_UNIONS.items()):
             union_set = set(union)
             if union_set <= args_set:
                 found = False
@@ -77,40 +78,30 @@ if sys.version_info < (3, 14):
                         "Could not identify union. This should never happen."
                     )
 
-        # Delete any unions that are contained in strictly bigger unions. We check for
-        # strictly inequality because any union includes itself.
+        # Delete any unions that are contained in strictly bigger unions. We
+        # check for strictly inequality because any union includes itself.
         for i in range(len(found_unions) - 1, -1, -1):
-            for union in found_unions:
-                if found_unions[i] < union:
+            for union_ in found_unions:
+                if found_unions[i] < set(union_):
                     del found_unions[i]
                     del found_positions[i]
                     del found_aliases[i]
                     break
 
         # Create a set with all arguments of all found unions.
-        found_args = set()
-        for union in found_unions:
-            found_args |= union
+        found_args = set().union(*found_unions) if found_unions else set()
 
-        # Insert the aliases right before the first found argument. When we insert an
-        # element, the positions of following insertions need to be appropriately
-        # incremented.
-        args = list(args)
-        # Sort by insertion position to ensure that all following insertions are
-        # at higher indices. This makes the bookkeeping simple.
-        for delta, (i, alias) in enumerate(
-            sorted(
-                zip(found_positions, found_aliases, strict=False), key=lambda x: x[0]
-            )
-        ):
-            args.insert(i + delta, alias)
+        # Build a mapping from original position to aliases to insert before it.
+        inserts: dict[int, list[str]] = {}
+        for pos, alias in zip(found_positions, found_aliases, strict=False):
+            inserts.setdefault(pos, []).append(alias)
+        # Interleave aliases at the appropriate positions.
+        args = tuple(
+            v for i, arg in enumerate(args) for v in (*inserts.pop(i, []), arg)
+        )
 
         # Filter all elements of unions that are aliased.
-        new_args = ()
-        for arg in args:
-            if arg not in found_args:
-                new_args += (arg,)
-        args = new_args
+        args = tuple(arg for arg in args if arg not in found_args)
 
         # Generate a string representation.
         args_repr = [a if isinstance(a, str) else _type_repr(a) for a in args]
@@ -140,8 +131,8 @@ if sys.version_info < (3, 14):
     def activate_union_aliases() -> None:
         """When printing `typing.Union`s, replace aliased unions by the aliased names.
         This monkey patches `__repr__` and `__str__` for `typing.Union`."""
-        _union_type.__repr__ = _new_repr
-        _union_type.__str__ = _new_str
+        _union_type.__repr__ = _new_repr  # type: ignore[method-assign]
+        _union_type.__str__ = _new_str  # type: ignore[method-assign]
 
     @deprecated(
         "`deactivate_union_aliases` is deprecated and will be removed in a future version.",  # noqa: E501
@@ -150,13 +141,9 @@ if sys.version_info < (3, 14):
     def deactivate_union_aliases() -> None:
         """Undo what :func:`.alias.activate` did. This restores the original  `__repr__`
         and `__str__` for `typing.Union`."""
-        _union_type.__repr__ = _original_repr
-        _union_type.__str__ = _original_str
+        _union_type.__repr__ = _original_repr  # type: ignore[method-assign]
+        _union_type.__str__ = _original_str  # type: ignore[method-assign]
 
-    @deprecated(
-        "`set_union_alias` is deprecated and will be removed in a future version.",  # noqa: E501
-        stacklevel=2,
-    )
     def set_union_alias(union: UnionT, alias: str) -> UnionT:
         """Change how a `typing.Union` is printed. This does not modify `union`.
 
@@ -168,7 +155,7 @@ if sys.version_info < (3, 14):
             type or type hint: `union`.
         """
         args = get_args(union) if isinstance(union, _union_type) else (union,)
-        for existing_union, existing_alias in _ALIASED_UNIONS:
+        for existing_union, existing_alias in _ALIASED_UNIONS.items():
             if set(existing_union) == set(args) and alias != existing_alias:
                 if isinstance(union, _union_type):
                     union_str = _original_str(union)
@@ -177,11 +164,11 @@ if sys.version_info < (3, 14):
                 raise RuntimeError(
                     f"`{union_str}` already has alias `{existing_alias}`."
                 )
-        _ALIASED_UNIONS.append((args, alias))
+        _ALIASED_UNIONS[args] = alias
         return union
 
-
-else:
+else:  # pragma: specific no cover 3.13 3.12 3.11 3.10
+    _ALIASED_UNIONS: dict[tuple[Any, ...], TypeAliasType] = {}
 
     @deprecated(
         "`activate_union_aliases` is deprecated and will be removed in a future version.",  # noqa: E501
@@ -200,23 +187,60 @@ else:
     def deactivate_union_aliases() -> None:
         """Undo what :func:`.alias.activate` did. This restores the original  `__repr__`
         and `__str__` for `typing.Union`."""
-        if sys.version_info < (3, 14):
-            _union_type.__repr__ = _original_repr
-            _union_type.__str__ = _original_str
 
-    @deprecated(
-        "`set_union_alias` is deprecated and will be removed in a future version.",  # noqa: E501
-        category=RuntimeWarning,
-        stacklevel=2,
-    )
-    def set_union_alias(union: UnionT, alias: str) -> UnionT:
-        """Change how a `typing.Union` is printed. This does not modify `union`.
+    def set_union_alias(union: UnionT, /, alias: str) -> UnionT:
+        """Register a union alias for use in plum's dispatch system.
+
+        When used with plum's dispatch system, the union will be automatically
+        transformed into a `TypeAliasType` during signature extraction, allowing
+        dispatch to key off the alias name instead of the union structure.
 
         Args:
-            union (type or type hint): A union.
-            alias (str): How to print `union`.
+            union (type or type hint): A union type or a single type.
+            alias (str): Alias name for the union.
 
-        Returns:
-            type or type hint: `union`.
         """
+        # Handle both union types and single types, matching < 3.14 behaviour.
+        args = get_args(union) if isinstance(union, _union_type) else (union,)
+
+        # Check for conflicting aliases
+        for existing_union, existing_alias in _ALIASED_UNIONS.items():
+            if set(existing_union) == set(args) and alias != repr(existing_alias):
+                union_str = repr(union)
+                raise RuntimeError(
+                    f"`{union_str}` already has alias `{existing_alias!r}`."
+                )
+
+        new_alias = TypeAliasType(alias, union, type_params=())  # type: ignore[misc]
+
+        _ALIASED_UNIONS[args] = new_alias
+
         return union
+
+
+def _transform_union_alias(x: object, /) -> object:
+    """Transform a Union type hint to a TypeAliasType if it's registered in the alias
+    registry. This is used by plum's dispatch machinery to use aliased names for unions.
+
+    Args:
+        x (type or type hint): Type hint, potentially a Union.
+
+    Returns:
+        type or type hint: If `x` is a Union registered in `_ALIASED_UNIONS`, returns
+            the TypeAliasType. Otherwise returns `x` unchanged.
+    """
+    # TypeAliasType instances are already transformed, return as-is
+    if isinstance(x, TypeAliasType):
+        return x
+
+    # Get the union args to check if it's registered
+    args = get_args(x) if isinstance(x, _union_type) else None
+    if args:
+        args_set = set(args)
+        # Look for a matching alias in the registry
+        for union_args, type_alias in _ALIASED_UNIONS.items():
+            if set(union_args) == args_set:
+                return type_alias
+
+    # Not a union or not aliased, return as-is
+    return x
