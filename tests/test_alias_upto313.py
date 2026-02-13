@@ -71,7 +71,6 @@ def test_optional(union_aliases):
 
 def test_double_registration(union_aliases):
     # We can register with the same alias, but not with a different alias.
-
     set_union_alias(Union[int, str], alias="IntStr")  # noqa: UP007
     set_union_alias(int | str, alias="IntStr")  # This is OK.
     with pytest.raises(RuntimeError, match=r"already has alias"):

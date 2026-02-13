@@ -142,9 +142,11 @@ typing.Union[numpy.int8, numpy.int16, numpy.int32, numpy.longlong, numpy.int64, 
 You can deactivate union aliases with `deactivate_union_aliases`:
 
 ```python
+>>> import warnings
 >>> from plum import deactivate_union_aliases
 
->>> deactivate_union_aliases()
+>>> with warnings.catch_warnings(action="ignore"):
+...     deactivate_union_aliases()
 
 % skip: next "Result depends on NumPy version."
 >>> Scalar
