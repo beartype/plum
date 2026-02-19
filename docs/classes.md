@@ -58,7 +58,7 @@ class MyClass:
 NotFoundLookupError: For function `name` of `__main__.MyClass`, `(<__main__.MyClass object at 0x7f8cb8813eb0>, 1)` could not be resolved.
 ```
 
-For example, when using `@staticmethod`, `@dispatch` must come before `@staticmethod` in the source code (i.e., `@dispatch` wraps the function first):
+For example, when using `@staticmethod`, `@dispatch` should be the inner decorator (i.e., `@dispatch` wraps the function first):
 
 ```python
 from plum import dispatch
