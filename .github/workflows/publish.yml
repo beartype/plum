@@ -67,9 +67,8 @@ jobs:
             - name: Merge matrices
               id: set-matrix
               run: |
-                  jq -sc 'add' /tmp/*_builds.json > /tmp/matrix.json
-                  MATRIX=$(cat /tmp/matrix.json)
-                  echo "include=$MATRIX" >> "$GITHUB_OUTPUT"
+                MATRIX=$(jq -sc '.' /tmp/*_builds.json | jq -c '.')
+                echo "include=$MATRIX" >> "$GITHUB_OUTPUT"
 
     # Build mypyc-compiled wheels using cibuildwheel
     mypyc-wheels:
