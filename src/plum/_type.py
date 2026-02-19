@@ -92,14 +92,18 @@ class ModuleType(ResolvableType):
             like a package version. This callable will be run whenever `module` has been
             imported. Only if the callable returns `True`, `name` will be imported
             from `module`.
+        faithful (bool, optional): If set, set the dunder `__faithful__` of the type to
+            this value upon retrieval.
     """
 
     def __init__(
         self,
         module: str,
         name: str,
+        *,
         allow_fail: bool = False,
         condition: Callable[[], bool] | None = None,
+        faithful: bool | None = None,
     ) -> None:
         if module in {"__builtin__", "__builtins__"}:
             module = "builtins"
@@ -108,9 +112,16 @@ class ModuleType(ResolvableType):
         self._module = module
         self._allow_fail = allow_fail
         self._condition = condition
+        self._faithful = faithful
 
     def __new__(cls: type[T], module: str, name: str, **kwargs: object) -> T:
         return ResolvableType.__new__(cls, f"ModuleType[{module}.{name}]")
+
+    def deliver(self: T, delivered_type: type, /) -> T:
+        return_value = super().deliver(delivered_type)
+        if self._faithful is not None:
+            delivered_type.__faithful__ = self._faithful
+        return return_value
 
     def retrieve(self) -> bool:
         """Attempt to retrieve the type from the reference module.
