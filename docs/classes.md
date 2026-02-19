@@ -29,7 +29,7 @@ class Real:
 ## Decorators
 
 You can use `@dispatch` with other decorators without any problem.
-When combining `@dispatch` with other decorators, `@dispatch` must always be the **inner** decorator (i.e., closest to the function definition):
+When combining `@dispatch` with other decorators, `@dispatch` should generally be the **inner** decorator (i.e., closest to the function definition):
 
 ```python
 from plum import dispatch
