@@ -122,6 +122,7 @@ skip = [
 
 test-command = 'pytest {project}/tests -k "not incompatible_with_mypyc" --ignore={project}/tests/advanced'
 test-requires = [
+    "ipython>=8.18.1",
     "numpy>=2.0.2",
     "pytest>=8.4.2",
     "sybil[pytest]>=9.2.0",
