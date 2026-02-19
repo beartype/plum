@@ -112,7 +112,7 @@ def test_repr_simple():
     assert repr(m).startswith(result)
     # Also render the fully mismatched version. When rendered to text, that should
     # give the same.
-    assert rich_render(m.repr_mismatch({0}, False)).startswith(result)
+    assert rich_render(m.repr_mismatch(frozenset({0}), False)).startswith(result)
 
 
 def test_repr_complex():
@@ -135,7 +135,7 @@ def test_repr_complex():
     assert repr(m).startswith(result)
     # Also render the fully mismatched version. When rendered to text, that should
     # give the same.
-    assert rich_render(m.repr_mismatch({0}, False)).startswith(result)
+    assert rich_render(m.repr_mismatch(frozenset({0}), False)).startswith(result)
 
 
 def test_methodlist_repr(monkeypatch, dispatch: plum.Dispatcher):

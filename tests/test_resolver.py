@@ -90,6 +90,7 @@ def test_document_sphinx(monkeypatch):
     assert _document(f, "f") == textwrap.dedent(expected_doc).strip()
 
 
+@pytest.mark.incompatible_with_mypyc
 def test_doc(monkeypatch):
     # Let the `pydoc` documenter simply return the docstring. This makes testing
     # simpler.
