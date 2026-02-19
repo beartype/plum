@@ -709,13 +709,13 @@ document.write(`
 
             <span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">Method</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
                 <span class="c1"># `target` are concrete arguments.</span>
-                <span class="k">return</span> <span class="n">m</span><span class="o">.</span><span class="n">signature</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+                <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">signature</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">target</span><span class="p">))</span>
 
         <span class="k">else</span><span class="p">:</span>
 
             <span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">Method</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
                 <span class="c1"># `target` is a signature that must be encompassed.</span>
-                <span class="k">return</span> <span class="n">target</span> <span class="o">&lt;=</span> <span class="n">m</span><span class="o">.</span><span class="n">signature</span>
+                <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">target</span> <span class="o">&lt;=</span> <span class="n">m</span><span class="o">.</span><span class="n">signature</span><span class="p">)</span>
 
         <span class="n">candidates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Method</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="p">[</span><span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">methods</span> <span class="k">if</span> <span class="n">check</span><span class="p">(</span><span class="n">m</span><span class="p">)]:</span>
