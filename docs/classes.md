@@ -28,7 +28,8 @@ class Real:
 
 ## Decorators
 
-You can use `@dispatch` with other decorators without any problem:
+You can use `@dispatch` with other decorators without any problem.
+When combining `@dispatch` with other decorators, `@dispatch` must always be the **inner** decorator (i.e., closest to the function definition):
 
 ```python
 from plum import dispatch
@@ -55,6 +56,32 @@ class MyClass:
 
 >>> a.name = 1    # Not OK  # doctest:+SKIP
 NotFoundLookupError: For function `name` of `__main__.MyClass`, `(<__main__.MyClass object at 0x7f8cb8813eb0>, 1)` could not be resolved.
+```
+
+For example, when using `@staticmethod`, `@dispatch` must come before `@staticmethod` in the source code (i.e., `@dispatch` wraps the function first):
+
+```python
+from plum import dispatch
+
+
+class MyClass:
+    @staticmethod
+    @dispatch
+    def my_func(a: int, b: int) -> int:
+        return a + b
+
+    @staticmethod
+    @dispatch
+    def my_func(a: float, b: float) -> float:
+        return a + b
+```
+
+```python
+>>> MyClass.my_func(1, 2)
+3
+
+>>> MyClass.my_func(1.0, 2.0)
+3.0
 ```
 
 
