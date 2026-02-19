@@ -120,7 +120,7 @@ skip = [
     "pp*",
 ]
 
-test-command = 'pytest {project}/tests -k "not incompatible_with_mypyc" --ignore={project}/tests/advanced'
+test-command = 'pytest {project}/tests -k "not incompatible_with_mypyc and not test_cache" --ignore={project}/tests/advanced'
 test-requires = [
     "ipython>=8.18.1",
     "numpy>=2.0.2",

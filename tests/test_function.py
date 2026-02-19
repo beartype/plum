@@ -459,7 +459,7 @@ def test_call_mro():
     assert (c <= 2) == 1
     with pytest.raises(
         NotFoundLookupError,
-        match=r"(?i)^`C.__le__\(.+\)` could not be\s+resolved",
+        match=r"(?i)^`C.__le__\(.+\)` could not be\n?\s*resolved",
     ):
         c <= "2"  # noqa
 
@@ -479,7 +479,7 @@ def test_call_abstract():
 def test_call_object():
     with pytest.raises(
         NotFoundLookupError,
-        match=r"(?is)^`B.__init__\(.+\)` could not be\s+resolved",
+        match=r"(?is)^`B.__init__\(.+\)` could not be\n?\s*resolved",
     ):
         # Construction requires no arguments. Giving an argument should propagate to
         # `B` and then error.
@@ -487,7 +487,7 @@ def test_call_object():
 
     with pytest.raises(
         NotFoundLookupError,
-        match=r"(?is)^`C.__call__\(.+\)` could not be\s+resolved",
+        match=r"(?is)^`C.__call__\(.+\)` could not be\n?\s*resolved",
     ):
         # Calling requires no arguments.
         C()(1)

@@ -1,3 +1,4 @@
+import platform
 import textwrap
 from copy import copy
 
@@ -93,6 +94,14 @@ def test_equality():
     assert m != 1
 
 
+def _hex(obj: object) -> str:
+    if platform.system() == "Windows":
+        # Assume 64-bit Windows.
+        return f"0x{id(obj):016X}"
+    else:
+        return str(hex(id(obj)))
+
+
 def test_repr_simple():
     def f(x, *args) -> float:
         return x
@@ -106,7 +115,7 @@ def test_repr_simple():
 
     result = (
         f"different_name(x: int, *args: object) -> complex\n"
-        f"    <function test_repr_simple.<locals>.f at {hex(id(f))}> @"
+        f"    <function test_repr_simple.<locals>.f at {_hex(f)}> @"
     )
 
     assert repr(m).startswith(result)
@@ -129,7 +138,7 @@ def test_repr_complex():
     result = (
         f"different_name(x: int, *, option, **kw_args) -> complex\n"
         f"    precedence=1\n"
-        f"    <function test_repr_complex.<locals>.f at {hex(id(f))}> @"
+        f"    <function test_repr_complex.<locals>.f at {_hex(f)}> @"
     )
 
     assert repr(m).startswith(result)
@@ -154,9 +163,9 @@ def test_methodlist_repr(monkeypatch, dispatch: plum.Dispatcher):
         f"""
         List of 2 method(s):
             [0] f(x: int)
-                <function test_methodlist_repr.<locals>.f at {hex(id(imp1))}> @
+                <function test_methodlist_repr.<locals>.f at {_hex(imp1)}> @
             [1] f(x: float)
-                <function test_methodlist_repr.<locals>.f at {hex(id(imp2))}> @
+                <function test_methodlist_repr.<locals>.f at {_hex(imp2)}> @
         """
     )
     lines = repr(f.methods).strip().splitlines()
