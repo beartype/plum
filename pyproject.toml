@@ -121,7 +121,11 @@ skip = [
 ]
 
 test-command = 'pytest {project}/tests -k "not incompatible_with_mypyc" --ignore={project}/tests/advanced'
-test-requires = ["pytest>=8.4.2", "sybil[pytest]>=9.2.0"]
+test-requires = [
+    "numpy>=2.0.2",
+    "pytest>=8.4.2",
+    "sybil[pytest]>=9.2.0",
+]
 # Skip testing arm64 builds on Intel Macs
 test-skip = ["*-macosx_arm64", "*-macosx_universal2:arm64"]
 
