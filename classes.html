@@ -434,7 +434,8 @@ document.write(`
 </div>
 <section id="decorators">
 <h2>Decorators<a class="headerlink" href="#decorators" title="Link to this heading">#</a></h2>
-<p>You can use <code class="docutils literal notranslate"><span class="pre">&#64;dispatch</span></code> with other decorators without any problem:</p>
+<p>You can use <code class="docutils literal notranslate"><span class="pre">&#64;dispatch</span></code> together with other decorators, provided the decorators are ordered correctly.
+When combining <code class="docutils literal notranslate"><span class="pre">&#64;dispatch</span></code> with other decorators (for example, <code class="docutils literal notranslate"><span class="pre">&#64;staticmethod</span></code>, <code class="docutils literal notranslate"><span class="pre">&#64;classmethod</span></code>, or <code class="docutils literal notranslate"><span class="pre">&#64;property</span></code>), <code class="docutils literal notranslate"><span class="pre">&#64;dispatch</span></code> should generally be the <strong>inner</strong> decorator (i.e., closest to the function definition) for dispatch to work correctly:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">dispatch</span>
 
 
@@ -458,6 +459,29 @@ document.write(`
 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">a</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="mi">1</span>    <span class="c1"># Not OK  </span>
 <span class="go">NotFoundLookupError: For function `name` of `__main__.MyClass`, `(&lt;__main__.MyClass object at 0x7f8cb8813eb0&gt;, 1)` could not be resolved.</span>
+</pre></div>
+</div>
+<p>For example, when using <code class="docutils literal notranslate"><span class="pre">&#64;staticmethod</span></code>, <code class="docutils literal notranslate"><span class="pre">&#64;dispatch</span></code> should be the inner decorator (i.e., <code class="docutils literal notranslate"><span class="pre">&#64;dispatch</span></code> wraps the function first):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">dispatch</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyClass</span><span class="p">:</span>
+    <span class="nd">@staticmethod</span>
+    <span class="nd">@dispatch</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">my_func</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="nd">@dispatch</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">my_func</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">MyClass</span><span class="o">.</span><span class="n">my_func</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="go">3</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">MyClass</span><span class="o">.</span><span class="n">my_func</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>
+<span class="go">3.0</span>
 </pre></div>
 </div>
 </section>
