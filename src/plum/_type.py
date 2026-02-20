@@ -79,6 +79,9 @@ class PromisedType(ResolvableType):
         return f"<class 'plum.PromisedType[{self._name}]'>"
 
 
+TModuleType = TypeVar("TModuleType", bound="ModuleType")
+
+
 @final
 class ModuleType(ResolvableType):
     """A type from another module.
@@ -114,21 +117,28 @@ class ModuleType(ResolvableType):
         self._condition = condition
         self._faithful = faithful
 
-    def __new__(cls: type[T], module: str, name: str, **kwargs: object) -> T:
+    def __new__(
+        cls: type[TModuleType], module: str, name: str, **kwargs: object
+    ) -> TModuleType:
         return ResolvableType.__new__(cls, f"ModuleType[{module}.{name}]")
 
-    def deliver(self: T, delivered_type: type, /) -> T:
+    def deliver(self: TModuleType, delivered_type: type, /) -> TModuleType:
         return_value = super().deliver(delivered_type)
         if self._faithful is not None:
             # Only set `delivered_type.__faithful__` if it is not already set to a
             # different value.
-            has_dunder = _has_dunder_faithful(delivered_type)
-            if has_dunder and delivered_type.__faithful__ != self._faithful:
+            if (
+                # Use `hasattr` instead of `_has_dunder_faithful` to `mypy` remains
+                # aware that `delivered_type` is a `type`, so won't complain about
+                # `delivered_type.__name__`.
+                hasattr(delivered_type, "__faithful__")
+                and delivered_type.__faithful__ != self._faithful
+            ):
                 raise TypeError(
                     f"`{delivered_type.__name__}.__faithful__` is already set and "
                     f"would be changed by `{self.__name__}` to a different value."
                 )
-            delivered_type.__faithful__ = self._faithful
+            delivered_type.__faithful__ = self._faithful  # type: ignore[attr-defined]
         return return_value
 
     def retrieve(self) -> bool:
