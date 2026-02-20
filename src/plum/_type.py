@@ -129,7 +129,7 @@ class ModuleType(ResolvableType):
             # different value.
             if (
                 # Use `hasattr` instead of `_has_dunder_faithful` so `mypy` remains
-                # aware that `delivered_type` is a `type`, so won't complain about
+                # aware that `delivered_type` is a `type` and won't complain about
                 # `delivered_type.__name__`.
                 hasattr(delivered_type, "__faithful__")
                 and delivered_type.__faithful__ != self._faithful
