@@ -396,6 +396,7 @@ document.write(`
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-plum._type">Types</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._type.ModuleType"><code class="docutils literal notranslate"><span class="pre">ModuleType</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._type.ModuleType.deliver"><code class="docutils literal notranslate"><span class="pre">ModuleType.deliver()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._type.ModuleType.retrieve"><code class="docutils literal notranslate"><span class="pre">ModuleType.retrieve()</span></code></a></li>
 </ul>
 </li>
@@ -541,9 +542,28 @@ do not raise an <cite>AttributeError</cite>.</p></li>
 like a package version. This callable will be run whenever <cite>module</cite> has been
 imported. Only if the callable returns <cite>True</cite>, <cite>name</cite> will be imported
 from <cite>module</cite>.</p></li>
+<li><p><strong>faithful</strong> (<em>bool</em><em>, </em><em>optional</em>) – If set, set the dunder <cite>__faithful__</cite> of the type to
+this value upon retrieval.</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="plum._type.ModuleType.deliver">
+<span class="sig-name descname"><span class="pre">deliver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">delivered_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">TModuleType</span></span></span><a class="reference internal" href="_modules/plum/_type.html#ModuleType.deliver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum._type.ModuleType.deliver" title="Link to this definition">#</a></dt>
+<dd><p>Deliver the type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>delivered_type</strong> (<em>type</em>) – Type to deliver.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><cite>self</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ResolvableType</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="plum._type.ModuleType.retrieve">
 <span class="sig-name descname"><span class="pre">retrieve</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/plum/_type.html#ModuleType.retrieve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum._type.ModuleType.retrieve" title="Link to this definition">#</a></dt>
@@ -1828,6 +1848,7 @@ scope of the function.</p>
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-plum._type">Types</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._type.ModuleType"><code class="docutils literal notranslate"><span class="pre">ModuleType</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._type.ModuleType.deliver"><code class="docutils literal notranslate"><span class="pre">ModuleType.deliver()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._type.ModuleType.retrieve"><code class="docutils literal notranslate"><span class="pre">ModuleType.retrieve()</span></code></a></li>
 </ul>
 </li>

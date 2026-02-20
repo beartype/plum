@@ -433,6 +433,9 @@ document.write(`
 
 
 
+<span class="n">TModuleType</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;TModuleType&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="s2">&quot;ModuleType&quot;</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="ModuleType">
 <a class="viewcode-back" href="../../api.html#plum._type.ModuleType">[docs]</a>
 <span class="nd">@final</span>
@@ -448,14 +451,18 @@ document.write(`
 <span class="sd">            like a package version. This callable will be run whenever `module` has been</span>
 <span class="sd">            imported. Only if the callable returns `True`, `name` will be imported</span>
 <span class="sd">            from `module`.</span>
+<span class="sd">        faithful (bool, optional): If set, set the dunder `__faithful__` of the type to</span>
+<span class="sd">            this value upon retrieval.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">module</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
         <span class="n">allow_fail</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">condition</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">faithful</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">module</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;__builtin__&quot;</span><span class="p">,</span> <span class="s2">&quot;__builtins__&quot;</span><span class="p">}:</span>
             <span class="n">module</span> <span class="o">=</span> <span class="s2">&quot;builtins&quot;</span>
@@ -464,9 +471,34 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">_module</span> <span class="o">=</span> <span class="n">module</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_allow_fail</span> <span class="o">=</span> <span class="n">allow_fail</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_condition</span> <span class="o">=</span> <span class="n">condition</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_faithful</span> <span class="o">=</span> <span class="n">faithful</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="n">module</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__new__</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">TModuleType</span><span class="p">],</span> <span class="n">module</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="nb">object</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TModuleType</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">ResolvableType</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;ModuleType[</span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ModuleType.deliver">
+<a class="viewcode-back" href="../../api.html#plum._type.ModuleType.deliver">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">deliver</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">TModuleType</span><span class="p">,</span> <span class="n">delivered_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TModuleType</span><span class="p">:</span>
+        <span class="n">return_value</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">deliver</span><span class="p">(</span><span class="n">delivered_type</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_faithful</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Only set `delivered_type.__faithful__` if it is not already set to a</span>
+            <span class="c1"># different value.</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="c1"># Use `hasattr` instead of `_has_dunder_faithful` so `mypy` remains</span>
+                <span class="c1"># aware that `delivered_type` is a `type` and won&#39;t complain about</span>
+                <span class="c1"># `delivered_type.__name__`.</span>
+                <span class="nb">hasattr</span><span class="p">(</span><span class="n">delivered_type</span><span class="p">,</span> <span class="s2">&quot;__faithful__&quot;</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="n">delivered_type</span><span class="o">.</span><span class="n">__faithful__</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_faithful</span>
+            <span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">delivered_type</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.__faithful__` is already set and &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;would be changed by `</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">` to a different value.&quot;</span>
+                <span class="p">)</span>
+            <span class="n">delivered_type</span><span class="o">.</span><span class="n">__faithful__</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_faithful</span>  <span class="c1"># type: ignore[attr-defined]</span>
+        <span class="k">return</span> <span class="n">return_value</span></div>
+
 
 <div class="viewcode-block" id="ModuleType.retrieve">
 <a class="viewcode-back" href="../../api.html#plum._type.ModuleType.retrieve">[docs]</a>

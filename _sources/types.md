@@ -233,23 +233,39 @@ You can specify a condition with the keyword argument `condition`.
 Example:
 
 ```python
->>> def jax_version():
-...     import sys
-...     version_string = sys.modules["jax.version"].__version__
-...     return tuple(int(x) for x in version_string.split("."))
+def jax_version():
+    import sys
+    version_string = sys.modules["jax.version"].__version__
+    return tuple(int(x) for x in version_string.split("."))
 
->>> ArrayImpl = Union[
-...     ModuleType(
-...         "jaxlib.xla_extension",
-...         "ArrayImpl",
-...         condition=lambda: jax_version() < (0, 6, 0),
-...     ),
-...     ModuleType(
-...         "jaxlib._jax",
-...         "ArrayImpl",
-...         condition=lambda: jax_version() >= (0, 6, 0),
-...     ),
-... ]
+
+ArrayImpl = Union[
+    ModuleType(
+        "jaxlib.xla_extension",
+        "ArrayImpl",
+        condition=lambda: jax_version() < (0, 6, 0),
+    ),
+    ModuleType(
+        "jaxlib._jax",
+        "ArrayImpl",
+        condition=lambda: jax_version() >= (0, 6, 0),
+    ),
+]
+```
+
+You might also run into a scenario where you want to express that an import is faithful.
+You can specify this with the keyword argument `faithful`.
+This sets the dunder `__faithful__` on the imported type.
+
+Example:
+
+```python
+JaxTensor = ModuleType(
+    "jaxlib._jax",
+    "ArrayImpl",
+    condition=lambda: _jax_version() >= (0, 6, 0),
+    faithful=True,
+)
 ```
 
 % skip: end
