@@ -120,6 +120,14 @@ class ModuleType(ResolvableType):
     def deliver(self: T, delivered_type: type, /) -> T:
         return_value = super().deliver(delivered_type)
         if self._faithful is not None:
+            # Only set `delivered_type.__faithful__` if it is not already set to a
+            # different value.
+            has_dunder = _has_dunder_faithful(delivered_type)
+            if has_dunder and delivered_type.__faithful__ != self._faithful:
+                raise TypeError(
+                    f"`{delivered_type.__name__}.__faithful__` is already set and "
+                    f"would be changed by `{self.__name__}` to a different value."
+                )
             delivered_type.__faithful__ = self._faithful
         return return_value
 

@@ -81,6 +81,47 @@ def test_moduletype_condition():
     assert t.retrieve()
 
 
+def test_moduletype_faithful(monkeypatch):
+    class Module:
+        class A:
+            __faithful__ = False
+
+        class B:
+            pass
+
+        class C:
+            pass
+
+    module = Module()
+    monkeypatch.setitem(sys.modules, "mymodule", module)
+
+    # Test retrieving a type with `__faithful__` already set.
+
+    t = ModuleType("mymodule", "A", faithful=False)
+    assert t.retrieve()
+    assert t.retrieve()  # Doing it twice is OK.
+    assert t.resolve() is module.A
+    assert not t.resolve().__faithful__
+
+    t = ModuleType("mymodule", "A", faithful=True)
+    with pytest.raises(TypeError, match="`A.__faithful__` is already set"):
+        t.retrieve()
+
+    # Test retrieving a type and setting `__faithful__` to `False`.
+    t = ModuleType("mymodule", "B", faithful=False)
+    assert t.retrieve()
+    assert t.retrieve()  # Doing it twice is OK.
+    assert t.resolve() is module.B
+    assert not t.resolve().__faithful__
+
+    # Test retrieving a type and setting `__faithful__` to `True`.
+    t = ModuleType("mymodule", "C", faithful=True)
+    assert t.retrieve()
+    assert t.retrieve()  # Doing it twice is OK.
+    assert t.resolve() is module.C
+    assert t.resolve().__faithful__
+
+
 def test_is_hint():
     assert not _is_hint(int)
     assert _is_hint(typing.Union[int, float])  # noqa: UP007
