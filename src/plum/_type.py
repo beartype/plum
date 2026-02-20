@@ -79,6 +79,9 @@ class PromisedType(ResolvableType):
         return f"<class 'plum.PromisedType[{self._name}]'>"
 
 
+TModuleType = TypeVar("TModuleType", bound="ModuleType")
+
+
 @final
 class ModuleType(ResolvableType):
     """A type from another module.
@@ -92,14 +95,18 @@ class ModuleType(ResolvableType):
             like a package version. This callable will be run whenever `module` has been
             imported. Only if the callable returns `True`, `name` will be imported
             from `module`.
+        faithful (bool, optional): If set, set the dunder `__faithful__` of the type to
+            this value upon retrieval.
     """
 
     def __init__(
         self,
         module: str,
         name: str,
+        *,
         allow_fail: bool = False,
         condition: Callable[[], bool] | None = None,
+        faithful: bool | None = None,
     ) -> None:
         if module in {"__builtin__", "__builtins__"}:
             module = "builtins"
@@ -108,9 +115,31 @@ class ModuleType(ResolvableType):
         self._module = module
         self._allow_fail = allow_fail
         self._condition = condition
+        self._faithful = faithful
 
-    def __new__(cls: type[T], module: str, name: str, **kwargs: object) -> T:
+    def __new__(
+        cls: type[TModuleType], module: str, name: str, **kwargs: object
+    ) -> TModuleType:
         return ResolvableType.__new__(cls, f"ModuleType[{module}.{name}]")
+
+    def deliver(self: TModuleType, delivered_type: type, /) -> TModuleType:
+        return_value = super().deliver(delivered_type)
+        if self._faithful is not None:
+            # Only set `delivered_type.__faithful__` if it is not already set to a
+            # different value.
+            if (
+                # Use `hasattr` instead of `_has_dunder_faithful` so `mypy` remains
+                # aware that `delivered_type` is a `type` and won't complain about
+                # `delivered_type.__name__`.
+                hasattr(delivered_type, "__faithful__")
+                and delivered_type.__faithful__ != self._faithful
+            ):
+                raise TypeError(
+                    f"`{delivered_type.__name__}.__faithful__` is already set and "
+                    f"would be changed by `{self.__name__}` to a different value."
+                )
+            delivered_type.__faithful__ = self._faithful  # type: ignore[attr-defined]
+        return return_value
 
     def retrieve(self) -> bool:
         """Attempt to retrieve the type from the reference module.
