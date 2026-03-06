@@ -16,16 +16,18 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def test_activate_union_aliases_deprecated() -> None:
-    """Test that activate_union_aliases raises a deprecation warning."""
-    with pytest.warns(RuntimeWarning, match="`activate_union_aliases` is deprecated"):
-        plum.activate_union_aliases()
+def test_activate_union_aliases() -> None:
+    """Test that activate_union_aliases sets _ALIASES_ARE_ACTIVE to True."""
+    plum._alias._ALIASES_ARE_ACTIVE = False
+    plum.activate_union_aliases()
+    assert plum._alias._ALIASES_ARE_ACTIVE is True
 
 
-def test_deactivate_union_aliases_deprecated() -> None:
-    """Test that deactivate_union_aliases raises a deprecation warning."""
-    with pytest.warns(RuntimeWarning, match="`deactivate_union_aliases` is deprecated"):
-        plum.deactivate_union_aliases()
+def test_deactivate_union_aliases() -> None:
+    """Test that deactivate_union_aliases sets _ALIASES_ARE_ACTIVE to False."""
+    plum._alias._ALIASES_ARE_ACTIVE = True
+    plum.deactivate_union_aliases()
+    assert plum._alias._ALIASES_ARE_ACTIVE is False
 
 
 @pytest.mark.parametrize("union", [int | str, Union[int, str]])  # noqa: UP007
@@ -60,7 +62,7 @@ def test_repr_short_uses_alias(union) -> None:
 def test_union_alias(display):
     plum.set_union_alias(int | str, alias="IntStr")
 
-    # Check that printing is normal before registering any aliases.
+    # Check that the alias is used after registration.
     assert display(Union[int, str]) == "IntStr"  # noqa: UP007
 
     # Register a simple alias and check that it prints correctly.
@@ -77,7 +79,7 @@ def test_union_alias(display):
 def test_uniontype_alias(display):
     plum.set_union_alias(int | str, alias="IntStr")
 
-    # Check that printing is normal before registering any aliases.
+    # Check that the alias is used after registration.
     assert display(int | str) == "IntStr"
 
     # Register a simple alias and check that it prints correctly.

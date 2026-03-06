@@ -35,11 +35,13 @@ __all__ = (
 import sys
 from functools import wraps
 from typing import Any, TypeVar, Union, _type_repr, get_args
-from typing_extensions import TypeAliasType, deprecated
+from typing_extensions import TypeAliasType
 
 UnionT = TypeVar("UnionT")
 
 _union_type = type(Union[int, float])  # noqa: UP007
+
+_ALIASES_ARE_ACTIVE: bool = True
 
 if sys.version_info < (3, 14):  # pragma: specific no cover 3.14
     _original_repr = _union_type.__repr__
@@ -124,25 +126,21 @@ if sys.version_info < (3, 14):  # pragma: specific no cover 3.14
         """
         return _new_repr(self)
 
-    @deprecated(
-        "`activate_union_aliases` is deprecated and will be removed in a future version.",  # noqa: E501
-        stacklevel=2,
-    )
     def activate_union_aliases() -> None:
         """When printing `typing.Union`s, replace aliased unions by the aliased names.
         This monkey patches `__repr__` and `__str__` for `typing.Union`."""
+        global _ALIASES_ARE_ACTIVE
         _union_type.__repr__ = _new_repr  # type: ignore[method-assign]
         _union_type.__str__ = _new_str  # type: ignore[method-assign]
+        _ALIASES_ARE_ACTIVE = True
 
-    @deprecated(
-        "`deactivate_union_aliases` is deprecated and will be removed in a future version.",  # noqa: E501
-        stacklevel=2,
-    )
     def deactivate_union_aliases() -> None:
         """Undo what :func:`.alias.activate` did. This restores the original  `__repr__`
         and `__str__` for `typing.Union`."""
+        global _ALIASES_ARE_ACTIVE
         _union_type.__repr__ = _original_repr  # type: ignore[method-assign]
         _union_type.__str__ = _original_str  # type: ignore[method-assign]
+        _ALIASES_ARE_ACTIVE = False
 
     def set_union_alias(union: UnionT, alias: str) -> UnionT:
         """Change how a `typing.Union` is printed. This does not modify `union`.
@@ -170,23 +168,15 @@ if sys.version_info < (3, 14):  # pragma: specific no cover 3.14
 else:  # pragma: specific no cover 3.13 3.12 3.11 3.10
     _ALIASED_UNIONS: dict[tuple[Any, ...], TypeAliasType] = {}
 
-    @deprecated(
-        "`activate_union_aliases` is deprecated and will be removed in a future version.",  # noqa: E501
-        category=RuntimeWarning,
-        stacklevel=2,
-    )
     def activate_union_aliases() -> None:
-        """When printing `typing.Union`s, replace aliased unions by the aliased names.
-        This monkey patches `__repr__` and `__str__` for `typing.Union`."""
+        """When printing `typing.Union`, replace aliased unions by the aliased names."""
+        global _ALIASES_ARE_ACTIVE
+        _ALIASES_ARE_ACTIVE = True
 
-    @deprecated(
-        "`deactivate_union_aliases` is deprecated and will be removed in a future version.",  # noqa: E501
-        category=RuntimeWarning,
-        stacklevel=2,
-    )
     def deactivate_union_aliases() -> None:
-        """Undo what :func:`.alias.activate` did. This restores the original  `__repr__`
-        and `__str__` for `typing.Union`."""
+        """When printing `typing.Union`s, print as normal."""
+        global _ALIASES_ARE_ACTIVE
+        _ALIASES_ARE_ACTIVE = False
 
     def set_union_alias(union: UnionT, /, alias: str) -> UnionT:
         """Register a union alias for use in plum's dispatch system.
@@ -205,10 +195,10 @@ else:  # pragma: specific no cover 3.13 3.12 3.11 3.10
 
         # Check for conflicting aliases
         for existing_union, existing_alias in _ALIASED_UNIONS.items():
-            if set(existing_union) == set(args) and alias != repr(existing_alias):
+            if set(existing_union) == set(args) and alias != existing_alias.__name__:
                 union_str = repr(union)
                 raise RuntimeError(
-                    f"`{union_str}` already has alias `{existing_alias!r}`."
+                    f"`{union_str}` already has alias `{existing_alias.__name__}`."
                 )
 
         new_alias = TypeAliasType(alias, union, type_params=())  # type: ignore[misc]
@@ -229,6 +219,10 @@ def _transform_union_alias(x: object, /) -> object:
         type or type hint: If `x` is a Union registered in `_ALIASED_UNIONS`, returns
             the TypeAliasType. Otherwise returns `x` unchanged.
     """
+    # Fast path: if aliases are not active, return `x` immediately.
+    if not _ALIASES_ARE_ACTIVE:
+        return x
+
     # TypeAliasType instances are already transformed, return as-is
     if isinstance(x, TypeAliasType):
         return x

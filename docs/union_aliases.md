@@ -118,10 +118,10 @@ typing.Union[Scalar]
 typing.Union[Scalar]
 
 >>> Union[tuple(scalar_types) + (tuple,)]       # Scalar or tuple
- typing.Union[Scalar, tuple]
+typing.Union[Scalar, tuple]
 
 >>> Union[tuple(scalar_types) + (tuple, list)]  # Scalar or tuple or list
- typing.Union[Scalar, tuple, list]
+typing.Union[Scalar, tuple, list]
 ```
 
 % skip: end
