@@ -59,7 +59,7 @@ jobs:
           parallel: true
           file: coverage.lcov
 
-  # Test that mypyc-compiled wheels work
+  # Test that `mypyc`-compiled wheels work.
   test-mypyc:
     name: Test mypyc wheel
     runs-on: ubuntu-latest

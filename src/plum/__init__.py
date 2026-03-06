@@ -109,7 +109,7 @@ from ._util import (
 )
 from ._version import __version__  # noqa: F401  # noqa: F401
 
-# If mypyc compiled, one of the core modules will be a native extension
+# If `mypyc`-compiled, one of the core modules will be a native extension.
 spec = importlib.util.find_spec("plum._bear")
 COMPILED = (
     spec is not None

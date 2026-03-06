@@ -11,13 +11,13 @@ on:
                 default: false
                 type: boolean
 
-# Cancel any in-progress build when a new commit is pushed
+# Cancel any in-progress build when a new commit is pushed.
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: true
 
 jobs:
-    # Build the sdist and pure Python wheel
+    # Build the `sdist` and pure Python wheel.
     sdist-and-wheel:
         name: Build sdist and pure wheel
         runs-on: ubuntu-latest
@@ -46,7 +46,7 @@ jobs:
                   name: wheel-pure
                   path: dist/*.whl
 
-    # Generate the wheel build matrix dynamically
+    # Generate the wheel build matrix dynamically.
     generate-wheels-matrix:
         name: Generate wheels matrix
         runs-on: ubuntu-latest
@@ -70,7 +70,7 @@ jobs:
                 MATRIX=$(jq -sc '.' /tmp/*_builds.json | jq -c '.')
                 echo "include=$MATRIX" >> "$GITHUB_OUTPUT"
 
-    # Build mypyc-compiled wheels using cibuildwheel
+    # Build `mypyc`-compiled wheels using `cibuildwheel`.
     mypyc-wheels:
         name: Build ${{ matrix.only }}
         needs: generate-wheels-matrix
@@ -97,12 +97,12 @@ jobs:
                   name: wheel-${{ matrix.only }}
                   path: wheelhouse/*.whl
 
-    # Publish to PyPI using trusted publishing
+    # Publish to PyPI using trusted publishing.
     publish:
         name: Publish to PyPI
         needs: [sdist-and-wheel, mypyc-wheels]
         runs-on: ubuntu-latest
-        # Only publish on release events or manual trigger with publish=true
+        # Only publish on release events or manual trigger with `publish=true`.
         if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.publish)
         environment:
             name: pypi
