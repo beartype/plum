@@ -65,7 +65,7 @@ def repr_short(x: object, /) -> str:
     """Representation as a string, but in shorter form. This just calls
     :func:`typing._type_repr`.
 
-    If the type is a union registered in plum's alias registry, the alias name
+    If the type is a union registered in Plum's alias registry, the alias name
     is used instead.
 
     Args:
@@ -75,7 +75,7 @@ def repr_short(x: object, /) -> str:
         str: Shorter representation of `x`.
     """
     if isinstance(transformed := _transform_union_alias(x), TypeAliasType):
-        # It's an aliased union — use the alias name
+        # It's an aliased union — use the alias name.
         return str(transformed.__name__)
     # :func:`typing._type_repr` is an internal function, but it should be
     # available in Python versions 3.9 through 3.14.

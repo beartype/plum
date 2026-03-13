@@ -7,13 +7,11 @@ import plum
 from plum import set_union_alias
 from plum._alias import _ALIASED_UNIONS
 
-# These tests are for Python <= 3.13 only.
-pytestmark = [
-    pytest.mark.skipif(
-        sys.version_info >= (3, 14),
-        reason="Union aliasing tests for Python <= 3.13",
-    ),
-]
+# These tests are for Python 3.13 and earlier only.
+pytestmark = pytest.mark.skipif(
+    sys.version_info >= (3, 14),
+    reason="Union aliasing tests for Python 3.13 and earlier.",
+)
 
 
 @pytest.fixture()

@@ -179,15 +179,17 @@ else:  # pragma: specific no cover 3.13 3.12 3.11 3.10
         _ALIASES_ARE_ACTIVE = False
 
     def set_union_alias(union: UnionT, /, alias: str) -> UnionT:
-        """Register a union alias for use in plum's dispatch system.
+        """Register a union alias for use in plum's printing of dispatch signatures.
 
-        When used with plum's dispatch system, the union will be automatically
-        transformed into a `TypeAliasType` during signature extraction, allowing
-        dispatch to key off the alias name instead of the union structure.
+        This does not modify the given `union` in any way. It only controls how
+        the union is printed when it is registered as a union alias.
 
         Args:
             union (type or type hint): A union type or a single type.
             alias (str): Alias name for the union.
+
+        Returns:
+            type or type hint: The given union.
 
         """
         # Handle both union types and single types, matching < 3.14 behaviour.
