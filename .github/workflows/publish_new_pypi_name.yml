@@ -31,8 +31,8 @@ jobs:
 
             - name: Adjust metadata
               run: |
-                sed -i '.backup' 's/plum-dispatch/plum/g' pyproject.toml
-                sed -i '.backup' 's/plum-dispatch/plum/g' uv.lock
+                sed -i.backup 's/plum-dispatch/plum/g' pyproject.toml
+                sed -i.backup 's/plum-dispatch/plum/g' uv.lock
 
             - name: Set up uv
               uses: astral-sh/setup-uv@v5
@@ -65,8 +65,8 @@ jobs:
 
             - name: Adjust metadata
               run: |
-                sed -i '.backup' 's/plum-dispatch/plum/g' pyproject.toml
-                sed -i '.backup' 's/plum-dispatch/plum/g' uv.lock
+                sed -i.backup 's/plum-dispatch/plum/g' pyproject.toml
+                sed -i.backup 's/plum-dispatch/plum/g' uv.lock
 
             - name: Set up uv
               uses: astral-sh/setup-uv@v5
@@ -102,8 +102,8 @@ jobs:
 
             - name: Adjust metadata
               run: |
-                sed -i '.backup' 's/plum-dispatch/plum/g' pyproject.toml
-                sed -i '.backup' 's/plum-dispatch/plum/g' uv.lock
+                sed -i.backup 's/plum-dispatch/plum/g' pyproject.toml
+                sed -i.backup 's/plum-dispatch/plum/g' uv.lock
 
             - name: Build wheels
               uses: pypa/cibuildwheel@v3.4.0
