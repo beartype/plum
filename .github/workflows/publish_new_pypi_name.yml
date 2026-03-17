@@ -44,6 +44,10 @@ jobs:
                       path.write_text(text, encoding="utf-8")
                   PYTHON
 
+            - name: Store release version
+              shell: bash
+              run: echo "RELEASE_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
             - name: Set up uv
               uses: astral-sh/setup-uv@v5
               with:
@@ -51,12 +55,15 @@ jobs:
 
             - name: Build sdist and wheel
               run: uv build
+              env:
+                  SETUPTOOLS_SCM_PRETEND_VERSION: ${{ env.RELEASE_VERSION }}
 
             - name: Upload sdist
               uses: actions/upload-artifact@v4
               with:
                   name: sdist
                   path: dist/*.tar.gz
+
 
             - name: Upload wheel
               uses: actions/upload-artifact@v4
@@ -88,6 +95,10 @@ jobs:
                       path.write_text(text, encoding="utf-8")
                   PYTHON
 
+            - name: Store release version
+              shell: bash
+              run: echo "RELEASE_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
             - name: Set up uv
               uses: astral-sh/setup-uv@v5
 
@@ -99,6 +110,10 @@ jobs:
                   | jq -nRc '{"only": inputs, "os": "macos-14"}' > /tmp/macos_builds.json
                   uvx cibuildwheel==3.4.0 --print-build-identifiers --platform windows \
                   | jq -nRc '{"only": inputs, "os": "windows-latest"}' > /tmp/windows_builds.json
+              env:
+                  CIBW_BUILD_VERBOSITY: 1
+                  SETUPTOOLS_SCM_PRETEND_VERSION: ${{ env.RELEASE_VERSION }}
+                  CIBW_ENVIRONMENT_PASS_LINUX: SETUPTOOLS_SCM_PRETEND_VERSION
 
             - name: Merge matrices
               id: set-matrix
@@ -135,12 +150,18 @@ jobs:
                       path.write_text(text, encoding="utf-8")
                   PYTHON
 
+            - name: Store release version
+              shell: bash
+              run: echo "RELEASE_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
             - name: Build wheels
               uses: pypa/cibuildwheel@v3.4.0
               with:
                   only: ${{ matrix.only }}
               env:
                   CIBW_BUILD_VERBOSITY: 1
+                  SETUPTOOLS_SCM_PRETEND_VERSION: ${{ env.RELEASE_VERSION }}
+                  CIBW_ENVIRONMENT_PASS_LINUX: SETUPTOOLS_SCM_PRETEND_VERSION
 
             - name: Upload wheels
               uses: actions/upload-artifact@v4
@@ -169,6 +190,9 @@ jobs:
 
             - name: List artifacts
               run: ls -la dist/
+
+            - name: Fail
+              run: fail
 
             - name: Publish to PyPI
               uses: pypa/gh-action-pypi-publish@release/v1
