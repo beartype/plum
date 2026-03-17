@@ -31,13 +31,17 @@ jobs:
 
             - name: Adjust metadata
               run: |
-                if [[ "$RUNNER_OS" == "macOS" ]]; then
-                    sed -i '' 's/plum-dispatch/plum/g' pyproject.toml
-                    sed -i '' 's/plum-dispatch/plum/g' uv.lock
-                else
-                    sed -i 's/plum-dispatch/plum/g' pyproject.toml
-                    sed -i 's/plum-dispatch/plum/g' uv.lock
-                fi
+                  python - <<'PYTHON'
+                  from pathlib import Path
+
+                  for path in [
+                    Path("pyproject.toml"),
+                    Path("uv.lock"),
+                  ]:
+                      text = path.read_text(encoding="utf-8")
+                      text = text.replace("plum-dispatch", "plum")
+                      path.write_text(text, encoding="utf-8")
+                  PYTHON
 
             - name: Set up uv
               uses: astral-sh/setup-uv@v5
@@ -70,13 +74,17 @@ jobs:
 
             - name: Adjust metadata
               run: |
-                if [[ "$RUNNER_OS" == "macOS" ]]; then
-                    sed -i '' 's/plum-dispatch/plum/g' pyproject.toml
-                    sed -i '' 's/plum-dispatch/plum/g' uv.lock
-                else
-                    sed -i 's/plum-dispatch/plum/g' pyproject.toml
-                    sed -i 's/plum-dispatch/plum/g' uv.lock
-                fi
+                  python - <<'PYTHON'
+                  from pathlib import Path
+
+                  for path in [
+                    Path("pyproject.toml"),
+                    Path("uv.lock"),
+                  ]:
+                      text = path.read_text(encoding="utf-8")
+                      text =text.replace("plum-dispatch", "plum")
+                      path.write_text(text, encoding="utf-8")
+                  PYTHON
 
             - name: Set up uv
               uses: astral-sh/setup-uv@v5
@@ -112,13 +120,17 @@ jobs:
 
             - name: Adjust metadata
               run: |
-                if [[ "$RUNNER_OS" == "macOS" ]]; then
-                    sed -i '' 's/plum-dispatch/plum/g' pyproject.toml
-                    sed -i '' 's/plum-dispatch/plum/g' uv.lock
-                else
-                    sed -i 's/plum-dispatch/plum/g' pyproject.toml
-                    sed -i 's/plum-dispatch/plum/g' uv.lock
-                fi
+                  python - <<'PYTHON'
+                  from pathlib import Path
+
+                  for path in [
+                    Path("pyproject.toml"),
+                    Path("uv.lock"),
+                  ]:
+                      text = path.read_text(encoding="utf-8")
+                      text = text.replace("plum-dispatch", "plum")
+                      path.write_text(text, encoding="utf-8")
+                  PYTHON
 
             - name: Build wheels
               uses: pypa/cibuildwheel@v3.4.0
