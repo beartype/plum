@@ -85,7 +85,6 @@ jobs:
         runs-on: ${{ matrix.os }}
         strategy:
             fail-fast: false
-            max-parallel: 3
             matrix:
                 include: ${{ fromJson(needs.generate-wheels-matrix.outputs.include) }}
         steps:
