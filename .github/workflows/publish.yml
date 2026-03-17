@@ -119,9 +119,6 @@ jobs:
             - name: List artifacts
               run: ls -la dist/
 
-            - name: Fail
-              run: fail
-
             - name: Publish to PyPI
               uses: pypa/gh-action-pypi-publish@release/v1
               with:
