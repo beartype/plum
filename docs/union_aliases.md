@@ -32,14 +32,33 @@ Help on Function in module __main__:
 add(x: Union[numpy.int8, numpy.int16, numpy.int32, numpy.int64, numpy.uint8, numpy.uint16, numpy.uint32, numpy.uint64, numpy.float16, numpy.float32, numpy.float64, numpy.float128, numpy.complex64, numpy.complex128, numpy.complex256, bool, object, bytes, str, numpy.void], y: Union[numpy.int8, numpy.int16, numpy.int32, numpy.int64, numpy.uint8, numpy.uint16, numpy.uint32, numpy.uint64, numpy.float16, numpy.float32, numpy.float64, numpy.float128, numpy.complex64, numpy.complex128, numpy.complex256, bool, object, bytes, str, numpy.void])
 ```
 
-While the documentation is accurate, it is not at all helpful to expand the union in
-its many elements, because it obscures the key message: `add(x, y)` is implemented
-for all _scalars_.
-A better option would be to print `add(x: Scalar, y: Scalar)`.
-This is precisely what union aliases do:
-by aliasing a union, you change the way it is displayed.
-Union aliases must be activated explicitly, because the feature
-monkeypatches `Union.__str__` and `Union.__repr__`.
+While the documentation is accurate, it is not at all helpful to expand the
+union in its many elements, because it obscures the key message: `add(x, y)` is
+implemented for all _scalars_.  A better option would be to print `add(x:
+Scalar, y: Scalar)`.  This is precisely what union aliases do: by aliasing a
+union, you change the way it is displayed.  On Python 3.13 and earlier, union
+aliases work by monkeypatching `typing.Union.__str__` and
+`typing.Union.__repr__`, and therefore must be activated explicitly.  On Python
+3.14 and later, `typing.Union`'s representation can no longer be monkeypatched;
+union aliases instead only affect how Plum formats unions in its own printed
+output.
+
+% invisible-code-block: python
+%
+% import sys
+
+% skip: start if(sys.version_info < (3, 14), reason="Union repr changed in Python 3.14+")
+
+```python
+>>> from plum import set_union_alias
+
+>>> set_union_alias(Scalar, alias="Scalar")
+numpy.bool | numpy.float16 | ...
+```
+
+% skip: end
+
+% skip: start if(sys.version_info >= (3, 14), reason="Representation of unions changed in Python 3.14.")
 
 ```python
 >>> from plum import activate_union_aliases, set_union_alias
@@ -49,6 +68,8 @@ monkeypatches `Union.__str__` and `Union.__repr__`.
 >>> set_union_alias(Scalar, alias="Scalar")
 typing.Union[Scalar]
 ```
+
+% skip: end
 
 After this, `help(add)` now prints the following:
 
@@ -68,6 +89,30 @@ For example, printing just `Scalar` would omit the type parameter(s).
 
 Let's see with a few more examples how this works:
 
+% invisible-code-block: python
+%
+% import sys
+
+% skip: start if(sys.version_info < (3, 14), reason="Representation of unions changed in Python 3.14.")
+
+```python
+>>> Scalar
+numpy.bool | numpy.float16 | ...
+
+>>> Union[tuple(scalar_types)]
+numpy.bool | numpy.float16 | ...
+
+>>> Union[tuple(scalar_types) + (tuple,)]       # Scalar or tuple
+numpy.bool | numpy.float16 | ... | tuple
+
+>>> Union[tuple(scalar_types) + (tuple, list)]  # Scalar or tuple or list
+numpy.bool | numpy.float16 | ... | tuple | list
+```
+
+% skip: end
+
+% skip: start if(sys.version_info >= (3, 14), reason="Representation of unions changed in Python 3.14.")
+
 ```python
 >>> Scalar
 typing.Union[Scalar]
@@ -81,6 +126,8 @@ typing.Union[Scalar, tuple]
 >>> Union[tuple(scalar_types) + (tuple, list)]  # Scalar or tuple or list
 typing.Union[Scalar, tuple, list]
 ```
+
+% skip: end
 
 If we don't include all of `scalar_types`, we won't see `Scalar`, as desired:
 
@@ -98,6 +145,8 @@ typing.Union[numpy.int8, numpy.int16, numpy.int32, numpy.longlong, numpy.int64, 
 You can deactivate union aliases with `deactivate_union_aliases`:
 
 ```python
+>>> import warnings
+
 >>> from plum import deactivate_union_aliases
 
 >>> deactivate_union_aliases()

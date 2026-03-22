@@ -12,12 +12,18 @@ from typing_extensions import Self
 from rich.console import Console, ConsoleOptions
 from rich.segment import Segment
 
-import beartype.door
+from beartype.door import TypeHint as TypeHintWrapper
 from beartype.peps import resolve_pep563 as beartype_resolve_pep563
 
 from ._bear import is_bearable
 from ._type import is_faithful, resolve_type_hint
-from ._util import Comparable, Missing, TypeHint, _MissingType, wrap_lambda
+from ._util import (
+    Comparable,
+    Missing,
+    TypeHint,
+    _MissingType,
+    wrap_lambda,
+)
 from .repr import repr_short, rich_repr
 
 
@@ -116,30 +122,21 @@ class Signature(Comparable):
             yield Segment("precedence=" + repr(self.precedence))
         yield Segment(")")
 
-    def __eq__(self, other: Any) -> bool:
-        if isinstance(other, Signature):
-            if self.varargs is Missing:
-                self_varargs = Missing
-            else:
-                self_varargs = beartype.door.TypeHint(self.varargs)
+    def __eq__(self, other: Any, /) -> bool:
+        if not isinstance(other, Signature):
+            return False
 
-            if other.varargs is Missing:
-                other_varargs = Missing
-            else:
-                other_varargs = beartype.door.TypeHint(other.varargs)
-
-            # We don't need to check faithfulness, because that is automatically derived
-            # from the arguments.
-            return (
-                tuple(beartype.door.TypeHint(t) for t in self.types),
-                self_varargs,
-                self.precedence,
-            ) == (
-                tuple(beartype.door.TypeHint(t) for t in other.types),
-                other_varargs,
-                other.precedence,
-            )
-        return False
+        # We don't need to check faithfulness, because that is automatically
+        # derived from the arguments.
+        return (
+            tuple(TypeHintWrapper(t) for t in self.types),
+            Missing if self.varargs is Missing else TypeHintWrapper(self.varargs),
+            self.precedence,
+        ) == (
+            tuple(TypeHintWrapper(t) for t in other.types),
+            Missing if other.varargs is Missing else TypeHintWrapper(other.varargs),
+            other.precedence,
+        )
 
     def __hash__(self) -> int:
         return hash((Signature, *self.types, self.varargs))
@@ -171,19 +168,20 @@ class Signature(Comparable):
         ):
             return False
 
-        # Expand the types and compare. We implement the subset relationship, but, very
-        # importantly, deviate from the subset relationship in exactly one place.
+        # Expand the types and compare. We implement the subset relationship,
+        # but, very importantly, deviate from the subset relationship in exactly
+        # one place.
         self_types = self.expand_varargs(len(other.types))
         other_types = other.expand_varargs(len(self.types))
         if all(
             [
-                beartype.door.TypeHint(x) == beartype.door.TypeHint(y)
+                TypeHintWrapper(x) == TypeHintWrapper(y)
                 for x, y in zip(self_types, other_types, strict=True)
             ]
         ):
             if self.has_varargs and other.has_varargs:
-                self_varargs = beartype.door.TypeHint(self.varargs)
-                other_varargs = beartype.door.TypeHint(other.varargs)
+                self_varargs = TypeHintWrapper(self.varargs)
+                other_varargs = TypeHintWrapper(other.varargs)
                 return bool(self_varargs <= other_varargs)
 
             # Having variable arguments makes you slightly larger.
@@ -197,7 +195,7 @@ class Signature(Comparable):
 
         elif all(
             [
-                beartype.door.TypeHint(x) <= beartype.door.TypeHint(y)
+                TypeHintWrapper(x) <= TypeHintWrapper(y)
                 for x, y in zip(self_types, other_types, strict=True)
             ]
         ):
@@ -213,8 +211,8 @@ class Signature(Comparable):
                 #       is `1.0`, then reasonably the variable arguments should be
                 #       ignored and `(int, *A)` should be considered more specific
                 #       than `(Number, *B)`.
-                self_varargs = beartype.door.TypeHint(self.varargs)
-                other_varargs = beartype.door.TypeHint(other.varargs)
+                self_varargs = TypeHintWrapper(self.varargs)
+                other_varargs = TypeHintWrapper(other.varargs)
                 return bool(self_varargs <= other_varargs)
 
             elif self.has_varargs:

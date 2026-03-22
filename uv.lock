@@ -2,7 +2,8 @@ version = 1
 revision = 3
 requires-python = ">=3.10"
 resolution-markers = [
-    "python_full_version >= '3.12'",
+    "python_full_version >= '3.14'",
+    "python_full_version >= '3.12' and python_full_version < '3.14'",
     "python_full_version == '3.11.*'",
     "python_full_version < '3.11'",
 ]
@@ -486,7 +487,8 @@ name = "cibuildwheel"
 version = "3.3.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.12'",
+    "python_full_version >= '3.14'",
+    "python_full_version >= '3.12' and python_full_version < '3.14'",
     "python_full_version == '3.11.*'",
 ]
 dependencies = [
@@ -1122,7 +1124,8 @@ name = "ipython"
 version = "9.8.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.12'",
+    "python_full_version >= '3.14'",
+    "python_full_version >= '3.12' and python_full_version < '3.14'",
     "python_full_version == '3.11.*'",
 ]
 dependencies = [
@@ -1840,7 +1843,8 @@ name = "numpy"
 version = "2.3.5"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version >= '3.12'",
+    "python_full_version >= '3.14'",
+    "python_full_version >= '3.12' and python_full_version < '3.14'",
     "python_full_version == '3.11.*'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/76/65/21b3bc86aac7b8f2862db1e808f1ea22b028e30a225a34a5ede9bf8678f2/numpy-2.3.5.tar.gz", hash = "sha256:784db1dcdab56bf0517743e746dfb0f885fc68d948aba86eeec2cba234bdf1c0", size = 20584950, upload-time = "2025-11-16T22:52:42.067Z" }
@@ -2055,7 +2059,8 @@ wheels = [
 
 [package.metadata]
 requires-dist = [
-    { name = "beartype", specifier = ">=0.16.2" },
+    { name = "beartype", marker = "python_full_version < '3.14'", specifier = ">=0.16.2" },
+    { name = "beartype", marker = "python_full_version >= '3.14'", specifier = ">=0.22.2" },
     { name = "rich", specifier = ">=10.0" },
     { name = "typing-extensions", specifier = ">=4.9.0" },
 ]
