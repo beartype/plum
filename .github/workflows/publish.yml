@@ -11,6 +11,9 @@ on:
                 default: false
                 type: boolean
 
+permissions:
+    contents: read
+
 # Cancel any in-progress build when a new commit is pushed.
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
