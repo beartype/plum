@@ -1,5 +1,8 @@
 name: Build Jupyter Book
 
+permissions:
+  contents: write
+
 on:
   # Trigger the workflow on push to main branch.
   push:
