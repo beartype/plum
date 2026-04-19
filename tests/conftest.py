@@ -1,7 +1,24 @@
+"""Fixtures for testing."""
+
+from unittest.mock import patch
+
 import pytest
 
 import plum
 from plum._promotion import _convert, _promotion_rule
+
+
+@pytest.fixture(autouse=True)
+def _clean_union_aliases():
+    """Give each test its own empty alias registry, restored automatically."""
+    import plum._alias as _alias_mod
+    from plum._alias import _ALIASED_UNIONS
+
+    with (
+        patch.dict(_ALIASED_UNIONS, clear=True),
+        patch.object(_alias_mod, "_ALIASES_ARE_ACTIVE", True),
+    ):
+        yield
 
 
 @pytest.fixture

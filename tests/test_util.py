@@ -21,7 +21,10 @@ def test_repr_short():
 
     assert repr_short(int) == "int"
     assert repr_short(A) == "tests.test_util.test_repr_short.<locals>.A"
-    assert repr_short(Union[int, float]) == "typing.Union[int, float]"  # noqa: UP007
+    if sys.version_info >= (3, 14):
+        assert repr_short(Union[int, float]) == "int | float"  # noqa: UP007
+    else:
+        assert repr_short(Union[int, float]) == "typing.Union[int, float]"  # noqa: UP007
     assert repr_short(int | float) == "int | float"
 
 
