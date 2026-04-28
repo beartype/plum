@@ -89,22 +89,7 @@ def f(x: int, y: Number):
 %
 % import sys
 
-% skip: start if(sys.version_info < (3, 14), reason="Union repr changed in Python 3.14+")
-
-```python
->>> try: f(1, 1)
-... except Exception as e: print(f"{type(e).__name__}: {e}")
-AmbiguousLookupError: `f(1, 1)` is ambiguous.
-Candidates:
-    f(x: int | numbers.Number, y: int)
-        <function f at ...> @ ...
-    f(x: int, y: numbers.Number)
-        <function f at ...> @ ...
-```
-
-% skip: end
-
-% skip: start if(sys.version_info >= (3, 14), reason="Union repr changed in Python 3.14+")
+% skip: start if(sys.version_info >= (3, 14), reason="Union representation changed in Python 3.14.")
 
 ```python
 >>> try: f(1, 1)

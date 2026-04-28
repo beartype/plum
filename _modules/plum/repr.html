@@ -431,7 +431,7 @@ document.write(`
 <span class="sd">        str: Shorter representation of `x`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transformed</span> <span class="o">:=</span> <span class="n">_transform_union_alias</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">TypeAliasType</span><span class="p">):</span>
-        <span class="c1"># It&#39;s an aliased union — use the alias name.</span>
+        <span class="c1"># It&#39;s an aliased union. Use the alias name.</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">transformed</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
     <span class="c1"># :func:`typing._type_repr` is an internal function, but it should be</span>
     <span class="c1"># available in Python versions 3.9 through 3.14.</span>

@@ -426,20 +426,18 @@ In particular, <code class="docutils literal notranslate"><span class="pre">help
 </pre></div>
 </div>
 <p>While the documentation is accurate, it is not at all helpful to expand the
-union in its many elements, because it obscures the key message: <code class="docutils literal notranslate"><span class="pre">add(x,</span> <span class="pre">y)</span></code> is
-implemented for all <em>scalars</em>.  A better option would be to print <code class="docutils literal notranslate"><span class="pre">add(x:</span> <span class="pre">Scalar,</span> <span class="pre">y:</span> <span class="pre">Scalar)</span></code>.  This is precisely what union aliases do: by aliasing a
-union, you change the way it is displayed.  On Python 3.13 and earlier, union
-aliases work by monkeypatching <code class="docutils literal notranslate"><span class="pre">typing.Union.__str__</span></code> and
-<code class="docutils literal notranslate"><span class="pre">typing.Union.__repr__</span></code>, and therefore must be activated explicitly.  On Python
-3.14 and later, <code class="docutils literal notranslate"><span class="pre">typing.Union</span></code>’s representation can no longer be monkeypatched;
+union in its many elements, because it obscures the key message:
+<code class="docutils literal notranslate"><span class="pre">add(x,</span> <span class="pre">y)</span></code> is implemented for all <em>scalars</em>.
+A better option would be to print <code class="docutils literal notranslate"><span class="pre">add(x:</span> <span class="pre">Scalar,</span> <span class="pre">y:</span> <span class="pre">Scalar)</span></code>.
+This is precisely what union aliases do:
+by aliasing a union, you change the way it is displayed.
+On Python 3.13 and earlier,
+union aliases work by monkeypatching <code class="docutils literal notranslate"><span class="pre">typing.Union.__str__</span></code> and
+<code class="docutils literal notranslate"><span class="pre">typing.Union.__repr__</span></code>, and therefore must be activated explicitly.
+On Python 3.14 and later,
+<code class="docutils literal notranslate"><span class="pre">typing.Union</span></code>’s representation can no longer be monkeypatched;
 union aliases instead only affect how Plum formats unions in its own printed
 output.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">set_union_alias</span>
-
-<span class="gp">&gt;&gt;&gt; </span><span class="n">set_union_alias</span><span class="p">(</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;Scalar&quot;</span><span class="p">)</span>
-<span class="go">numpy.bool | numpy.float16 | ...</span>
-</pre></div>
-</div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">activate_union_aliases</span><span class="p">,</span> <span class="n">set_union_alias</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">activate_union_aliases</span><span class="p">()</span>
@@ -460,19 +458,6 @@ This is intentional: it is to prevent breaking code that depends on how unions
 print.
 For example, printing just <code class="docutils literal notranslate"><span class="pre">Scalar</span></code> would omit the type parameter(s).</p>
 <p>Let’s see with a few more examples how this works:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Scalar</span>
-<span class="go">numpy.bool | numpy.float16 | ...</span>
-
-<span class="gp">&gt;&gt;&gt; </span><span class="n">Union</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">scalar_types</span><span class="p">)]</span>
-<span class="go">numpy.bool | numpy.float16 | ...</span>
-
-<span class="gp">&gt;&gt;&gt; </span><span class="n">Union</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">scalar_types</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,)]</span>       <span class="c1"># Scalar or tuple</span>
-<span class="go">numpy.bool | numpy.float16 | ... | tuple</span>
-
-<span class="gp">&gt;&gt;&gt; </span><span class="n">Union</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">scalar_types</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)]</span>  <span class="c1"># Scalar or tuple or list</span>
-<span class="go">numpy.bool | numpy.float16 | ... | tuple | list</span>
-</pre></div>
-</div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Scalar</span>
 <span class="go">typing.Union[Scalar]</span>
 
