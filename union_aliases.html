@@ -425,14 +425,21 @@ In particular, <code class="docutils literal notranslate"><span class="pre">help
 <span class="n">add</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">int8</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">int16</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">uint8</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">uint16</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">uint32</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">uint64</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">float16</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">float128</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">complex64</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">complex128</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">complex256</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="nb">object</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">void</span><span class="p">],</span> <span class="n">y</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">int8</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">int16</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">uint8</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">uint16</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">uint32</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">uint64</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">float16</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">float128</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">complex64</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">complex128</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">complex256</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="nb">object</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">void</span><span class="p">])</span>
 </pre></div>
 </div>
-<p>While the documentation is accurate, it is not at all helpful to expand the union in
-its many elements, because it obscures the key message: <code class="docutils literal notranslate"><span class="pre">add(x,</span> <span class="pre">y)</span></code> is implemented
-for all <em>scalars</em>.
-A better option would be to print <code class="docutils literal notranslate"><span class="pre">add(x:</span> <span class="pre">Scalar,</span> <span class="pre">y:</span> <span class="pre">Scalar)</span></code>.
-This is precisely what union aliases do:
-by aliasing a union, you change the way it is displayed.
-Union aliases must be activated explicitly, because the feature
-monkeypatches <code class="docutils literal notranslate"><span class="pre">Union.__str__</span></code> and <code class="docutils literal notranslate"><span class="pre">Union.__repr__</span></code>.</p>
+<p>While the documentation is accurate, it is not at all helpful to expand the
+union in its many elements, because it obscures the key message: <code class="docutils literal notranslate"><span class="pre">add(x,</span> <span class="pre">y)</span></code> is
+implemented for all <em>scalars</em>.  A better option would be to print <code class="docutils literal notranslate"><span class="pre">add(x:</span> <span class="pre">Scalar,</span> <span class="pre">y:</span> <span class="pre">Scalar)</span></code>.  This is precisely what union aliases do: by aliasing a
+union, you change the way it is displayed.  On Python 3.13 and earlier, union
+aliases work by monkeypatching <code class="docutils literal notranslate"><span class="pre">typing.Union.__str__</span></code> and
+<code class="docutils literal notranslate"><span class="pre">typing.Union.__repr__</span></code>, and therefore must be activated explicitly.  On Python
+3.14 and later, <code class="docutils literal notranslate"><span class="pre">typing.Union</span></code>’s representation can no longer be monkeypatched;
+union aliases instead only affect how Plum formats unions in its own printed
+output.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">set_union_alias</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">set_union_alias</span><span class="p">(</span><span class="n">Scalar</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;Scalar&quot;</span><span class="p">)</span>
+<span class="go">numpy.bool | numpy.float16 | ...</span>
+</pre></div>
+</div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">activate_union_aliases</span><span class="p">,</span> <span class="n">set_union_alias</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">activate_union_aliases</span><span class="p">()</span>
@@ -454,6 +461,19 @@ print.
 For example, printing just <code class="docutils literal notranslate"><span class="pre">Scalar</span></code> would omit the type parameter(s).</p>
 <p>Let’s see with a few more examples how this works:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Scalar</span>
+<span class="go">numpy.bool | numpy.float16 | ...</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Union</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">scalar_types</span><span class="p">)]</span>
+<span class="go">numpy.bool | numpy.float16 | ...</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Union</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">scalar_types</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,)]</span>       <span class="c1"># Scalar or tuple</span>
+<span class="go">numpy.bool | numpy.float16 | ... | tuple</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Union</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">scalar_types</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)]</span>  <span class="c1"># Scalar or tuple or list</span>
+<span class="go">numpy.bool | numpy.float16 | ... | tuple | list</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Scalar</span>
 <span class="go">typing.Union[Scalar]</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">Union</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">scalar_types</span><span class="p">)]</span>
@@ -472,7 +492,9 @@ For example, printing just <code class="docutils literal notranslate"><span clas
 </pre></div>
 </div>
 <p>You can deactivate union aliases with <code class="docutils literal notranslate"><span class="pre">deactivate_union_aliases</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">deactivate_union_aliases</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">deactivate_union_aliases</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">deactivate_union_aliases</span><span class="p">()</span>
 

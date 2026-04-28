@@ -1519,7 +1519,7 @@ parsing how unions print.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="plum._alias.activate_union_aliases">
 <span class="sig-prename descclassname"><span class="pre">plum._alias.</span></span><span class="sig-name descname"><span class="pre">activate_union_aliases</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/plum/_alias.html#activate_union_aliases"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum._alias.activate_union_aliases" title="Link to this definition">#</a></dt>
-<dd><p>When printing <cite>typing.Union`s, replace all aliased unions by the aliased names.
+<dd><p>When printing <cite>typing.Union`s, replace aliased unions by the aliased names.
 This monkey patches `__repr__</cite> and <cite>__str__</cite> for <cite>typing.Union</cite>.</p>
 </dd></dl>
 
@@ -1593,6 +1593,8 @@ to the source definition created with <a class="reference internal" href="#plum.
 <span class="sig-prename descclassname"><span class="pre">plum.repr.</span></span><span class="sig-name descname"><span class="pre">repr_short</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">object</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/plum/repr.html#repr_short"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum.repr.repr_short" title="Link to this definition">#</a></dt>
 <dd><p>Representation as a string, but in shorter form. This just calls
 <code class="xref py py-func docutils literal notranslate"><span class="pre">typing._type_repr()</span></code>.</p>
+<p>If the type is a union registered in Plum’s alias registry, the alias name
+is used instead.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<em>object</em>) – Object.</p>
