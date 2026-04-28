@@ -33,30 +33,22 @@ add(x: Union[numpy.int8, numpy.int16, numpy.int32, numpy.int64, numpy.uint8, num
 ```
 
 While the documentation is accurate, it is not at all helpful to expand the
-union in its many elements, because it obscures the key message: `add(x, y)` is
-implemented for all _scalars_.  A better option would be to print `add(x:
-Scalar, y: Scalar)`.  This is precisely what union aliases do: by aliasing a
-union, you change the way it is displayed.  On Python 3.13 and earlier, union
-aliases work by monkeypatching `typing.Union.__str__` and
-`typing.Union.__repr__`, and therefore must be activated explicitly.  On Python
-3.14 and later, `typing.Union`'s representation can no longer be monkeypatched;
+union in its many elements, because it obscures the key message:
+`add(x, y)` is implemented for all _scalars_.
+A better option would be to print `add(x: Scalar, y: Scalar)`.
+This is precisely what union aliases do:
+by aliasing a union, you change the way it is displayed.
+On Python 3.13 and earlier,
+union aliases work by monkeypatching `typing.Union.__str__` and
+`typing.Union.__repr__`, and therefore must be activated explicitly.
+On Python 3.14 and later,
+`typing.Union`'s representation can no longer be monkeypatched;
 union aliases instead only affect how Plum formats unions in its own printed
 output.
 
 % invisible-code-block: python
 %
 % import sys
-
-% skip: start if(sys.version_info < (3, 14), reason="Union repr changed in Python 3.14+")
-
-```python
->>> from plum import set_union_alias
-
->>> set_union_alias(Scalar, alias="Scalar")
-numpy.bool | numpy.float16 | ...
-```
-
-% skip: end
 
 % skip: start if(sys.version_info >= (3, 14), reason="Representation of unions changed in Python 3.14.")
 
@@ -92,24 +84,6 @@ Let's see with a few more examples how this works:
 % invisible-code-block: python
 %
 % import sys
-
-% skip: start if(sys.version_info < (3, 14), reason="Representation of unions changed in Python 3.14.")
-
-```python
->>> Scalar
-numpy.bool | numpy.float16 | ...
-
->>> Union[tuple(scalar_types)]
-numpy.bool | numpy.float16 | ...
-
->>> Union[tuple(scalar_types) + (tuple,)]       # Scalar or tuple
-numpy.bool | numpy.float16 | ... | tuple
-
->>> Union[tuple(scalar_types) + (tuple, list)]  # Scalar or tuple or list
-numpy.bool | numpy.float16 | ... | tuple | list
-```
-
-% skip: end
 
 % skip: start if(sys.version_info >= (3, 14), reason="Representation of unions changed in Python 3.14.")
 
