@@ -5,7 +5,6 @@ __all__ = [
     "repr_pyfunction",
     "rich_repr",
 ]
-
 import inspect
 import os
 import sys
@@ -14,11 +13,14 @@ import typing
 from collections.abc import Callable, Iterable
 from functools import partial
 from typing import Any, TypeVar, overload
+from typing_extensions import TypeAliasType
 
 import rich
 from rich.color import Color
 from rich.style import Style
 from rich.text import Text
+
+from ._alias import _transform_union_alias
 
 T = TypeVar("T")
 
@@ -41,6 +43,9 @@ def repr_type(x: object, /) -> Text:
     Returns:
         :class:`rich.Text`: Representation.
     """
+    # Apply union aliasing if `x` is a union. This allows us to have the correct
+    # syntax highlighting for aliased unions.
+    x = _transform_union_alias(x)
 
     if isinstance(x, type):
         if x.__module__ in ["builtins", "typing", "typing_extensions"]:
@@ -60,14 +65,20 @@ def repr_short(x: object, /) -> str:
     """Representation as a string, but in shorter form. This just calls
     :func:`typing._type_repr`.
 
+    If the type is a union registered in Plum's alias registry, the alias name
+    is used instead.
+
     Args:
         x (object): Object.
 
     Returns:
         str: Shorter representation of `x`.
     """
-    # :func:`typing._type_repr` is an internal function, but it should be available in
-    # Python versions 3.9 through 3.13.
+    if isinstance(transformed := _transform_union_alias(x), TypeAliasType):
+        # It's an aliased union — use the alias name.
+        return str(transformed.__name__)
+    # :func:`typing._type_repr` is an internal function, but it should be
+    # available in Python versions 3.9 through 3.14.
     return typing._type_repr(x)
 
 

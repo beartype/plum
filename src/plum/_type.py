@@ -249,18 +249,19 @@ def resolve_type_hint(x: object, /) -> object:
     elif isinstance(x, list):
         return [resolve_type_hint(arg) for arg in x]
     elif isinstance(x, type):
-        if isinstance(x, ResolvableType):
-            if isinstance(x, ModuleType) and not x.retrieve():
-                # If the type could not be retrieved, then just return the
-                # wrapper. Namely, `x.resolve()` will then return `x`, which means
-                # that the below call will result in an infinite recursion.
-                return x
-            return resolve_type_hint(x.resolve())
-        else:
+        if not isinstance(x, ResolvableType):
+            return x
+        elif isinstance(x, ModuleType) and not x.retrieve():
+            # If the type could not be retrieved, then just return the
+            # wrapper. Namely, `x.resolve()` will then return `x`, which
+            # means that the below call will result in an infinite
+            # recursion.
             return x
 
-    # For example, `Is[lambda x: x > 0]` is an example of a `BeartypeValidator`. We
-    # shouldn't resolve those.
+        return resolve_type_hint(x.resolve())
+
+    # For example, `Is[lambda x: x > 0]` is an example of a `BeartypeValidator`.
+    # We shouldn't resolve those.
     elif isinstance(x, BeartypeValidator):
         return x
 
@@ -298,7 +299,7 @@ def is_faithful(x: object, /) -> bool:
     return _is_faithful(resolve_type_hint(x))
 
 
-UNION_TYPES = frozenset({typing.Union, UnionType, typing.Optional})
+UNION_TYPES = (typing.Union, UnionType, typing.Optional)
 
 
 class _SupportsDunderFaithful(typing.Protocol):

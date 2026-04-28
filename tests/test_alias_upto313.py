@@ -1,18 +1,26 @@
+import sys
 from typing import Union
 
 import pytest
 
-from plum import activate_union_aliases, deactivate_union_aliases, set_union_alias
+import plum
+from plum import set_union_alias
 from plum._alias import _ALIASED_UNIONS
+
+# These tests are for Python 3.13 and earlier only.
+pytestmark = pytest.mark.skipif(
+    sys.version_info >= (3, 14),
+    reason="Union aliasing tests for Python 3.13 and earlier.",
+)
 
 
 @pytest.fixture()
 def union_aliases():
     """Activate union aliases during the test and remove all aliases after the test
     finishes."""
-    activate_union_aliases()
+    plum.activate_union_aliases()
     yield
-    deactivate_union_aliases()
+    plum.deactivate_union_aliases()
     _ALIASED_UNIONS.clear()
 
 
@@ -61,7 +69,6 @@ def test_optional(union_aliases):
 
 def test_double_registration(union_aliases):
     # We can register with the same alias, but not with a different alias.
-
     set_union_alias(Union[int, str], alias="IntStr")  # noqa: UP007
     set_union_alias(int | str, alias="IntStr")  # This is OK.
     with pytest.raises(RuntimeError, match=r"already has alias"):
