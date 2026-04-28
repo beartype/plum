@@ -75,7 +75,7 @@ def repr_short(x: object, /) -> str:
         str: Shorter representation of `x`.
     """
     if isinstance(transformed := _transform_union_alias(x), TypeAliasType):
-        # It's an aliased union — use the alias name.
+        # It's an aliased union. Use the alias name.
         return str(transformed.__name__)
     # :func:`typing._type_repr` is an internal function, but it should be
     # available in Python versions 3.9 through 3.14.

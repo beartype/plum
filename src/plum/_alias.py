@@ -26,6 +26,8 @@ Note that `IntOrFloat` prints to `typing.Union[IntOrFloat]` rather than just
 parsing how unions print.
 """
 
+# pyright: reportUnreachable=false
+
 __all__ = (
     "activate_union_aliases",
     "deactivate_union_aliases",
@@ -192,10 +194,10 @@ else:  # pragma: specific no cover 3.13 3.12 3.11 3.10
             type or type hint: The given union.
 
         """
-        # Handle both union types and single types, matching < 3.14 behaviour.
+        # Handle both union types and single types, matching pre-3.14 behaviour.
         args = get_args(union) if isinstance(union, _union_type) else (union,)
 
-        # Check for conflicting aliases
+        # Check for conflicting aliases.
         for existing_union, existing_alias in _ALIASED_UNIONS.items():
             if set(existing_union) == set(args) and alias != existing_alias.__name__:
                 union_str = repr(union)
@@ -225,18 +227,18 @@ def _transform_union_alias(x: object, /) -> object:
     if not _ALIASES_ARE_ACTIVE:
         return x
 
-    # TypeAliasType instances are already transformed, return as-is
+    # `TypeAliasType` instances are already transformed, so return as-is.
     if isinstance(x, TypeAliasType):
         return x
 
-    # Get the union args to check if it's registered
+    # Get the union args to check if it is registered.
     args = get_args(x) if isinstance(x, _union_type) else None
     if args:
         args_set = set(args)
-        # Look for a matching alias in the registry
+        # Look for a matching alias in the registry.
         for union_args, type_alias in _ALIASED_UNIONS.items():
             if set(union_args) == args_set:
                 return type_alias
 
-    # Not a union or not aliased, return as-is
+    # Not a union or not aliased, so return as-is.
     return x
