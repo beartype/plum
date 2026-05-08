@@ -505,6 +505,30 @@ class _DispatchFunction(Protocol):
     ) -> Self | Callable[[Callable[..., Any]], Self]: ...
 
 
+class _BoundFunctionProto(Protocol):
+    """Subset of :class:`Function`'s interface required by :class:`_BoundFunction`.
+
+    Declaring ``_BoundFunction._f`` with this Protocol rather than :class:`Function`
+    directly prevents mypy from applying ``Function.__get__``'s descriptor protocol
+    when resolving instance-attribute accesses of ``_f``.
+    """
+
+    _f: Callable[..., Any]
+
+    def __call__(self, *args: object, **kw: object) -> object: ...
+
+    def invoke(self, *types: TypeHint) -> Callable[..., Any]: ...
+
+    @property
+    def methods(self) -> MethodList: ...
+
+    def dispatch(
+        self,
+        method: Callable[..., Any] | None = None,
+        precedence: int = 0,
+    ) -> Any: ...
+
+
 class _BoundFunction:
     """A bound instance of `.function.Function`.
 
@@ -513,7 +537,7 @@ class _BoundFunction:
         instance (object): Instance to which the function is bound.
     """
 
-    _f: "Function"
+    _f: "_BoundFunctionProto"
     _instance: object
 
     def __init__(self, f: "Function", instance: object) -> None:
@@ -538,10 +562,10 @@ class _BoundFunction:
     def invoke(self, *types: TypeHint) -> Callable[..., Any]:
         """See :meth:`.Function.invoke`."""
 
-        @wraps(self._f._f)  # type: ignore[union-attr]
+        @wraps(self._f._f)
         def wrapped_method(*args: Any, **kw: Any) -> Any:
             # TODO: Can we do this without `type` here?
-            method = self._f.invoke(type(self._instance), *types)  # type: ignore[union-attr]
+            method = self._f.invoke(type(self._instance), *types)
             return method(self._instance, *args, **kw)
 
         # We set `f.__wrapped_by_plum__` for :func:`Function.invoke`, but here
@@ -555,9 +579,9 @@ class _BoundFunction:
     @property
     def methods(self) -> MethodList:
         """list[:class:`.method.Method`]: All available methods."""
-        return self._f.methods  # type: ignore[union-attr]
+        return self._f.methods
 
     @property
     def dispatch(self) -> _DispatchFunction:
         """See :meth:`.Function.dispatch`."""
-        return self._f.dispatch  # type: ignore[union-attr, return-value]
+        return self._f.dispatch
