@@ -6,7 +6,6 @@ import numpy as np
 import pytest
 
 import plum
-from plum import Val
 from plum._parametric import is_concrete, is_type
 
 
@@ -522,35 +521,6 @@ def test_kind():
     assert issubclass(Kind3[1], SuperClass)
     assert not issubclass(Kind2[1], SuperClass)
     assert issubclass(Kind2[1], object)
-
-
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_val():
-    # Check some cases.
-    for T, v in [
-        (Val[3], Val(3)),
-        (Val[3, 4], Val((3, 4))),
-        (Val[(3, 4)], Val((3, 4))),
-    ]:
-        assert type(v) is T
-        assert T() == v
-
-    # Test all checks for numbers of arguments and the like.
-    with pytest.raises(ValueError):
-        Val()
-    with pytest.raises(ValueError):
-        Val(1, 2, 3)
-    with pytest.raises(ValueError):
-        Val[1](2)
-
-    # Check that `__init__` can only be called for a concrete instance.
-    class MockVal:
-        concrete = False
-
-    with pytest.raises(ValueError):
-        Val[1].__init__(MockVal())
-
-    assert repr(Val[1]()) == "plum.Val[1]()"
 
 
 def test_init_subclass_correct_args():

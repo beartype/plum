@@ -123,10 +123,6 @@ COMPILED = (
 # export these types.
 from typing import Dict, List, Tuple, Union  # noqa: E402, F401, UP035
 
-# Deprecated
-# isort: split
-from ._parametric import Val as Val  # noqa: E402, F401, F403
-
 T = TypeVar("T")
 T2 = TypeVar("T2")
 

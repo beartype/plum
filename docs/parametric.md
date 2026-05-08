@@ -242,11 +242,10 @@ def i_expect_that(that: Kind["that"]):
     ...
 ```
 
-## `typing.Literal` (and `Val`)
+## `typing.Literal`
 
 To bring information from the object domain to the type domain use
 `typing.Literal`.
-Plum's now-deprecated equivalent means is through the class `plum.Val`.
 
 Example:
 
