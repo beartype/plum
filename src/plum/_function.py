@@ -6,7 +6,7 @@ from collections.abc import Callable
 from copy import copy
 from functools import wraps
 from types import MethodType
-from typing import Any, Protocol, TypeVar
+from typing import Any, Protocol, TypeVar, overload
 from typing_extensions import Self
 
 from ._method import Method, MethodList
@@ -454,11 +454,17 @@ class Function(metaclass=_FunctionMeta):
 
         return wrapped_method
 
-    def __get__(self, instance: object, owner: type, /) -> "Function | MethodType":
-        if instance is not None:
-            return MethodType(_BoundFunction(self, instance), instance)
-        else:
+    @overload
+    def __get__(self, instance: None, owner: type, /) -> "Function": ...
+    @overload
+    def __get__(self, instance: object, owner: type, /) -> MethodType: ...
+
+    def __get__(
+        self, instance: object | None, owner: type, /
+    ) -> "Function | MethodType":
+        if instance is None:
             return self
+        return MethodType(_BoundFunction(self, instance), instance)
 
     def __repr__(self) -> str:
         return (
