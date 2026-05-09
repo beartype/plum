@@ -53,7 +53,7 @@ plum._function._promised_convert = convert
 
 
 @_dispatch
-def _convert(obj, type_to):
+def _convert(obj, type_to):  # type: ignore[no-untyped-def]
     if not is_bearable(obj, resolve_type_hint(type_to)):
         raise TypeError(f"Cannot convert `{obj}` to `{repr_short(type_to)}`.")
     return obj
@@ -111,7 +111,7 @@ add_conversion_method(bytes, str, lambda x: x.decode("utf-8", "replace"))
 
 
 @_dispatch
-def _promotion_rule(type1, type2):
+def _promotion_rule(type1, type2):  # type: ignore[no-untyped-def]
     """Promotion rule.
 
     Args:
