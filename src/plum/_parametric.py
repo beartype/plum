@@ -174,7 +174,7 @@ class CovariantMeta(ParametricTypeMeta):
         )
 
 
-def parametric(original_class: type | None = None, /) -> type:
+def parametric(original_class: type, /) -> type:
     """A decorator for parametric classes.
 
     When the constructor of this parametric type is called before the type parameter
@@ -202,7 +202,6 @@ def parametric(original_class: type | None = None, /) -> type:
             ...
 
     """
-
     original_meta = type(original_class)
 
     # Make a metaclass that derives from both the metaclass of `original_meta` and
@@ -234,7 +233,7 @@ def parametric(original_class: type | None = None, /) -> type:
         else:
             return CovariantMeta.__instancecheck__(cls, instance)
 
-    meta = type(
+    meta: Any = type(
         name,
         bases,
         {
@@ -250,12 +249,13 @@ def parametric(original_class: type | None = None, /) -> type:
         if ps not in subclasses:
 
             def __new__(cls: type, *args: object, **kw_args: object) -> object:
-                return original_class.__new__(cls)
+                _new: Any = original_class.__new__
+                return _new(cls)
 
             # Create subclass.
             name = original_class.__name__
             name += "[" + ", ".join(repr_short(p) for p in ps) + "]"
-            subclass = cast(Callable[..., type], meta)(
+            subclass = meta(
                 name,
                 (parametric_class,),
                 {"__new__": __new__},
@@ -280,7 +280,8 @@ def parametric(original_class: type | None = None, /) -> type:
         if cls.__new__ is __new__:
 
             def class_new(cls: type, *args: object, **kw_args: object) -> object:
-                return original_class.__new__(cls)
+                _new: Any = original_class.__new__
+                return _new(cls)
 
             cls.__new__ = class_new
         super(original_class, cls).__init_subclass__(**kw_args)
@@ -392,7 +393,7 @@ def parametric(original_class: type | None = None, /) -> type:
         return parametric_class
 
     # Create parametric class.
-    parametric_class = cast(Callable[..., type], meta)(
+    parametric_class = meta(
         original_class.__name__,
         (original_class,),
         {
