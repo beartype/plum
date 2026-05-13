@@ -9,8 +9,7 @@ __all__ = (
 )
 
 import contextlib
-from typing import TypeVar, final
-from typing_extensions import deprecated
+from typing import TypeVar
 
 import beartype.door
 from beartype.roar import BeartypeDoorNonpepException
@@ -628,47 +627,3 @@ def kind(SuperClass=object):
 
 
 Kind = kind()  #: A default kind provided for convenience.
-
-
-@final
-@deprecated("Use `typing.Literal[val]` instead.")
-@parametric
-class Val:
-    """A parametric type used to move information from the value domain to the type
-    domain.
-
-    .. deprecated::  v0.5.0
-
-        This class is deprecated and will be removed in a future version.
-        Please use `typing.Literal` instead.
-
-    """
-
-    @classmethod
-    def __infer_type_parameter__(cls, *arg):
-        """Function called when the constructor of `Val` is called to determine the type
-        parameters."""
-        if len(arg) == 0:
-            raise ValueError("The value must be specified.")
-        elif len(arg) > 1:
-            raise ValueError("Too many values. `Val` accepts only one argument.")
-        return arg[0]
-
-    def __init__(self, val=None):
-        """Construct a value object with type `Val(arg)` that can be used to dispatch
-        based on values.
-
-        Args:
-            val (object): The value to be moved to the type domain.
-        """
-        if type(self).concrete:
-            if val is not None and type_parameter(self) != val:
-                raise ValueError("The value must be equal to the type parameter.")
-        else:
-            raise ValueError("The value must be specified.")
-
-    def __repr__(self) -> str:
-        return repr_short(type(self)).replace("._parametric", "") + "()"
-
-    def __eq__(self, other):
-        return type(self) is type(other)
