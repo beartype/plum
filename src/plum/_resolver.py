@@ -263,22 +263,57 @@ def _sort_most_specific_first(methods: list["Method"]) -> list["Method"]:
     Uses the Signature partial order: ``m1 < m2`` means m1 is strictly more
     specific than m2.  Methods that are incomparable remain in their relative
     order within the same topological layer.
+
+    Implements Kahn's algorithm on the "more-specific-than" DAG.  Each
+    unordered pair is checked with exactly two ``__le__`` calls; the strict
+    relation follows as ``le_ij and not le_ji``.  This avoids the
+    ``Signature.__eq__`` calls that ``Comparable.__lt__`` incurs (once per
+    True comparison) and that ``list.remove()`` incurs (once per non-matching
+    element scan), both of which require ``TypeHintWrapper`` construction.
     """
-    if len(methods) <= 1:
+    n = len(methods)
+    if n <= 1:
         return list(methods)
+
+    # Pre-compute the partial order in one pass over unordered pairs.
+    # in_degree[i]   = number of methods strictly more specific than methods[i]
+    # successors[i]  = indices of methods that methods[i] is strictly more
+    #                  specific than (i.e. the nodes i "dominates")
+    in_degree = [0] * n
+    successors: list[list[int]] = [[] for _ in range(n)]
+
+    for i in range(n):
+        sig_i = methods[i].signature
+        for j in range(i + 1, n):
+            le_ij = sig_i <= methods[j].signature
+            le_ji = methods[j].signature <= sig_i
+            if le_ij and not le_ji:  # i strictly more specific than j
+                in_degree[j] += 1
+                successors[i].append(j)
+            elif le_ji and not le_ij:  # j strictly more specific than i
+                in_degree[i] += 1
+                successors[j].append(i)
+            # else: equal or incomparable — no edge
+
+    # Kahn's BFS: process in stable original-index order within each layer.
     result: list[Method] = []
-    remaining = list(methods)
-    while remaining:
-        layer = [
-            m
-            for m in remaining
-            if not any(o is not m and o.signature < m.signature for o in remaining)
-        ]
-        result.extend(layer or remaining)
-        if not layer:  # Safety valve — should never happen with a valid partial order.
-            break
-        for m in layer:
-            remaining.remove(m)
+    queue = [i for i in range(n) if in_degree[i] == 0]
+    while queue:
+        result.extend(methods[i] for i in queue)
+        next_queue: list[int] = []
+        for i in queue:
+            for j in successors[i]:
+                in_degree[j] -= 1
+                if in_degree[j] == 0:
+                    next_queue.append(j)
+        queue = next_queue
+
+    if len(result) < n:
+        # Safety valve — should never happen with a valid partial order.
+        # A cyclic __le__ relation leaves some nodes with in_degree > 0.
+        seen = {id(m) for m in result}
+        result.extend(m for m in methods if id(m) not in seen)
+
     return result
 
 

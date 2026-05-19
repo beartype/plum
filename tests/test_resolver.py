@@ -14,6 +14,7 @@ from plum._resolver import (
     Resolver,
     _document,
     _render_function_call,
+    _sort_most_specific_first,
 )
 
 
@@ -155,19 +156,12 @@ def test_register():
 def test_register_short_circuits_on_first_match():
     """``register`` must stop scanning after the first matching signature.
 
-    The original code built a full boolean list::
-
-        existing = [m.signature == signature for m in self.methods]
-
-    which always evaluates ``Signature.__eq__`` for every registered method,
-    even when the match is found at index 0.  The optimised code uses
-    ``next()`` with a generator expression so that scanning stops as soon as
-    the first match is found.
+    ``register`` uses ``next()`` with a generator expression so that scanning
+    stops as soon as the first matching signature is found.
 
     Scenario: resolver with 2 methods (``int`` at index 0, ``float`` at
     index 1).  Re-registering ``int`` should require exactly one
-    ``Signature.__eq__`` call (int==int → True → stop).  The old code
-    required two (int==int + float==int).
+    ``Signature.__eq__`` call (int==int → True → stop).
     """
 
     def f(*xs):
@@ -185,9 +179,7 @@ def test_register_short_circuits_on_first_match():
         eq_calls += 1
         return real_eq(self, other)
 
-    # Re-register the FIRST method.  Without early-break the list comprehension
-    # checks int==int (True) and float==int (False) = 2 calls.
-    # With next() the generator stops after int==int = 1 call.
+    # Re-register the FIRST method.  next() stops after int==int = 1 call.
     with patch.object(plum.Signature, "__eq__", counting_eq):
         r.register(plum.Method(f, plum.Signature(int)))
 
@@ -211,20 +203,16 @@ def test_register_metadata_updated_incrementally():
     - ``_arity1_methods`` is populated on every subsequent registration.
 
     We count calls to ``is_generic_hint``, which is invoked by three parts of
-    the ``register`` implementation:
+    the ``register`` implementation — each incremental:
 
-    1. **``_method_has_generic_hint``** (already incremental) — called once per
-       registration for the new method only: **1 call**.
-    2. **``generic_origins`` computation** — in the *old* code this rescans all N
-       registered methods each call (total N(N+1)/2 for N registrations); in the
-       *new* incremental code it only scans the new method's types: **1 call**.
-    3. **``_arity1_methods`` rebuild** — in the *old* code ``_can_match_arity1_origin``
-       is called for every registered method each call (total N(N+1)/2); in the
-       *new* code only the new method's origin is checked: **1 call**.
+    1. **``_method_has_generic_hint``** — called once per registration for the
+       new method only: **1 call**.
+    2. **``generic_origins`` computation** — scans only the new method's types:
+       **1 call**.
+    3. **``_arity1_methods`` update** — checks only the new method's origin:
+       **1 call**.
 
-    Expected totals for N=4 registrations:
-    - Old code: 4 + 10 + 10 = **24 calls**
-    - New code: 4 + 4 + 4  = **12 calls** (3 per registration)
+    Expected total for N=4 registrations: **12 calls** (3 per registration).
 
     The module is loaded from the ``.py`` source so that ``is_generic_hint`` (a
     module-level name in ``_resolver.py``) can be patched via the module dict.
@@ -266,15 +254,171 @@ def test_register_metadata_updated_incrementally():
         for t in (int, float, str, bytes):
             r.register(plum.Method(f, plum.Signature(list[t])))
 
-    # Old code: 4 (_mhgh) + 10 (generic_origins full scan) + 10 (_arity1 full
-    # rebuild) = 24.  New code: 3 per registration × 4 = 12.
+    # 3 per registration × 4 = 12.
     expected = n_methods * 3
     assert call_count == expected, (
-        f"Expected {expected} is_generic_hint calls (incremental: 3 per "
-        f"registration), got {call_count}. "
-        f"Old code would give "
-        f"{n_methods + 2 * n_methods * (n_methods + 1) // 2} calls."
+        f"Expected {expected} is_generic_hint calls (3 per registration), "
+        f"got {call_count}."
     )
+
+
+def test_sort_most_specific_first_no_eq_calls():
+    """Kahn's algorithm uses only ``__le__``; ``Signature.__eq__`` is never called.
+
+    Kahn's algorithm determines strict ordering via two ``__le__`` calls per
+    pair (``le_ij`` and ``le_ji``), deriving ``i < j`` as ``le_ij and not
+    le_ji``.  ``Signature.__eq__`` is therefore never called.
+    """
+
+    class A:
+        pass
+
+    class B(A):
+        pass
+
+    class C(B):
+        pass
+
+    class D(C):
+        pass
+
+    def f(*xs):
+        return xs
+
+    # 4-method linear chain registered in least-specific-first order.
+    m_A = plum.Method(f, plum.Signature(A))
+    m_B = plum.Method(f, plum.Signature(B))
+    m_C = plum.Method(f, plum.Signature(C))
+    m_D = plum.Method(f, plum.Signature(D))
+
+    real_eq = plum.Signature.__eq__
+    eq_call_count = 0
+
+    def counting_eq(self, other, /):
+        nonlocal eq_call_count
+        eq_call_count += 1
+        return real_eq(self, other)
+
+    with patch.object(plum.Signature, "__eq__", counting_eq):
+        result = _sort_most_specific_first([m_A, m_B, m_C, m_D])
+
+    assert result[0] is m_D, f"Expected m_D first (most specific), got {result[0]}"
+    assert result[-1] is m_A, f"Expected m_A last (least specific), got {result[-1]}"
+    assert eq_call_count == 0, (
+        f"Expected 0 Signature.__eq__ calls (Kahn's uses __le__ only), "
+        f"got {eq_call_count}."
+    )
+
+
+def test_sort_most_specific_first_safety_valve():
+    """The safety valve fires when all nodes have in-degree > 0 (cyclic ``__le__``).
+
+    Kahn's algorithm uses ``__le__`` to derive the strict partial order.
+    A cyclic ``__le__`` relation leaves every node with in_degree > 0, so the
+    BFS queue empties before all methods are emitted; the safety valve then
+    appends the remaining methods in their original order.
+
+    This path is unreachable with a valid partial order but we exercise it by
+    patching ``Signature.__le__`` to create a three-node cycle:
+    m1 → m2 → m3 → m1 (each method "more specific than" the next).
+    """
+
+    def f(*xs):
+        return xs
+
+    m1 = plum.Method(f, plum.Signature(int))
+    m2 = plum.Method(f, plum.Signature(float))
+    m3 = plum.Method(f, plum.Signature(str))
+
+    methods = [m1, m2, m3]
+
+    # Directed cycle via __le__:
+    #   sig1 ≤ sig2 (not sig2 ≤ sig1)  →  m1 more specific than m2
+    #   sig2 ≤ sig3 (not sig3 ≤ sig2)  →  m2 more specific than m3
+    #   sig3 ≤ sig1 (not sig1 ≤ sig3)  →  m3 more specific than m1
+    # All in-degrees become 1; Kahn's queue starts empty → safety valve fires.
+    _le_table = {
+        (id(m1.signature), id(m2.signature)): True,
+        (id(m2.signature), id(m1.signature)): False,
+        (id(m2.signature), id(m3.signature)): True,
+        (id(m3.signature), id(m2.signature)): False,
+        (id(m3.signature), id(m1.signature)): True,
+        (id(m1.signature), id(m3.signature)): False,
+    }
+
+    def _cyclic_le(self, other):
+        return _le_table.get((id(self), id(other)), False)
+
+    with patch.object(plum.Signature, "__le__", _cyclic_le):
+        result = _sort_most_specific_first(methods)
+
+    # Safety valve: all unprocessed methods are appended in original order.
+    assert set(result) == {m1, m2, m3}
+
+
+def test_register_replace_faithful_triggers_rescan():
+    """When a faithful method replaces an existing one while
+    ``is_faithful_for_non_generic`` is False (due to a *different* unfaithful
+    non-generic method), the full-rescan branch (lines 420-423) executes."""
+
+    class _Unfaithful:
+        """A plain class that opts out of faithful type-checking."""
+
+        __faithful__ = False
+
+    def f(*xs):
+        return xs
+
+    def g(*xs):
+        return xs
+
+    r = Resolver()
+    # Register an unfaithful, non-generic method → flag becomes False.
+    r.register(plum.Method(f, plum.Signature(_Unfaithful)))
+    assert not r.is_faithful_for_non_generic
+
+    # Register a faithful method (different signature).
+    r.register(plum.Method(f, plum.Signature(int)))
+    assert not r.is_faithful_for_non_generic  # still False
+
+    # Replace the faithful ``int`` method with a new implementation.
+    # ``_new_ok`` is True (int is faithful); flag is still False → rescan.
+    r.register(plum.Method(g, plum.Signature(int)))
+    # After rescan the _Unfaithful method is still present, so the flag
+    # remains False — but the rescan branch was exercised.
+    assert not r.is_faithful_for_non_generic
+    # Replacing did not add a new method.
+    assert len(r) == 2
+
+
+def test_register_replace_swaps_arity1_bucket():
+    """When an existing method is replaced and ``_arity1_methods`` is already
+    populated, the old method reference is swapped for the new one in each
+    origin bucket (lines 461-462)."""
+
+    def f(*xs):
+        return xs
+
+    def g(*xs):
+        return xs
+
+    r = Resolver()
+    m1 = plum.Method(f, plum.Signature(list[int]))
+    r.register(m1)
+
+    # After the first generic arity-1 registration, _arity1_methods is built.
+    assert r._arity1_methods
+    assert list in r._arity1_methods
+    assert r._arity1_methods[list][0] is m1
+
+    # Replace with a different implementation but identical signature.
+    m2 = plum.Method(g, plum.Signature(list[int]))
+    r.register(m2)
+
+    # Still one method (replacement, not an addition).
+    assert len(r) == 1
+    # Bucket now holds m2, not m1.
+    assert r._arity1_methods[list][0] is m2
 
 
 def test_len():
