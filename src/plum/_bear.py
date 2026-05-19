@@ -52,7 +52,10 @@ def is_bearable_with_orig(value: object, hint: Any, /) -> bool:
     """
     orig = getattr(value, "__orig_class__", None)
     if orig is not None:
-        # Fast path: exact match avoids TypeHint construction entirely.
+        # ``__orig_class__`` is set by Python after subscripted instantiation
+        # (e.g. ``Box[int](1)``) and by the ``@generic`` decorator.  We trust it
+        # is correct — no isinstance guard needed.  Fast path: exact match
+        # avoids TypeHint construction entirely.
         if orig == hint:
             return True
         return bool(_TypeHint(orig) <= _TypeHint(hint))

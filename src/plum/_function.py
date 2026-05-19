@@ -41,6 +41,8 @@ def _arg_key(arg: object, /) -> object:
     For all other values the bare ``type(arg)`` is returned unchanged.
     """
     orig = getattr(arg, "__orig_class__", None)
+    # ``__orig_class__`` is set by Python after subscripted instantiation and by
+    # the ``@generic`` decorator.  We trust it is correct.
     return orig if orig is not None else type(arg)
 
 
