@@ -10,15 +10,13 @@ import pytest
 
 import plum
 import plum._function
-from plum._function import Function, _convert, _owner_transfer
-from plum._method import Method
+from plum._function import _convert, _owner_transfer
 from plum._resolver import (
     AmbiguousLookupError,
     NotFoundLookupError,
     _change_function_name,
     _unwrap_invoked_methods,
 )
-from plum._signature import Signature
 
 
 def test_convert_reference():
@@ -44,13 +42,13 @@ def test_function():
     def f(x):
         """Doc"""
 
-    g = Function(f)
+    g = plum.Function(f)
 
     assert g.__name__ == "f"
     assert g.__doc__ == "Doc"
 
     # Check global tracking of functions.
-    assert Function._instances[-1] == g
+    assert plum.Function._instances[-1] == g
 
 
 def test_repr(dispatch: plum.Dispatcher):
@@ -104,8 +102,8 @@ def test_owner():
     def f(x):
         pass
 
-    assert Function(f).owner is None
-    assert Function(f, owner="A").owner is A
+    assert plum.Function(f).owner is None
+    assert plum.Function(f, owner="A").owner is A
 
 
 def test_resolve_method_with_cache_no_arguments():
@@ -113,7 +111,7 @@ def test_resolve_method_with_cache_no_arguments():
         pass
 
     with pytest.raises(ValueError, match="`args` and `types` cannot both be `None`"):
-        Function(f)._resolve_method_with_cache()
+        plum.Function(f)._resolve_method_with_cache()
 
 
 @pytest.fixture()
@@ -138,18 +136,18 @@ def test_owner_transfer(owner_transfer):
 
     # Transfer once.
     owner_transfer[A] = B
-    assert Function(f, owner="A").owner is B
+    assert plum.Function(f, owner="A").owner is B
 
     class C:
         pass
 
     # Transfer twice.
     owner_transfer[B] = C
-    assert Function(f, owner="A").owner is C
+    assert plum.Function(f, owner="A").owner is C
 
 
 def test_functionmeta():
-    assert Function.__doc__ == Function._class_doc
+    assert plum.Function.__doc__ == plum.Function._class_doc
 
 
 def test_doc(monkeypatch):
@@ -170,7 +168,7 @@ def test_doc(monkeypatch):
     #   (2) single-line original docstring,
     #   (3) the trimming of whitespace of the original docstring, and
     #   (4) the replacement of `<separator>` by lines of the right length.
-    g = Function(f).dispatch(f)
+    g = plum.Function(f).dispatch(f)
     assert g.__doc__ == "Process an int."
     g.dispatch(f2)
     expected_doc = """
@@ -196,7 +194,7 @@ def test_doc(monkeypatch):
         """
 
     # Test multi-line original docstring.
-    g = Function(f).dispatch(f)
+    g = plum.Function(f).dispatch(f)
     expected_doc = """
     Process an int.
 
@@ -226,7 +224,7 @@ def test_doc(monkeypatch):
         pass
 
     # Test empty original docstring.
-    g = Function(f).dispatch(f)
+    g = plum.Function(f).dispatch(f)
     assert g.__doc__ is None
     g.dispatch(f2)
     expected_doc = """
@@ -271,13 +269,13 @@ def test_methods(dispatch: plum.Dispatcher):
     def f(x: int):
         pass
 
-    method1 = Method(f, Signature(int), function_name="f")
+    method1 = plum.Method(f, plum.Signature(int), function_name="f")
     f_dispatch = dispatch(f)
 
     def f(x: float):
         pass
 
-    method2 = Method(f, Signature(float), function_name="f")
+    method2 = plum.Method(f, plum.Signature(float), function_name="f")
     dispatch(f)
 
     methods = [method1, method2]
@@ -309,7 +307,7 @@ def test_function_multi_dispatch(dispatch: plum.Dispatcher):
     def f(x: int):
         return "int"
 
-    @f.dispatch_multi((float,), Signature(str, precedence=1))
+    @f.dispatch_multi((float,), plum.Signature(str, precedence=1))
     def implementation(x):
         return "float or str"
 
@@ -327,7 +325,7 @@ def test_register():
     def f(x: int):
         pass
 
-    g = Function(f)
+    g = plum.Function(f)
     g.register(f)
 
     assert g._pending == [(f, None, 0)]
@@ -360,7 +358,7 @@ def test_resolve_pending_registrations(dispatch: plum.Dispatcher):
     assert len(f._cache) == 0
 
     # Register in two ways using multi and the wrong name.
-    @f.dispatch_multi((float,), Signature(complex))
+    @f.dispatch_multi((float,), plum.Signature(complex))
     def not_f(x):
         return "float or complex"
 

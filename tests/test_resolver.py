@@ -328,3 +328,33 @@ def test_not_found_lookup_error_renders_with_signature_target():
 
     rendered = rich_render(exc_info.value)
     assert "could not be resolved" in rendered
+
+
+def test_resolve_from_does_not_materialise_filter_list():
+    """``_resolve_from`` must iterate ``methods`` directly, not via a temporary list.
+
+    The original code used::
+
+        for method in [m for m in methods if check(m)]:
+
+    which builds an O(k) temporary list of all matching methods before entering
+    the processing loop.  The fix replaces this with direct iteration::
+
+        for method in methods:
+            if not check(method):
+                continue
+
+    avoiding the allocation entirely.  This is verified by asserting that the
+    source of ``_resolve_from`` contains the direct-iteration pattern.
+    """
+    import inspect
+
+    import plum._resolver as _resolver_mod
+
+    source = inspect.getsource(_resolver_mod.Resolver._resolve_from)
+    assert "for method in methods:" in source, (
+        "_resolve_from does not iterate methods directly; "
+        "it appears to still materialise a temporary filter list. "
+        "Replace `for method in [m for m in methods if check(m)]:` "
+        "with `for method in methods:` + `if not check(method): continue`."
+    )

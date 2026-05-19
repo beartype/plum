@@ -481,7 +481,9 @@ class Resolver:
                 return bool(target <= m.signature)
 
         candidates: list[Method] = []
-        for method in [m for m in methods if check(m)]:
+        for method in methods:
+            if not check(method):
+                continue
             # If none of the candidates are comparable, then add the method as
             # a new candidate and continue.
             if not any(c.signature.is_comparable(method.signature) for c in candidates):
