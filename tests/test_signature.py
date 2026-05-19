@@ -9,7 +9,7 @@ import pytest
 from beartype.door import TypeHint
 
 import plum
-import plum._signature as _sig
+import plum._signature
 from plum import Signature as Sig
 from plum._util import Missing
 
@@ -149,6 +149,14 @@ def test_le_non_signature_returns_not_implemented():
     assert sig.__le__("not_a_signature") is NotImplemented
     assert sig.__le__(42) is NotImplemented
     assert sig.__le__(None) is NotImplemented
+
+
+def test_is_comparable_non_signature_returns_false():
+    """Signature.is_comparable must return False for non-Signature objects."""
+    sig = Sig(int)
+    assert sig.is_comparable("not_a_signature") is False
+    assert sig.is_comparable(42) is False
+    assert sig.is_comparable(None) is False
 
 
 def test_varargs_tie_breaking(dispatch: plum.Dispatcher):
@@ -477,7 +485,7 @@ def test_le_constructs_typehint_wrapper_once_per_pair():
     once per pair regardless of which branch is taken.
     """
 
-    real_wrapper = _sig.TypeHintWrapper
+    real_wrapper = plum._signature.TypeHintWrapper
     calls: list[object] = []
 
     def counting_wrapper(t: object) -> object:
@@ -487,7 +495,7 @@ def test_le_constructs_typehint_wrapper_once_per_pair():
     # bool < int on both positions: equality fails, subset succeeds.
     # Two type pairs → expect exactly 4 TypeHintWrapper constructions
     # (one for each type in each pair, built once).
-    with patch.object(_sig, "TypeHintWrapper", side_effect=counting_wrapper):
+    with patch.object(plum._signature, "TypeHintWrapper", side_effect=counting_wrapper):
         result = Sig(bool, bool) <= Sig(int, int)
 
     assert result is True
@@ -502,7 +510,7 @@ def test_eq_short_circuits_before_building_wrappers():
     already prove inequality.
     """
 
-    real_wrapper = _sig.TypeHintWrapper
+    real_wrapper = plum._signature.TypeHintWrapper
     calls: list[object] = []
 
     def counting_wrapper(t: object) -> object:
@@ -510,7 +518,7 @@ def test_eq_short_circuits_before_building_wrappers():
         return real_wrapper(t)
 
     # --- length mismatch --------------------------------------------------
-    with patch.object(_sig, "TypeHintWrapper", side_effect=counting_wrapper):
+    with patch.object(plum._signature, "TypeHintWrapper", side_effect=counting_wrapper):
         result = Sig(int, int) == Sig(
             int,
         )
@@ -521,7 +529,7 @@ def test_eq_short_circuits_before_building_wrappers():
 
     # --- precedence mismatch -----------------------------------------------
     calls.clear()
-    with patch.object(_sig, "TypeHintWrapper", side_effect=counting_wrapper):
+    with patch.object(plum._signature, "TypeHintWrapper", side_effect=counting_wrapper):
         result = Sig(int, precedence=0) == Sig(int, precedence=1)
     assert result is False
     assert (
@@ -530,7 +538,7 @@ def test_eq_short_circuits_before_building_wrappers():
 
     # --- varargs presence mismatch ----------------------------------------
     calls.clear()
-    with patch.object(_sig, "TypeHintWrapper", side_effect=counting_wrapper):
+    with patch.object(plum._signature, "TypeHintWrapper", side_effect=counting_wrapper):
         result = Sig(int) == Sig(int, varargs=int)
     assert result is False
     assert len(calls) == 0, (
@@ -555,7 +563,7 @@ def test_is_comparable_avoids_redundant_typehint_wrappers():
     and short-circuits after the first direction when it returns ``True``, so
     the maximum for a single-type equal signature is 2 constructions.
     """
-    real_wrapper = _sig.TypeHintWrapper
+    real_wrapper = plum._signature.TypeHintWrapper
     calls: list[object] = []
 
     def counting_wrapper(t: object) -> object:
@@ -565,7 +573,7 @@ def test_is_comparable_avoids_redundant_typehint_wrappers():
     # Equal signatures: self.__le__(other) is True so the override returns
     # True after just 1 __le__ call (2 TypeHintWrapper constructions for
     # 1-type sig).  Without the override: 6 constructions.
-    with patch.object(_sig, "TypeHintWrapper", side_effect=counting_wrapper):
+    with patch.object(plum._signature, "TypeHintWrapper", side_effect=counting_wrapper):
         result = Sig(int).is_comparable(Sig(int))
     assert result is True
     assert len(calls) <= 2, (

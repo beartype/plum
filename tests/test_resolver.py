@@ -306,7 +306,9 @@ def test_redefinition_warning_unwrapping():
         f._resolve_pending_registrations()
 
 
-def test_not_found_lookup_error_renders_with_signature_target():
+def test_not_found_lookup_error_renders_with_signature_target(
+    dispatch: plum.Dispatcher,
+):
     """NotFoundLookupError raised via .invoke() has a Signature as its target.
 
     The __rich_console__ method has two branches: one that shows candidate
@@ -315,7 +317,6 @@ def test_not_found_lookup_error_renders_with_signature_target():
     a Signature, because there are no concrete argument values to compute
     distances from).  This test exercises the Signature branch.
     """
-    dispatch = plum.Dispatcher()
 
     @dispatch
     def f(x: int) -> int:

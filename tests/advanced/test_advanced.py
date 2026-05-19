@@ -56,6 +56,12 @@ def test_defaults(dispatch: plum.Dispatcher):
 
         f_wrong_default._resolve_pending_registrations()
 
+    # Remove from _instances so it doesn't interfere with other tests that
+    # iterate _instances and call _resolve_pending_registrations() (e.g. the
+    # cache benchmarks).  WeakSet.discard is safe even if GC already collected
+    # the object.
+    plum.Function._instances.discard(f_wrong_default)
+
     # Try multiple arguments.
 
     @dispatch
