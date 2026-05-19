@@ -15,7 +15,7 @@ from rich.segment import Segment
 from beartype.door import TypeHint as TypeHintWrapper
 from beartype.peps import resolve_pep563 as beartype_resolve_pep563
 
-from ._bear import is_bearable
+from ._bear import is_bearable, is_bearable_with_orig
 from ._type import is_faithful, resolve_type_hint
 from ._util import (
     Comparable,
@@ -255,7 +255,9 @@ class Signature(Comparable):
             return False
         else:
             types = self.expand_varargs(len(values))
-            return all(is_bearable(v, t) for v, t in zip(values, types, strict=True))
+            return all(
+                is_bearable_with_orig(v, t) for v, t in zip(values, types, strict=True)
+            )
 
     def compute_distance(self, values: tuple[object, ...], /) -> int:
         """For given values, computes the edit distance between these vales and this

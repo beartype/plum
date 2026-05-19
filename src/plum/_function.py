@@ -11,7 +11,7 @@ from typing import Any, Protocol, TypeAlias, TypeVar, overload
 
 from typing_extensions import Self
 
-from ._bear import is_bearable
+from ._bear import is_bearable_with_orig
 from ._method import Method, MethodList
 from ._resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
 from ._signature import Signature, append_default_args
@@ -25,6 +25,22 @@ SomeExceptionType = TypeVar("SomeExceptionType", bound=Exception)
 TypeHints: TypeAlias = tuple[TypeHint, ...]
 CallAny: TypeAlias = Callable[..., Any]
 FunctionCacheEntry: TypeAlias = tuple[CallAny, TypeHint]
+
+
+def _arg_key(arg: object, /) -> object:
+    """Return the effective cache key for a single dispatch argument.
+
+    For instances produced via subscripted-generic instantiation (e.g.
+    ``Box[int](1)``) Python sets ``instance.__orig_class__ = Box[int]`` after
+    ``__init__`` returns.  Using the subscripted form as the cache key ensures
+    that ``Box[int](1)`` and ``Box[str]('x')`` land in separate buckets and are
+    matched with :func:`._bear.is_bearable_with_orig` rather than the bare-type
+    fallback path.
+
+    For all other values the bare ``type(arg)`` is returned unchanged.
+    """
+    orig = getattr(arg, "__orig_class__", None)
+    return orig if orig is not None else type(arg)
 
 
 def _convert(obj: Any, target_type: TypeHint, /) -> Any:
@@ -478,13 +494,14 @@ class Function(metaclass=_FunctionMeta):
                     types = tuple(map(type, args))
                 else:
                     # ── Two-tier cache ─────────────────────────────────────────
-                    # Key on cheap bare types; verify with is_bearable per hit.
-                    key = tuple(map(type, args))
+                    # Key on _arg_key: bare type for normal values, __orig_class__
+                    # for subscripted-generic instances (e.g. Box[int](1) → Box[int]).
+                    key = tuple(map(_arg_key, args))
                     candidates = self._generic_cache.get(key)
                     if candidates is not None:
                         for hint_tuple, impl, return_type in candidates:
                             if all(
-                                is_bearable(a, h)
+                                is_bearable_with_orig(a, h)
                                 for a, h in zip(args, hint_tuple, strict=False)
                             ):
                                 return impl, return_type
@@ -494,9 +511,7 @@ class Function(metaclass=_FunctionMeta):
                     # map to avoid scanning all registered methods.
                     try:
                         if len(args) == 1 and self._resolver._arity1_methods:
-                            resolved = self._resolver.resolve_for_type(
-                                args, type(args[0])
-                            )
+                            resolved = self._resolver.resolve_for_type(args, key[0])
                         else:
                             resolved = self._resolver.resolve(args)
                     except AmbiguousLookupError as e:

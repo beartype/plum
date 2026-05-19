@@ -496,7 +496,7 @@ class Resolver:
                     self.function_name, target, MethodList(candidates)
                 )
 
-    def resolve_for_type(self, target: tuple, arg_type: type) -> Method:
+    def resolve_for_type(self, target: tuple, arg_type: object) -> Method:
         """Arity-1 cold-miss shortcut using the pre-filtered ``_arity1_methods`` map.
 
         Gathers only the methods that could match an arg of ``arg_type``, avoiding
@@ -505,7 +505,9 @@ class Resolver:
 
         Args:
             target: Concrete single-element argument tuple.
-            arg_type: ``type(target[0])``.
+            arg_type: ``type(target[0])`` for plain values, or
+                ``target[0].__orig_class__`` (a subscripted generic alias such as
+                ``Box[int]``) for instances constructed via ``Box[int](...)``.
 
         Returns:
             :class:`.method.Method`: Best matching method.
@@ -513,12 +515,26 @@ class Resolver:
         if not self._arity1_methods:
             return self.resolve(target)
 
+        # ``arg_type`` may be a subscripted generic alias (e.g. ``Box[int]``)
+        # when the caller was constructed via ``Box[int](...)``.  The
+        # ``_arity1_methods`` dict is keyed by bare origin types, so we need the
+        # origin for the ``issubclass`` check.
+        bare_type: type
+        arg_origin = get_origin(arg_type)
+        if arg_origin is not None:
+            bare_type = arg_origin
+        elif isinstance(arg_type, type):
+            bare_type = arg_type
+        else:
+            # Unexpected; fall back to full resolution.
+            return self.resolve(target)
+
         # Gather methods from all registered origins that arg_type is a subtype of,
         # deduplicating across overlapping origin buckets (e.g. list & Sequence).
         seen: set[int] = set()
         relevant: list[Method] = []
         for origin, methods in self._arity1_methods.items():
-            if issubclass(arg_type, origin):
+            if issubclass(bare_type, origin):
                 for m in methods:
                     mid = id(m)
                     if mid not in seen:

@@ -97,14 +97,12 @@ def test_signature_le_box_subscript():
 # ── Basic stdlib generic dispatch ────────────────────────────────────────────────
 
 
-def test_list_int_vs_list_str():
-    d = plum.Dispatcher()
-
-    @d
+def test_list_int_vs_list_str(dispatch: plum.Dispatcher):
+    @dispatch
     def f(x: list[int]) -> str:
         return "list[int]"
 
-    @d
+    @dispatch
     def f(x: list[str]) -> str:
         return "list[str]"
 
@@ -112,14 +110,12 @@ def test_list_int_vs_list_str():
     assert f(["a", "b"]) == "list[str]"
 
 
-def test_list_int_with_list_fallback():
-    d = plum.Dispatcher()
-
-    @d
+def test_list_int_with_list_fallback(dispatch: plum.Dispatcher):
+    @dispatch
     def f(x: list[int]) -> str:
         return "list[int]"
 
-    @d
+    @dispatch
     def f(x: list) -> str:
         return "list"
 
@@ -127,14 +123,12 @@ def test_list_int_with_list_fallback():
     assert f(["a", "b"]) == "list"
 
 
-def test_dict_str_int_dispatch():
-    d = plum.Dispatcher()
-
-    @d
+def test_dict_str_int_dispatch(dispatch: plum.Dispatcher):
+    @dispatch
     def g(x: dict[str, int]) -> str:
         return "dict[str,int]"
 
-    @d
+    @dispatch
     def g(x: dict) -> str:
         return "dict"
 
@@ -248,7 +242,9 @@ def test_generic_call_cached_after_first_call():
     assert f([1, 2, 3]) == "list[int]"
     # list[int] arg takes the two-tier generic cache path.
     generic_cache_size = len(f._generic_cache)
-    assert generic_cache_size > 0, "Expected _generic_cache populated after first generic call"
+    assert (
+        generic_cache_size > 0
+    ), "Expected _generic_cache populated after first generic call"
 
     # Second call with a different list[int] value — should hit cache.
     assert f([4, 5, 6]) == "list[int]"
@@ -270,10 +266,7 @@ def test_different_generic_types_cached_separately():
         return "list[str]"
 
     f([1, 2, 3])
-    size_after_int = len(f._generic_cache)
-
     f(["a", "b"])
-    size_after_str = len(f._generic_cache)
 
     # Both calls share the same bare-type key (list,); the second call adds a
     # second candidate under that key (not a new top-level entry), but the
@@ -326,3 +319,155 @@ def test_parametric_still_works_with_generic_registered():
 
     assert f(MyParam(1)) == "MyParam[int]"
     assert f([1, 2]) == "list[int]"
+
+
+# ── __orig_class__ dispatch ──────────────────────────────────────────────────────
+#
+# When a user instantiates a subscripted generic, Python automatically sets
+# ``instance.__orig_class__ = Box[int]`` *after* ``__init__`` returns.  We can
+# use that attribute as an enriched cache key so that ``Box[int](1)`` and
+# ``Box[str](1)`` route to different overloads even though ``type(...)`` is the
+# same bare ``Box`` for both.
+#
+# All tests below are RED until _arg_key is wired into _resolve_method_with_cache
+# and resolve_for_type.
+
+
+def test_orig_class_two_way_dispatch():
+    """Box[int](1) and Box[str]('x') route to different overloads."""
+    d = plum.Dispatcher()
+
+    @d
+    def f(x: Box[int]) -> str:
+        return "Box[int]"
+
+    @d
+    def f(x: Box[str]) -> str:
+        return "Box[str]"
+
+    assert f(Box[int](1)) == "Box[int]"
+    assert f(Box[str]("hello")) == "Box[str]"
+
+
+def test_orig_class_three_way_with_fallback():
+    """Three-way: Box[int], Box[str], and bare Box (fallback).
+
+    Subscripted instances dispatch correctly.  Plain ``Box(…)`` without
+    ``__orig_class__`` is still ambiguous — beartype cannot distinguish
+    ``Box[int]`` from ``Box[str]`` without the subscript information, so both
+    match, and the bare ``Box`` overload is outcompeted by both of them.
+    """
+    d = plum.Dispatcher()
+
+    @d
+    def f(x: Box[int]) -> str:
+        return "Box[int]"
+
+    @d
+    def f(x: Box[str]) -> str:
+        return "Box[str]"
+
+    @d
+    def f(x: Box) -> str:
+        return "Box"
+
+    assert f(Box[int](1)) == "Box[int]"
+    assert f(Box[str]("hello")) == "Box[str]"
+    # Box[object] has __orig_class__ = Box[object]; TypeHint ordering says it is
+    # NOT a subtype of Box[int] or Box[str], but IS a subtype of bare Box.
+    assert f(Box[object](None)) == "Box"
+    # Bare Box(None) has no __orig_class__ → beartype returns True for both
+    # Box[int] and Box[str] → still ambiguous even with a bare Box fallback.
+    with pytest.raises(plum.AmbiguousLookupError):
+        f(Box(None))
+
+
+def test_orig_class_bare_still_ambiguous_without_fallback():
+    """Bare Box(1) with no Box fallback is still ambiguous (unchanged behaviour)."""
+    d = plum.Dispatcher()
+
+    @d
+    def f(x: Box[int]) -> str:
+        return "Box[int]"
+
+    @d
+    def f(x: Box[str]) -> str:
+        return "Box[str]"
+
+    with pytest.raises(plum.AmbiguousLookupError):
+        f(Box(1))  # no __orig_class__ → ambiguous
+
+
+def test_orig_class_subscripted_wins_over_bare():
+    """Box[int](1) picks Box[int] overload, not the less-specific bare Box."""
+    d = plum.Dispatcher()
+
+    @d
+    def f(x: Box[int]) -> str:
+        return "Box[int]"
+
+    @d
+    def f(x: Box) -> str:
+        return "Box"
+
+    assert f(Box[int](1)) == "Box[int]"
+    assert (
+        f(Box(1)) == "Box[int]"
+    )  # no __orig_class__; beartype can't check T, Box[int] more specific wins
+    # Box[str]("hello") has __orig_class__=Box[str];
+    # TypeHint(Box[str]) <= TypeHint(Box[int]) is False, falls through to bare Box.
+    assert f(Box[str]("hello")) == "Box"
+
+
+def test_orig_class_cache_keyed_separately():
+    """Box[int](1) and Box[str](1) must not share a cache entry."""
+    d = plum.Dispatcher()
+
+    @d
+    def f(x: Box[int]) -> str:
+        return "Box[int]"
+
+    @d
+    def f(x: Box[str]) -> str:
+        return "Box[str]"
+
+    f(Box[int](1))
+    f(Box[str]("x"))
+    # Each __orig_class__ is a distinct cache key
+
+    key_int = (Box[int],)
+    key_str = (Box[str],)
+    assert key_int in f._generic_cache, "Box[int] should be its own cache key"
+    assert key_str in f._generic_cache, "Box[str] should be its own cache key"
+
+
+def test_orig_class_nested_generic():
+    """Box[list[int]](…) routes correctly with nested generic hint."""
+    d = plum.Dispatcher()
+
+    @d
+    def f(x: Box[list[int]]) -> str:
+        return "Box[list[int]]"
+
+    @d
+    def f(x: Box[list[str]]) -> str:
+        return "Box[list[str]]"
+
+    assert f(Box[list[int]]([1, 2, 3])) == "Box[list[int]]"
+    assert f(Box[list[str]](["a"])) == "Box[list[str]]"
+
+
+def test_orig_class_mixed_with_non_generic_arg():
+    """Multi-arg dispatch where only one arg has __orig_class__."""
+    d = plum.Dispatcher()
+
+    @d
+    def f(x: int, y: Box[int]) -> str:
+        return "int,Box[int]"
+
+    @d
+    def f(x: int, y: Box[str]) -> str:
+        return "int,Box[str]"
+
+    assert f(1, Box[int](42)) == "int,Box[int]"
+    assert f(1, Box[str]("hello")) == "int,Box[str]"
