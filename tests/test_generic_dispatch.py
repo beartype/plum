@@ -6,9 +6,11 @@ implementation; the dispatch-routing tests verify behavior that already works.
 
 from collections.abc import Sequence
 from numbers import Number
-from typing import ClassVar, Final, Generic, Literal, TypeVar, Union
+from typing import Annotated, Any, ClassVar, Final, Generic, Literal, TypeVar, Union
 
 import pytest
+
+from beartype.vale import Is
 
 import plum
 from plum._generic import is_generic_hint, le_generic
@@ -58,10 +60,56 @@ def test_is_generic_hint_true(hint):
         Literal[1, 2, 3],
         ClassVar[int],
         Final[int],
+        # Annotated aliases must NOT be classified as generic hints even though
+        # their wrapped type may be a concrete type (get_origin unwraps them).
+        pytest.param(Annotated[int, "meta"], id="Annotated[int,meta]"),
+        pytest.param(Annotated[list[int], "meta"], id="Annotated[list[int],meta]"),
     ],
 )
 def test_is_generic_hint_false(hint):
     assert not is_generic_hint(hint)
+
+
+def test_is_generic_hint_false_annotated_beartype():
+    """Annotated[int, Is[...]] must return False from is_generic_hint.
+
+    Regression: get_origin(Annotated[int, ...]) returns the inner type (int),
+    not Annotated itself, so checking origin against _EXCLUDED_ORIGINS never
+    matched — Annotated hints were incorrectly classified as generic.
+    """
+
+    hint = Annotated[int, Is[lambda v: v > 0]]
+    assert not is_generic_hint(hint)
+
+
+def test_annotated_overload_not_cached_by_bare_type_standalone(
+    dispatch: plum.Dispatcher,
+):
+    """Pure-Annotated dispatch (no generic overload) must never cache by bare type.
+
+    Regression: when is_generic_hint incorrectly returned True for
+    Annotated hints, has_generic_signatures was set, which could re-enable
+    bare-type caching even for non-faithful resolvers.
+    """
+
+    @dispatch
+    def f(x: Annotated[int, Is[lambda v: v > 0]]) -> str:
+        return "positive"
+
+    @dispatch
+    def f(x: Annotated[int, Is[lambda v: v <= 0]]) -> str:
+        return "non-positive"
+
+    # Resolver must be non-faithful and must NOT have generic signatures.
+    assert f(1) == "positive"
+    assert not f._resolver.is_faithful
+    assert not f._resolver.has_generic_signatures
+
+    # Value-dependent calls must never be served from a bare-type cache entry.
+    assert f(3) == "positive"
+    assert f(-1) == "non-positive"
+    assert f(0) == "non-positive"
+    assert (int,) not in f._cache
 
 
 # ── le_generic ───────────────────────────────────────────────────────────────────
@@ -430,10 +478,9 @@ def test_any_fallback_routes_bare_instances(dispatch: plum.Dispatcher):
     - ``Box[int](1)`` routes to ``Box[int]`` (most specific).
     - ``Box[str]("x")`` routes to ``Box[str]`` (most specific).
     """
-    from typing import Any as _Any
 
     @dispatch
-    def f(x: Box[_Any]) -> str:
+    def f(x: Box[Any]) -> str:
         return "Box[Any]"
 
     @dispatch
@@ -451,10 +498,9 @@ def test_any_fallback_routes_bare_instances(dispatch: plum.Dispatcher):
 
 def test_any_fallback_alone_matches_everything(dispatch: plum.Dispatcher):
     """``Box[Any]`` alone matches bare *and* subscripted ``Box`` instances."""
-    from typing import Any as _Any
 
     @dispatch
-    def f(x: Box[_Any]) -> str:
+    def f(x: Box[Any]) -> str:
         return "Box[Any]"
 
     assert f(Box(1)) == "Box[Any]"
@@ -669,9 +715,6 @@ def test_non_faithful_generic_mix_not_cached_by_bare_type(dispatch: plum.Dispatc
     ``is_faithful or has_generic_signatures`` incorrectly enabled caching
     for non-faithful resolvers that happened to also have generic signatures.
     """
-    from typing import Annotated
-
-    from beartype.vale import Is
 
     @dispatch
     def f(x: Annotated[int, Is[lambda v: v > 0]]) -> str:

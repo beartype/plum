@@ -13,7 +13,7 @@ import typing
 import warnings
 from collections.abc import Callable
 from types import UnionType
-from typing import Annotated, Any, TypeVar, get_args, get_origin, overload
+from typing import Any, TypeVar, get_args, get_origin, overload
 
 from beartype.door import TypeHint
 from beartype.typing import Protocol
@@ -21,11 +21,15 @@ from beartype.typing import Protocol
 # Special typing forms that look like parameterised generics but are NOT
 # container types whose element types can be inferred from runtime values.
 # We must exclude these so that `infer_hint`-based caching is never applied
-# to value-constrained types like ``Annotated[int, Is[lambda x: x > 0]]``
-# or to ``Union[int, str]``.
+# to ``Union[int, str]`` and similar forms.
+#
+# Note: ``Annotated[T, ...]`` is NOT handled here.  On Python 3.10
+# (the minimum supported version) ``get_origin(Annotated[X, ...])`` returns
+# the inner type ``X``, not ``Annotated`` itself — so comparing origin to
+# ``Annotated`` would never match.  Instead, ``is_generic_hint`` detects
+# ``Annotated`` aliases explicitly via the ``__metadata__`` attribute (PEP 593).
 _EXCLUDED_ORIGINS: frozenset[object] = frozenset(
     {
-        Annotated,  # Annotated[T, metadata...]
         typing.Union,  # Union[int, str], Optional[int]
         UnionType,  # int | str  (PEP 604 syntax)
     }
@@ -44,16 +48,25 @@ def is_generic_hint(t: object, /) -> bool:
     * User-defined ``Generic`` subclasses: ``Box[int]``
 
     Plain (unsubscripted) types such as ``list``, ``Box``, or ``int`` return
-    ``False``.
+    ``False``.  :data:`~typing.Annotated` aliases always return ``False``
+    regardless of the wrapped type.
 
     Args:
         t: Object to inspect.
 
     Returns:
         ``True`` if *t* has a non-``None`` ``get_origin``, non-empty
-        ``get_args``, and is not a special typing form like
-        :data:`~typing.Annotated` or :data:`~typing.Union`.
+        ``get_args``, is not a special typing form like :data:`~typing.Union`,
+        and is not a :data:`~typing.Annotated` alias.
     """
+    # ``Annotated[X, ...]`` carries ``__metadata__`` (PEP 593).  We must
+    # detect it here rather than via ``get_origin``: on Python 3.10 (the
+    # minimum supported version) ``get_origin(Annotated[X, ...])`` returns
+    # the inner type ``X``, not ``Annotated`` itself, so an origin-based check
+    # would silently misclassify value-dependent hints as generic and
+    # re-enable unsafe bare-type caching for non-faithful overloads.
+    if getattr(t, "__metadata__", None) is not None:
+        return False
     origin = get_origin(t)
     return (
         origin is not None
