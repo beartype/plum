@@ -111,6 +111,80 @@ A bare hint like `Box` behaves the same way as `Box[Any]` for dispatch purposes 
 
 % skip: end
 
+## Auto-inferring types with `@plum.generic`
+
+If your class can always infer `T` from the constructor arguments — for
+example, `Box(1)` should behave exactly like `Box[int](1)` — you can opt into
+automatic inference with `@plum.generic`:
+
+```python
+from typing import Generic, TypeVar
+from plum import dispatch, generic
+
+T = TypeVar("T")
+
+
+@generic
+class Box(Generic[T]):
+    def __init__(self, value) -> None:
+        self.value = value
+
+    @classmethod
+    def __infer_type_parameter__(cls, instance):
+        return type(instance.value)
+
+
+@dispatch
+def unwrap(b: Box[int]) -> str:
+    return "int box"
+
+
+@dispatch
+def unwrap(b: Box[str]) -> str:
+    return "str box"
+```
+
+Bare instances now dispatch correctly **without** an `A[Any]` fallback:
+
+```python
+>>> unwrap(Box(1))
+'int box'
+
+>>> unwrap(Box("hello"))
+'str box'
+
+>>> unwrap(Box[str](1))   # explicit subscription still wins
+'str box'
+```
+
+The decorator wraps `__init__` so that after construction it sets `instance.__orig_class__ = Box[inferred_T]`.  When you use the subscripted form `Box[str](1)`, Python's own machinery overwrites that attribute after `__init__` returns, so explicit parameterisation always takes precedence.
+
+**Inference rule**: define `__infer_type_parameter__(cls, instance)` as a classmethod that inspects the freshly-constructed instance and returns the type parameter.  For multi-parameter generics return a tuple:
+
+```python
+from typing import Generic, TypeVar
+from plum import generic
+
+T = TypeVar("T")
+S = TypeVar("S")
+
+
+@generic
+class Pair(Generic[T, S]):
+    def __init__(self, x, y) -> None:
+        self.x, self.y = x, y
+
+    @classmethod
+    def __infer_type_parameter__(cls, instance):
+        return (type(instance.x), type(instance.y))
+```
+
+`@generic` raises `TypeError` at decoration time if `__infer_type_parameter__` is not defined on the class or any of its ancestors.
+
+```{note}
+`@plum.generic` is a **lightweight** opt-in that simply sets `__orig_class__`. For richer parametric machinery — covariant subclassing, custom type-parameter validation, and multi-parameter ordering — see [Parametric Classes](parametric).
+```
+
 ## Why this isn't fully automatic
 
 There are two fundamental limits at play:
@@ -118,44 +192,33 @@ There are two fundamental limits at play:
 1. **Python only attaches `__orig_class__` on subscripted construction.**  An instance created via `Box(1)` simply does not carry information about `T`, so no runtime introspection can recover it.
 1. **Beartype validates type parameters by inspecting elements**, which works for containers (`list`, `dict`, etc.) but not for user-defined generic classes whose type-variable usage is opaque to the runtime.
 
-Rather than guess or silently pick an arbitrary overload, Plum requires you to
-state your intent explicitly via the `A[Any]` (or bare `A`) fallback overload.
+Rather than guess or silently pick an arbitrary overload, Plum requires you to state your intent explicitly via the `A[Any]` (or bare `A`) fallback overload.
 
 ## Summary
 
-| Call                | Best overload chosen                                            |
-| ------------------- | --------------------------------------------------------------- |
-| `f(Box[int](1))`    | `Box[int]` (or `Box[Any]` / `Box` if `Box[int]` not present)    |
-| `f(Box[str]("x"))`  | `Box[str]` (or `Box[Any]` / `Box` if `Box[str]` not present)    |
-| `f(Box(1))`         | `Box[Any]` or bare `Box` only; `NotFoundLookupError` if absent  |
+| Call                      | Without `@generic`                                               | With `@generic`                                     |
+| ------------------------- | ---------------------------------------------------------------- | --------------------------------------------------- |
+| `f(Box[int](1))`          | `Box[int]` (or `Box[Any]` / `Box` if `Box[int]` not present)    | `Box[int]` (same; explicit subscription always wins)|
+| `f(Box[str]("x"))`        | `Box[str]` (or `Box[Any]` / `Box` if `Box[str]` not present)    | `Box[str]` (same)                                   |
+| `f(Box(1))`               | `Box[Any]` or bare `Box` only; `NotFoundLookupError` if absent  | `Box[int]` (inferred from `type(1)`)                |
 
 For more advanced parametric-class machinery (covariance, custom type-parameter inference, etc.), see [Parametric Classes](parametric).
 
 (generics-performance)=
 ## Performance
 
-Generic dispatch carries a small overhead compared to a regular faithful type.
-The table below is generated each time the documentation is built so the numbers
-reflect your actual hardware and Python version.
+Generic dispatch carries a small overhead compared to a regular faithful type. The table below is generated each time the documentation is built so the numbers reflect your actual hardware and Python version.
 
 Two scenarios are measured:
 
-- **Faithful** — only a bare `B` overload (no type-parameter overloads).  Plum
-  uses the fast faithful-cache path.
-- **Generic** — `A[Any]`, `A[int]`, and `A[str]` overloads.  Plum uses the
-  two-tier generic cache, keyed on `__orig_class__` when present.
+- **Faithful** — only a bare `B` overload (no type-parameter overloads).  Plum uses the fast faithful-cache path.
+- **Generic** — `A[Any]`, `A[int]`, and `A[str]` overloads.  Plum uses the two-tier generic cache, keyed on `__orig_class__` when present.
 
 ```{include} _generated/generics_timing.md
 ```
 
-The faithful path is the fastest because Plum caches by `type(arg)` and checks
-membership with a single `issubclass` call.  The generic path must additionally
-read `__orig_class__` (or detect its absence), build the two-tier cache key, and
-run the TypeHint subtype check on a cache miss.
+The faithful path is the fastest because Plum caches by `type(arg)` and checks membership with a single `issubclass` call.  The generic path must additionally read `__orig_class__` (or detect its absence), build the two-tier cache key, and run the TypeHint subtype check on a cache miss.
 
 ```{tip}
-If your code only dispatches on the *class* `A` and never needs to distinguish
-`A[int]` from `A[str]`, declare a bare `A` (or `B` in the example above) overload
-and omit the parameterized ones.  You get the faithful-cache speed with no change
-to the calling code.
+If your code only dispatches on the *class* `A` and never needs to distinguish `A[int]` from `A[str]`, declare a bare `A` (or `B` in the example above) overload and omit the parameterized ones.  You get the faithful-cache speed with no change to the calling code.
 ```

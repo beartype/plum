@@ -36,14 +36,13 @@ def is_bearable_with_orig(value: object, hint: Any, /) -> bool:
     This function adds two behaviours on top of :func:`is_bearable`:
 
     1. **``__orig_class__`` present.**  Membership is checked using
-       :class:`beartype.door.TypeHint` subtype ordering
-       (``orig_class <= hint``).  ``is_bearable_with_orig(Box[int](1), Box[str])``
-       returns ``False``; ``is_bearable_with_orig(Box[int](1), Box)`` returns
-       ``True``.
+       :class:`beartype.door.TypeHint` subtype ordering (``orig_class <=
+       hint``).  ``is_bearable_with_orig(Box[int](1), Box[str])`` returns
+       ``False``; ``is_bearable_with_orig(Box[int](1), Box)`` returns ``True``.
 
     2. **``__orig_class__`` absent and *hint* is a parameterized user-defined
-       Generic.**  In this case beartype cannot verify the type parameter, so
-       to keep dispatch unambiguous we treat such hints as *non-matching* —
+       Generic.**  In this case beartype cannot verify the type parameter, so to
+       keep dispatch unambiguous we treat such hints as *non-matching* —
        **except** when every parameter is :data:`typing.Any`, which acts as the
        explicit "no parameterization information available" fallback overload.
        So ``is_bearable_with_orig(Box(1), Box[int])`` returns ``False`` while
