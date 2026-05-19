@@ -537,3 +537,38 @@ def test_eq_short_circuits_before_building_wrappers():
         "Expected 0 TypeHintWrapper calls for varargs-presence mismatch, "
         f"got {len(calls)}"
     )
+
+
+def test_is_comparable_avoids_redundant_typehint_wrappers():
+    """``Signature.is_comparable`` should build ``TypeHintWrapper`` at most as
+    many times as two ``__le__`` calls require.
+
+    The base ``Comparable.is_comparable`` expands to::
+
+        self < other or self == other or self > other
+
+    Each branch triggers ``Signature.__eq__`` (which builds ``TypeHintWrapper``
+    objects) *in addition to* ``__le__``.  For equal single-type signatures
+    this results in 6 ``TypeHintWrapper`` constructions.
+
+    The ``Signature`` override only calls ``__le__`` twice (once per direction),
+    and short-circuits after the first direction when it returns ``True``, so
+    the maximum for a single-type equal signature is 2 constructions.
+    """
+    real_wrapper = _sig.TypeHintWrapper
+    calls: list[object] = []
+
+    def counting_wrapper(t: object) -> object:
+        calls.append(t)
+        return real_wrapper(t)
+
+    # Equal signatures: self.__le__(other) is True so the override returns
+    # True after just 1 __le__ call (2 TypeHintWrapper constructions for
+    # 1-type sig).  Without the override: 6 constructions.
+    with patch.object(_sig, "TypeHintWrapper", side_effect=counting_wrapper):
+        result = Sig(int).is_comparable(Sig(int))
+    assert result is True
+    assert len(calls) <= 2, (
+        f"Expected at most 2 TypeHintWrapper calls for is_comparable "
+        f"(equal 1-type signatures), got {len(calls)}"
+    )

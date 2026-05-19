@@ -241,6 +241,20 @@ class Signature(Comparable):
         else:
             return False
 
+    def is_comparable(self, other: object, /) -> bool:
+        """Check whether this signature is comparable with another.
+
+        Two signatures are comparable iff one is a subtype of the other, so
+        calling ``__le__`` once per direction is sufficient.  This avoids the
+        redundant ``__eq__`` calls (and their ``TypeHintWrapper`` construction
+        cost) that the generic ``Comparable.is_comparable`` incurs.
+        """
+        if not isinstance(other, Signature):
+            return False
+        # Short-circuit: if self <= other the answer is True without checking
+        # the reverse direction.
+        return bool(self.__le__(other)) or bool(other.__le__(self))
+
     def match(self, values: tuple[object, ...], /) -> bool:
         """Check whether values match the signature.
 
