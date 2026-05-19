@@ -2,6 +2,7 @@ import inspect
 import operator
 from numbers import Number as Num, Real as Re
 from typing import Any, Union
+from unittest.mock import patch
 
 import pytest
 
@@ -452,3 +453,33 @@ def test_append_default_args():
     # Test that `itemgetter` is supported.
     f = operator.itemgetter(0)
     assert len(plum.append_default_args(Sig.from_callable(f), f)) == 1
+
+
+def test_le_constructs_typehint_wrapper_once_per_pair():
+    """TypeHintWrapper must be constructed once per type pair in ``__le__``.
+
+    A two-pass implementation constructs TypeHintWrapper for every type twice
+    when the equality check (pass 1) fails and the subset check (pass 2)
+    succeeds.  The optimised implementation must construct each wrapper exactly
+    once per pair regardless of which branch is taken.
+    """
+
+    import plum._signature as _sig
+
+    real_wrapper = _sig.TypeHintWrapper
+    calls: list[object] = []
+
+    def counting_wrapper(t: object) -> object:
+        calls.append(t)
+        return real_wrapper(t)
+
+    # bool < int on both positions: equality fails, subset succeeds.
+    # Two type pairs → expect exactly 4 TypeHintWrapper constructions
+    # (one for each type in each pair, built once).
+    with patch.object(_sig, "TypeHintWrapper", side_effect=counting_wrapper):
+        result = Sig(bool, bool) <= Sig(int, int)
+
+    assert result is True
+    assert (
+        len(calls) == 4
+    ), f"Expected 4 TypeHintWrapper constructions, got {len(calls)}: {calls}"
