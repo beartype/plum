@@ -53,6 +53,12 @@ supported, they do incur a performance penalty.
 For optimal performance, is recommended to use parametric types only where necessary.
 `Union` and `Optional` do not incur a performance penalty.
 
+```{note}
+Dispatching on your *own* generic classes (subclasses of `typing.Generic[T]`)
+is also partially supported via Python's `__orig_class__` mechanism — see
+[Custom Generic Types](generics) for the recommended pattern and its limitations.
+```
+
 ````{important}
 Plum's type system is powered by [Beartype](https://github.com/beartype/beartype).
 To ensure constant-time performance,

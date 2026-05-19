@@ -395,7 +395,7 @@ class Resolver:
                 list(m.signature.types)
                 + ([m.signature.varargs] if m.signature.has_varargs else [])
             )
-            if is_generic_hint(t)
+            if is_generic_hint(t) and isinstance(get_origin(t), type)
         )
         self.has_generic_signatures = bool(self.generic_origins)
 

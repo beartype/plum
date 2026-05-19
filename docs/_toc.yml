@@ -18,6 +18,7 @@ chapters:
   - file: conversion_promotion
   - file: precedence
   - file: parametric
+  - file: generics
   - file: union_aliases
   - file: autoreload
   - file: command_line

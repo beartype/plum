@@ -350,12 +350,11 @@ def test_orig_class_two_way_dispatch():
 
 
 def test_orig_class_three_way_with_fallback():
-    """Three-way: Box[int], Box[str], and bare Box (fallback).
+    """Three-way: Box[int], Box[str], and bare Box as a non-parameterized fallback.
 
-    Subscripted instances dispatch correctly.  Plain ``Box(…)`` without
-    ``__orig_class__`` is still ambiguous — beartype cannot distinguish
-    ``Box[int]`` from ``Box[str]`` without the subscript information, so both
-    match, and the bare ``Box`` overload is outcompeted by both of them.
+    Subscripted instances dispatch correctly via ``__orig_class__``.  Instances
+    without ``__orig_class__`` (plain ``Box(…)``) do not match the
+    parameterized overloads and fall through to the bare ``Box`` overload.
     """
     d = plum.Dispatcher()
 
@@ -376,14 +375,18 @@ def test_orig_class_three_way_with_fallback():
     # Box[object] has __orig_class__ = Box[object]; TypeHint ordering says it is
     # NOT a subtype of Box[int] or Box[str], but IS a subtype of bare Box.
     assert f(Box[object](None)) == "Box"
-    # Bare Box(None) has no __orig_class__ → beartype returns True for both
-    # Box[int] and Box[str] → still ambiguous even with a bare Box fallback.
-    with pytest.raises(plum.AmbiguousLookupError):
-        f(Box(None))
+    # Bare Box(None) has no __orig_class__: parameterized overloads no longer
+    # match — only the bare Box overload does.
+    assert f(Box(None)) == "Box"
 
 
-def test_orig_class_bare_still_ambiguous_without_fallback():
-    """Bare Box(1) with no Box fallback is still ambiguous (unchanged behaviour)."""
+def test_orig_class_bare_no_fallback_raises_not_found():
+    """Bare Box(1) with only parameterized overloads raises NotFoundLookupError.
+
+    Bare instances carry no parameterization information, so they don't match
+    any of ``Box[int]`` / ``Box[str]``.  Without a fallback overload there is
+    no method to dispatch to.
+    """
     d = plum.Dispatcher()
 
     @d
@@ -394,12 +397,12 @@ def test_orig_class_bare_still_ambiguous_without_fallback():
     def f(x: Box[str]) -> str:
         return "Box[str]"
 
-    with pytest.raises(plum.AmbiguousLookupError):
-        f(Box(1))  # no __orig_class__ → ambiguous
+    with pytest.raises(plum.NotFoundLookupError):
+        f(Box(1))  # no __orig_class__ → no match
 
 
 def test_orig_class_subscripted_wins_over_bare():
-    """Box[int](1) picks Box[int] overload, not the less-specific bare Box."""
+    """Box[int](1) picks Box[int]; bare Box(1) falls through to bare Box overload."""
     d = plum.Dispatcher()
 
     @d
@@ -411,12 +414,55 @@ def test_orig_class_subscripted_wins_over_bare():
         return "Box"
 
     assert f(Box[int](1)) == "Box[int]"
-    assert (
-        f(Box(1)) == "Box[int]"
-    )  # no __orig_class__; beartype can't check T, Box[int] more specific wins
+    # No __orig_class__: Box[int] doesn't match → falls through to bare Box.
+    assert f(Box(1)) == "Box"
     # Box[str]("hello") has __orig_class__=Box[str];
     # TypeHint(Box[str]) <= TypeHint(Box[int]) is False, falls through to bare Box.
     assert f(Box[str]("hello")) == "Box"
+
+
+def test_any_fallback_routes_bare_instances():
+    """`Box[Any]` is the explicit fallback for bare `Box(...)` instances.
+
+    With overloads for ``Box[Any]``, ``Box[int]`` and ``Box[str]``:
+    - ``Box(1)`` (no ``__orig_class__``) routes to ``Box[Any]``.
+    - ``Box[int](1)`` routes to ``Box[int]`` (most specific).
+    - ``Box[str]("x")`` routes to ``Box[str]`` (most specific).
+    """
+    from typing import Any as _Any
+
+    d = plum.Dispatcher()
+
+    @d
+    def f(x: Box[_Any]) -> str:
+        return "Box[Any]"
+
+    @d
+    def f(x: Box[int]) -> str:
+        return "Box[int]"
+
+    @d
+    def f(x: Box[str]) -> str:
+        return "Box[str]"
+
+    assert f(Box(1)) == "Box[Any]"
+    assert f(Box[int](1)) == "Box[int]"
+    assert f(Box[str]("hello")) == "Box[str]"
+
+
+def test_any_fallback_alone_matches_everything():
+    """``Box[Any]`` alone matches bare *and* subscripted ``Box`` instances."""
+    from typing import Any as _Any
+
+    d = plum.Dispatcher()
+
+    @d
+    def f(x: Box[_Any]) -> str:
+        return "Box[Any]"
+
+    assert f(Box(1)) == "Box[Any]"
+    assert f(Box[int](1)) == "Box[Any]"
+    assert f(Box[str]("hello")) == "Box[Any]"
 
 
 def test_orig_class_cache_keyed_separately():
