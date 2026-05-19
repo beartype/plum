@@ -458,6 +458,52 @@ class Function(metaclass=_FunctionMeta):
         method, return_type = self._resolve_method_with_cache(args=args)
         return _convert(method(*args, **kw), return_type)
 
+    def _resolve_generic(self, args: tuple[object, ...]) -> FunctionCacheEntry:
+        key = tuple(map(_arg_key, args))
+        candidates = self._generic_cache.get(key)
+        if candidates is not None:
+            for hint_tuple, impl, return_type in candidates:
+                if all(
+                    is_bearable_with_orig(a, h)
+                    for a, h in zip(args, hint_tuple, strict=False)
+                ):
+                    return impl, return_type
+        # Full miss — run the resolver to get the matched signature.
+        # For arity-1, use the pre-filtered _arity1_methods map.
+        try:
+            if len(args) == 1 and self._resolver._arity1_methods:
+                resolved = self._resolver.resolve_for_type(args, key[0])
+            else:
+                resolved = self._resolver.resolve(args)
+        except AmbiguousLookupError as e:
+            __tracebackhide__ = True
+            if self.owner:
+                e.f_name = self.__qualname__
+            raise e from None
+        except NotFoundLookupError as e:
+            __tracebackhide__ = True
+            if self.owner:
+                e.f_name = self.__qualname__
+            return self._handle_not_found_lookup_error(e)
+        impl = resolved.implementation
+        return_type = resolved.return_type
+        sig = resolved.signature
+        if sig.has_varargs:
+            n_extra = len(args) - len(sig.types)
+            hint_tuple = sig.types + (sig.varargs,) * max(0, n_extra)
+        else:
+            hint_tuple = sig.types
+        entry: tuple[tuple[TypeHint, ...], CallAny, TypeHint] = (
+            hint_tuple,
+            impl,
+            return_type,
+        )
+        if candidates is None:
+            self._generic_cache[key] = [entry]
+        else:
+            candidates.append(entry)
+        return impl, return_type
+
     def _resolve_method_with_cache(
         self,
         args: tuple[object, ...] | Signature | None = None,
@@ -483,67 +529,17 @@ class Function(metaclass=_FunctionMeta):
             # At this point, `args` must be a tuple (not `Signature` or `None`).
             assert isinstance(args, tuple)
             if self._resolver.has_generic_signatures:
-                generic_origins = self._resolver.generic_origins
                 # Check whether any argument's runtime type overlaps with a
                 # registered generic origin (e.g. list for list[int]).
                 needs_generic = any(
-                    issubclass(type(a), o) for a in args for o in generic_origins
+                    issubclass(type(a), o)
+                    for a in args
+                    for o in self._resolver.generic_origins
                 )
-                if not needs_generic:
-                    # No generic arg — use the fast faithful path below.
-                    types = tuple(map(type, args))
-                else:
-                    # ── Two-tier cache ─────────────────────────────────────────
-                    # Key on _arg_key: bare type for normal values, __orig_class__
-                    # for subscripted-generic instances (e.g. Box[int](1) → Box[int]).
-                    key = tuple(map(_arg_key, args))
-                    candidates = self._generic_cache.get(key)
-                    if candidates is not None:
-                        for hint_tuple, impl, return_type in candidates:
-                            if all(
-                                is_bearable_with_orig(a, h)
-                                for a, h in zip(args, hint_tuple, strict=False)
-                            ):
-                                return impl, return_type
-                    # Full miss — run the resolver directly to also get the
-                    # matched signature (needed to build hint_tuple).
-                    # Tier 2: for arity-1, use the pre-filtered _arity1_methods
-                    # map to avoid scanning all registered methods.
-                    try:
-                        if len(args) == 1 and self._resolver._arity1_methods:
-                            resolved = self._resolver.resolve_for_type(args, key[0])
-                        else:
-                            resolved = self._resolver.resolve(args)
-                    except AmbiguousLookupError as e:
-                        __tracebackhide__ = True
-                        if self.owner:
-                            e.f_name = self.__qualname__
-                        raise e from None
-                    except NotFoundLookupError as e:
-                        __tracebackhide__ = True
-                        if self.owner:
-                            e.f_name = self.__qualname__
-                        return self._handle_not_found_lookup_error(e)
-                    impl = resolved.implementation
-                    return_type = resolved.return_type
-                    # Build per-arg hint tuple, expanding varargs if present.
-                    sig = resolved.signature
-                    sig_types = sig.types
-                    if sig.has_varargs:
-                        n_extra = len(args) - len(sig_types)
-                        hint_tuple = sig_types + (sig.varargs,) * max(0, n_extra)
-                    else:
-                        hint_tuple = sig_types
-                    entry: tuple[tuple[TypeHint, ...], CallAny, TypeHint]
-                    entry = (hint_tuple, impl, return_type)
-                    if candidates is None:
-                        self._generic_cache[key] = [entry]
-                    else:
-                        candidates.append(entry)
-                    return impl, return_type
-
-            else:
-                types = tuple(map(type, args))
+                if needs_generic:
+                    return self._resolve_generic(args)
+            # No generic arg — fall through to the faithful cache below.
+            types = tuple(map(type, args))
         try:
             return self._cache[types]
         except KeyError:
@@ -554,11 +550,16 @@ class Function(metaclass=_FunctionMeta):
 
             # Cache miss. Run the resolver based on the arguments.
             method, return_type = self.resolve_method(args)
-            # Cache when the resolver is faithful (safe to key on bare types),
-            # or when we reached here via the non-generic arm of a mixed
-            # function (has_generic_signatures but this arg didn't match any
-            # generic origin, so types are plain bare-type tuples).
-            if self._resolver.is_faithful or self._resolver.has_generic_signatures:
+            # Cache by bare type when it is safe to do so:
+            #   1. All methods are faithful (resolver-wide), OR
+            #   2. We're on the non-generic arm of a mixed function and every
+            #      non-generic method is faithful (i.e. no value-dependent overloads
+            #      like Annotated/BeartypeValidator).  Generic-only methods can never
+            #      be reached on this arm, so they don't affect caching safety.
+            if self._resolver.is_faithful or (
+                self._resolver.has_generic_signatures
+                and self._resolver.is_faithful_for_non_generic
+            ):
                 self._cache[types] = method, return_type
             return method, return_type
 

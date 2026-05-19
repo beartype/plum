@@ -2017,7 +2017,6 @@ dev = [
     { name = "nox-uv" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "plum-dispatch" },
     { name = "pre-commit" },
     { name = "pylint" },
     { name = "pyright" },
@@ -2028,7 +2027,6 @@ dev = [
 ]
 docs = [
     { name = "jupyter-book" },
-    { name = "plum-dispatch" },
 ]
 lint = [
     { name = "pre-commit" },
@@ -2081,7 +2079,6 @@ dev = [
     { name = "nox", specifier = ">=2025.11.12" },
     { name = "nox-uv", specifier = ">=0.6.3" },
     { name = "numpy", specifier = ">=2.0.2" },
-    { name = "plum-dispatch" },
     { name = "pre-commit", specifier = ">=4.3.0" },
     { name = "pylint", specifier = ">=4.0.4" },
     { name = "pyright", specifier = ">=1.1.331" },
@@ -2090,10 +2087,7 @@ dev = [
     { name = "sybil", extras = ["pytest"], specifier = ">=9.2.0" },
     { name = "uv", specifier = ">=0.9.16" },
 ]
-docs = [
-    { name = "jupyter-book", specifier = ">=1.0.0,<2.0.0" },
-    { name = "plum-dispatch" },
-]
+docs = [{ name = "jupyter-book", specifier = ">=1.0.0,<2.0.0" }]
 lint = [
     { name = "pre-commit", specifier = ">=4.3.0" },
     { name = "pylint", specifier = ">=4.0.4" },

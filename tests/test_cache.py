@@ -171,5 +171,10 @@ def test_cache_unfaithful(dispatch: plum.Dispatcher):
     # list[int] args take the two-tier generic path → stored in _generic_cache.
     assert f(1) == 1
     assert f([1]) == 2
+    # The resolver is not faithful as a whole (list[int] is non-faithful in
+    # plum's sense), but every non-generic method (int) IS faithful —
+    # is_faithful_for_non_generic must be True so the int result gets cached.
+    assert not f._resolver.is_faithful
+    assert f._resolver.is_faithful_for_non_generic
     assert len(f._cache) == 1
     assert len(f._generic_cache) == 1

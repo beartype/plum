@@ -233,13 +233,25 @@ def _unwrap_invoked_methods(f: Callable[..., object], /) -> Callable[..., object
     return f
 
 
+def _method_has_generic_hint(m: "Method") -> bool:
+    """Return True if *m* has a generic hint in its positional types or varargs.
+
+    Used to classify methods as reachable only via the generic arm so that
+    bare-type caching on the non-generic arm remains safe.
+    """
+    return any(is_generic_hint(t) for t in m.signature.types) or (
+        m.signature.has_varargs and is_generic_hint(m.signature.varargs)
+    )
+
+
 def _can_match_arity1_origin(hint: object, origin: type) -> bool:
     """True if an arg of bare type `origin` could possibly match `hint`.
 
     Used to pre-filter the method list for the arity-1 fast dispatch path.
     """
     if is_generic_hint(hint):
-        return issubclass(origin, get_origin(hint))  # type: ignore[arg-type]
+        hint_origin = get_origin(hint)
+        return isinstance(hint_origin, type) and issubclass(origin, hint_origin)
     elif isinstance(hint, type):
         return issubclass(origin, hint)
     return False
@@ -293,6 +305,7 @@ class Resolver:
         "function_name",
         "methods",
         "is_faithful",
+        "is_faithful_for_non_generic",
         "has_generic_signatures",
         "generic_origins",
         "_arity1_methods",
@@ -312,6 +325,7 @@ class Resolver:
         self.function_name = function_name
         self.methods: MethodList = MethodList()
         self.is_faithful: bool = True
+        self.is_faithful_for_non_generic: bool = True
         self.has_generic_signatures: bool = False
         self.generic_origins: tuple[type, ...] = ()
         self._arity1_methods: dict[type, list[Method]] = {}
@@ -384,18 +398,30 @@ class Resolver:
         # Use a double negation for slightly better performance.
         self.is_faithful = not any(not s.signature.is_faithful for s in self.methods)
 
+        # True when every method is either faithful OR carries a generic hint in
+        # its positional types or varargs (and thus can only be reached via the
+        # generic arm, not the bare-type fallback).  When True, caching by bare
+        # type on the non-generic arm is safe even if the resolver as a whole is
+        # not faithful.
+        self.is_faithful_for_non_generic = all(
+            m.signature.is_faithful or _method_has_generic_hint(m) for m in self.methods
+        )
+
         # Collect the bare origin types of all parameterised generic hints
         # (e.g. `list` from `list[int]`, `dict` from `dict[str, int]`).
-        # Used to avoid calling infer_hint on arguments whose runtime type
-        # is not a generic container registered in this resolver.
+        # Deduplicated (dict.fromkeys preserves first-seen order) so that the
+        # `needs_generic` check in _resolve_method_with_cache performs exactly
+        # one issubclass call per distinct origin, not one per overload.
         self.generic_origins = tuple(
-            cast(type, get_origin(t))
-            for m in self.methods
-            for t in (
-                list(m.signature.types)
-                + ([m.signature.varargs] if m.signature.has_varargs else [])
+            dict.fromkeys(
+                cast(type, get_origin(t))
+                for m in self.methods
+                for t in (
+                    list(m.signature.types)
+                    + ([m.signature.varargs] if m.signature.has_varargs else [])
+                )
+                if is_generic_hint(t) and isinstance(get_origin(t), type)
             )
-            if is_generic_hint(t) and isinstance(get_origin(t), type)
         )
         self.has_generic_signatures = bool(self.generic_origins)
 

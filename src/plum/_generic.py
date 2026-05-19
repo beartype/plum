@@ -12,6 +12,7 @@ import functools
 import typing
 import warnings
 from collections.abc import Callable
+from types import UnionType
 from typing import Annotated, Any, Protocol, TypeVar, get_args, get_origin, overload
 
 from beartype.door import TypeHint
@@ -25,6 +26,7 @@ _EXCLUDED_ORIGINS: frozenset[object] = frozenset(
     {
         Annotated,  # Annotated[T, metadata...]
         typing.Union,  # Union[int, str], Optional[int]
+        UnionType,  # int | str  (PEP 604 syntax)
     }
 )
 
@@ -52,7 +54,12 @@ def is_generic_hint(t: object, /) -> bool:
         :data:`~typing.Annotated` or :data:`~typing.Union`.
     """
     origin = get_origin(t)
-    return origin is not None and bool(get_args(t)) and origin not in _EXCLUDED_ORIGINS
+    return (
+        origin is not None
+        and isinstance(origin, type)
+        and bool(get_args(t))
+        and origin not in _EXCLUDED_ORIGINS
+    )
 
 
 def le_generic(left: object, right: object, /) -> bool:

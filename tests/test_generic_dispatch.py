@@ -6,7 +6,7 @@ implementation; the dispatch-routing tests verify behavior that already works.
 
 from collections.abc import Sequence
 from numbers import Number
-from typing import Generic, TypeVar
+from typing import ClassVar, Final, Generic, Literal, TypeVar, Union
 
 import pytest
 
@@ -48,6 +48,22 @@ def test_is_generic_hint_false_for_bare_types():
     assert not is_generic_hint(str)
     assert not is_generic_hint(object)
     assert not is_generic_hint(Box)
+
+
+def test_is_generic_hint_false_for_union_forms():
+    # typing.Union form — was already excluded
+    assert not is_generic_hint(Union[int, str])  # noqa: UP007
+    # PEP 604 syntax — types.UnionType origin must also be excluded
+    assert not is_generic_hint(int | str)
+    assert not is_generic_hint(int | str | None)
+
+
+def test_is_generic_hint_false_for_special_forms():
+    # Special forms whose get_origin() is a _SpecialForm, not a plain type
+    assert not is_generic_hint(Literal[1])
+    assert not is_generic_hint(Literal[1, 2, 3])
+    assert not is_generic_hint(ClassVar[int])
+    assert not is_generic_hint(Final[int])
 
 
 # ── le_generic ───────────────────────────────────────────────────────────────────
@@ -216,6 +232,11 @@ def test_faithful_method_cached_in_generic_function():
 
     # First call — cache miss, should populate cache.
     assert f(42) == "int"
+    # The resolver is not faithful as a whole (list[int] is non-faithful in
+    # plum's sense), but every non-generic method (int) IS faithful, so
+    # bare-type caching on the non-generic arm is safe.
+    assert not f._resolver.is_faithful
+    assert f._resolver.is_faithful_for_non_generic
     # int arg takes the faithful path → stored in _cache (not _generic_cache).
     assert len(f._cache) > 0, "Expected _cache to be populated after first int call"
 
@@ -517,3 +538,79 @@ def test_orig_class_mixed_with_non_generic_arg():
 
     assert f(1, Box[int](42)) == "int,Box[int]"
     assert f(1, Box[str]("hello")) == "int,Box[str]"
+
+
+# ── Caching correctness: non-faithful + generic mix ──────────────────────────────────
+
+
+def test_non_faithful_generic_mix_not_cached_by_bare_type():
+    """A function with both a generic overload (list[int]) and a
+    value-dependent (Annotated/BeartypeValidator) overload must NOT cache
+    the value-dependent result by bare type.  If it did, a subsequent call
+    with the same type but a different value would return the wrong method.
+
+    This is a regression test for the bug where
+    ``is_faithful or has_generic_signatures`` incorrectly enabled caching
+    for non-faithful resolvers that happened to also have generic signatures.
+    """
+    from typing import Annotated
+
+    from beartype.vale import Is
+
+    d = plum.Dispatcher()
+
+    @d
+    def f(x: Annotated[int, Is[lambda v: v > 0]]) -> str:
+        return "positive"
+
+    @d
+    def f(x: Annotated[int, Is[lambda v: v <= 0]]) -> str:
+        return "non-positive"
+
+    @d
+    def f(x: list[int]) -> str:
+        return "list[int]"
+
+    # Trigger registration so resolver state is populated.
+    assert f(5) == "positive"
+
+    # Resolver properties: non-faithful (Annotated overloads) + has generics
+    # (list[int]).
+    assert not f._resolver.is_faithful
+    assert f._resolver.has_generic_signatures
+    # is_faithful_for_non_generic must be False: Annotated overloads are non-faithful
+    # and non-generic, so bare-type caching on the non-generic arm is unsafe.
+    assert not f._resolver.is_faithful_for_non_generic
+
+    # Subsequent calls with different values of the same type must dispatch correctly
+    # (the int result must NOT have been cached under the bare type (int,)).
+    assert f(-1) == "non-positive"  # must NOT return "positive" from a stale cache
+    assert f(0) == "non-positive"
+    assert f(3) == "positive"
+    assert f([1, 2]) == "list[int]"
+    assert (int,) not in f._cache
+
+
+# ── _can_match_arity1_origin safety: non-type origins ────────────────────────────
+
+
+def test_literal_overload_does_not_raise_on_registration():
+    """Registering a Literal-typed arity-1 function must not raise TypeError.
+
+    Before the fix, is_generic_hint(Literal[1]) was True, causing
+    _can_match_arity1_origin to pass Literal (a _SpecialForm, not a type) to
+    issubclass, raising TypeError during resolver.register().
+    """
+    d = plum.Dispatcher()
+
+    @d
+    def f(x: Literal[1]) -> str:
+        return "one"
+
+    @d
+    def f(x: int) -> str:
+        return "int"
+
+    # Registration must complete without raising; dispatch should work too.
+    assert f(1) in ("one", "int")  # exact winner depends on faithfulness ordering
+    assert f(2) == "int"
