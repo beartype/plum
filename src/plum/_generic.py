@@ -13,9 +13,10 @@ import typing
 import warnings
 from collections.abc import Callable
 from types import UnionType
-from typing import Annotated, Any, Protocol, TypeVar, get_args, get_origin, overload
+from typing import Annotated, Any, TypeVar, get_args, get_origin, overload
 
 from beartype.door import TypeHint
+from beartype.typing import Protocol
 
 # Special typing forms that look like parameterised generics but are NOT
 # container types whose element types can be inferred from runtime values.
@@ -83,7 +84,7 @@ def le_generic(left: object, right: object, /) -> bool:
 # ---------------------------------------------------------------------------
 
 
-class HasInferTypeParameter(Protocol):
+class HasInferTypeParameter(Protocol):  # type: ignore[misc]
     @classmethod
     def __infer_type_parameter__(cls, instance: object) -> object: ...
 

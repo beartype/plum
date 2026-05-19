@@ -16,6 +16,7 @@ from operator import or_
 from types import UnionType
 from typing import Literal, TypeGuard, TypeVar, cast, final, get_args, get_origin
 
+from beartype.typing import Protocol
 from beartype.vale._core._valecore import BeartypeValidator
 
 T = TypeVar("T", bound="ResolvableType")
@@ -316,7 +317,7 @@ def is_faithful(x: object, /) -> bool:
 UNION_TYPES = (typing.Union, UnionType, typing.Optional)
 
 
-class _SupportsDunderFaithful(typing.Protocol):
+class _SupportsDunderFaithful(Protocol):  # type: ignore[misc]
     __faithful__: bool
 
 

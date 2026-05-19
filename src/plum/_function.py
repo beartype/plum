@@ -9,6 +9,7 @@ from functools import wraps
 from types import MethodType
 from typing import Any, Protocol, TypeAlias, TypeVar, overload
 
+from beartype.typing import Protocol
 from typing_extensions import Self
 
 from ._bear import is_bearable_with_orig
@@ -656,10 +657,10 @@ def _generate_qualname(f: CallAny, /) -> str:
     return qualname
 
 
-class _DispatchFunction(Protocol):
+class _DispatchFunction(Protocol):  # type: ignore[misc]
     """Protocol for the `dispatch` method of a function."""
 
-    def __call__(
+    def __call__(  # type: ignore[empty-body]
         self, method: CallAny | None, precedence: int
     ) -> Self | Callable[[CallAny], Self]: ...
 
