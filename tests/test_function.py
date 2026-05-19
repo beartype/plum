@@ -4,10 +4,12 @@ import sys
 import textwrap
 import threading
 import typing
+from unittest.mock import patch
 
 import pytest
 
 import plum
+import plum._function
 from plum._function import Function, _convert, _owner_transfer
 from plum._method import Method
 from plum._resolver import (
@@ -723,9 +725,6 @@ def test_resolve_method_with_cache_calls_type_once_per_arg(
     The optimised code hoists ``tuple(map(type, args))`` before the generic check
     and reuses the pre-computed types tuple, so ``type()`` is called exactly once.
     """
-    from unittest.mock import patch
-
-    import plum._function as _fn
 
     @dispatch
     def f(x: list[int]):
@@ -753,7 +752,7 @@ def test_resolve_method_with_cache_calls_type_once_per_arg(
 
     # Shadow the ``type`` builtin inside plum._function so that every
     # ``type(x)`` call in that module goes through ``counting_type``.
-    with patch.dict(_fn.__dict__, {"type": counting_type}):
+    with patch.dict(plum._function.__dict__, {"type": counting_type}):
         result = f(sentinel)
 
     assert result == "str"

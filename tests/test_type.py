@@ -203,6 +203,22 @@ def test_resolve_type_hint_new_union():
     assert resolve_type_hint(float | int) == float | int
 
 
+def test_resolve_type_hint_user_defined_generic_with_args():
+    import typing
+
+    T = typing.TypeVar("T")
+
+    class Box(typing.Generic[T]):
+        pass
+
+    # Box[int].__module__ is this test module, not a stdlib module, so
+    # _is_hint(Box[int]) returns False.  The elif-branch for user-defined
+    # parameterised generics handles it by recursing into the args and
+    # reconstructing the subscripted type.
+    result = resolve_type_hint(Box[int])
+    assert result == Box[int]
+
+
 def test_is_faithful():
     # Example of a not faithful type.
     t_nf = Callable[[int], int]

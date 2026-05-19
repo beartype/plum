@@ -9,6 +9,7 @@ import pytest
 from beartype.door import TypeHint
 
 import plum
+import plum._signature as _sig
 from plum import Signature as Sig
 from plum._util import Missing
 
@@ -136,6 +137,18 @@ def test_expand_varargs():
     assert s.expand_varargs(2) == (int, int)
     assert s.expand_varargs(3) == (int, int, float)
     assert s.expand_varargs(4) == (int, int, float, float)
+
+
+def test_le_non_signature_returns_not_implemented():
+    """Signature.__le__ must return NotImplemented for non-Signature objects.
+
+    This lets Python's comparison machinery try the reflected operation instead
+    of raising TypeError, which is the correct protocol for __le__.
+    """
+    sig = Sig(int)
+    assert sig.__le__("not_a_signature") is NotImplemented
+    assert sig.__le__(42) is NotImplemented
+    assert sig.__le__(None) is NotImplemented
 
 
 def test_varargs_tie_breaking(dispatch: plum.Dispatcher):
@@ -464,8 +477,6 @@ def test_le_constructs_typehint_wrapper_once_per_pair():
     once per pair regardless of which branch is taken.
     """
 
-    import plum._signature as _sig
-
     real_wrapper = _sig.TypeHintWrapper
     calls: list[object] = []
 
@@ -483,3 +494,46 @@ def test_le_constructs_typehint_wrapper_once_per_pair():
     assert (
         len(calls) == 4
     ), f"Expected 4 TypeHintWrapper constructions, got {len(calls)}: {calls}"
+
+
+def test_eq_short_circuits_before_building_wrappers():
+    """``__eq__`` must return ``False`` without constructing any ``TypeHintWrapper``
+    objects when cheap scalar checks (types length, varargs presence, precedence)
+    already prove inequality.
+    """
+
+    real_wrapper = _sig.TypeHintWrapper
+    calls: list[object] = []
+
+    def counting_wrapper(t: object) -> object:
+        calls.append(t)
+        return real_wrapper(t)
+
+    # --- length mismatch --------------------------------------------------
+    with patch.object(_sig, "TypeHintWrapper", side_effect=counting_wrapper):
+        result = Sig(int, int) == Sig(
+            int,
+        )
+    assert result is False
+    assert (
+        len(calls) == 0
+    ), f"Expected 0 TypeHintWrapper calls for length mismatch, got {len(calls)}"
+
+    # --- precedence mismatch -----------------------------------------------
+    calls.clear()
+    with patch.object(_sig, "TypeHintWrapper", side_effect=counting_wrapper):
+        result = Sig(int, precedence=0) == Sig(int, precedence=1)
+    assert result is False
+    assert (
+        len(calls) == 0
+    ), f"Expected 0 TypeHintWrapper calls for precedence mismatch, got {len(calls)}"
+
+    # --- varargs presence mismatch ----------------------------------------
+    calls.clear()
+    with patch.object(_sig, "TypeHintWrapper", side_effect=counting_wrapper):
+        result = Sig(int) == Sig(int, varargs=int)
+    assert result is False
+    assert len(calls) == 0, (
+        "Expected 0 TypeHintWrapper calls for varargs-presence mismatch, "
+        f"got {len(calls)}"
+    )

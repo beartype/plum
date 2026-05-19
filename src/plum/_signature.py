@@ -126,16 +126,23 @@ class Signature(Comparable):
         if not isinstance(other, Signature):
             return False
 
+        # Fast early exits: check cheap scalar properties before paying the
+        # cost of TypeHintWrapper construction.
+        if (
+            len(self.types) != len(other.types)
+            or (self.varargs is Missing) != (other.varargs is Missing)
+            or self.precedence != other.precedence
+        ):
+            return False
+
         # We don't need to check faithfulness, because that is automatically
         # derived from the arguments.
         return (
             tuple(TypeHintWrapper(t) for t in self.types),
             Missing if self.varargs is Missing else TypeHintWrapper(self.varargs),
-            self.precedence,
         ) == (
             tuple(TypeHintWrapper(t) for t in other.types),
             Missing if other.varargs is Missing else TypeHintWrapper(other.varargs),
-            other.precedence,
         )
 
     def __hash__(self) -> int:

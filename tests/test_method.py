@@ -147,6 +147,23 @@ def test_repr_complex():
     assert rich_render(m.repr_mismatch(frozenset({0}), False)).startswith(result)
 
 
+def test_repr_mismatch_varargs_only():
+    """A method with no positional types (varargs-only signature) must render
+    correctly.  This exercises the False branch of `if sig.types:` in
+    text_from_method, which is skipped when the method has no positional args.
+    """
+
+    def f(*args):
+        pass
+
+    m = Method(f, Signature(varargs=int), function_name="f")
+    rendered = rich_render(m.repr_mismatch(frozenset(), True))
+    # The varargs annotation must appear in the rendering.
+    assert "*args: int" in rendered
+    # Without positional types there should be no spurious commas.
+    assert "f(*args: int)" in rendered
+
+
 def test_methodlist_repr(monkeypatch, dispatch: plum.Dispatcher):
     @dispatch
     def f(x: int):

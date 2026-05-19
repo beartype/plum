@@ -4,6 +4,8 @@ import warnings
 
 import pytest
 
+from tests.util import rich_render
+
 import plum
 from plum._method import Method
 from plum._resolver import (
@@ -302,3 +304,27 @@ def test_redefinition_warning_unwrapping():
         match=r".*`.*test_resolver.py:[0-9]+`.*" * 2,
     ):
         f._resolve_pending_registrations()
+
+
+def test_not_found_lookup_error_renders_with_signature_target():
+    """NotFoundLookupError raised via .invoke() has a Signature as its target.
+
+    The __rich_console__ method has two branches: one that shows candidate
+    suggestions (used when the target is a tuple of runtime arguments) and one
+    that simply shows the "could not be resolved" line (used when the target is
+    a Signature, because there are no concrete argument values to compute
+    distances from).  This test exercises the Signature branch.
+    """
+    dispatch = plum.Dispatcher()
+
+    @dispatch
+    def f(x: int) -> int:
+        return x
+
+    # .invoke(str) looks up by Signature, not by runtime argument types, so
+    # NotFoundLookupError.target is a Signature, not a tuple.
+    with pytest.raises(plum.NotFoundLookupError) as exc_info:
+        f.invoke(str)
+
+    rendered = rich_render(exc_info.value)
+    assert "could not be resolved" in rendered
