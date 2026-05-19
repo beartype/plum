@@ -53,6 +53,7 @@ wheels = [
 ]
 docs = [
     "jupyter-book>=1.0.0,<2.0.0",
+    "plum-dispatch",
 ]
 lint = [
     "pre-commit>=4.3.0",

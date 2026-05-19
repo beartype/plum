@@ -107,11 +107,7 @@ def g(b: Box[int]) -> str:
     return "int"
 ```
 
-A bare hint like `Box` behaves the same way as `Box[Any]` for dispatch
-purposes — every `Box` instance matches it, and parameterized overloads still
-win for subscripted instances when their parameter agrees.  `Box` and
-`Box[Any]` are interchangeable as fallback overloads; pick whichever reads
-more clearly in your codebase.
+A bare hint like `Box` behaves the same way as `Box[Any]` for dispatch purposes — every `Box` instance matches it, and parameterized overloads still win for subscripted instances when their parameter agrees.  `Box` and `Box[Any]` are interchangeable as fallback overloads; pick whichever reads more clearly in your codebase.
 
 % skip: end
 
@@ -119,12 +115,8 @@ more clearly in your codebase.
 
 There are two fundamental limits at play:
 
-1. **Python only attaches `__orig_class__` on subscripted construction.**  An
-   instance created via `Box(1)` simply does not carry information about `T`,
-   so no runtime introspection can recover it.
-2. **Beartype validates type parameters by inspecting elements**, which works
-   for containers (`list`, `dict`, etc.) but not for user-defined generic
-   classes whose type-variable usage is opaque to the runtime.
+1. **Python only attaches `__orig_class__` on subscripted construction.**  An instance created via `Box(1)` simply does not carry information about `T`, so no runtime introspection can recover it.
+1. **Beartype validates type parameters by inspecting elements**, which works for containers (`list`, `dict`, etc.) but not for user-defined generic classes whose type-variable usage is opaque to the runtime.
 
 Rather than guess or silently pick an arbitrary overload, Plum requires you to
 state your intent explicitly via the `A[Any]` (or bare `A`) fallback overload.
@@ -137,5 +129,33 @@ state your intent explicitly via the `A[Any]` (or bare `A`) fallback overload.
 | `f(Box[str]("x"))`  | `Box[str]` (or `Box[Any]` / `Box` if `Box[str]` not present)    |
 | `f(Box(1))`         | `Box[Any]` or bare `Box` only; `NotFoundLookupError` if absent  |
 
-For more advanced parametric-class machinery (covariance, custom type-parameter
-inference, etc.), see [Parametric Classes](parametric).
+For more advanced parametric-class machinery (covariance, custom type-parameter inference, etc.), see [Parametric Classes](parametric).
+
+(generics-performance)=
+## Performance
+
+Generic dispatch carries a small overhead compared to a regular faithful type.
+The table below is generated each time the documentation is built so the numbers
+reflect your actual hardware and Python version.
+
+Two scenarios are measured:
+
+- **Faithful** — only a bare `B` overload (no type-parameter overloads).  Plum
+  uses the fast faithful-cache path.
+- **Generic** — `A[Any]`, `A[int]`, and `A[str]` overloads.  Plum uses the
+  two-tier generic cache, keyed on `__orig_class__` when present.
+
+```{include} _generated/generics_timing.md
+```
+
+The faithful path is the fastest because Plum caches by `type(arg)` and checks
+membership with a single `issubclass` call.  The generic path must additionally
+read `__orig_class__` (or detect its absence), build the two-tier cache key, and
+run the TypeHint subtype check on a cache miss.
+
+```{tip}
+If your code only dispatches on the *class* `A` and never needs to distinguish
+`A[int]` from `A[str]`, declare a bare `A` (or `B` in the example above) overload
+and omit the parameterized ones.  You get the faithful-cache speed with no change
+to the calling code.
+```
