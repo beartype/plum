@@ -189,7 +189,7 @@ class Pair(Generic[T, S]):
 `@generic` raises `TypeError` at decoration time if `__infer_type_parameter__` is not defined on the class or any of its ancestors.
 
 ```{note}
-`@plum.generic` is a **lightweight** opt-in that simply sets `__orig_class__`. For richer parametric machinery — covariant subclassing, custom type-parameter validation, and multi-parameter ordering — see [Parametric Classes](parametric).
+`@plum.generic` is a **lightweight** opt-in that simply sets `__orig_class__`. For richer parametric machinery — covariant subclassing, custom type-parameter validation, and multi-parameter ordering — see [Parametric Classes](parametric.md).
 ```
 
 ## Why this isn't fully automatic
@@ -209,7 +209,7 @@ Rather than guess or silently pick an arbitrary overload, Plum requires you to s
 | `f(Box[str]("x"))`        | `Box[str]` (or `Box[Any]` / `Box` if `Box[str]` not present)    | `Box[str]` (same)                                   |
 | `f(Box(1))`               | `Box[Any]` or bare `Box` only; `NotFoundLookupError` if absent  | `Box[int]` (inferred from `type(1)`)                |
 
-For more advanced parametric-class machinery (covariance, custom type-parameter inference, etc.), see [Parametric Classes](parametric).
+For more advanced parametric-class machinery (covariance, custom type-parameter inference, etc.), see [Parametric Classes](parametric.md).
 
 (generics-performance)=
 ## Performance

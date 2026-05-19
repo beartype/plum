@@ -54,32 +54,22 @@ class CustomInfer(Generic[T]):
 # ---------------------------------------------------------------------------
 
 
-def test_bare_call_sets_orig_class_single_arg():
-    b = Box(1)
-    assert hasattr(b, "__orig_class__")
-    assert b.__orig_class__ == Box[int]
-
-
-def test_bare_call_sets_orig_class_str():
-    b = Box("hello")
-    assert b.__orig_class__ == Box[str]
-
-
-def test_bare_call_sets_orig_class_multi_arg():
-    p = Pair(1, "x")
-    assert p.__orig_class__ == Pair[int, str]
-
-
-def test_subscripted_call_overrides_inferred():
-    # A[str](1): our wrapper infers Box[int], but Python's _GenericAlias.__call__
-    # sets __orig_class__ = Box[str] afterwards.  The explicit form must win.
-    b = Box[str](1)
-    assert b.__orig_class__ == Box[str]
-
-
-def test_subscripted_call_same_type():
-    b = Box[int](1)
-    assert b.__orig_class__ == Box[int]
+@pytest.mark.parametrize(
+    "instance, expected_orig_class",
+    [
+        (Box(1), Box[int]),
+        (Box("hello"), Box[str]),
+        (Pair(1, "x"), Pair[int, str]),
+        # Explicit subscription overrides the inferred type: Box[str](1) -> Box[str].
+        pytest.param(Box[str](1), Box[str], id="subscripted_overrides_inferred"),
+        (Box[int](1), Box[int]),
+        (CustomInfer(42, "ignored"), CustomInfer[int]),
+        (CustomInfer("hi", 99), CustomInfer[str]),
+    ],
+)
+def test_orig_class_is_set(instance, expected_orig_class):
+    assert hasattr(instance, "__orig_class__")
+    assert instance.__orig_class__ == expected_orig_class
 
 
 def test_no_args_does_not_crash():
@@ -99,17 +89,6 @@ def test_no_args_does_not_crash():
     assert not hasattr(n, "__orig_class__")
 
 
-def test_custom_infer_type_parameter():
-    c = CustomInfer(42, "ignored")
-    assert c.__orig_class__ == CustomInfer[int]
-
-
-def test_custom_infer_overrides_default():
-    # Pair of (str, int) with first-arg-only inference.
-    c = CustomInfer("hi", 99)
-    assert c.__orig_class__ == CustomInfer[str]
-
-
 # ---------------------------------------------------------------------------
 # Dispatch routing tests
 # ---------------------------------------------------------------------------
@@ -125,25 +104,19 @@ def unwrap(b: Box[str]) -> str:
     return "str box"
 
 
-def test_dispatch_routes_bare_int():
-    assert unwrap(Box(1)) == "int box"
-
-
-def test_dispatch_routes_bare_str():
-    assert unwrap(Box("hi")) == "str box"
-
-
-def test_dispatch_routes_subscripted_int():
-    assert unwrap(Box[int](1)) == "int box"
-
-
-def test_dispatch_routes_subscripted_str():
-    assert unwrap(Box[str]("hi")) == "str box"
-
-
-def test_dispatch_routes_subscripted_override():
-    # Explicit Box[str](1) should route to str overload even though 1 is int.
-    assert unwrap(Box[str](1)) == "str box"
+@pytest.mark.parametrize(
+    "arg, expected",
+    [
+        (Box(1), "int box"),
+        (Box("hi"), "str box"),
+        (Box[int](1), "int box"),
+        (Box[str]("hi"), "str box"),
+        # Explicit Box[str](1) routes to str overload even though 1 is int.
+        pytest.param(Box[str](1), "str box", id="subscripted_overrides_inferred"),
+    ],
+)
+def test_dispatch_routes_unwrap(arg, expected):
+    assert unwrap(arg) == expected
 
 
 def test_dispatch_no_any_fallback_needed():
@@ -168,12 +141,15 @@ def process(c: CustomInfer[str]) -> str:
     return "custom str"
 
 
-def test_dispatch_custom_infer_int():
-    assert process(CustomInfer(10, "ignored")) == "custom int"
-
-
-def test_dispatch_custom_infer_str():
-    assert process(CustomInfer("hi", 0)) == "custom str"
+@pytest.mark.parametrize(
+    "arg, expected",
+    [
+        (CustomInfer(10, "ignored"), "custom int"),
+        (CustomInfer("hi", 0), "custom str"),
+    ],
+)
+def test_dispatch_custom_infer(arg, expected):
+    assert process(arg) == expected
 
 
 # ---------------------------------------------------------------------------

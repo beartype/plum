@@ -27,43 +27,41 @@ class BoxCo(Generic[T_co]):
         self.val = val
 
 
+class Container(Generic[T]):
+    def __init__(self, val: object) -> None:
+        self.val = val
+
+
 # ── is_generic_hint ─────────────────────────────────────────────────────────────
 
 
-def test_is_generic_hint_parameterized_builtins():
-    assert is_generic_hint(list[int])
-    assert is_generic_hint(dict[str, int])
-    assert is_generic_hint(tuple[int, str])
-    assert is_generic_hint(set[float])
+@pytest.mark.parametrize(
+    "hint",
+    [list[int], dict[str, int], tuple[int, str], set[float], Sequence[int], Box[int]],
+)
+def test_is_generic_hint_true(hint):
+    assert is_generic_hint(hint)
 
 
-def test_is_generic_hint_typing_generics():
-    assert is_generic_hint(Sequence[int])
-    assert is_generic_hint(Box[int])
-
-
-def test_is_generic_hint_false_for_bare_types():
-    assert not is_generic_hint(int)
-    assert not is_generic_hint(list)
-    assert not is_generic_hint(str)
-    assert not is_generic_hint(object)
-    assert not is_generic_hint(Box)
-
-
-def test_is_generic_hint_false_for_union_forms():
-    # typing.Union form — was already excluded
-    assert not is_generic_hint(Union[int, str])  # noqa: UP007
-    # PEP 604 syntax — types.UnionType origin must also be excluded
-    assert not is_generic_hint(int | str)
-    assert not is_generic_hint(int | str | None)
-
-
-def test_is_generic_hint_false_for_special_forms():
-    # Special forms whose get_origin() is a _SpecialForm, not a plain type
-    assert not is_generic_hint(Literal[1])
-    assert not is_generic_hint(Literal[1, 2, 3])
-    assert not is_generic_hint(ClassVar[int])
-    assert not is_generic_hint(Final[int])
+@pytest.mark.parametrize(
+    "hint",
+    [
+        int,
+        list,
+        str,
+        object,
+        Box,
+        Union[int, str],  # noqa: UP007
+        int | str,
+        int | str | None,
+        Literal[1],
+        Literal[1, 2, 3],
+        ClassVar[int],
+        Final[int],
+    ],
+)
+def test_is_generic_hint_false(hint):
+    assert not is_generic_hint(hint)
 
 
 # ── le_generic ───────────────────────────────────────────────────────────────────
@@ -92,22 +90,19 @@ def test_le_generic_box_covariant():
 # ── Signature ordering with generic hints ────────────────────────────────────────
 
 
-def test_signature_le_list_int_le_list():
-    assert plum.Signature(list[int]) <= plum.Signature(list)
-    assert not (plum.Signature(list) <= plum.Signature(list[int]))
-
-
-def test_signature_le_list_int_le_list_number():
-    assert plum.Signature(list[int]) <= plum.Signature(list[Number])
-
-
-def test_signature_le_sequence_covariant():
-    assert plum.Signature(Sequence[int]) <= plum.Signature(Sequence[Number])
-
-
-def test_signature_le_box_subscript():
-    assert plum.Signature(Box[int]) <= plum.Signature(Box)
-    assert not (plum.Signature(Box) <= plum.Signature(Box[int]))
+@pytest.mark.parametrize(
+    "left, right, expected",
+    [
+        (plum.Signature(list[int]), plum.Signature(list), True),
+        (plum.Signature(list), plum.Signature(list[int]), False),
+        (plum.Signature(list[int]), plum.Signature(list[Number]), True),
+        (plum.Signature(Sequence[int]), plum.Signature(Sequence[Number]), True),
+        (plum.Signature(Box[int]), plum.Signature(Box), True),
+        (plum.Signature(Box), plum.Signature(Box[int]), False),
+    ],
+)
+def test_signature_le_with_generics(left, right, expected):
+    assert (left <= right) == expected
 
 
 # ── Basic stdlib generic dispatch ────────────────────────────────────────────────
@@ -152,14 +147,12 @@ def test_dict_str_int_dispatch(dispatch: plum.Dispatcher):
     assert g({"a": "b"}) == "dict"
 
 
-def test_sequence_int_vs_sequence_str():
-    d = plum.Dispatcher()
-
-    @d
+def test_sequence_int_vs_sequence_str(dispatch: plum.Dispatcher):
+    @dispatch
     def f(x: Sequence[int]) -> str:
         return "Sequence[int]"
 
-    @d
+    @dispatch
     def f(x: Sequence[str]) -> str:
         return "Sequence[str]"
 
@@ -167,15 +160,14 @@ def test_sequence_int_vs_sequence_str():
     assert f(["a", "b"]) == "Sequence[str]"
 
 
-def test_empty_list_ambiguous_without_fallback():
+def test_empty_list_ambiguous_without_fallback(dispatch: plum.Dispatcher):
     """[] matches both list[int] and list[str] → AmbiguousLookupError."""
-    d = plum.Dispatcher()
 
-    @d
+    @dispatch
     def f(x: list[int]) -> str:
         return "list[int]"
 
-    @d
+    @dispatch
     def f(x: list[str]) -> str:
         return "list[str]"
 
@@ -183,15 +175,14 @@ def test_empty_list_ambiguous_without_fallback():
         f([])
 
 
-def test_empty_list_with_fallback_resolves():
+def test_empty_list_with_fallback_resolves(dispatch: plum.Dispatcher):
     """[] with only list[int] registered should still match (empty is_bearable)."""
-    d = plum.Dispatcher()
 
-    @d
+    @dispatch
     def f(x: list[int]) -> str:
         return "list[int]"
 
-    @d
+    @dispatch
     def f(x: list) -> str:
         return "list"
 
@@ -199,15 +190,14 @@ def test_empty_list_with_fallback_resolves():
     assert f([]) == "list[int]"
 
 
-def test_most_specific_generic_wins():
+def test_most_specific_generic_wins(dispatch: plum.Dispatcher):
     """When list[int] and list are both registered, list[int] wins for [1,2,3]."""
-    d = plum.Dispatcher()
 
-    @d
+    @dispatch
     def f(x: list[int]) -> str:
         return "list[int]"
 
-    @d
+    @dispatch
     def f(x: list) -> str:
         return "list"
 
@@ -217,16 +207,15 @@ def test_most_specific_generic_wins():
 # ── Caching: faithful methods in a mixed function ────────────────────────────────
 
 
-def test_faithful_method_cached_in_generic_function():
+def test_faithful_method_cached_in_generic_function(dispatch: plum.Dispatcher):
     """A faithful dispatch (e.g. int) co-existing with a generic dispatch (list[int])
     should still be cached after the first call, not re-resolved on every call."""
-    d = plum.Dispatcher()
 
-    @d
+    @dispatch
     def f(x: int) -> str:
         return "int"
 
-    @d
+    @dispatch
     def f(x: list[int]) -> str:
         return "list[int]"
 
@@ -252,11 +241,10 @@ def test_faithful_method_cached_in_generic_function():
     ), "Generic cache grew on second identical int call"
 
 
-def test_generic_call_cached_after_first_call():
+def test_generic_call_cached_after_first_call(dispatch: plum.Dispatcher):
     """Repeated calls with same-type list should hit the cache."""
-    d = plum.Dispatcher()
 
-    @d
+    @dispatch
     def f(x: list[int]) -> str:
         return "list[int]"
 
@@ -274,15 +262,14 @@ def test_generic_call_cached_after_first_call():
     ), "Generic cache grew (cache miss) on second list[int] call"
 
 
-def test_different_generic_types_cached_separately():
+def test_different_generic_types_cached_separately(dispatch: plum.Dispatcher):
     """list[int] and list[str] calls each get their own cache entry."""
-    d = plum.Dispatcher()
 
-    @d
+    @dispatch
     def f(x: list[int]) -> str:
         return "list[int]"
 
-    @d
+    @dispatch
     def f(x: list[str]) -> str:
         return "list[str]"
 
@@ -300,11 +287,10 @@ def test_different_generic_types_cached_separately():
 # ── Phase 3: user-defined Generic subclasses ────────────────────────────────────
 
 
-def test_bare_box_dispatch():
+def test_bare_box_dispatch(dispatch: plum.Dispatcher):
     """Box (unparameterized) matches a method registered for Box."""
-    d = plum.Dispatcher()
 
-    @d
+    @dispatch
     def f(x: Box) -> str:
         return "Box"
 
@@ -319,10 +305,8 @@ def test_box_subscript_more_specific_than_bare():
     assert not (plum.Signature(Box) <= plum.Signature(Box[int]))
 
 
-def test_parametric_still_works_with_generic_registered():
+def test_parametric_still_works_with_generic_registered(dispatch: plum.Dispatcher):
     """@parametric dispatch must be unaffected by generic dispatch."""
-
-    d = plum.Dispatcher()
 
     @plum.parametric
     class MyParam:
@@ -330,11 +314,11 @@ def test_parametric_still_works_with_generic_registered():
         def __infer_type_parameter__(cls, val: object) -> type:
             return type(val)
 
-    @d
+    @dispatch
     def f(x: MyParam[int]) -> str:  # type: ignore[type-arg]
         return "MyParam[int]"
 
-    @d
+    @dispatch
     def f(x: list[int]) -> str:
         return "list[int]"
 
@@ -354,15 +338,14 @@ def test_parametric_still_works_with_generic_registered():
 # and resolve_for_type.
 
 
-def test_orig_class_two_way_dispatch():
+def test_orig_class_two_way_dispatch(dispatch: plum.Dispatcher):
     """Box[int](1) and Box[str]('x') route to different overloads."""
-    d = plum.Dispatcher()
 
-    @d
+    @dispatch
     def f(x: Box[int]) -> str:
         return "Box[int]"
 
-    @d
+    @dispatch
     def f(x: Box[str]) -> str:
         return "Box[str]"
 
@@ -370,24 +353,23 @@ def test_orig_class_two_way_dispatch():
     assert f(Box[str]("hello")) == "Box[str]"
 
 
-def test_orig_class_three_way_with_fallback():
+def test_orig_class_three_way_with_fallback(dispatch: plum.Dispatcher):
     """Three-way: Box[int], Box[str], and bare Box as a non-parameterized fallback.
 
     Subscripted instances dispatch correctly via ``__orig_class__``.  Instances
     without ``__orig_class__`` (plain ``Box(…)``) do not match the
     parameterized overloads and fall through to the bare ``Box`` overload.
     """
-    d = plum.Dispatcher()
 
-    @d
+    @dispatch
     def f(x: Box[int]) -> str:
         return "Box[int]"
 
-    @d
+    @dispatch
     def f(x: Box[str]) -> str:
         return "Box[str]"
 
-    @d
+    @dispatch
     def f(x: Box) -> str:
         return "Box"
 
@@ -401,20 +383,19 @@ def test_orig_class_three_way_with_fallback():
     assert f(Box(None)) == "Box"
 
 
-def test_orig_class_bare_no_fallback_raises_not_found():
+def test_orig_class_bare_no_fallback_raises_not_found(dispatch: plum.Dispatcher):
     """Bare Box(1) with only parameterized overloads raises NotFoundLookupError.
 
     Bare instances carry no parameterization information, so they don't match
     any of ``Box[int]`` / ``Box[str]``.  Without a fallback overload there is
     no method to dispatch to.
     """
-    d = plum.Dispatcher()
 
-    @d
+    @dispatch
     def f(x: Box[int]) -> str:
         return "Box[int]"
 
-    @d
+    @dispatch
     def f(x: Box[str]) -> str:
         return "Box[str]"
 
@@ -422,15 +403,14 @@ def test_orig_class_bare_no_fallback_raises_not_found():
         f(Box(1))  # no __orig_class__ → no match
 
 
-def test_orig_class_subscripted_wins_over_bare():
+def test_orig_class_subscripted_wins_over_bare(dispatch: plum.Dispatcher):
     """Box[int](1) picks Box[int]; bare Box(1) falls through to bare Box overload."""
-    d = plum.Dispatcher()
 
-    @d
+    @dispatch
     def f(x: Box[int]) -> str:
         return "Box[int]"
 
-    @d
+    @dispatch
     def f(x: Box) -> str:
         return "Box"
 
@@ -442,7 +422,7 @@ def test_orig_class_subscripted_wins_over_bare():
     assert f(Box[str]("hello")) == "Box"
 
 
-def test_any_fallback_routes_bare_instances():
+def test_any_fallback_routes_bare_instances(dispatch: plum.Dispatcher):
     """`Box[Any]` is the explicit fallback for bare `Box(...)` instances.
 
     With overloads for ``Box[Any]``, ``Box[int]`` and ``Box[str]``:
@@ -452,17 +432,15 @@ def test_any_fallback_routes_bare_instances():
     """
     from typing import Any as _Any
 
-    d = plum.Dispatcher()
-
-    @d
+    @dispatch
     def f(x: Box[_Any]) -> str:
         return "Box[Any]"
 
-    @d
+    @dispatch
     def f(x: Box[int]) -> str:
         return "Box[int]"
 
-    @d
+    @dispatch
     def f(x: Box[str]) -> str:
         return "Box[str]"
 
@@ -471,13 +449,11 @@ def test_any_fallback_routes_bare_instances():
     assert f(Box[str]("hello")) == "Box[str]"
 
 
-def test_any_fallback_alone_matches_everything():
+def test_any_fallback_alone_matches_everything(dispatch: plum.Dispatcher):
     """``Box[Any]`` alone matches bare *and* subscripted ``Box`` instances."""
     from typing import Any as _Any
 
-    d = plum.Dispatcher()
-
-    @d
+    @dispatch
     def f(x: Box[_Any]) -> str:
         return "Box[Any]"
 
@@ -486,15 +462,14 @@ def test_any_fallback_alone_matches_everything():
     assert f(Box[str]("hello")) == "Box[Any]"
 
 
-def test_orig_class_cache_keyed_separately():
+def test_orig_class_cache_keyed_separately(dispatch: plum.Dispatcher):
     """Box[int](1) and Box[str](1) must not share a cache entry."""
-    d = plum.Dispatcher()
 
-    @d
+    @dispatch
     def f(x: Box[int]) -> str:
         return "Box[int]"
 
-    @d
+    @dispatch
     def f(x: Box[str]) -> str:
         return "Box[str]"
 
@@ -508,15 +483,14 @@ def test_orig_class_cache_keyed_separately():
     assert key_str in f._generic_cache, "Box[str] should be its own cache key"
 
 
-def test_orig_class_nested_generic():
+def test_orig_class_nested_generic(dispatch: plum.Dispatcher):
     """Box[list[int]](…) routes correctly with nested generic hint."""
-    d = plum.Dispatcher()
 
-    @d
+    @dispatch
     def f(x: Box[list[int]]) -> str:
         return "Box[list[int]]"
 
-    @d
+    @dispatch
     def f(x: Box[list[str]]) -> str:
         return "Box[list[str]]"
 
@@ -524,15 +498,14 @@ def test_orig_class_nested_generic():
     assert f(Box[list[str]](["a"])) == "Box[list[str]]"
 
 
-def test_orig_class_mixed_with_non_generic_arg():
+def test_orig_class_mixed_with_non_generic_arg(dispatch: plum.Dispatcher):
     """Multi-arg dispatch where only one arg has __orig_class__."""
-    d = plum.Dispatcher()
 
-    @d
+    @dispatch
     def f(x: int, y: Box[int]) -> str:
         return "int,Box[int]"
 
-    @d
+    @dispatch
     def f(x: int, y: Box[str]) -> str:
         return "int,Box[str]"
 
@@ -540,10 +513,153 @@ def test_orig_class_mixed_with_non_generic_arg():
     assert f(1, Box[str]("hello")) == "int,Box[str]"
 
 
+# ── Two generic arguments ────────────────────────────────────────────────────────────
+# These tests verify that beartype correctly checks BOTH arguments when every
+# parameter carries a parameterised generic hint.  The mechanism under test is
+# `is_bearable_with_orig`, which is called once per (arg, hint) pair inside
+# `_resolve_generic`.
+
+
+def test_two_stdlib_list_generics(dispatch: plum.Dispatcher):
+    """Dispatch over two list[T] args with swapped element types."""
+
+    @dispatch
+    def f(x: list[int], y: list[str]) -> str:
+        return "list[int],list[str]"
+
+    @dispatch
+    def f(x: list[str], y: list[int]) -> str:
+        return "list[str],list[int]"
+
+    # beartype inspects element types on both args to pick the right overload.
+    assert f([1, 2], ["a"]) == "list[int],list[str]"
+    assert f(["a"], [1, 2]) == "list[str],list[int]"
+
+
+def test_two_different_stdlib_generics(dispatch: plum.Dispatcher):
+    """Dispatch over list[T] and dict[K, V] as separate generic arguments."""
+
+    @dispatch
+    def f(x: list[int], y: dict[str, int]) -> str:
+        return "list[int],dict[str,int]"
+
+    @dispatch
+    def f(x: list[str], y: dict[int, str]) -> str:
+        return "list[str],dict[int,str]"
+
+    assert f([1], {"a": 1}) == "list[int],dict[str,int]"
+    assert f(["a"], {1: "b"}) == "list[str],dict[int,str]"
+
+
+def test_two_custom_generic_args(dispatch: plum.Dispatcher):
+    """Dispatch over Box[T] for both arguments using __orig_class__."""
+
+    @dispatch
+    def f(x: Box[int], y: Box[str]) -> str:
+        return "Box[int],Box[str]"
+
+    @dispatch
+    def f(x: Box[str], y: Box[int]) -> str:
+        return "Box[str],Box[int]"
+
+    # Box[int](1) sets __orig_class__ = Box[int]; is_bearable_with_orig uses
+    # that to distinguish Box[int] from Box[str] at runtime.
+    assert f(Box[int](1), Box[str]("a")) == "Box[int],Box[str]"
+    assert f(Box[str]("a"), Box[int](1)) == "Box[str],Box[int]"
+
+
+def test_two_different_custom_generic_types(dispatch: plum.Dispatcher):
+    """Dispatch over two distinct custom Generic classes: Box[T] and Container[T]."""
+
+    @dispatch
+    def f(x: Box[int], y: Container[str]) -> str:
+        return "Box[int],Container[str]"
+
+    @dispatch
+    def f(x: Box[str], y: Container[int]) -> str:
+        return "Box[str],Container[int]"
+
+    assert f(Box[int](1), Container[str]("a")) == "Box[int],Container[str]"
+    assert f(Box[str]("a"), Container[int](1)) == "Box[str],Container[int]"
+
+
+def test_mixed_stdlib_and_custom_generic(dispatch: plum.Dispatcher):
+    """Dispatch over one stdlib generic (list) and one custom generic (Box)."""
+
+    @dispatch
+    def f(x: list[int], y: Box[str]) -> str:
+        return "list[int],Box[str]"
+
+    @dispatch
+    def f(x: list[str], y: Box[int]) -> str:
+        return "list[str],Box[int]"
+
+    assert f([1], Box[str]("a")) == "list[int],Box[str]"
+    assert f(["a"], Box[int](1)) == "list[str],Box[int]"
+
+
+def test_two_generic_args_type_error_raised(dispatch: plum.Dispatcher):
+    """Beartype checks both args independently; mismatched element types raise."""
+
+    @dispatch
+    def f(x: list[int], y: list[str]) -> str:
+        return "list[int],list[str]"
+
+    # Second arg is list[int], not list[str] — no overload matches.
+    with pytest.raises(plum.NotFoundLookupError):
+        f([1], [1])
+
+    # First arg is list[str], not list[int] — no overload matches.
+    with pytest.raises(plum.NotFoundLookupError):
+        f(["a"], ["a"])
+
+
+def test_two_stdlib_generics_cached_under_same_bare_key(dispatch: plum.Dispatcher):
+    """Both two-list combos share key (list, list); the cache holds 2 candidates."""
+
+    @dispatch
+    def f(x: list[int], y: list[str]) -> str:
+        return "list[int],list[str]"
+
+    @dispatch
+    def f(x: list[str], y: list[int]) -> str:
+        return "list[str],list[int]"
+
+    f([1], ["a"])
+    f(["a"], [1])
+
+    # Both dispatch calls share the same bare-type key because neither list
+    # instance carries __orig_class__.  The two entries live as separate
+    # candidates inside the same bucket.
+    key = (list, list)
+    assert key in f._generic_cache
+    assert len(f._generic_cache[key]) == 2
+
+
+def test_two_custom_generics_cached_separately(dispatch: plum.Dispatcher):
+    """Box[int]+Box[str] and Box[str]+Box[int] produce distinct cache keys."""
+
+    @dispatch
+    def f(x: Box[int], y: Box[str]) -> str:
+        return "Box[int],Box[str]"
+
+    @dispatch
+    def f(x: Box[str], y: Box[int]) -> str:
+        return "Box[str],Box[int]"
+
+    f(Box[int](1), Box[str]("a"))
+    f(Box[str]("a"), Box[int](1))
+
+    # __orig_class__ is used as the key component, so the two argument orders
+    # produce entirely separate top-level cache entries.
+    assert (Box[int], Box[str]) in f._generic_cache
+    assert (Box[str], Box[int]) in f._generic_cache
+
+
 # ── Caching correctness: non-faithful + generic mix ──────────────────────────────────
 
 
-def test_non_faithful_generic_mix_not_cached_by_bare_type():
+def test_non_faithful_generic_mix_not_cached_by_bare_type(dispatch: plum.Dispatcher):
     """A function with both a generic overload (list[int]) and a
     value-dependent (Annotated/BeartypeValidator) overload must NOT cache
     the value-dependent result by bare type.  If it did, a subsequent call
@@ -557,17 +673,15 @@ def test_non_faithful_generic_mix_not_cached_by_bare_type():
 
     from beartype.vale import Is
 
-    d = plum.Dispatcher()
-
-    @d
+    @dispatch
     def f(x: Annotated[int, Is[lambda v: v > 0]]) -> str:
         return "positive"
 
-    @d
+    @dispatch
     def f(x: Annotated[int, Is[lambda v: v <= 0]]) -> str:
         return "non-positive"
 
-    @d
+    @dispatch
     def f(x: list[int]) -> str:
         return "list[int]"
 
@@ -594,20 +708,19 @@ def test_non_faithful_generic_mix_not_cached_by_bare_type():
 # ── _can_match_arity1_origin safety: non-type origins ────────────────────────────
 
 
-def test_literal_overload_does_not_raise_on_registration():
+def test_literal_overload_does_not_raise_on_registration(dispatch: plum.Dispatcher):
     """Registering a Literal-typed arity-1 function must not raise TypeError.
 
     Before the fix, is_generic_hint(Literal[1]) was True, causing
     _can_match_arity1_origin to pass Literal (a _SpecialForm, not a type) to
     issubclass, raising TypeError during resolver.register().
     """
-    d = plum.Dispatcher()
 
-    @d
+    @dispatch
     def f(x: Literal[1]) -> str:
         return "one"
 
-    @d
+    @dispatch
     def f(x: int) -> str:
         return "int"
 

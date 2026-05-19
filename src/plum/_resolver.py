@@ -425,8 +425,7 @@ class Resolver:
         )
         self.has_generic_signatures = bool(self.generic_origins)
 
-        # Pre-compute per-origin sorted method lists for arity-1 fast dispatch
-        # (used by Tier 2 cold-miss shortcut and Tier 3 eager pre-population).
+        # Pre-compute per-origin sorted method lists for arity-1 fast dispatch.
         # Only populated when every registered method is single-argument with no
         # varargs, so multi-arity functions fall back to the regular resolver.
         if self.has_generic_signatures and all(
