@@ -708,3 +708,55 @@ def test_concurrent_resolution_is_thread_safe(make_stringly_annotated_function):
             assert f(1.0) == "float"
     finally:
         sys.setswitchinterval(old_interval)
+
+
+def test_resolve_method_with_cache_calls_type_once_per_arg(
+    dispatch: plum.Dispatcher,
+):
+    """``type()`` must be called exactly once per argument in the non-generic path.
+
+    When a function carries generic signatures, the old code called ``type(a)``
+    twice per argument: once inside the ``issubclass(type(a), o)`` generator that
+    checks whether any argument needs the generic arm, and again in the
+    ``tuple(map(type, args))`` that computes the cache key.
+
+    The optimised code hoists ``tuple(map(type, args))`` before the generic check
+    and reuses the pre-computed types tuple, so ``type()`` is called exactly once.
+    """
+    from unittest.mock import patch
+
+    import plum._function as _fn
+
+    @dispatch
+    def f(x: list[int]):
+        return "list"
+
+    @dispatch
+    def f(x: str):  # noqa: F811
+        return "str"
+
+    # Ensure the function is fully resolved before we start counting.
+    assert f("warmup") == "str"
+    f.clear_cache()
+
+    # Use an interned sentinel string so ``obj is sentinel`` is a reliable check.
+    sentinel = "counting-sentinel"
+    real_type = __builtins__["type"] if isinstance(__builtins__, dict) else type
+
+    call_count = 0
+
+    def counting_type(obj: object) -> type:
+        nonlocal call_count
+        if obj is sentinel:
+            call_count += 1
+        return real_type(obj)
+
+    # Shadow the ``type`` builtin inside plum._function so that every
+    # ``type(x)`` call in that module goes through ``counting_type``.
+    with patch.dict(_fn.__dict__, {"type": counting_type}):
+        result = f(sentinel)
+
+    assert result == "str"
+    # One argument → type() must be called exactly once (the cache-key
+    # computation).  Before the fix it was called twice.
+    assert call_count == 1, f"Expected 1 call to type() for the arg, got {call_count}"

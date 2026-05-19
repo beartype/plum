@@ -562,18 +562,19 @@ class Function(metaclass=_FunctionMeta):
             # Attempt to use the cache based on the types of the arguments.
             # At this point, `args` must be a tuple (not `Signature` or `None`).
             assert isinstance(args, tuple)
+            # Compute the bare-type tuple once; it is reused for both the
+            # needs_generic check below and as the cache key.
+            types = tuple(map(type, args))
             if self._resolver.has_generic_signatures:
                 # Check whether any argument's runtime type overlaps with a
                 # registered generic origin (e.g. list for list[int]).
                 needs_generic = any(
-                    issubclass(type(a), o)
-                    for a in args
+                    issubclass(t, o)
+                    for t in types
                     for o in self._resolver.generic_origins
                 )
                 if needs_generic:
                     return self._resolve_generic(args)
-            # No generic arg — fall through to the faithful cache below.
-            types = tuple(map(type, args))
         try:
             return self._cache[types]
         except KeyError:
