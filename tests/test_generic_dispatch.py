@@ -556,6 +556,57 @@ def test_union_fallback_with_generic_overload(dispatch: plum.Dispatcher):
     assert f([1.0, 2.0]) == "list-or-dict"
 
 
+def test_ambiguous_bucket_stays_ambiguous_with_any_fallback(
+    dispatch: plum.Dispatcher,
+):
+    """AmbiguousLookupError from bucket methods is not hidden by a non-bucket Any.
+
+    Sequence[int] and Sequence[str] both land in the 'list' origin bucket and
+    are incomparable.  An empty list matches both vacuously, producing
+    AmbiguousLookupError from the pre-filtered subset.
+
+    Adding an Any overload (excluded from every origin bucket because
+    ``_can_match_arity1_origin`` returns False for it) does NOT resolve the
+    ambiguity: beartype reports ``TypeHint(Any) <= TypeHint(Sequence[int])``
+    as False, so Any is never admitted as a candidate in ``_resolve_from``
+    even when it matches the argument.  The full ``self.resolve()`` call
+    therefore also raises AmbiguousLookupError.
+
+    Consequence: the ``except NotFoundLookupError`` in ``resolve_for_type``
+    is the only catch needed — catching AmbiguousLookupError would be a
+    no-op and this test documents that expected behaviour.
+
+    Note: the ambiguous call must come BEFORE any non-ambiguous calls to the
+    same function.  A prior non-ambiguous dispatch (e.g. f([1])) warms
+    ``_generic_cache[(list,)]`` with the Sequence[int] candidate.  The fast
+    cache path would then accept an empty list as Sequence[int] vacuously,
+    silencing the ambiguity.  Testing the ambiguous case first ensures the
+    cache is cold and the resolver is exercised.
+    """
+
+    @dispatch
+    def f(x: Sequence[int]) -> str:
+        return "Seq[int]"
+
+    @dispatch
+    def f(x: Sequence[str]) -> str:
+        return "Seq[str]"
+
+    @dispatch
+    def f(x: Any) -> str:
+        return "any"
+
+    # An empty list is genuinely ambiguous — Any does NOT break the tie
+    # because TypeHint(Any) is not a subtype of TypeHint(Sequence[int]).
+    # Must be called first (cold cache) so the full resolver is reached.
+    with pytest.raises(plum.AmbiguousLookupError):
+        f([])
+
+    # Non-ambiguous calls still route correctly.
+    assert f([1]) == "Seq[int]"
+    assert f(["a"]) == "Seq[str]"
+
+
 def test_orig_class_cache_keyed_separately(dispatch: plum.Dispatcher):
     """Box[int](1) and Box[str](1) must not share a cache entry."""
 

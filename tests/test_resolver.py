@@ -1,13 +1,14 @@
+import inspect
 import sys
 import textwrap
 import warnings
+from unittest.mock import patch
 
 import pytest
 
 from tests.util import rich_render
 
 import plum
-from plum._method import Method
 from plum._resolver import (
     MethodRedefinitionWarning,
     Resolver,
@@ -136,27 +137,64 @@ def test_register():
         return xs
 
     # Test that faithfulness is tracked correctly.
-    r.register(Method(f, plum.Signature(int)))
-    r.register(Method(f, plum.Signature(float)))
+    r.register(plum.Method(f, plum.Signature(int)))
+    r.register(plum.Method(f, plum.Signature(float)))
     assert r.is_faithful
-    r.register(Method(f, plum.Signature(tuple[int])))
+    r.register(plum.Method(f, plum.Signature(tuple[int])))
     assert not r.is_faithful
 
     # Test that signatures can be replaced.
-    new_m = Method(f, plum.Signature(float))
+    new_m = plum.Method(f, plum.Signature(float))
     assert len(r) == 3
     assert r.methods[1] is not new_m
     r.register(new_m)
     assert len(r) == 3
     assert r.methods[1] is new_m
 
-    # Test the edge case that should never happen.
-    r.methods[2] = Method(f, plum.Signature(float))
-    with pytest.raises(
-        AssertionError,
-        match=r"(?i)the added method `(.*)` is equal to 2 existing methods",
-    ):
-        r.register(Method(f, plum.Signature(float)))
+
+def test_register_short_circuits_on_first_match():
+    """``register`` must stop scanning after the first matching signature.
+
+    The original code built a full boolean list::
+
+        existing = [m.signature == signature for m in self.methods]
+
+    which always evaluates ``Signature.__eq__`` for every registered method,
+    even when the match is found at index 0.  The optimised code uses
+    ``next()`` with a generator expression so that scanning stops as soon as
+    the first match is found.
+
+    Scenario: resolver with 2 methods (``int`` at index 0, ``float`` at
+    index 1).  Re-registering ``int`` should require exactly one
+    ``Signature.__eq__`` call (int==int → True → stop).  The old code
+    required two (int==int + float==int).
+    """
+
+    def f(*xs):
+        return xs
+
+    r = Resolver()
+    r.register(plum.Method(f, plum.Signature(int)))  # index 0
+    r.register(plum.Method(f, plum.Signature(float)))  # index 1
+
+    eq_calls = 0
+    real_eq = plum.Signature.__eq__
+
+    def counting_eq(self, other):
+        nonlocal eq_calls
+        eq_calls += 1
+        return real_eq(self, other)
+
+    # Re-register the FIRST method.  Without early-break the list comprehension
+    # checks int==int (True) and float==int (False) = 2 calls.
+    # With next() the generator stops after int==int = 1 call.
+    with patch.object(plum.Signature, "__eq__", counting_eq):
+        r.register(plum.Method(f, plum.Signature(int)))
+
+    assert len(r) == 2, "Redefinition must not change the method count"
+    assert (
+        eq_calls == 1
+    ), f"Expected 1 Signature.__eq__ call (early break on match), got {eq_calls}"
 
 
 def test_len():
@@ -165,11 +203,11 @@ def test_len():
 
     r = Resolver()
     assert len(r) == 0
-    r.register(Method(f, plum.Signature(int)))
+    r.register(plum.Method(f, plum.Signature(int)))
     assert len(r) == 1
-    r.register(Method(f, plum.Signature(float)))
+    r.register(plum.Method(f, plum.Signature(float)))
     assert len(r) == 2
-    r.register(Method(f, plum.Signature(float)))
+    r.register(plum.Method(f, plum.Signature(float)))
     assert len(r) == 2
 
 
@@ -198,13 +236,13 @@ def test_resolve():
     def f(x):
         return x
 
-    m_a = Method(f, plum.Signature(A))
-    m_b1 = Method(f, plum.Signature(B1))
-    m_b2 = Method(f, plum.Signature(B2))
-    m_c1 = Method(f, plum.Signature(C1))
-    m_c2 = Method(f, plum.Signature(C2))
-    m_u = Method(f, plum.Signature(Unrelated))
-    m_m = Method(f, plum.Signature(Missing))
+    m_a = plum.Method(f, plum.Signature(A))
+    m_b1 = plum.Method(f, plum.Signature(B1))
+    m_b2 = plum.Method(f, plum.Signature(B2))
+    m_c1 = plum.Method(f, plum.Signature(C1))
+    m_c2 = plum.Method(f, plum.Signature(C2))
+    m_u = plum.Method(f, plum.Signature(Unrelated))
+    m_m = plum.Method(f, plum.Signature(Missing))
 
     r = Resolver()
     r.register(m_b1)
@@ -300,8 +338,7 @@ def test_redefinition_warning_unwrapping():
     f.dispatch_multi((str,))(f.invoke(int))
 
     with pytest.warns(
-        MethodRedefinitionWarning,
-        match=r".*`.*test_resolver.py:[0-9]+`.*" * 2,
+        MethodRedefinitionWarning, match=r".*`.*test_resolver.py:[0-9]+`.*" * 2
     ):
         f._resolve_pending_registrations()
 
@@ -348,11 +385,8 @@ def test_resolve_from_does_not_materialise_filter_list():
     avoiding the allocation entirely.  This is verified by asserting that the
     source of ``_resolve_from`` contains the direct-iteration pattern.
     """
-    import inspect
 
-    import plum._resolver as _resolver_mod
-
-    source = inspect.getsource(_resolver_mod.Resolver._resolve_from)
+    source = inspect.getsource(plum._resolver.Resolver._resolve_from)
     assert "for method in methods:" in source, (
         "_resolve_from does not iterate methods directly; "
         "it appears to still materialise a temporary filter list. "

@@ -367,19 +367,19 @@ class Resolver:
         """
         signature = method.signature
 
-        existing = [m.signature == signature for m in self.methods]
-        if any(existing):
-            if sum(existing) != 1:
-                raise AssertionError(
-                    f"The added method `{method}` is equal to {sum(existing)} "
-                    f"existing methods. This should never happen."
-                )
-
+        # Find the index of the first existing method with an equal signature,
+        # using a generator so we stop at the first match rather than scanning
+        # the full list and building a boolean array.
+        existing_idx = next(
+            (i for i, m in enumerate(self.methods) if m.signature == signature),
+            None,
+        )
+        if existing_idx is not None:
             if self.warn_redefinition:
                 # Determine the new and previous implementation. Unwrap possible
                 # wrapping by Plum from :meth:`Function.invoke`s, which can obscure the
                 # location where the implementation was originally defined.
-                previous_method = self.methods[existing.index(True)]
+                previous_method = self.methods[existing_idx]
                 prev_impl = _unwrap_invoked_methods(previous_method.implementation)
                 impl = _unwrap_invoked_methods(method.implementation)
                 warnings.warn(
@@ -391,7 +391,7 @@ class Resolver:
                     stacklevel=0,
                 )
 
-            self.methods[existing.index(True)] = method
+            self.methods[existing_idx] = method
         else:
             self.methods.append(method)
 
