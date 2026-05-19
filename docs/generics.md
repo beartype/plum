@@ -94,8 +94,6 @@ Think of `A[Any]` as the explicit way to say *"this overload is the fallback for
 
 You can also write a fallback against the **bare** (unsubscripted) class:
 
-% skip: start
-
 ```python
 @dispatch
 def g(b: Box) -> str:
@@ -109,7 +107,16 @@ def g(b: Box[int]) -> str:
 
 A bare hint like `Box` behaves the same way as `Box[Any]` for dispatch purposes — every `Box` instance matches it, and parameterized overloads still win for subscripted instances when their parameter agrees.  `Box` and `Box[Any]` are interchangeable as fallback overloads; pick whichever reads more clearly in your codebase.
 
-% skip: end
+```python
+>>> g(Box(1))           # bare instance — no __orig_class__ → Box fallback
+'bare Box'
+
+>>> g(Box[int](1))      # __orig_class__ = Box[int] → specific overload wins
+'int'
+
+>>> g(Box[str]("hi"))   # __orig_class__ = Box[str] — no str overload → Box fallback
+'bare Box'
+```
 
 ## Auto-inferring types with `@plum.generic`
 
