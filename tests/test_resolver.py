@@ -368,6 +368,7 @@ def test_not_found_lookup_error_renders_with_signature_target(
     assert "could not be resolved" in rendered
 
 
+@pytest.mark.incompatible_with_mypyc
 def test_resolve_from_does_not_materialise_filter_list():
     """``_resolve_from`` must iterate ``methods`` directly, not via a temporary list.
 
