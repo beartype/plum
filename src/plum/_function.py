@@ -522,11 +522,8 @@ class Function(metaclass=_FunctionMeta):
         else:
             hint_tuple = sig.types
 
-        entry: tuple[tuple[TypeHint, ...], CallAny, TypeHint] = (
-            hint_tuple,
-            impl,
-            return_type,
-        )
+        entry: tuple[tuple[TypeHint, ...], CallAny, TypeHint]
+        entry = (hint_tuple, impl, return_type)
 
         # Populate the cache.  If this key was seen before but no candidate
         # matched (all candidates failed is_bearable_with_orig), append the new

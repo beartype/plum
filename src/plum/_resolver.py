@@ -269,19 +269,14 @@ def _sort_most_specific_first(methods: list["Method"]) -> list["Method"]:
     result: list[Method] = []
     remaining = list(methods)
     while remaining:
-        # A method is in the current "most specific" layer if no other
-        # remaining method is strictly more specific than it.
         layer = [
             m
             for m in remaining
-            if not any(
-                other is not m and other.signature < m.signature for other in remaining
-            )
+            if not any(o is not m and o.signature < m.signature for o in remaining)
         ]
+        result.extend(layer or remaining)
         if not layer:  # Safety valve — should never happen with a valid partial order.
-            result.extend(remaining)
             break
-        result.extend(layer)
         for m in layer:
             remaining.remove(m)
     return result
@@ -375,17 +370,19 @@ class Resolver:
             None,
         )
         if existing_idx is not None:
+            # Save the replaced method before overwriting: needed below to swap
+            # the reference inside _arity1_methods buckets.
+            _replaced_method = self.methods[existing_idx]
             if self.warn_redefinition:
                 # Determine the new and previous implementation. Unwrap possible
                 # wrapping by Plum from :meth:`Function.invoke`s, which can obscure the
                 # location where the implementation was originally defined.
-                previous_method = self.methods[existing_idx]
-                prev_impl = _unwrap_invoked_methods(previous_method.implementation)
+                prev_impl = _unwrap_invoked_methods(_replaced_method.implementation)
                 impl = _unwrap_invoked_methods(method.implementation)
                 warnings.warn(
                     f"`{method}` (`{repr_source_path(impl)}`) "
                     f"overwrites the earlier definition "
-                    f"`{previous_method}` "
+                    f"`{_replaced_method}` "
                     f"(`{repr_source_path(prev_impl)}`).",
                     category=MethodRedefinitionWarning,
                     stacklevel=0,
@@ -393,58 +390,117 @@ class Resolver:
 
             self.methods[existing_idx] = method
         else:
+            _replaced_method = None
             self.methods.append(method)
 
-        # Use a double negation for slightly better performance.
-        self.is_faithful = not any(not s.signature.is_faithful for s in self.methods)
+        # --- is_faithful ---
+        # REPLACE: same signature ⇒ same types ⇒ faithfulness is unchanged.
+        # APPEND: if already False it stays False; otherwise check only the new method.
+        if existing_idx is None and self.is_faithful:
+            self.is_faithful = method.signature.is_faithful
 
         # True when every method is either faithful OR carries a generic hint in
         # its positional types or varargs (and thus can only be reached via the
         # generic arm, not the bare-type fallback).  When True, caching by bare
         # type on the non-generic arm is safe even if the resolver as a whole is
         # not faithful.
-        self.is_faithful_for_non_generic = all(
-            m.signature.is_faithful or _method_has_generic_hint(m) for m in self.methods
-        )
-
-        # Collect the bare origin types of all parameterised generic hints
-        # (e.g. `list` from `list[int]`, `dict` from `dict[str, int]`).
-        # Deduplicated (dict.fromkeys preserves first-seen order) so that the
-        # `needs_generic` check in _resolve_method_with_cache performs exactly
-        # one issubclass call per distinct origin, not one per overload.
-        self.generic_origins = tuple(
-            dict.fromkeys(
-                cast(type, get_origin(t))
-                for m in self.methods
-                for t in (
-                    list(m.signature.types)
-                    + ([m.signature.varargs] if m.signature.has_varargs else [])
-                )
-                if is_generic_hint(t) and isinstance(get_origin(t), type)
+        #
+        # Updated incrementally: only call _method_has_generic_hint for the
+        # new/replacement method rather than rescanning all methods each time.
+        _new_ok = method.signature.is_faithful or _method_has_generic_hint(method)
+        if existing_idx is None:
+            # Appending: conjoin with the existing flag.
+            self.is_faithful_for_non_generic = (
+                self.is_faithful_for_non_generic and _new_ok
             )
-        )
-        self.has_generic_signatures = bool(self.generic_origins)
-
-        # Pre-compute per-origin sorted method lists for arity-1 fast dispatch.
-        # Only populated when every registered method is single-argument with no
-        # varargs, so multi-arity functions fall back to the regular resolver.
-        if self.has_generic_signatures and all(
-            len(m.signature.types) == 1 and not m.signature.has_varargs
-            for m in self.methods
-        ):
-            self._arity1_methods = {
-                origin: _sort_most_specific_first(
-                    [
-                        m
-                        for m in self.methods
-                        if m.signature.types
-                        and _can_match_arity1_origin(m.signature.types[0], origin)
-                    ]
-                )
-                for origin in set(self.generic_origins)
-            }
+        elif not self.is_faithful_for_non_generic and _new_ok:
+            # Replacing when the flag is currently False but the replacement
+            # conforms: the replaced method may have been the sole violator, so
+            # a full rescan is needed to determine whether the flag becomes True.
+            self.is_faithful_for_non_generic = all(
+                m.signature.is_faithful or _method_has_generic_hint(m)
+                for m in self.methods
+            )
         else:
-            self._arity1_methods = {}
+            # Replacing when the flag is True (only the new method determines
+            # the outcome) or when the new method also fails (stays False).
+            self.is_faithful_for_non_generic = _new_ok
+
+        # --- generic_origins and has_generic_signatures ---
+        # REPLACE: same signature ⇒ same types ⇒ generic_origins is unchanged.
+        # APPEND: scan only the new method's types rather than all methods.
+        if existing_idx is None:
+            _was_generic_before = self.has_generic_signatures
+            _new_method_types = list(method.signature.types) + (
+                [method.signature.varargs] if method.signature.has_varargs else []
+            )
+            _new_origins = tuple(
+                dict.fromkeys(
+                    cast(type, get_origin(t))
+                    for t in _new_method_types
+                    if is_generic_hint(t) and isinstance(get_origin(t), type)
+                )
+            )
+            if _new_origins:
+                _existing_set = set(self.generic_origins)
+                _fresh = tuple(o for o in _new_origins if o not in _existing_set)
+                if _fresh:
+                    self.generic_origins = self.generic_origins + _fresh
+            self.has_generic_signatures = bool(self.generic_origins)
+
+        # --- _arity1_methods ---
+        # The dict is valid iff has_generic_signatures AND every registered method
+        # is single-argument (no varargs).
+        if existing_idx is not None:
+            # REPLACE: same signature ⇒ same arity ⇒ fast-path eligibility unchanged.
+            # Only swap the old method reference with the new one in each bucket.
+            if self._arity1_methods:
+                for _bucket in self._arity1_methods.values():
+                    for _i, _m in enumerate(_bucket):
+                        if _m is _replaced_method:
+                            _bucket[_i] = method
+                            break
+        else:
+            # APPEND: check whether the arity-1 fast path is still applicable.
+            _new_is_arity1 = (
+                len(method.signature.types) == 1 and not method.signature.has_varargs
+            )
+            if not self.has_generic_signatures or not _new_is_arity1:
+                # Either no generic signatures, or new method is not arity-1.
+                self._arity1_methods = {}
+            elif self._arity1_methods:
+                # Was already populated ⇒ all previous methods are arity-1.
+                # Add the new method to the relevant origin buckets incrementally.
+                for _origin in set(self.generic_origins):
+                    if _can_match_arity1_origin(method.signature.types[0], _origin):
+                        if _origin in self._arity1_methods:
+                            self._arity1_methods[_origin] = _sort_most_specific_first(
+                                self._arity1_methods[_origin] + [method]
+                            )
+                        else:
+                            self._arity1_methods[_origin] = _sort_most_specific_first(
+                                [method]
+                            )
+            elif not _was_generic_before and all(
+                # First generic method added; _arity1_methods was empty because
+                # all previous methods were non-generic (not because one was
+                # non-arity-1).  Do a one-time full build if all methods are arity-1.
+                len(m.signature.types) == 1 and not m.signature.has_varargs
+                for m in self.methods
+            ):
+                self._arity1_methods = {
+                    _origin: _sort_most_specific_first(
+                        [
+                            m
+                            for m in self.methods
+                            if m.signature.types
+                            and _can_match_arity1_origin(m.signature.types[0], _origin)
+                        ]
+                    )
+                    for _origin in set(self.generic_origins)
+                }
+            # else: _was_generic_before=True, _arity1_methods={}: some prior
+            # method was not arity-1, so the fast path stays disabled.
 
     def __len__(self) -> int:
         return len(self.methods)
@@ -559,14 +615,14 @@ class Resolver:
         # Gather methods from all registered origins that arg_type is a subtype of,
         # deduplicating across overlapping origin buckets (e.g. list & Sequence).
         seen: set[int] = set()
-        relevant: list[Method] = []
-        for origin, methods in self._arity1_methods.items():
-            if issubclass(bare_type, origin):
-                for m in methods:
-                    mid = id(m)
-                    if mid not in seen:
-                        seen.add(mid)
-                        relevant.append(m)
+        relevant: list[Method] = [
+            m
+            for methods in (
+                v for k, v in self._arity1_methods.items() if issubclass(bare_type, k)
+            )
+            for m in methods
+            if not (id(m) in seen or seen.add(id(m)))  # type: ignore[func-returns-value]
+        ]
 
         if not relevant:
             return self.resolve(target)

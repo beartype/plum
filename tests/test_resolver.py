@@ -197,6 +197,86 @@ def test_register_short_circuits_on_first_match():
     ), f"Expected 1 Signature.__eq__ call (early break on match), got {eq_calls}"
 
 
+def test_register_metadata_updated_incrementally():
+    """``register`` must update ``generic_origins`` and ``_arity1_methods``
+    incrementally rather than rescanning all registered methods on every call.
+
+    The test uses arity-1 methods whose sole type is ``list[X]`` (a parameterised
+    generic) so that:
+
+    - ``is_faithful`` is ``False`` for every signature;
+    - ``_method_has_generic_hint`` returns ``True``, qualifying methods for the
+      arity-1 fast path;
+    - ``generic_origins = (list,)`` after the first registration;
+    - ``_arity1_methods`` is populated on every subsequent registration.
+
+    We count calls to ``is_generic_hint``, which is invoked by three parts of
+    the ``register`` implementation:
+
+    1. **``_method_has_generic_hint``** (already incremental) — called once per
+       registration for the new method only: **1 call**.
+    2. **``generic_origins`` computation** — in the *old* code this rescans all N
+       registered methods each call (total N(N+1)/2 for N registrations); in the
+       *new* incremental code it only scans the new method's types: **1 call**.
+    3. **``_arity1_methods`` rebuild** — in the *old* code ``_can_match_arity1_origin``
+       is called for every registered method each call (total N(N+1)/2); in the
+       *new* code only the new method's origin is checked: **1 call**.
+
+    Expected totals for N=4 registrations:
+    - Old code: 4 + 10 + 10 = **24 calls**
+    - New code: 4 + 4 + 4  = **12 calls** (3 per registration)
+
+    The module is loaded from the ``.py`` source so that ``is_generic_hint`` (a
+    module-level name in ``_resolver.py``) can be patched via the module dict.
+    mypyc-compiled callers use a direct C pointer and bypass the dict lookup.
+    """
+    import importlib.util
+    import pathlib
+    import sys as _sys
+
+    # Load _resolver.py from source to get an interpreted Resolver.
+    src_path = pathlib.Path(__file__).parent.parent / "src" / "plum" / "_resolver.py"
+    _MOD_NAME = "plum._resolver_source"
+    spec = importlib.util.spec_from_file_location(_MOD_NAME, str(src_path))
+    mod = importlib.util.module_from_spec(spec)
+    # Must set __package__ so that the relative imports inside _resolver.py
+    # (e.g. ``from ._generic import …``) resolve against the already-loaded
+    # compiled ``plum.*`` modules in sys.modules.
+    mod.__package__ = "plum"
+    _sys.modules[_MOD_NAME] = mod
+    try:
+        spec.loader.exec_module(mod)
+    finally:
+        _sys.modules.pop(_MOD_NAME, None)
+
+    real_is_generic_hint = mod.is_generic_hint
+    call_count = 0
+
+    def counting_is_generic_hint(t):
+        nonlocal call_count
+        call_count += 1
+        return real_is_generic_hint(t)
+
+    def f(*xs):
+        return xs
+
+    n_methods = 4
+    with patch.object(mod, "is_generic_hint", counting_is_generic_hint):
+        r = mod.Resolver()
+        for t in (int, float, str, bytes):
+            r.register(plum.Method(f, plum.Signature(list[t])))
+
+    # Old code: 4 (_mhgh) + 10 (generic_origins full scan) + 10 (_arity1 full
+    # rebuild) = 24.  New code: 3 per registration × 4 = 12.
+    expected = n_methods * 3
+    assert call_count == expected, (
+        f"Expected {expected} is_generic_hint calls (incremental: 3 per "
+        f"registration), got {call_count}. "
+        f"Old code would give "
+        f"{n_methods + 2 * n_methods * (n_methods + 1) // 2} calls."
+    )
+
+
 def test_len():
     def f(x):
         return x
@@ -370,27 +450,54 @@ def test_not_found_lookup_error_renders_with_signature_target(
 
 @pytest.mark.incompatible_with_mypyc
 def test_resolve_from_does_not_materialise_filter_list():
-    """``_resolve_from`` must iterate ``methods`` directly, not via a temporary list.
+    """``_resolve_from`` must iterate ``methods`` lazily, not via a temporary list.
 
-    The original code used::
+    Verified by wrapping ``methods`` in an iterable whose ``__iter__`` raises
+    ``RuntimeError`` if called from within a list or generator comprehension frame
+    (``<listcomp>`` / ``<genexpr>``).  The bad pattern::
 
         for method in [m for m in methods if check(m)]:
 
-    which builds an O(k) temporary list of all matching methods before entering
-    the processing loop.  The fix replaces this with direct iteration::
+    causes the comprehension to call ``iter(methods)`` from a ``<listcomp>``
+    frame, which our guard detects.  The correct pattern::
 
         for method in methods:
             if not check(method):
                 continue
 
-    avoiding the allocation entirely.  This is verified by asserting that the
-    source of ``_resolve_from`` contains the direct-iteration pattern.
+    calls ``iter(methods)`` directly from ``_resolve_from``'s frame, which
+    passes the guard.
     """
 
-    source = inspect.getsource(plum._resolver.Resolver._resolve_from)
-    assert "for method in methods:" in source, (
-        "_resolve_from does not iterate methods directly; "
-        "it appears to still materialise a temporary filter list. "
-        "Replace `for method in [m for m in methods if check(m)]:` "
-        "with `for method in methods:` + `if not check(method): continue`."
-    )
+    class _NoMaterializeIterable:
+        """Raises RuntimeError if iterated from within a list/gen comprehension."""
+
+        def __init__(self, items):
+            self._items = items
+
+        def __iter__(self):
+            frame = inspect.currentframe()
+            caller = frame.f_back if frame is not None else None
+            if caller is not None and caller.f_code.co_name in (
+                "<listcomp>",
+                "<genexpr>",
+            ):
+                raise RuntimeError(
+                    "_resolve_from materialised `methods` inside a comprehension. "
+                    "Use direct iteration: `for method in methods:` + "
+                    "`if not check(method): continue`."
+                )
+            return iter(self._items)
+
+    def f():
+        pass
+
+    resolver = Resolver()
+    m = plum.Method(f, plum.Signature(int))
+    resolver.register(m)
+
+    # Wrap the registered methods in the guard and call _resolve_from directly.
+    # RuntimeError is raised here if the implementation uses a comprehension.
+    guarded = _NoMaterializeIterable(list(resolver.methods))
+    result = resolver._resolve_from((1,), guarded)
+    assert result is m

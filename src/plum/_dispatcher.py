@@ -144,7 +144,7 @@ class Dispatcher:
 def clear_all_cache() -> None:
     """Clear all cache, including the cache of subclass checks. This should be called
     if types are modified."""
-    for f in Function._instances:
+    for f in tuple(Function._instances):
         f.clear_cache()
 
 
