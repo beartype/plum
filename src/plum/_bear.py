@@ -67,4 +67,4 @@ def is_bearable_with_orig(value: object, hint: Any, /) -> bool:
             return isinstance(value, origin)
         return False
 
-    return is_bearable(value, hint)
+    return is_bearable(value, hint)  # type: ignore[no-any-return]

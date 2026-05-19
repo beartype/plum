@@ -12,11 +12,9 @@ import functools
 import typing
 import warnings
 from collections.abc import Callable
-from typing import Annotated, Any, TypeVar, get_args, get_origin, overload
+from typing import Annotated, Any, Protocol, TypeVar, get_args, get_origin, overload
 
 from beartype.door import TypeHint
-
-T = TypeVar("T")
 
 # Special typing forms that look like parameterised generics but are NOT
 # container types whose element types can be inferred from runtime values.
@@ -78,11 +76,19 @@ def le_generic(left: object, right: object, /) -> bool:
 # ---------------------------------------------------------------------------
 
 
+class HasInferTypeParameter(Protocol):
+    @classmethod
+    def __infer_type_parameter__(cls, instance: object) -> object: ...
+
+
+T = TypeVar("T", bound=HasInferTypeParameter)
+
+
 @overload
 def generic(cls: type[T]) -> type[T]: ...
 @overload
 def generic(cls: None = ...) -> Callable[[type[T]], type[T]]: ...
-def generic(cls: type[T] | None = None, /) -> type[T] | Callable[[type[T]], type[T]]:
+def generic(cls: type[T] | None = None, /) -> type[T] | Callable[[type[T]], type[T]]:  # type: ignore[misc]
     """Decorator that makes bare instantiation infer ``__orig_class__``.
 
     Apply to a :class:`typing.Generic` subclass.  After decoration, calling
@@ -161,7 +167,7 @@ def generic(cls: type[T] | None = None, /) -> type[T] | Callable[[type[T]], type
     orig_init = cls.__init__
 
     @functools.wraps(orig_init)
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self: T, *args: Any, **kwargs: Any) -> None:
         orig_init(self, *args, **kwargs)
         actual_cls = type(self)
         try:
@@ -170,7 +176,7 @@ def generic(cls: type[T] | None = None, /) -> type[T] | Callable[[type[T]], type
             # any other custom __setattr__ that would reject the write.
             # AttributeError is caught below for slotted classes that do not
             # include '__orig_class__' in __slots__.
-            object.__setattr__(self, "__orig_class__", actual_cls[params])
+            object.__setattr__(self, "__orig_class__", actual_cls[params])  # type: ignore[index]
         except (TypeError, AttributeError) as e:
             warnings.warn(
                 f"@generic: could not set __orig_class__ on {actual_cls.__name__} "
@@ -181,5 +187,5 @@ def generic(cls: type[T] | None = None, /) -> type[T] | Callable[[type[T]], type
                 stacklevel=2,
             )
 
-    cls.__init__ = __init__
+    cls.__init__ = __init__  # type: ignore[method-assign,assignment]
     return cls

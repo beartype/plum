@@ -115,7 +115,7 @@ class Function(metaclass=_FunctionMeta):
         # (cheap to compute); each bucket holds a list of
         # (hint_tuple, impl, return_type) candidates verified via is_bearable.
         self._generic_cache: dict[
-            tuple[type, ...], list[tuple[tuple, CallAny, TypeHint]]
+            tuple[object, ...], list[tuple[tuple[TypeHint, ...], CallAny, TypeHint]]
         ]
         self._generic_cache = {}
         wraps(f)(self)  # Sets `self._doc`.
@@ -534,7 +534,7 @@ class Function(metaclass=_FunctionMeta):
                         hint_tuple = sig_types + (sig.varargs,) * max(0, n_extra)
                     else:
                         hint_tuple = sig_types
-                    entry: tuple[tuple, CallAny, TypeHint]
+                    entry: tuple[tuple[TypeHint, ...], CallAny, TypeHint]
                     entry = (hint_tuple, impl, return_type)
                     if candidates is None:
                         self._generic_cache[key] = [entry]

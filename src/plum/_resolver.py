@@ -5,7 +5,7 @@ import sys
 import warnings
 from collections.abc import Callable, Iterable
 from functools import wraps
-from typing import get_origin
+from typing import cast, get_origin
 
 from rich.console import Console, ConsoleOptions
 from rich.padding import Padding
@@ -239,7 +239,7 @@ def _can_match_arity1_origin(hint: object, origin: type) -> bool:
     Used to pre-filter the method list for the arity-1 fast dispatch path.
     """
     if is_generic_hint(hint):
-        return issubclass(origin, get_origin(hint))
+        return issubclass(origin, get_origin(hint))  # type: ignore[arg-type]
     elif isinstance(hint, type):
         return issubclass(origin, hint)
     return False
@@ -389,7 +389,7 @@ class Resolver:
         # Used to avoid calling infer_hint on arguments whose runtime type
         # is not a generic container registered in this resolver.
         self.generic_origins = tuple(
-            get_origin(t)
+            cast(type, get_origin(t))
             for m in self.methods
             for t in (
                 list(m.signature.types)
@@ -496,7 +496,7 @@ class Resolver:
                     self.function_name, target, MethodList(candidates)
                 )
 
-    def resolve_for_type(self, target: tuple, arg_type: object) -> Method:
+    def resolve_for_type(self, target: tuple[object, ...], arg_type: object) -> Method:
         """Arity-1 cold-miss shortcut using the pre-filtered ``_arity1_methods`` map.
 
         Gathers only the methods that could match an arg of ``arg_type``, avoiding
