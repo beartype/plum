@@ -3,6 +3,7 @@ __all__ = ("Function",)
 import os
 import textwrap
 import threading
+import weakref
 from collections.abc import Callable
 from copy import copy
 from functools import wraps
@@ -94,12 +95,12 @@ class Function(metaclass=_FunctionMeta):
     # Correctly printing the docstring is handled by :class:`_FunctionMeta`.
     _class_doc = __doc__
 
-    _instances: list["Function"] = []
+    _instances: weakref.WeakSet["Function"] = weakref.WeakSet()
 
     def __init__(
         self, f: CallAny, /, owner: str | None = None, warn_redefinition: bool = False
     ) -> None:
-        Function._instances.append(self)
+        Function._instances.add(self)
 
         self._f: CallAny = f
         # Cache maps type tuples to `(method, return_type)`. Keys can be either

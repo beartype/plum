@@ -48,7 +48,7 @@ def test_function():
     assert g.__doc__ == "Doc"
 
     # Check global tracking of functions.
-    assert plum.Function._instances[-1] == g
+    assert g in plum.Function._instances
 
 
 def test_repr(dispatch: plum.Dispatcher):
@@ -757,3 +757,34 @@ def test_resolve_method_with_cache_calls_type_once_per_arg(
     # One argument → type() must be called exactly once (the cache-key
     # computation).  Before the fix it was called twice.
     assert call_count == 1, f"Expected 1 call to type() for the arg, got {call_count}"
+
+
+def test_instances_does_not_prevent_garbage_collection():
+    """``Function._instances`` must use weak references so that ``Function``
+    objects can be garbage-collected when no longer referenced by user code.
+
+    Using a plain ``list`` keeps a strong reference to every ``Function`` ever
+    created, growing memory unboundedly.  A ``weakref.WeakSet`` allows the GC
+    to reclaim dead instances while still letting ``clear_all_cache()`` iterate
+    over all *live* functions.
+    """
+    import gc
+    import weakref
+
+    def f(x: int) -> int:
+        return x
+
+    g = plum.Function(f)
+    assert g in plum.Function._instances
+
+    ref = weakref.ref(g)
+    del g
+    gc.collect()
+
+    # With a WeakSet, the Function is reclaimed and the weak ref goes dead.
+    # With a plain list, the list keeps g alive so ref() is still not None.
+    assert ref() is None, (
+        "Function was not garbage-collected; "
+        "Function._instances appears to hold a strong reference. "
+        "Use weakref.WeakSet instead of list."
+    )
