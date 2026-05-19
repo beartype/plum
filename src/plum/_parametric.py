@@ -227,9 +227,8 @@ def parametric(original_class: type, /) -> type:
         # used as a fallback. Note that `original_meta.__instancecheck__` always exists.
         # We check that it is not equal to the default `type.__instancecheck__`.
         if original_meta.__instancecheck__ != type.__instancecheck__:
-            return cast(
-                Callable[[type, object], bool], original_meta.__instancecheck__
-            )(cls, instance)
+            target_type = Callable[[type, object], bool]
+            return cast(target_type, original_meta.__instancecheck__)(cls, instance)
         else:
             return CovariantMeta.__instancecheck__(cls, instance)
 

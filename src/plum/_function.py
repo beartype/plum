@@ -508,9 +508,9 @@ class _DispatchFunction(Protocol):
 class _BoundFunctionProto(Protocol):
     """Subset of :class:`Function`'s interface required by :class:`_BoundFunction`.
 
-    Declaring ``_BoundFunction._f`` with this Protocol rather than :class:`Function`
-    directly prevents mypy from applying ``Function.__get__``'s descriptor protocol
-    when resolving instance-attribute accesses of ``_f``.
+    Declaring `_BoundFunction._f` with this Protocol rather than :class:`Function`
+    directly prevents `mypy` from applying `Function.__get__`'s descriptor protocol
+    when resolving instance-attribute accesses of `_f`.
     """
 
     _f: Callable[..., Any]
