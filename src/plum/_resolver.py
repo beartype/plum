@@ -573,4 +573,12 @@ class Resolver:
 
         if len(relevant) > 1:
             relevant = _sort_most_specific_first(relevant)
-        return self._resolve_from(target, relevant)
+        try:
+            return self._resolve_from(target, relevant)
+        except NotFoundLookupError:
+            # The prefiltered bucket may omit matching fallback methods whose
+            # annotations are not generic hints and not plain types (e.g.
+            # ``typing.Any``, ``Union[list, dict]``).  Such hints are excluded
+            # from every origin bucket, so the filtered list can miss a valid
+            # match.  Fall back to full resolution over all registered methods.
+            return self.resolve(target)

@@ -508,6 +508,54 @@ def test_any_fallback_alone_matches_everything(dispatch: plum.Dispatcher):
     assert f(Box[str]("hello")) == "Box[Any]"
 
 
+def test_plain_any_fallback_with_generic_overload(dispatch: plum.Dispatcher):
+    """typing.Any annotation must be reachable even when _arity1_methods is used.
+
+    _arity1_methods buckets are keyed by parameterised-generic origins (e.g.
+    ``list``).  Methods whose annotation is plain ``typing.Any`` are *not* a
+    generic hint and are excluded from every bucket.  When the filtered bucket
+    doesn't contain a match, ``resolve_for_type`` must fall back to
+    ``self.resolve()`` so the Any-annotated overload can still be found.
+
+    Regression: before the fix, ``f([1.0, 2.0])`` raised ``NotFoundLookupError``
+    because only the ``list[int]`` overload was in the ``list`` bucket and
+    ``[1.0, 2.0]`` is not a ``list[int]``.
+    """
+
+    @dispatch
+    def f(x: list[int]) -> str:
+        return "list[int]"
+
+    @dispatch
+    def f(x: Any) -> str:
+        return "any"
+
+    # list[float] doesn't match list[int] but should fall through to Any.
+    assert f([1.0, 2.0]) == "any"
+    # list[int] still hits the specific overload.
+    assert f([1, 2]) == "list[int]"
+
+
+def test_union_fallback_with_generic_overload(dispatch: plum.Dispatcher):
+    """A Union annotation that can match must be reachable via the Any-fallback path.
+
+    ``Union[list, dict]`` has ``get_origin`` == ``Union`` which is excluded from
+    ``is_generic_hint``, so it lands in no _arity1_methods bucket.  Resolution
+    must still find it via ``self.resolve()`` fallback.
+    """
+
+    @dispatch
+    def f(x: list[int]) -> str:
+        return "list[int]"
+
+    @dispatch
+    def f(x: Union[list, dict]) -> str:  # noqa: UP007
+        return "list-or-dict"
+
+    # list[float] doesn't match list[int]; Union[list, dict] accepts any list.
+    assert f([1.0, 2.0]) == "list-or-dict"
+
+
 def test_orig_class_cache_keyed_separately(dispatch: plum.Dispatcher):
     """Box[int](1) and Box[str](1) must not share a cache entry."""
 
