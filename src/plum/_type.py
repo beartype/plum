@@ -260,6 +260,19 @@ def resolve_type_hint(x: object, /) -> object:
 
         return resolve_type_hint(x.resolve())
 
+    elif get_origin(x) is not None:
+        # Parameterised user-defined Generic, e.g. ``Box[int]`` where ``Box``
+        # is a subclass of ``Generic[T]``.  ``_is_hint`` does not recognise
+        # these because their ``__module__`` points to user code, but they
+        # still carry origin/args that we can recurse into.
+        origin = get_origin(x)
+        args = get_args(x)
+        if args:
+            resolved_args = resolve_type_hint(args)
+            assert isinstance(resolved_args, tuple)
+            return origin[resolved_args]
+        return x
+
     # For example, `Is[lambda x: x > 0]` is an example of a `BeartypeValidator`.
     # We shouldn't resolve those.
     elif isinstance(x, BeartypeValidator):
@@ -331,6 +344,12 @@ def _is_faithful(x: object, /) -> bool:
 
     elif isinstance(x, (tuple, list)):
         return all(is_faithful(arg) for arg in x)
+    elif get_origin(x) is not None:
+        # Parameterised user-defined Generic, e.g. ``Box[int]``.  These are
+        # never faithful: ``isinstance(Box("a"), Box)`` is True regardless of
+        # the type argument, so the element type cannot be inferred from the
+        # container type alone.
+        return False
     elif isinstance(x, type):
         if _has_dunder_faithful(x):
             return x.__faithful__

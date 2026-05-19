@@ -7,9 +7,11 @@ from collections.abc import Callable
 from copy import copy
 from functools import wraps
 from types import MethodType
-from typing import Any, Protocol, TypeVar, overload
+from typing import Any, Protocol, TypeAlias, TypeVar, overload
+
 from typing_extensions import Self
 
+from ._bear import is_bearable
 from ._method import Method, MethodList
 from ._resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
 from ._signature import Signature, append_default_args
@@ -20,6 +22,9 @@ _promised_convert = None
 """function or None: This will be set to :func:`.parametric.convert`."""
 
 SomeExceptionType = TypeVar("SomeExceptionType", bound=Exception)
+TypeHints: TypeAlias = tuple[TypeHint, ...]
+CallAny: TypeAlias = Callable[..., Any]
+FunctionCacheEntry: TypeAlias = tuple[CallAny, TypeHint]
 
 
 def _convert(obj: Any, target_type: TypeHint, /) -> Any:
@@ -73,18 +78,14 @@ class Function(metaclass=_FunctionMeta):
     _instances: list["Function"] = []
 
     def __init__(
-        self,
-        f: Callable[..., Any],
-        /,
-        owner: str | None = None,
-        warn_redefinition: bool = False,
+        self, f: CallAny, /, owner: str | None = None, warn_redefinition: bool = False
     ) -> None:
         Function._instances.append(self)
 
-        self._f: Callable[..., Any] = f
+        self._f: CallAny = f
         # Cache maps type tuples to `(method, return_type)`. Keys can be either
         # actual types (from `__call__`) or `TypeHints` (from `invoke`).
-        self._cache: dict[tuple[TypeHint, ...], tuple[Callable[..., Any], TypeHint]]
+        self._cache: dict[TypeHints, FunctionCacheEntry]
         self._cache = {}
 
         # Guards the lazy resolution of pending registrations, which mutates each
@@ -94,6 +95,13 @@ class Function(metaclass=_FunctionMeta):
         # lock. See GitHub issue #274.
         self._lock = threading.RLock()
 
+        # Two-tier cache for generic dispatch.  Keyed on bare runtime types
+        # (cheap to compute); each bucket holds a list of
+        # (hint_tuple, impl, return_type) candidates verified via is_bearable.
+        self._generic_cache: dict[
+            tuple[type, ...], list[tuple[tuple, CallAny, TypeHint]]
+        ]
+        self._generic_cache = {}
         wraps(f)(self)  # Sets `self._doc`.
 
         self.__name__ = f.__name__
@@ -107,16 +115,12 @@ class Function(metaclass=_FunctionMeta):
         self._warn_redefinition = warn_redefinition
 
         # Initialise pending and resolved methods.
-        self._pending: list[
-            tuple[Callable[..., Any], Signature | None, int | None]
-        ] = []
+        self._pending: list[tuple[CallAny, Signature | None, int | None]] = []
         self._resolver = Resolver(
             self.__name__,
             warn_redefinition=self._warn_redefinition,
         )
-        self._resolved: list[
-            tuple[Callable[..., Any], Signature | None, int | None]
-        ] = []
+        self._resolved: list[tuple[CallAny, Signature | None, int | None]] = []
 
     @property
     def owner(self) -> type | None:
@@ -198,8 +202,8 @@ class Function(metaclass=_FunctionMeta):
         return self._resolver.methods
 
     def dispatch(
-        self: Self, method: Callable[..., Any] | None = None, precedence: int = 0
-    ) -> Self | Callable[[Callable[..., Any]], Self]:
+        self: Self, method: CallAny | None = None, precedence: int = 0
+    ) -> Self | Callable[[CallAny], Self]:
         """Decorator to extend the function with another signature.
 
         Args:
@@ -215,8 +219,8 @@ class Function(metaclass=_FunctionMeta):
         return self
 
     def dispatch_multi(
-        self: Self, *signatures: Signature | tuple[TypeHint, ...]
-    ) -> Callable[[Callable[..., Any]], Self]:
+        self: Self, *signatures: Signature | TypeHints
+    ) -> Callable[[CallAny], Self]:
         """Decorator to extend the function with multiple signatures at once.
 
         Args:
@@ -238,7 +242,7 @@ class Function(metaclass=_FunctionMeta):
                     f"`plum.signature.Signature`."
                 )
 
-        def decorator(method: Callable[..., Any]) -> "Function":
+        def decorator(method: CallAny, /) -> "Function":
             # The precedence will not be used, so we can safely set it to `None`.
             for signature in resolved_signatures:
                 self.register(method, signature=signature, precedence=None)
@@ -257,6 +261,7 @@ class Function(metaclass=_FunctionMeta):
         # `_pending`/`_resolved`/`_resolver` in multiple steps. See GitHub issue #274.
         with self._lock:
             self._cache.clear()
+            self._generic_cache.clear()
 
             if reregister:
                 # Add all resolved to pending.
@@ -271,7 +276,8 @@ class Function(metaclass=_FunctionMeta):
 
     def register(
         self,
-        f: Callable[..., Any],
+        f: CallAny,
+        /,
         signature: Signature | None = None,
         precedence: int | None = 0,
     ) -> None:
@@ -332,9 +338,26 @@ class Function(metaclass=_FunctionMeta):
                 # Clear cache. Reenters `self._lock`, which is why it is an `RLock`.
                 self.clear_cache(reregister=False)
 
+                # Eagerly pre-populate _generic_cache for arity-1 generic functions
+                # so the first dispatch avoids the resolver entirely.  Skip origins
+                # where any two methods are incomparable — those origins could yield
+                # AmbiguousLookupError for some inputs (e.g. list[int] vs list[str]
+                # for an empty list), and must fall through to the resolver.
+                for origin, methods in self._resolver._arity1_methods.items():
+                    if any(
+                        not m1.signature.is_comparable(m2.signature)
+                        for i, m1 in enumerate(methods)
+                        for m2 in methods[i + 1 :]
+                    ):
+                        continue
+                    self._generic_cache[(origin,)] = [
+                        (m.signature.types, m.implementation, m.return_type)
+                        for m in methods
+                    ]
+
     def resolve_method(
-        self, target: tuple[object, ...] | Signature
-    ) -> tuple[Callable[..., Any], TypeHint]:
+        self, target: tuple[object, ...] | Signature, /
+    ) -> FunctionCacheEntry:
         """Find the method and return type for arguments.
 
         Args:
@@ -373,14 +396,14 @@ class Function(metaclass=_FunctionMeta):
 
     def _handle_not_found_lookup_error(
         self, ex: NotFoundLookupError, /
-    ) -> tuple[Callable[..., Any], TypeHint]:
+    ) -> FunctionCacheEntry:
         if not self.owner:
             # Not in a class. Nothing we can do.
             raise ex from None
 
         # In a class. Walk through the classes in the class's MRO, except for this
         # class, and try to get the method.
-        method: Callable[..., Any] | None = None
+        method: CallAny | None = None
         return_type: TypeHint = object
 
         for c in self.owner.__mro__[1:]:
@@ -422,8 +445,8 @@ class Function(metaclass=_FunctionMeta):
     def _resolve_method_with_cache(
         self,
         args: tuple[object, ...] | Signature | None = None,
-        types: tuple[TypeHint, ...] | None = None,
-    ) -> tuple[Callable[..., Any], TypeHint]:
+        types: TypeHints | None = None,
+    ) -> FunctionCacheEntry:
         if args is None and types is None:
             raise ValueError(
                 "Arguments `args` and `types` cannot both be `None`. "
@@ -443,7 +466,69 @@ class Function(metaclass=_FunctionMeta):
             # Attempt to use the cache based on the types of the arguments.
             # At this point, `args` must be a tuple (not `Signature` or `None`).
             assert isinstance(args, tuple)
-            types = tuple(map(type, args))
+            if self._resolver.has_generic_signatures:
+                generic_origins = self._resolver.generic_origins
+                # Check whether any argument's runtime type overlaps with a
+                # registered generic origin (e.g. list for list[int]).
+                needs_generic = any(
+                    issubclass(type(a), o) for a in args for o in generic_origins
+                )
+                if not needs_generic:
+                    # No generic arg — use the fast faithful path below.
+                    types = tuple(map(type, args))
+                else:
+                    # ── Two-tier cache ─────────────────────────────────────────
+                    # Key on cheap bare types; verify with is_bearable per hit.
+                    key = tuple(map(type, args))
+                    candidates = self._generic_cache.get(key)
+                    if candidates is not None:
+                        for hint_tuple, impl, return_type in candidates:
+                            if all(
+                                is_bearable(a, h)
+                                for a, h in zip(args, hint_tuple, strict=False)
+                            ):
+                                return impl, return_type
+                    # Full miss — run the resolver directly to also get the
+                    # matched signature (needed to build hint_tuple).
+                    # Tier 2: for arity-1, use the pre-filtered _arity1_methods
+                    # map to avoid scanning all registered methods.
+                    try:
+                        if len(args) == 1 and self._resolver._arity1_methods:
+                            resolved = self._resolver.resolve_for_type(
+                                args, type(args[0])
+                            )
+                        else:
+                            resolved = self._resolver.resolve(args)
+                    except AmbiguousLookupError as e:
+                        __tracebackhide__ = True
+                        if self.owner:
+                            e.f_name = self.__qualname__
+                        raise e from None
+                    except NotFoundLookupError as e:
+                        __tracebackhide__ = True
+                        if self.owner:
+                            e.f_name = self.__qualname__
+                        return self._handle_not_found_lookup_error(e)
+                    impl = resolved.implementation
+                    return_type = resolved.return_type
+                    # Build per-arg hint tuple, expanding varargs if present.
+                    sig = resolved.signature
+                    sig_types = sig.types
+                    if sig.has_varargs:
+                        n_extra = len(args) - len(sig_types)
+                        hint_tuple = sig_types + (sig.varargs,) * max(0, n_extra)
+                    else:
+                        hint_tuple = sig_types
+                    entry: tuple[tuple, CallAny, TypeHint]
+                    entry = (hint_tuple, impl, return_type)
+                    if candidates is None:
+                        self._generic_cache[key] = [entry]
+                    else:
+                        candidates.append(entry)
+                    return impl, return_type
+
+            else:
+                types = tuple(map(type, args))
         try:
             return self._cache[types]
         except KeyError:
@@ -454,13 +539,15 @@ class Function(metaclass=_FunctionMeta):
 
             # Cache miss. Run the resolver based on the arguments.
             method, return_type = self.resolve_method(args)
-            # If the resolver is faithful, then we can perform caching using the types
-            # of the arguments. If the resolver is not faithful, then we cannot.
-            if self._resolver.is_faithful:
+            # Cache when the resolver is faithful (safe to key on bare types),
+            # or when we reached here via the non-generic arm of a mixed
+            # function (has_generic_signatures but this arg didn't match any
+            # generic origin, so types are plain bare-type tuples).
+            if self._resolver.is_faithful or self._resolver.has_generic_signatures:
                 self._cache[types] = method, return_type
             return method, return_type
 
-    def invoke(self, *types: TypeHint) -> Callable[..., Any]:
+    def invoke(self, *types: TypeHint) -> CallAny:
         """Invoke a particular method.
 
         Args:
@@ -499,7 +586,7 @@ class Function(metaclass=_FunctionMeta):
         )
 
 
-def _generate_qualname(f: Callable[..., Any], /) -> str:
+def _generate_qualname(f: CallAny, /) -> str:
     """Generate a qualified name for a function.
 
     This function can be interpreted as an improved version of `f.__qualname__`
@@ -526,8 +613,8 @@ class _DispatchFunction(Protocol):
     """Protocol for the `dispatch` method of a function."""
 
     def __call__(
-        self, method: Callable[..., Any] | None, precedence: int
-    ) -> Self | Callable[[Callable[..., Any]], Self]: ...
+        self, method: CallAny | None, precedence: int
+    ) -> Self | Callable[[CallAny], Self]: ...
 
 
 class _BoundFunctionProto(Protocol):
@@ -565,7 +652,7 @@ class _BoundFunction:
     _f: "_BoundFunctionProto"
     _instance: object
 
-    def __init__(self, f: "Function", instance: object) -> None:
+    def __init__(self, f: "Function", instance: object, /) -> None:
         self._f = f
         wraps(f._f)(self)  # This will call the setter for `__doc__`.
         self._instance = instance
@@ -581,10 +668,10 @@ class _BoundFunction:
         # it.
         pass
 
-    def __call__(self, _: object, *args: object, **kw: object) -> object:
+    def __call__(self, _: object, /, *args: object, **kw: object) -> object:
         return self._f(self._instance, *args, **kw)
 
-    def invoke(self, *types: TypeHint) -> Callable[..., Any]:
+    def invoke(self, *types: TypeHint) -> CallAny:
         """See :meth:`.Function.invoke`."""
 
         @wraps(self._f._f)

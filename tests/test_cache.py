@@ -167,7 +167,9 @@ def test_cache_unfaithful(dispatch: plum.Dispatcher):
     def f(x: list[int]):
         return 2
 
-    # Since `f` is not faithful, no cache should be accumulated.
+    # int args take the faithful path → stored in _cache.
+    # list[int] args take the two-tier generic path → stored in _generic_cache.
     assert f(1) == 1
     assert f([1]) == 2
-    assert len(f._cache) == 0
+    assert len(f._cache) == 1
+    assert len(f._generic_cache) == 1

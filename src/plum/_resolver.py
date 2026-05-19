@@ -5,11 +5,13 @@ import sys
 import warnings
 from collections.abc import Callable, Iterable
 from functools import wraps
+from typing import get_origin
 
 from rich.console import Console, ConsoleOptions
 from rich.padding import Padding
 from rich.text import Text
 
+from ._generic import is_generic_hint
 from ._util import argsort
 from plum._method import Method, MethodList
 from plum._signature import Signature
@@ -231,6 +233,48 @@ def _unwrap_invoked_methods(f: Callable[..., object], /) -> Callable[..., object
     return f
 
 
+def _can_match_arity1_origin(hint: object, origin: type) -> bool:
+    """True if an arg of bare type `origin` could possibly match `hint`.
+
+    Used to pre-filter the method list for the arity-1 fast dispatch path.
+    """
+    if is_generic_hint(hint):
+        return issubclass(origin, get_origin(hint))
+    elif isinstance(hint, type):
+        return issubclass(origin, hint)
+    return False
+
+
+def _sort_most_specific_first(methods: list["Method"]) -> list["Method"]:
+    """Topological sort: most-specific methods first.
+
+    Uses the Signature partial order: ``m1 < m2`` means m1 is strictly more
+    specific than m2.  Methods that are incomparable remain in their relative
+    order within the same topological layer.
+    """
+    if len(methods) <= 1:
+        return list(methods)
+    result: list[Method] = []
+    remaining = list(methods)
+    while remaining:
+        # A method is in the current "most specific" layer if no other
+        # remaining method is strictly more specific than it.
+        layer = [
+            m
+            for m in remaining
+            if not any(
+                other is not m and other.signature < m.signature for other in remaining
+            )
+        ]
+        if not layer:  # Safety valve — should never happen with a valid partial order.
+            result.extend(remaining)
+            break
+        result.extend(layer)
+        for m in layer:
+            remaining.remove(m)
+    return result
+
+
 class Resolver:
     """Method resolver.
 
@@ -249,6 +293,9 @@ class Resolver:
         "function_name",
         "methods",
         "is_faithful",
+        "has_generic_signatures",
+        "generic_origins",
+        "_arity1_methods",
         "warn_redefinition",
     )
 
@@ -265,6 +312,9 @@ class Resolver:
         self.function_name = function_name
         self.methods: MethodList = MethodList()
         self.is_faithful: bool = True
+        self.has_generic_signatures: bool = False
+        self.generic_origins: tuple[type, ...] = ()
+        self._arity1_methods: dict[type, list[Method]] = {}
         self.warn_redefinition = warn_redefinition
 
     def doc(self, exclude: Callable[..., object] | None = None) -> str:
@@ -334,6 +384,43 @@ class Resolver:
         # Use a double negation for slightly better performance.
         self.is_faithful = not any(not s.signature.is_faithful for s in self.methods)
 
+        # Collect the bare origin types of all parameterised generic hints
+        # (e.g. `list` from `list[int]`, `dict` from `dict[str, int]`).
+        # Used to avoid calling infer_hint on arguments whose runtime type
+        # is not a generic container registered in this resolver.
+        self.generic_origins = tuple(
+            get_origin(t)
+            for m in self.methods
+            for t in (
+                list(m.signature.types)
+                + ([m.signature.varargs] if m.signature.has_varargs else [])
+            )
+            if is_generic_hint(t)
+        )
+        self.has_generic_signatures = bool(self.generic_origins)
+
+        # Pre-compute per-origin sorted method lists for arity-1 fast dispatch
+        # (used by Tier 2 cold-miss shortcut and Tier 3 eager pre-population).
+        # Only populated when every registered method is single-argument with no
+        # varargs, so multi-arity functions fall back to the regular resolver.
+        if self.has_generic_signatures and all(
+            len(m.signature.types) == 1 and not m.signature.has_varargs
+            for m in self.methods
+        ):
+            self._arity1_methods = {
+                origin: _sort_most_specific_first(
+                    [
+                        m
+                        for m in self.methods
+                        if m.signature.types
+                        and _can_match_arity1_origin(m.signature.types[0], origin)
+                    ]
+                )
+                for origin in set(self.generic_origins)
+            }
+        else:
+            self._arity1_methods = {}
+
     def __len__(self) -> int:
         return len(self.methods)
 
@@ -348,6 +435,14 @@ class Resolver:
             :class:`.signature.Signature`: The most specific signature satisfying
                 `target`.
         """
+        return self._resolve_from(target, self.methods)
+
+    def _resolve_from(
+        self,
+        target: tuple[object, ...] | Signature,
+        methods: "MethodList | list[Method]",
+    ) -> Method:
+        """Core resolution algorithm operating on the given methods list."""
         if isinstance(target, tuple):
 
             def check(m: Method, /) -> bool:
@@ -361,7 +456,7 @@ class Resolver:
                 return bool(target <= m.signature)
 
         candidates: list[Method] = []
-        for method in [m for m in self.methods if check(m)]:
+        for method in [m for m in methods if check(m)]:
             # If none of the candidates are comparable, then add the method as
             # a new candidate and continue.
             if not any(c.signature.is_comparable(method.signature) for c in candidates):
@@ -400,3 +495,39 @@ class Resolver:
                 raise AmbiguousLookupError(
                     self.function_name, target, MethodList(candidates)
                 )
+
+    def resolve_for_type(self, target: tuple, arg_type: type) -> Method:
+        """Arity-1 cold-miss shortcut using the pre-filtered ``_arity1_methods`` map.
+
+        Gathers only the methods that could match an arg of ``arg_type``, avoiding
+        a full scan of all registered methods.  Falls back to :meth:`resolve` when
+        ``_arity1_methods`` is empty (non-arity-1 or non-generic function).
+
+        Args:
+            target: Concrete single-element argument tuple.
+            arg_type: ``type(target[0])``.
+
+        Returns:
+            :class:`.method.Method`: Best matching method.
+        """
+        if not self._arity1_methods:
+            return self.resolve(target)
+
+        # Gather methods from all registered origins that arg_type is a subtype of,
+        # deduplicating across overlapping origin buckets (e.g. list & Sequence).
+        seen: set[int] = set()
+        relevant: list[Method] = []
+        for origin, methods in self._arity1_methods.items():
+            if issubclass(arg_type, origin):
+                for m in methods:
+                    mid = id(m)
+                    if mid not in seen:
+                        seen.add(mid)
+                        relevant.append(m)
+
+        if not relevant:
+            return self.resolve(target)
+
+        if len(relevant) > 1:
+            relevant = _sort_most_specific_first(relevant)
+        return self._resolve_from(target, relevant)
