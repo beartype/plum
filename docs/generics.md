@@ -164,7 +164,7 @@ Bare instances now dispatch correctly **without** an `A[Any]` fallback:
 'str box'
 ```
 
-The decorator wraps `__init__` so that after construction it sets `instance.__orig_class__ = Box[inferred_T]`.  When you use the subscripted form `Box[str](1)`, Python's own machinery overwrites that attribute after `__init__` returns, so explicit parameterisation always takes precedence.
+The decorator wraps `__init__` so that after construction it sets `instance.__orig_class__ = Box[inferred_T]`.  When you use the subscripted form `Box[str](1)`, Python's own machinery overwrites that attribute after `__init__` returns, so explicit parameterisation always takes precedence.  For frozen dataclasses (`@dataclass(frozen=True)`), `@generic` installs a custom `__setattr__` that allows `__orig_class__` to be updated despite the frozen restriction, so subscripted construction takes precedence there too.
 
 **Inference rule**: define `__infer_type_parameter__(cls, instance)` as a classmethod that inspects the freshly-constructed instance and returns the type parameter.  For multi-parameter generics return a tuple:
 

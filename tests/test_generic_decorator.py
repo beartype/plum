@@ -252,6 +252,32 @@ def test_generic_inherited_infer_not_double_installed():
 # ---------------------------------------------------------------------------
 
 
+# Canary: verify that CPython still silently swallows FrozenInstanceError in
+# _GenericAlias.__call__ when setting __orig_class__ via normal assignment.
+# If this test ever fails it means CPython has been fixed (e.g. to use
+# object.__setattr__) and the custom __setattr__ installed by @generic on
+# frozen dataclasses can be removed.
+@dataclass(frozen=True)
+class _PlainFrozenBox(Generic[T]):
+    value: object
+
+
+def test_cpython_swallows_frozen_instance_error_for_orig_class():
+    import dataclasses
+
+    b = _PlainFrozenBox(1)
+    # Normal assignment raises FrozenInstanceError.
+    with pytest.raises(dataclasses.FrozenInstanceError):
+        b.__orig_class__ = _PlainFrozenBox[int]  # type: ignore[attr-defined]
+    # Python's _GenericAlias.__call__ uses normal assignment and silently
+    # swallows the error, so __orig_class__ is never set.
+    b2 = _PlainFrozenBox[int](1)
+    assert not hasattr(b2, "__orig_class__"), (
+        "CPython now sets __orig_class__ on frozen dataclasses — "
+        "the custom __setattr__ workaround in @generic can be removed."
+    )
+
+
 @generic
 @dataclass(frozen=True)
 class FrozenBox(Generic[T]):
@@ -279,21 +305,18 @@ def test_generic_frozen_dataclass_dispatch():
 
     assert handle(FrozenBox(1)) == "int"
     assert handle(FrozenBox("x")) == "str"
-    # For frozen dataclasses Python's _GenericAlias.__call__ cannot overwrite
-    # __orig_class__ (FrozenInstanceError is caught and swallowed), so the
-    # inferred value always wins regardless of the subscripted form.
-    assert handle(FrozenBox[str](1)) == "int"
+    # @generic installs a custom __setattr__ that allows __orig_class__ to be
+    # updated on frozen dataclasses, so subscripted construction wins as it
+    # does for normal classes.
+    assert handle(FrozenBox[str](1)) == "str"
 
 
-def test_generic_frozen_dataclass_subscripted_inference_wins():
-    # Python's _GenericAlias.__call__ tries to set __orig_class__ after __init__
-    # but catches the resulting FrozenInstanceError (AttributeError subclass)
-    # and silently discards it.  Our object.__setattr__ value therefore
-    # persists.
+def test_generic_frozen_dataclass_subscripted_wins():
+    # @generic overrides __setattr__ on frozen dataclasses so that Python's
+    # _GenericAlias.__call__ can successfully overwrite __orig_class__ with the
+    # subscripted alias after __init__ sets the inferred value.
     b = FrozenBox[str](1)
-    assert (
-        b.__orig_class__ == FrozenBox[int]
-    )  # inferred from value, not from subscription
+    assert b.__orig_class__ == FrozenBox[str]  # subscripted wins, not inferred
 
 
 # ---------------------------------------------------------------------------

@@ -8,6 +8,7 @@ decisions of its own — that is deferred to :mod:`beartype.door`.
 
 __all__ = ("generic", "is_generic_hint", "le_generic")
 
+import dataclasses
 import functools
 import typing
 import warnings
@@ -124,9 +125,11 @@ def generic(cls: type[T] | None = None, /) -> type[T] | Callable[[type[T]], type
     parameter generics).  The decorator raises :exc:`TypeError` at decoration
     time if the method is absent.
 
-    Subscripted construction (e.g. ``A[str](value)``) still wins: Python sets
+    Subscripted construction (e.g. ``A[str](value)``) always wins: Python sets
     ``__orig_class__`` *after* ``__init__`` returns, overwriting whatever the
-    wrapper inferred.
+    wrapper inferred.  For frozen dataclasses, ``@generic`` installs a custom
+    ``__setattr__`` that allows ``__orig_class__`` to be updated despite the
+    frozen restriction, so subscripted construction takes precedence there too.
 
     Examples::
 
@@ -209,4 +212,21 @@ def generic(cls: type[T] | None = None, /) -> type[T] | Callable[[type[T]], type
             )
 
     cls.__init__ = __init__  # type: ignore[method-assign,assignment]
-    return cls
+
+    # For frozen dataclasses, Python's _GenericAlias.__call__ cannot overwrite
+    # __orig_class__ via normal attribute assignment because FrozenInstanceError
+    # is silently swallowed.  Override __setattr__ to allow __orig_class__ to be
+    # set, so subscripted construction (e.g. A[str](...)) correctly takes
+    # precedence over the value inferred in __init__.
+    if dataclasses.is_dataclass(cls) and cls.__dataclass_params__.frozen:  # type: ignore[attr-defined]
+        _frozen_setattr = cls.__setattr__
+
+        def __setattr__(self: T, name: str, value: Any) -> None:
+            if name == "__orig_class__":
+                object.__setattr__(self, name, value)
+            else:
+                _frozen_setattr(self, name, value)
+
+        cls.__setattr__ = __setattr__  # type: ignore[method-assign,assignment]
+
+    return cls  # type: ignore[return-value]
