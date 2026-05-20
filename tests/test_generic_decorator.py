@@ -165,12 +165,37 @@ def test_generic_preserves_init_signature():
 def test_generic_requires_infer_method():
     # @generic must raise TypeError at decoration time if __infer_type_parameter__
     # is not defined on the class or any ancestor.
-    with pytest.raises(TypeError, match="__infer_type_parameter__"):
+    with pytest.raises(TypeError, match="not defined"):
 
         @generic
         class NoInfer(Generic[T]):
             def __init__(self, x) -> None:
                 self.x = x
+
+
+def test_generic_requires_infer_method_to_be_classmethod():
+    # @generic must raise TypeError if __infer_type_parameter__ exists but is
+    # a plain method or static method rather than a classmethod.
+    with pytest.raises(TypeError, match="classmethod"):
+
+        @generic
+        class PlainMethod(Generic[T]):
+            def __init__(self, x) -> None:
+                self.x = x
+
+            def __infer_type_parameter__(cls, instance):  # not a classmethod
+                return type(instance.x)
+
+    with pytest.raises(TypeError, match="classmethod"):
+
+        @generic
+        class StaticMethod(Generic[T]):
+            def __init__(self, x) -> None:
+                self.x = x
+
+            @staticmethod
+            def __infer_type_parameter__(instance):
+                return type(instance.x)
 
 
 def test_generic_parens_form():

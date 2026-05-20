@@ -10,6 +10,7 @@ __all__ = ("generic", "is_generic_hint", "le_generic")
 
 import dataclasses
 import functools
+import inspect
 import typing
 import warnings
 from collections.abc import Callable
@@ -166,10 +167,19 @@ def generic(cls: type[T] | None = None, /) -> type[T] | Callable[[type[T]], type
         # Support @generic() with parentheses.
         return generic
 
-    if not hasattr(cls, "__infer_type_parameter__"):
+    # inspect.getattr_static walks the MRO without invoking descriptors, so
+    # we can verify the raw object is actually a classmethod before binding.
+    _raw = inspect.getattr_static(cls, "__infer_type_parameter__", None)
+    if not isinstance(_raw, classmethod):
         raise TypeError(
             f"@generic requires {cls.__name__} to define "
-            "__infer_type_parameter__(cls, instance) as a classmethod."
+            "__infer_type_parameter__(cls, instance) as a classmethod "
+            "(decorated with @classmethod). "
+            + (
+                f"Found {type(_raw).__name__!r} instead."
+                if _raw is not None
+                else "The method is not defined."
+            )
         )
 
     # Warn at decoration time if the class declares __slots__ without
