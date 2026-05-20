@@ -92,7 +92,7 @@ Think of `A[Any]` as the explicit way to say *"this overload is the fallback for
 
 ## Bare class hints (`Box` without brackets)
 
-You can also write a fallback against the **bare** (unsubscripted) class:
+You can equivalently write a fallback against the **bare** (unsubscripted) class:
 
 ```python
 @dispatch
@@ -120,9 +120,7 @@ A bare hint like `Box` behaves the same way as `Box[Any]` for dispatch purposes 
 
 ## Auto-inferring types with `@plum.generic`
 
-If your class can always infer `T` from the constructor arguments — for
-example, `Box(1)` should behave exactly like `Box[int](1)` — you can opt into
-automatic inference with `@plum.generic`:
+If your class can always infer `T` from the constructor arguments — for example, `Box(1)` should behave exactly like `Box[int](1)` — you can opt into automatic inference with `@plum.generic`:
 
 ```python
 from typing import Generic, TypeVar
@@ -189,7 +187,7 @@ class Pair(Generic[T, S]):
 `@generic` raises `TypeError` at decoration time if `__infer_type_parameter__` is not defined on the class or any of its ancestors.
 
 ```{note}
-`@plum.generic` is a **lightweight** opt-in that simply sets `__orig_class__`. For richer parametric machinery — covariant subclassing, custom type-parameter validation, and multi-parameter ordering — see [Parametric Classes](parametric.md).
+`@plum.generic` is a **lightweight** opt-in that sets `__orig_class__`. For richer parametric machinery — covariant subclassing, custom type-parameter validation, and multi-parameter ordering — see [Parametric Classes](parametric.md).
 ```
 
 ## Why this isn't fully automatic
@@ -224,7 +222,7 @@ Two scenarios are measured:
 ```{include} _generated/generics_timing.md
 ```
 
-The faithful path is the fastest because Plum caches by `type(arg)` and checks membership with a single `issubclass` call.  The generic path must additionally read `__orig_class__` (or detect its absence), build the two-tier cache key, and run the TypeHint subtype check on a cache miss.
+The faithful path is the fastest because Plum caches by `type(arg)` and checks membership with a single `issubclass` call.  The generic path must additionally read `__orig_class__` (or detect its absence), build a two-tier cache key over the type and type parameters, and run the TypeHint subtype check on a cache miss.
 
 ```{tip}
 If your code only dispatches on the *class* `A` and never needs to distinguish `A[int]` from `A[str]`, declare a bare `A` (or `B` in the example above) overload and omit the parameterized ones.  You get the faithful-cache speed with no change to the calling code.
