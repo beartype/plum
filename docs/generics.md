@@ -214,7 +214,7 @@ For more advanced parametric-class machinery (covariance, custom type-parameter 
 (generics-performance)=
 ## Performance
 
-Generic dispatch carries a small overhead compared to a regular faithful type. The table below is generated each time the documentation is built so the numbers reflect your actual hardware and Python version.
+Generic dispatch carries a small overhead compared to a regular faithful type. The table below is generated each time the documentation is built.
 
 Two scenarios are measured:
 
