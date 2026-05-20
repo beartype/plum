@@ -296,7 +296,7 @@ class Signature(Comparable):
         # Additionally count one for every mismatching value above the
         # extra/missing arguments. There can be fewer types than values.
         for v, t in zip(values, types, strict=False):
-            if not is_bearable(v, t):
+            if not is_bearable_with_orig(v, t):
                 distance += 1
 
         return distance
@@ -323,7 +323,7 @@ class Signature(Comparable):
         varargs_matched = True
 
         for i, (v, t) in enumerate(zip(values, types, strict=False)):
-            if not is_bearable(v, t):
+            if not is_bearable_with_orig(v, t):
                 if i < n_types:
                     mismatches.add(i)
                 else:

@@ -370,39 +370,108 @@ def test_match():
     assert not Sig(int, varargs=int).match(())
 
 
-def test_compute_distance():
-    assert Sig(int, int).compute_distance(()) == 2
-    assert Sig(int, int).compute_distance((1,)) == 1
-    assert Sig(int, int).compute_distance((1.0,)) == 2
-    assert Sig(int, int).compute_distance((1, 1)) == 0
-    assert Sig(int, int).compute_distance((1, 1, 1)) == 1
-    assert Sig(int, int).compute_distance((1, 1, 1, 1)) == 2
-    assert Sig(int, int).compute_distance((1, 1.0, 1, 1)) == 3
-    assert Sig(int, int).compute_distance((1, 1.0, 1.0, 1)) == 3
+@pytest.mark.parametrize(
+    "sig, values, expected",
+    [
+        (Sig(int, int), (), 2),
+        (Sig(int, int), (1,), 1),
+        (Sig(int, int), (1.0,), 2),
+        (Sig(int, int), (1, 1), 0),
+        (Sig(int, int), (1, 1, 1), 1),
+        (Sig(int, int), (1, 1, 1, 1), 2),
+        (Sig(int, int), (1, 1.0, 1, 1), 3),
+        (Sig(int, int), (1, 1.0, 1.0, 1), 3),
+        (Sig(varargs=float), (1, 1), 2),
+        (Sig(varargs=float), (1,), 1),
+        (Sig(varargs=float), (), 0),
+        (Sig(varargs=float), (1.0,), 0),
+        (Sig(varargs=float), (1.0, 1.0), 0),
+    ],
+)
+def test_compute_distance(sig, values, expected):
+    assert sig.compute_distance(values) == expected
 
-    assert Sig(varargs=float).compute_distance((1, 1)) == 2
-    assert Sig(varargs=float).compute_distance((1,)) == 1
-    assert Sig(varargs=float).compute_distance(()) == 0
-    assert Sig(varargs=float).compute_distance((1.0,)) == 0
-    assert Sig(varargs=float).compute_distance((1.0, 1.0)) == 0
+
+@pytest.mark.parametrize(
+    "sig, values, expected_mismatches, expected_varargs_matched",
+    [
+        # Without varargs:
+        (Sig(int, int), (), set(), True),
+        (Sig(int, int), (1,), set(), True),
+        (Sig(int, int), (1, 1), set(), True),
+        (Sig(int, int), (1.0, 1), {0}, True),
+        (Sig(int, int), (1, 1.0), {1}, True),
+        (Sig(int, int), (1.0, 1.0), {0, 1}, True),
+        # Extra values beyond sig.types are ignored when no varargs:
+        (Sig(int, int), (1.0, 1.0, 1), {0, 1}, True),
+        # With varargs:
+        (Sig(int, int, varargs=int), (1.0, 1.0, 1.0), {0, 1}, False),
+        (Sig(int, int, varargs=int), (1.0, 1.0, 1), {0, 1}, True),
+        (Sig(int, int, varargs=int), (1.0, 1.0, 1, 1), {0, 1}, True),
+    ],
+)
+def test_compute_mismatches(sig, values, expected_mismatches, expected_varargs_matched):
+    assert sig.compute_mismatches(values) == (
+        expected_mismatches,
+        expected_varargs_matched,
+    )
 
 
-def test_compute_mismatches():
-    # Test without varargs present:
-    assert Sig(int, int).compute_mismatches(()) == (set(), True)
-    assert Sig(int, int).compute_mismatches((1,)) == (set(), True)
-    assert Sig(int, int).compute_mismatches((1, 1)) == (set(), True)
-    assert Sig(int, int).compute_mismatches((1.0, 1)) == ({0}, True)
-    assert Sig(int, int).compute_mismatches((1, 1.0)) == ({1}, True)
-    assert Sig(int, int).compute_mismatches((1.0, 1.0)) == ({0, 1}, True)
-    # If more values are given, these are ignored if not varargs are present.
-    assert Sig(int, int).compute_mismatches((1.0, 1.0, 1)) == ({0, 1}, True)
+# ── Generic __orig_class__ semantics in distance/mismatches ──────────────────
 
-    # Test with varargs present:
-    sig = Sig(int, int, varargs=int)
-    assert sig.compute_mismatches((1.0, 1.0, 1.0)) == ({0, 1}, False)
-    assert sig.compute_mismatches((1.0, 1.0, 1)) == ({0, 1}, True)
-    assert sig.compute_mismatches((1.0, 1.0, 1, 1)) == ({0, 1}, True)
+
+@pytest.fixture()
+def make_box():
+    """Return a fresh Box generic class (avoids polluting module scope)."""
+    from typing import Generic, TypeVar
+
+    T = TypeVar("T")
+
+    class Box(Generic[T]):
+        def __init__(self, val: object) -> None:
+            self.val = val
+
+    return Box
+
+
+def test_compute_distance_honours_orig_class(make_box):
+    """compute_distance must use is_bearable_with_orig, not plain is_bearable.
+
+    With plain is_bearable, beartype cannot distinguish Box[int] from Box[str]
+    at runtime, so Sig(Box[str]).compute_distance((Box[int](1),)) would
+    incorrectly return 0 (no mismatch) instead of 1.
+    """
+    Box = make_box
+    box_int = Box[int](1)
+
+    # A Box[int] instance does NOT match Sig(Box[str]).
+    assert Sig(Box[str]).compute_distance((box_int,)) == 1
+
+    # A Box[int] instance DOES match Sig(Box[int]) → distance 0.
+    assert Sig(Box[int]).compute_distance((box_int,)) == 0
+
+    # A Box[int] instance DOES match the bare Sig(Box) → distance 0.
+    assert Sig(Box).compute_distance((box_int,)) == 0
+
+
+def test_compute_mismatches_honours_orig_class(make_box):
+    """compute_mismatches must use is_bearable_with_orig, not plain is_bearable.
+
+    With plain is_bearable, beartype cannot distinguish Box[int] from Box[str],
+    so Sig(Box[str]).compute_mismatches((Box[int](1),)) would incorrectly
+    return (set(), True) instead of ({0}, True).
+    """
+    Box = make_box
+    box_int = Box[int](1)
+
+    # Box[int] does NOT match Box[str] → position 0 is a mismatch.
+    assert Sig(Box[str]).compute_mismatches((box_int,)) == ({0}, True)
+
+    # Box[int] DOES match Box[int] → no mismatch.
+    assert Sig(Box[int]).compute_mismatches((box_int,)) == (set(), True)
+
+    # Box[int] DOES match bare Box → no mismatch.
+    assert Sig(Box).compute_mismatches((box_int,)) == (set(), True)
 
 
 def test_inspect_signature():
@@ -504,12 +573,19 @@ def test_le_constructs_typehint_wrapper_once_per_pair():
     ), f"Expected 4 TypeHintWrapper constructions, got {len(calls)}: {calls}"
 
 
-def test_eq_short_circuits_before_building_wrappers():
-    """``__eq__`` must return ``False`` without constructing any ``TypeHintWrapper``
-    objects when cheap scalar checks (types length, varargs presence, precedence)
-    already prove inequality.
+@pytest.mark.parametrize(
+    "left, right",
+    [
+        (Sig(int, int), Sig(int)),  # length mismatch
+        (Sig(int, precedence=0), Sig(int, precedence=1)),  # precedence mismatch
+        (Sig(int), Sig(int, varargs=int)),  # varargs-presence mismatch
+    ],
+    ids=["length", "precedence", "varargs"],
+)
+def test_eq_short_circuits_before_building_wrappers(left, right):
+    """``__eq__`` returns False without building any TypeHintWrapper when cheap
+    scalar checks (length / precedence / varargs) already prove inequality.
     """
-
     real_wrapper = plum._signature.TypeHintWrapper
     calls: list[object] = []
 
@@ -517,51 +593,16 @@ def test_eq_short_circuits_before_building_wrappers():
         calls.append(t)
         return real_wrapper(t)
 
-    # --- length mismatch --------------------------------------------------
     with patch.object(plum._signature, "TypeHintWrapper", side_effect=counting_wrapper):
-        result = Sig(int, int) == Sig(
-            int,
-        )
+        result = left == right
     assert result is False
-    assert (
-        len(calls) == 0
-    ), f"Expected 0 TypeHintWrapper calls for length mismatch, got {len(calls)}"
-
-    # --- precedence mismatch -----------------------------------------------
-    calls.clear()
-    with patch.object(plum._signature, "TypeHintWrapper", side_effect=counting_wrapper):
-        result = Sig(int, precedence=0) == Sig(int, precedence=1)
-    assert result is False
-    assert (
-        len(calls) == 0
-    ), f"Expected 0 TypeHintWrapper calls for precedence mismatch, got {len(calls)}"
-
-    # --- varargs presence mismatch ----------------------------------------
-    calls.clear()
-    with patch.object(plum._signature, "TypeHintWrapper", side_effect=counting_wrapper):
-        result = Sig(int) == Sig(int, varargs=int)
-    assert result is False
-    assert len(calls) == 0, (
-        "Expected 0 TypeHintWrapper calls for varargs-presence mismatch, "
-        f"got {len(calls)}"
-    )
+    assert len(calls) == 0, f"Expected 0 TypeHintWrapper calls, got {len(calls)}"
 
 
 def test_is_comparable_avoids_redundant_typehint_wrappers():
-    """``Signature.is_comparable`` should build ``TypeHintWrapper`` at most as
-    many times as two ``__le__`` calls require.
-
-    The base ``Comparable.is_comparable`` expands to::
-
-        self < other or self == other or self > other
-
-    Each branch triggers ``Signature.__eq__`` (which builds ``TypeHintWrapper``
-    objects) *in addition to* ``__le__``.  For equal single-type signatures
-    this results in 6 ``TypeHintWrapper`` constructions.
-
-    The ``Signature`` override only calls ``__le__`` twice (once per direction),
-    and short-circuits after the first direction when it returns ``True``, so
-    the maximum for a single-type equal signature is 2 constructions.
+    """``Signature.is_comparable`` must call ``__le__`` at most twice, not fall back
+    to the base ``self < other or self == other or self > other`` which builds up to
+    6 TypeHintWrapper objects per comparison.
     """
     real_wrapper = plum._signature.TypeHintWrapper
     calls: list[object] = []

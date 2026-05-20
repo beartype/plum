@@ -154,14 +154,8 @@ def test_register():
 
 
 def test_register_short_circuits_on_first_match():
-    """``register`` must stop scanning after the first matching signature.
-
-    ``register`` uses ``next()`` with a generator expression so that scanning
-    stops as soon as the first matching signature is found.
-
-    Scenario: resolver with 2 methods (``int`` at index 0, ``float`` at
-    index 1).  Re-registering ``int`` should require exactly one
-    ``Signature.__eq__`` call (int==int → True → stop).
+    """register() uses next() to stop scanning after the first matching signature.
+    Re-registering the first of two methods must call Signature.__eq__ exactly once.
     """
 
     def f(*xs):
@@ -190,33 +184,13 @@ def test_register_short_circuits_on_first_match():
 
 
 def test_register_metadata_updated_incrementally():
-    """``register`` must update ``generic_origins`` and ``_arity1_methods``
-    incrementally rather than rescanning all registered methods on every call.
+    """register() updates generic_origins and _arity1_methods for the new method only,
+    not by rescanning all registered methods.  Each registration invokes
+    is_generic_hint exactly 3 times (method_has_generic_hint, generic_origins,
+    _arity1_methods update).  For 4 registrations: 12 total calls.
 
-    The test uses arity-1 methods whose sole type is ``list[X]`` (a parameterised
-    generic) so that:
-
-    - ``is_faithful`` is ``False`` for every signature;
-    - ``_method_has_generic_hint`` returns ``True``, qualifying methods for the
-      arity-1 fast path;
-    - ``generic_origins = (list,)`` after the first registration;
-    - ``_arity1_methods`` is populated on every subsequent registration.
-
-    We count calls to ``is_generic_hint``, which is invoked by three parts of
-    the ``register`` implementation — each incremental:
-
-    1. **``_method_has_generic_hint``** — called once per registration for the
-       new method only: **1 call**.
-    2. **``generic_origins`` computation** — scans only the new method's types:
-       **1 call**.
-    3. **``_arity1_methods`` update** — checks only the new method's origin:
-       **1 call**.
-
-    Expected total for N=4 registrations: **12 calls** (3 per registration).
-
-    The module is loaded from the ``.py`` source so that ``is_generic_hint`` (a
-    module-level name in ``_resolver.py``) can be patched via the module dict.
-    mypyc-compiled callers use a direct C pointer and bypass the dict lookup.
+    The module is loaded from source so is_generic_hint can be patched via the
+    module dict (mypyc-compiled callers use a direct C pointer and bypass it).
     """
     import importlib.util
     import pathlib
@@ -263,11 +237,8 @@ def test_register_metadata_updated_incrementally():
 
 
 def test_sort_most_specific_first_no_eq_calls():
-    """Kahn's algorithm uses only ``__le__``; ``Signature.__eq__`` is never called.
-
-    Kahn's algorithm determines strict ordering via two ``__le__`` calls per
-    pair (``le_ij`` and ``le_ji``), deriving ``i < j`` as ``le_ij and not
-    le_ji``.  ``Signature.__eq__`` is therefore never called.
+    """Kahn's algorithm uses only __le__ to derive strict ordering; __eq__ is never
+    called (i < j iff le_ij and not le_ji).
     """
 
     class A:
@@ -302,25 +273,17 @@ def test_sort_most_specific_first_no_eq_calls():
     with patch.object(plum.Signature, "__eq__", counting_eq):
         result = _sort_most_specific_first([m_A, m_B, m_C, m_D])
 
-    assert result[0] is m_D, f"Expected m_D first (most specific), got {result[0]}"
-    assert result[-1] is m_A, f"Expected m_A last (least specific), got {result[-1]}"
-    assert eq_call_count == 0, (
-        f"Expected 0 Signature.__eq__ calls (Kahn's uses __le__ only), "
-        f"got {eq_call_count}."
-    )
+    assert result[0] is m_D
+    assert result[-1] is m_A
+    assert (
+        eq_call_count == 0
+    ), f"Expected 0 __eq__ calls (Kahn's uses __le__ only), got {eq_call_count}"
 
 
 def test_sort_most_specific_first_safety_valve():
-    """The safety valve fires when all nodes have in-degree > 0 (cyclic ``__le__``).
-
-    Kahn's algorithm uses ``__le__`` to derive the strict partial order.
-    A cyclic ``__le__`` relation leaves every node with in_degree > 0, so the
-    BFS queue empties before all methods are emitted; the safety valve then
-    appends the remaining methods in their original order.
-
-    This path is unreachable with a valid partial order but we exercise it by
-    patching ``Signature.__le__`` to create a three-node cycle:
-    m1 → m2 → m3 → m1 (each method "more specific than" the next).
+    """Safety valve: when all nodes have in-degree > 0 (cyclic __le__) Kahn's
+    BFS queue empties before all methods are emitted; remaining methods are
+    appended in original order.
     """
 
     def f(*xs):
@@ -570,13 +533,9 @@ def test_redefinition_warning_unwrapping():
 def test_not_found_lookup_error_renders_with_signature_target(
     dispatch: plum.Dispatcher,
 ):
-    """NotFoundLookupError raised via .invoke() has a Signature as its target.
-
-    The __rich_console__ method has two branches: one that shows candidate
-    suggestions (used when the target is a tuple of runtime arguments) and one
-    that simply shows the "could not be resolved" line (used when the target is
-    a Signature, because there are no concrete argument values to compute
-    distances from).  This test exercises the Signature branch.
+    """NotFoundLookupError raised via .invoke() (target is a Signature, not a tuple)
+    must render the "could not be resolved" branch, not the candidate-suggestions
+    branch.
     """
 
     @dispatch
@@ -594,23 +553,9 @@ def test_not_found_lookup_error_renders_with_signature_target(
 
 @pytest.mark.incompatible_with_mypyc
 def test_resolve_from_does_not_materialise_filter_list():
-    """``_resolve_from`` must iterate ``methods`` lazily, not via a temporary list.
-
-    Verified by wrapping ``methods`` in an iterable whose ``__iter__`` raises
-    ``RuntimeError`` if called from within a list or generator comprehension frame
-    (``<listcomp>`` / ``<genexpr>``).  The bad pattern::
-
-        for method in [m for m in methods if check(m)]:
-
-    causes the comprehension to call ``iter(methods)`` from a ``<listcomp>``
-    frame, which our guard detects.  The correct pattern::
-
-        for method in methods:
-            if not check(method):
-                continue
-
-    calls ``iter(methods)`` directly from ``_resolve_from``'s frame, which
-    passes the guard.
+    """_resolve_from must iterate methods directly, not via a list/genexpr.
+    Verified by wrapping methods in an iterable that raises RuntimeError if
+    iterated from within a <listcomp> or <genexpr> frame.
     """
 
     class _NoMaterializeIterable:
@@ -627,9 +572,7 @@ def test_resolve_from_does_not_materialise_filter_list():
                 "<genexpr>",
             ):
                 raise RuntimeError(
-                    "_resolve_from materialised `methods` inside a comprehension. "
-                    "Use direct iteration: `for method in methods:` + "
-                    "`if not check(method): continue`."
+                    "_resolve_from materialised `methods` inside a comprehension."
                 )
             return iter(self._items)
 

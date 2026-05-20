@@ -122,6 +122,12 @@ class Function(metaclass=_FunctionMeta):
             tuple[object, ...], list[tuple[tuple[TypeHint, ...], CallAny, TypeHint]]
         ]
         self._generic_cache = {}
+        # Keys present in this set have buckets built by pre-population
+        # (_resolve_pending_registrations) where all candidate methods are
+        # pairwise comparable and sorted most-specific-first.  For those keys
+        # the first is_bearable_with_orig match is the most specific answer;
+        # no second-match scan is needed.
+        self._generic_cache_sorted: set[tuple[object, ...]] = set()
         wraps(f)(self)  # Sets `self._doc`.
 
         self.__name__ = f.__name__
@@ -282,6 +288,7 @@ class Function(metaclass=_FunctionMeta):
         with self._lock:
             self._cache.clear()
             self._generic_cache.clear()
+            self._generic_cache_sorted.clear()
 
             if reregister:
                 # Add all resolved to pending.
@@ -359,8 +366,14 @@ class Function(metaclass=_FunctionMeta):
                 self.clear_cache(reregister=False)
 
                 # Eagerly pre-populate _generic_cache for arity-1 generic functions
-                # so the first dispatch avoids the resolver entirely.  Skip origins
-                # where any two methods are incomparable — those origins could yield
+                # as a best-effort fast path.  This lets the first dispatch avoid
+                # the resolver when the runtime cache key matches the generic origin
+                # (e.g. builtins and custom generics where type(arg) is the origin
+                # directly).  For ABC generics such as Sequence the runtime key is
+                # type(arg) — e.g. (list,) — which differs from the origin key
+                # (collections.abc.Sequence,), so those calls still miss the cache
+                # and fall through to resolution.  Skip origins where any two
+                # methods are incomparable — those origins could yield
                 # AmbiguousLookupError for some inputs (e.g. list[int] vs list[str]
                 # for an empty list), and must fall through to the resolver.
                 for origin, methods in self._resolver._arity1_methods.items():
@@ -374,6 +387,7 @@ class Function(metaclass=_FunctionMeta):
                         (m.signature.types, m.implementation, m.return_type)
                         for m in methods
                     ]
+                    self._generic_cache_sorted.add((origin,))
 
     def resolve_method(
         self, target: tuple[object, ...] | Signature, /
@@ -473,20 +487,47 @@ class Function(metaclass=_FunctionMeta):
         key = tuple(map(_arg_key, args))
 
         # --- Fast path: cache hit ---
-        # If we've seen this key before, try each stored candidate in
-        # registration order.  is_bearable_with_orig checks every argument
-        # against its recorded hint; the first fully-matching candidate wins.
-        # For stdlib generics this means beartype inspects element types (O(n)
-        # strategy); for custom generics it uses the __orig_class__ ≤ hint
-        # subtype relation.
+        # Scan stored candidates for is_bearable_with_orig matches.
+        #
+        # Two cases:
+        #   _presorted (key in _generic_cache_sorted): the bucket was built by
+        #     pre-population with all pairwise-comparable methods sorted
+        #     most-specific-first.  The first match is the definitive answer;
+        #     break immediately (original O(1) behaviour).
+        #   unsorted (dynamically accumulated via slow-path appends): methods may
+        #     be incomparable (e.g. list[int] vs list[str]).  We must check for a
+        #     second match before returning — if one exists the call is ambiguous
+        #     (or needs most-specific resolution) and must fall through to the
+        #     resolver.  Returning the first match silently would be wrong when
+        #     both list[int] and list[str] vacuously match an empty list.
         candidates = self._generic_cache.get(key)
         if candidates is not None:
+            _presorted = key in self._generic_cache_sorted
+            _first_impl: CallAny | None = None
+            _first_rt: TypeHint | None = None
+            _ambiguous = False
             for hint_tuple, impl, return_type in candidates:
                 if all(
                     is_bearable_with_orig(a, h)
                     for a, h in zip(args, hint_tuple, strict=False)
                 ):
-                    return impl, return_type
+                    if _first_impl is None:
+                        _first_impl, _first_rt = impl, return_type
+                        if _presorted:
+                            # Bucket was built most-specific-first from comparable
+                            # methods only; the first match is the definitive answer.
+                            break
+                    else:
+                        # Second match in an unsorted bucket: ambiguous or needs
+                        # most-specific resolution — fall through to the resolver.
+                        _ambiguous = True
+                        break
+            if _first_impl is not None and not _ambiguous:
+                # Exactly one candidate matched — fast return.
+                return _first_impl, _first_rt
+            # Zero or multiple matches: fall through to the resolver for the
+            # authoritative answer (raises AmbiguousLookupError if ambiguous,
+            # or selects the most-specific candidate).
 
         # --- Slow path: full resolver ---
         # No cached candidate matched.  Delegate to the resolver for the
@@ -522,7 +563,6 @@ class Function(metaclass=_FunctionMeta):
         else:
             hint_tuple = sig.types
 
-        entry: tuple[tuple[TypeHint, ...], CallAny, TypeHint]
         entry = (hint_tuple, impl, return_type)
 
         # Populate the cache.  If this key was seen before but no candidate
@@ -532,7 +572,12 @@ class Function(metaclass=_FunctionMeta):
         if candidates is None:
             self._generic_cache[key] = [entry]
         else:
-            candidates.append(entry)
+            # Deduplicate: avoid appending an entry whose implementation is already
+            # present.  Without this guard, repeated falls-through to the resolver
+            # (e.g. for f([]) when both list[int] and list match) would grow the
+            # bucket without bound.
+            if not any(existing_impl is impl for _, existing_impl, _ in candidates):
+                candidates.append(entry)
 
         return impl, return_type
 

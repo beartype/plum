@@ -223,6 +223,26 @@ def test_empty_list_ambiguous_without_fallback(dispatch: plum.Dispatcher):
         f([])
 
 
+def test_empty_list_ambiguous_via_warm_cache(dispatch: plum.Dispatcher):
+    """Warm cache with list[int] and list[str]; a subsequent f([]) must still raise
+    AmbiguousLookupError rather than silently picking the first cached candidate.
+    """
+
+    @dispatch
+    def f(x: list[int]) -> str:
+        return "list[int]"
+
+    @dispatch
+    def f(x: list[str]) -> str:
+        return "list[str]"
+
+    f([1, 2, 3])  # warms (list,) bucket with list[int] candidate
+    f(["a", "b"])  # appends list[str] candidate to same bucket
+
+    with pytest.raises(plum.AmbiguousLookupError):
+        f([])  # both cached entries match vacuously
+
+
 def test_empty_list_with_fallback_resolves(dispatch: plum.Dispatcher):
     """[] with only list[int] registered should still match (empty is_bearable)."""
 
@@ -252,12 +272,32 @@ def test_most_specific_generic_wins(dispatch: plum.Dispatcher):
     assert f([1, 2, 3]) == "list[int]"
 
 
+def test_most_specific_generic_wins_via_warm_cache(dispatch: plum.Dispatcher):
+    """After warming the cache with a non-empty list, [] must resolve to list[int]
+    (most specific) rather than silently picking the first cached candidate."""
+
+    @dispatch
+    def f(x: list[int]) -> str:
+        return "list[int]"
+
+    @dispatch
+    def f(x: list) -> str:
+        return "list"
+
+    # Warm the cache so both candidates are in the bucket.
+    assert f([1, 2, 3]) == "list[int]"
+
+    # [] matches both list[int] and list; list[int] is more specific → must win.
+    assert f([]) == "list[int]"
+
+
 # ── Caching: faithful methods in a mixed function ────────────────────────────────
 
 
 def test_faithful_method_cached_in_generic_function(dispatch: plum.Dispatcher):
-    """A faithful dispatch (e.g. int) co-existing with a generic dispatch (list[int])
-    should still be cached after the first call, not re-resolved on every call."""
+    """int co-existing with list[int]: int dispatch is cached;
+    is_faithful_for_non_generic is True.
+    """
 
     @dispatch
     def f(x: int) -> str:
@@ -267,47 +307,28 @@ def test_faithful_method_cached_in_generic_function(dispatch: plum.Dispatcher):
     def f(x: list[int]) -> str:
         return "list[int]"
 
-    # First call — cache miss, should populate cache.
     assert f(42) == "int"
-    # The resolver is not faithful as a whole (list[int] is non-faithful in
-    # plum's sense), but every non-generic method (int) IS faithful, so
-    # bare-type caching on the non-generic arm is safe.
     assert not f._resolver.is_faithful
     assert f._resolver.is_faithful_for_non_generic
-    # int arg takes the faithful path → stored in _cache (not _generic_cache).
-    assert len(f._cache) > 0, "Expected _cache to be populated after first int call"
+    assert len(f._cache) > 0
 
-    cache_size = len(f._cache)
-    generic_cache_size = len(f._generic_cache)
-    # Second call — should be a cache hit; no new entry added.
-    assert f(42) == "int"
-    assert (
-        len(f._cache) == cache_size
-    ), "Cache grew on second identical call (cache miss)"
-    assert (
-        len(f._generic_cache) == generic_cache_size
-    ), "Generic cache grew on second identical int call"
+    cache_snap = len(f._cache), len(f._generic_cache)
+    assert f(42) == "int"  # cache hit — no growth
+    assert (len(f._cache), len(f._generic_cache)) == cache_snap
 
 
 def test_generic_call_cached_after_first_call(dispatch: plum.Dispatcher):
-    """Repeated calls with same-type list should hit the cache."""
+    """Repeated same-type list calls should be cache hits (no growth)."""
 
     @dispatch
     def f(x: list[int]) -> str:
         return "list[int]"
 
     assert f([1, 2, 3]) == "list[int]"
-    # list[int] arg takes the two-tier generic cache path.
-    generic_cache_size = len(f._generic_cache)
-    assert (
-        generic_cache_size > 0
-    ), "Expected _generic_cache populated after first generic call"
-
-    # Second call with a different list[int] value — should hit cache.
+    size = len(f._generic_cache)
+    assert size > 0
     assert f([4, 5, 6]) == "list[int]"
-    assert (
-        len(f._generic_cache) == generic_cache_size
-    ), "Generic cache grew (cache miss) on second list[int] call"
+    assert len(f._generic_cache) == size  # second call is a cache hit
 
 
 def test_different_generic_types_cached_separately(dispatch: plum.Dispatcher):
@@ -375,15 +396,9 @@ def test_parametric_still_works_with_generic_registered(dispatch: plum.Dispatche
 
 
 # ── __orig_class__ dispatch ──────────────────────────────────────────────────────
-#
-# When a user instantiates a subscripted generic, Python automatically sets
-# ``instance.__orig_class__ = Box[int]`` *after* ``__init__`` returns.  We can
-# use that attribute as an enriched cache key so that ``Box[int](1)`` and
-# ``Box[str](1)`` route to different overloads even though ``type(...)`` is the
-# same bare ``Box`` for both.
-#
-# All tests below are RED until _arg_key is wired into _resolve_method_with_cache
-# and resolve_for_type.
+# Python sets ``instance.__orig_class__ = Box[int]`` after ``__init__`` returns.
+# Plum uses this as an enriched cache key to distinguish Box[int] from Box[str]
+# even though type(instance) is the same bare Box for both.
 
 
 def test_orig_class_two_way_dispatch(dispatch: plum.Dispatcher):
@@ -509,17 +524,8 @@ def test_any_fallback_alone_matches_everything(dispatch: plum.Dispatcher):
 
 
 def test_plain_any_fallback_with_generic_overload(dispatch: plum.Dispatcher):
-    """typing.Any annotation must be reachable even when _arity1_methods is used.
-
-    _arity1_methods buckets are keyed by parameterised-generic origins (e.g.
-    ``list``).  Methods whose annotation is plain ``typing.Any`` are *not* a
-    generic hint and are excluded from every bucket.  When the filtered bucket
-    doesn't contain a match, ``resolve_for_type`` must fall back to
-    ``self.resolve()`` so the Any-annotated overload can still be found.
-
-    Regression: before the fix, ``f([1.0, 2.0])`` raised ``NotFoundLookupError``
-    because only the ``list[int]`` overload was in the ``list`` bucket and
-    ``[1.0, 2.0]`` is not a ``list[int]``.
+    """Any-annotated overload must be reachable when the _arity1_methods bucket
+    has no match; ``resolve_for_type`` must fall back to ``self.resolve()``.
     """
 
     @dispatch
@@ -537,11 +543,8 @@ def test_plain_any_fallback_with_generic_overload(dispatch: plum.Dispatcher):
 
 
 def test_union_fallback_with_generic_overload(dispatch: plum.Dispatcher):
-    """A Union annotation that can match must be reachable via the Any-fallback path.
-
-    ``Union[list, dict]`` has ``get_origin`` == ``Union`` which is excluded from
-    ``is_generic_hint``, so it lands in no _arity1_methods bucket.  Resolution
-    must still find it via ``self.resolve()`` fallback.
+    """Union annotation excluded from _arity1_methods buckets must still be found
+    via the ``self.resolve()`` fallback path.
     """
 
     @dispatch
@@ -559,29 +562,9 @@ def test_union_fallback_with_generic_overload(dispatch: plum.Dispatcher):
 def test_ambiguous_bucket_stays_ambiguous_with_any_fallback(
     dispatch: plum.Dispatcher,
 ):
-    """AmbiguousLookupError from bucket methods is not hidden by a non-bucket Any.
-
-    Sequence[int] and Sequence[str] both land in the 'list' origin bucket and
-    are incomparable.  An empty list matches both vacuously, producing
-    AmbiguousLookupError from the pre-filtered subset.
-
-    Adding an Any overload (excluded from every origin bucket because
-    ``_can_match_arity1_origin`` returns False for it) does NOT resolve the
-    ambiguity: beartype reports ``TypeHint(Any) <= TypeHint(Sequence[int])``
-    as False, so Any is never admitted as a candidate in ``_resolve_from``
-    even when it matches the argument.  The full ``self.resolve()`` call
-    therefore also raises AmbiguousLookupError.
-
-    Consequence: the ``except NotFoundLookupError`` in ``resolve_for_type``
-    is the only catch needed — catching AmbiguousLookupError would be a
-    no-op and this test documents that expected behaviour.
-
-    Note: the ambiguous call must come BEFORE any non-ambiguous calls to the
-    same function.  A prior non-ambiguous dispatch (e.g. f([1])) warms
-    ``_generic_cache[(list,)]`` with the Sequence[int] candidate.  The fast
-    cache path would then accept an empty list as Sequence[int] vacuously,
-    silencing the ambiguity.  Testing the ambiguous case first ensures the
-    cache is cold and the resolver is exercised.
+    """An Any overload does NOT break Sequence[int]/Sequence[str] ambiguity on []
+    because TypeHint(Any) is not a subtype of TypeHint(Sequence[int]).
+    The ambiguous call must come first (cold cache) so the full resolver runs.
     """
 
     @dispatch
@@ -805,14 +788,8 @@ def test_two_custom_generics_cached_separately(dispatch: plum.Dispatcher):
 
 
 def test_non_faithful_generic_mix_not_cached_by_bare_type(dispatch: plum.Dispatcher):
-    """A function with both a generic overload (list[int]) and a
-    value-dependent (Annotated/BeartypeValidator) overload must NOT cache
-    the value-dependent result by bare type.  If it did, a subsequent call
-    with the same type but a different value would return the wrong method.
-
-    This is a regression test for the bug where
-    ``is_faithful or has_generic_signatures`` incorrectly enabled caching
-    for non-faithful resolvers that happened to also have generic signatures.
+    """Regression: ``is_faithful or has_generic_signatures`` must not enable
+    bare-type caching for value-dependent (Annotated) overloads.
     """
 
     @dispatch
@@ -827,20 +804,13 @@ def test_non_faithful_generic_mix_not_cached_by_bare_type(dispatch: plum.Dispatc
     def f(x: list[int]) -> str:
         return "list[int]"
 
-    # Trigger registration so resolver state is populated.
     assert f(5) == "positive"
-
-    # Resolver properties: non-faithful (Annotated overloads) + has generics
-    # (list[int]).
     assert not f._resolver.is_faithful
     assert f._resolver.has_generic_signatures
-    # is_faithful_for_non_generic must be False: Annotated overloads are non-faithful
-    # and non-generic, so bare-type caching on the non-generic arm is unsafe.
     assert not f._resolver.is_faithful_for_non_generic
 
-    # Subsequent calls with different values of the same type must dispatch correctly
-    # (the int result must NOT have been cached under the bare type (int,)).
-    assert f(-1) == "non-positive"  # must NOT return "positive" from a stale cache
+    # int result must NOT be cached under bare type — value-dependent dispatch.
+    assert f(-1) == "non-positive"
     assert f(0) == "non-positive"
     assert f(3) == "positive"
     assert f([1, 2]) == "list[int]"

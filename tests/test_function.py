@@ -713,15 +713,12 @@ def test_concurrent_resolution_is_thread_safe(make_stringly_annotated_function):
 def test_resolve_method_with_cache_calls_type_once_per_arg(
     dispatch: plum.Dispatcher,
 ):
-    """``type()`` must be called exactly once per argument in the non-generic path.
+    """type() must be called exactly once per argument in the non-generic path.
 
-    When a function carries generic signatures, the old code called ``type(a)``
-    twice per argument: once inside the ``issubclass(type(a), o)`` generator that
-    checks whether any argument needs the generic arm, and again in the
-    ``tuple(map(type, args))`` that computes the cache key.
-
-    The optimised code hoists ``tuple(map(type, args))`` before the generic check
-    and reuses the pre-computed types tuple, so ``type()`` is called exactly once.
+    The optimised code hoists tuple(map(type, args)) before the generic-arm
+    check and reuses the pre-computed types tuple.  Previously type(a) was
+    called twice per argument (once for the generic-arm check, once for the
+    cache key).
     """
 
     @dispatch
@@ -736,10 +733,8 @@ def test_resolve_method_with_cache_calls_type_once_per_arg(
     assert f("warmup") == "str"
     f.clear_cache()
 
-    # Use an interned sentinel string so ``obj is sentinel`` is a reliable check.
     sentinel = "counting-sentinel"
-    real_type = __builtins__["type"] if isinstance(__builtins__, dict) else type
-
+    real_type = type  # capture before any patching
     call_count = 0
 
     def counting_type(obj: object) -> type:
@@ -754,19 +749,12 @@ def test_resolve_method_with_cache_calls_type_once_per_arg(
         result = f(sentinel)
 
     assert result == "str"
-    # One argument → type() must be called exactly once (the cache-key
-    # computation).  Before the fix it was called twice.
-    assert call_count == 1, f"Expected 1 call to type() for the arg, got {call_count}"
+    assert call_count == 1, f"Expected 1 call to type(), got {call_count}"
 
 
 def test_instances_does_not_prevent_garbage_collection():
-    """``Function._instances`` must use weak references so that ``Function``
-    objects can be garbage-collected when no longer referenced by user code.
-
-    Using a plain ``list`` keeps a strong reference to every ``Function`` ever
-    created, growing memory unboundedly.  A ``weakref.WeakSet`` allows the GC
-    to reclaim dead instances while still letting ``clear_all_cache()`` iterate
-    over all *live* functions.
+    """Function._instances must use weak references (WeakSet) so that Function
+    objects are garbage-collected when no longer referenced by user code.
     """
     import gc
     import weakref
@@ -781,10 +769,4 @@ def test_instances_does_not_prevent_garbage_collection():
     del g
     gc.collect()
 
-    # With a WeakSet, the Function is reclaimed and the weak ref goes dead.
-    # With a plain list, the list keeps g alive so ref() is still not None.
-    assert ref() is None, (
-        "Function was not garbage-collected; "
-        "Function._instances appears to hold a strong reference. "
-        "Use weakref.WeakSet instead of list."
-    )
+    assert ref() is None, "Function not GC'd; Function._instances holds a strong ref"
