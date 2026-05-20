@@ -118,9 +118,9 @@ A bare hint like `Box` behaves the same way as `Box[Any]` for dispatch purposes 
 'bare Box'
 ```
 
-## Auto-inferring types with `@plum.generic`
+## Inferring types with `@plum.generic`
 
-If your class can always infer `T` from the constructor arguments — for example, `Box(1)` should behave exactly like `Box[int](1)` — you can opt into automatic inference with `@plum.generic`:
+`@plum.generic` solves the problem of Python not attaching parameterization information to instances based on runtime argument. All you need to do is write a classmethod to return the type parameters given an instance of the class and decorate the class with `@plum.generic`:
 
 ```python
 from typing import Generic, TypeVar
@@ -197,7 +197,7 @@ There are two fundamental limits at play:
 1. **Python only attaches `__orig_class__` on subscripted construction.**  An instance created via `Box(1)` simply does not carry information about `T`, so no runtime introspection can recover it.
 1. **Beartype validates type parameters by inspecting elements**, which works for containers (`list`, `dict`, etc.) but not for user-defined generic classes whose type-variable usage is opaque to the runtime.
 
-Rather than guess or silently pick an arbitrary overload, Plum requires you to state your intent explicitly via the `A[Any]` (or bare `A`) fallback overload.
+Rather than guess or silently pick an arbitrary overload, Plum requires you to state your intent explicitly via the `A[Any]` (or bare `A`) fallback overload. Alternatively `@plum.generic` can solve all problems.
 
 ## Summary
 
