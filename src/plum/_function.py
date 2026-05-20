@@ -572,11 +572,16 @@ class Function(metaclass=_FunctionMeta):
         if candidates is None:
             self._generic_cache[key] = [entry]
         else:
-            # Deduplicate: avoid appending an entry whose implementation is already
+            # Deduplicate: avoid appending an entry whose hint_tuple is already
             # present.  Without this guard, repeated falls-through to the resolver
             # (e.g. for f([]) when both list[int] and list match) would grow the
-            # bucket without bound.
-            if not any(existing_impl is impl for _, existing_impl, _ in candidates):
+            # bucket without bound.  We key on hint_tuple rather than impl so that
+            # two distinct signatures sharing the same implementation (e.g. from
+            # dispatch_multi) each get their own bucket entry; omitting either
+            # would break ambiguity detection on later calls.
+            if not any(
+                existing_hints == hint_tuple for existing_hints, _, _ in candidates
+            ):
                 candidates.append(entry)
 
         return impl, return_type

@@ -228,6 +228,8 @@ def test_resolve_type_hint_generic_no_args_returns_unchanged():
     result = plum.resolve_type_hint(alias)
     assert result is alias  # returned unchanged — no-args fallback
 
+
+def test_is_faithful():
     # Example of a not faithful type.
     t_nf = plum.Callable[[int], int]
 
