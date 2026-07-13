@@ -407,7 +407,7 @@ document.write(`
 
 
 <span class="nd">@_dispatch</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">_convert</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">type_to</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_convert</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">type_to</span><span class="p">):</span>  <span class="c1"># type: ignore[no-untyped-def]</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">is_bearable</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">type_to</span><span class="p">)):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot convert `</span><span class="si">{</span><span class="n">obj</span><span class="si">}</span><span class="s2">` to `</span><span class="si">{</span><span class="n">repr_short</span><span class="p">(</span><span class="n">type_to</span><span class="p">)</span><span class="si">}</span><span class="s2">`.&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">obj</span>
@@ -471,7 +471,7 @@ document.write(`
 
 
 <span class="nd">@_dispatch</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">_promotion_rule</span><span class="p">(</span><span class="n">type1</span><span class="p">,</span> <span class="n">type2</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_promotion_rule</span><span class="p">(</span><span class="n">type1</span><span class="p">,</span> <span class="n">type2</span><span class="p">):</span>  <span class="c1"># type: ignore[no-untyped-def]</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Promotion rule.</span>
 
 <span class="sd">    Args:</span>

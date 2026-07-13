@@ -1192,17 +1192,17 @@ if types are modified.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="plum._parametric.Kind">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum._parametric.</span></span><span class="sig-name descname"><span class="pre">Kind</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw_args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#plum._parametric.Kind" title="Link to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">plum._parametric.</span></span><span class="sig-name descname"><span class="pre">Kind</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">object</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw_args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">object</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#plum._parametric.Kind" title="Link to this definition">#</a></dt>
 <dd><p>A default kind provided for convenience.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="plum._parametric.kind">
-<span class="sig-prename descclassname"><span class="pre">plum._parametric.</span></span><span class="sig-name descname"><span class="pre">kind</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">SuperClass=&lt;class</span> <span class="pre">'object'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/_parametric.html#kind"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum._parametric.kind" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">plum._parametric.</span></span><span class="sig-name descname"><span class="pre">kind</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls:</span> <span class="pre">type</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'object'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">/</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">type</span></span></span><a class="reference internal" href="_modules/plum/_parametric.html#kind"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum._parametric.kind" title="Link to this definition">#</a></dt>
 <dd><p>Create a parametric wrapper type for dispatch purposes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>SuperClass</strong> (<em>type</em>) – Super class.</p>
+<dd class="field-odd"><p><strong>cls</strong> (<em>type</em>) – Super class.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>New parametric type wrapper.</p>
@@ -1215,7 +1215,7 @@ if types are modified.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="plum._parametric.parametric">
-<span class="sig-prename descclassname"><span class="pre">plum._parametric.</span></span><span class="sig-name descname"><span class="pre">parametric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_class</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/plum/_parametric.html#parametric"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum._parametric.parametric" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">plum._parametric.</span></span><span class="sig-name descname"><span class="pre">parametric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_class</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">type</span></span></span><a class="reference internal" href="_modules/plum/_parametric.html#parametric"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum._parametric.parametric" title="Link to this definition">#</a></dt>
 <dd><p>A decorator for parametric classes.</p>
 <p>When the constructor of this parametric type is called before the type parameter
 has been specified, the type parameter is inferred from the arguments of the
