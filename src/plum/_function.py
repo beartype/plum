@@ -2,6 +2,7 @@ __all__ = ("Function",)
 
 import os
 import textwrap
+import threading
 from collections.abc import Callable
 from copy import copy
 from functools import wraps
@@ -85,6 +86,14 @@ class Function(metaclass=_FunctionMeta):
         # actual types (from `__call__`) or `TypeHints` (from `invoke`).
         self._cache: dict[tuple[TypeHint, ...], tuple[Callable[..., Any], TypeHint]]
         self._cache = {}
+
+        # Guards the lazy resolution of pending registrations, which mutates each
+        # registered function's `__annotations__` in place (via beartype's
+        # `resolve_pep563`) and is otherwise not thread-safe. Reentrant because
+        # `_resolve_pending_registrations` calls `clear_cache`, which also acquires
+        # this lock. See GitHub issue #274.
+        self._lock = threading.RLock()
+
         wraps(f)(self)  # Sets `self._doc`.
 
         self.__name__ = f.__name__
@@ -244,18 +253,21 @@ class Function(metaclass=_FunctionMeta):
             reregister (bool, optional): Also reregister all methods. Defaults to
                 `True`.
         """
-        self._cache.clear()
+        # Serialise against concurrent resolution: the `reregister` branch swaps
+        # `_pending`/`_resolved`/`_resolver` in multiple steps. See issue #274.
+        with self._lock:
+            self._cache.clear()
 
-        if reregister:
-            # Add all resolved to pending.
-            self._pending.extend(self._resolved)
+            if reregister:
+                # Add all resolved to pending.
+                self._pending.extend(self._resolved)
 
-            # Clear resolved.
-            self._resolved = []
-            self._resolver = Resolver(
-                self._resolver.function_name,
-                warn_redefinition=self._warn_redefinition,
-            )
+                # Clear resolved.
+                self._resolved = []
+                self._resolver = Resolver(
+                    self._resolver.function_name,
+                    warn_redefinition=self._warn_redefinition,
+                )
 
     def register(
         self,
@@ -277,35 +289,48 @@ class Function(metaclass=_FunctionMeta):
         self._pending.append((f, signature, precedence))
 
     def _resolve_pending_registrations(self) -> None:
-        # Keep track of whether anything registered.
-        registered = False
+        # Fast path: nothing pending. This unlocked check keeps the common
+        # already-resolved case (the hot dispatch path) lock-free.
+        if not self._pending:
+            return
 
-        # Perform any pending registrations.
-        for f, signature, precedence in self._pending:
-            # Add to resolved registrations.
-            self._resolved.append((f, signature, precedence))
+        # Resolution mutates each registered function's annotations in place and is
+        # not thread-safe, so serialise it. See GitHub issue #274.
+        with self._lock:
+            # Re-check under the lock: another thread may have completed the
+            # resolution while we were waiting to acquire it.
+            if not self._pending:
+                return
 
-            # Obtain the signature if it is not available.
-            if signature is None:
-                # When signature is `None`, precedence should always be set.
-                assert precedence is not None
-                signature = Signature.from_callable(f, precedence=precedence)
-            else:
-                # Ensure that the implementation is `f`, but make a copy before
-                # mutating.
-                signature = copy(signature)
+            # Keep track of whether anything registered.
+            registered = False
 
-            # Process default values.
-            for subsignature in append_default_args(signature, f):
-                submethod = Method(f, subsignature, function_name=self.__name__)
-                self._resolver.register(submethod)
-                registered = True
+            # Perform any pending registrations.
+            for f, signature, precedence in self._pending:
+                # Add to resolved registrations.
+                self._resolved.append((f, signature, precedence))
 
-        if registered:
-            self._pending = []
+                # Obtain the signature if it is not available.
+                if signature is None:
+                    # When signature is `None`, precedence should always be set.
+                    assert precedence is not None
+                    signature = Signature.from_callable(f, precedence=precedence)
+                else:
+                    # Ensure that the implementation is `f`, but make a copy before
+                    # mutating.
+                    signature = copy(signature)
 
-            # Clear cache.
-            self.clear_cache(reregister=False)
+                # Process default values.
+                for subsignature in append_default_args(signature, f):
+                    submethod = Method(f, subsignature, function_name=self.__name__)
+                    self._resolver.register(submethod)
+                    registered = True
+
+            if registered:
+                self._pending = []
+
+                # Clear cache. Reenters `self._lock`, which is why it is an `RLock`.
+                self.clear_cache(reregister=False)
 
     def resolve_method(
         self, target: tuple[object, ...] | Signature
