@@ -41,6 +41,13 @@ def test_instantiation_copy():
     assert not Sig(int, tuple[int], varargs=int).is_faithful
     assert not Sig(int, int, varargs=tuple[int]).is_faithful
 
+    # Dispatching on a class via `type[X]` is faithful.
+    assert Sig(type[int]).is_faithful
+    assert Sig(type[int], int).is_faithful
+    assert Sig(int, type[int], varargs=type[float]).is_faithful
+    # But mixing in a genuinely unfaithful type is still unfaithful.
+    assert not Sig(type[int], tuple[int]).is_faithful
+
 
 def _impl(x, y, *z):
     return str(x)

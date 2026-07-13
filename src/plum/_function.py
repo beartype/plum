@@ -43,6 +43,27 @@ _owner_transfer: dict[type, type] = {}
 a function (see :meth:`Function.owner`), make the corresponding value the owner."""
 
 
+def _cache_key(args: tuple[object, ...], /) -> tuple[object, ...]:
+    """Compute the dispatch cache key for a tuple of arguments.
+
+    For a normal argument, the key element is its runtime type `type(arg)`. For an
+    argument that is itself a class, the key element is `type[arg]` instead: a class
+    argument *is* its own dispatch-relevant value (dispatch on `type[X]` depends on
+    `issubclass(arg, X)`, a function of the class identity alone, not of the metaclass
+    `type(arg)`). Keying such arguments on `type[arg]` makes dispatch on `type[X]`
+    cacheable. `type[arg]` is hashable, never collides with a runtime `type(x)` key,
+    and coincides with `invoke(type[arg])`, since resolving the concrete class `arg`
+    selects the same method as resolving the hint `type[arg]`.
+
+    Args:
+        args (tuple[object, ...]): Arguments.
+
+    Returns:
+        tuple[object, ...]: Cache key.
+    """
+    return tuple(type[arg] if isinstance(arg, type) else type(arg) for arg in args)
+
+
 class _FunctionMeta(type):
     """:class:`Function` implements `__doc__`, which overrides the docstring of the
     class. This simple metaclass ensures that `Function.__doc__` still prints as the
@@ -411,14 +432,14 @@ class Function(metaclass=_FunctionMeta):
             self._resolve_pending_registrations()
 
         # Compute cache key. When called from `__call__`, types will be actual
-        # runtime types from `map(type, args)`. When called from `invoke`, types
-        # may be `TypeHints` like `Union[int, str]`. Both are hashable and work
-        # as cache keys.
+        # runtime types from `_cache_key(args)` (which keys class arguments on
+        # `type[arg]`; see `_cache_key`). When called from `invoke`, types may be
+        # `TypeHints` like `Union[int, str]`. Both are hashable and work as cache keys.
         if types is None:
             # Attempt to use the cache based on the types of the arguments.
             # At this point, `args` must be a tuple (not `Signature` or `None`).
             assert isinstance(args, tuple)
-            types = tuple(map(type, args))
+            types = _cache_key(args)
         try:
             return self._cache[types]
         except KeyError:

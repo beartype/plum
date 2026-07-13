@@ -106,10 +106,17 @@ isinstance(x, t) == issubclass(type(x), t)
 For example, `int` is faithful, since `type(1) == int`;
 but `Literal[1]` is not faithful, since `issubclass(int, Literal[1])` is false.
 
+Dispatching on a class via `type[X]` (or the equivalent `typing.Type[X]`) is also
+faithful, and therefore cached: membership in `type[X]` depends only on the class
+identity of the argument (whether `issubclass(x, X)` holds), so Plum keys such
+arguments on the class itself rather than on the metaclass `type(x)`.
+
 Methods which have signatures that depend only on faithful types will
 be performant.
 On the other hand, methods which have one or more signatures with one or more
 unfaithful types cannot use caching and will therefore be less performant.
+Note that this is per function: a single method with an unfaithful signature disables
+caching for _all_ methods of that function.
 
 Example:
 
@@ -148,6 +155,9 @@ True
 
 >>> is_faithful(Literal[1])
 False
+
+>>> is_faithful(type[int])
+True
 ```
 
 If you implement, e.g., a type with a custom `__instancecheck__`, then `is_faithful`

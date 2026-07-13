@@ -112,6 +112,55 @@ def test_resolve_method_with_cache_no_arguments():
         Function(f)._resolve_method_with_cache()
 
 
+class _Base:
+    pass
+
+
+class _Sub(_Base):
+    pass
+
+
+def test_type_dispatch_correctness(dispatch: plum.Dispatcher):
+    """Dispatching on a class via `type[X]` must not collide with instance dispatch,
+    and must respect subclass specificity. This exercises the class-identity cache key
+    (`_function._cache_key`)."""
+
+    @dispatch
+    def f(x: int):
+        return "int-instance"
+
+    @dispatch
+    def f(x: type[int]):
+        return "type[int]"
+
+    @dispatch
+    def f(x: type[_Base]):
+        return "type[Base]"
+
+    @dispatch
+    def f(x: type[_Sub]):
+        return "type[Sub]"
+
+    # An instance and the class itself must not collide, even though `int` appears in
+    # both an instance signature and a `type[...]` signature.
+    assert f(5) == "int-instance"
+    assert f(int) == "type[int]"
+
+    # `type[X]` respects subclass specificity: `_Sub` matches both `type[_Base]` and
+    # `type[_Sub]`, and the more specific one wins.
+    assert f(_Base) == "type[Base]"
+    assert f(_Sub) == "type[Sub]"
+
+    # Repeated calls (now served from the cache) stay correct.
+    assert f(5) == "int-instance"
+    assert f(int) == "type[int]"
+    assert f(_Sub) == "type[Sub]"
+
+    # `invoke` on the instance type and on the class hint resolve independently.
+    assert f.invoke(int)(5) == "int-instance"
+    assert f.invoke(type[int])(int) == "type[int]"
+
+
 @pytest.fixture()
 def owner_transfer():
     # Save and clear.

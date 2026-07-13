@@ -171,3 +171,34 @@ def test_cache_unfaithful(dispatch: plum.Dispatcher):
     assert f(1) == 1
     assert f([1]) == 2
     assert len(f._cache) == 0
+
+
+def test_cache_type_dispatch(dispatch: plum.Dispatcher):
+    @dispatch
+    def f(x: type[int]):
+        return 1
+
+    @dispatch
+    def f(x: type[str]):
+        return 2
+
+    # Dispatching on a class via `type[X]` is faithful, so the cache should be used.
+    assert f._resolver.is_faithful
+    assert len(f._cache) == 0
+
+    assert f(int) == 1
+    assert f(str) == 2
+    assert len(f._cache) == 2
+
+    # A cache hit should be substantially faster than a cache miss.
+    def setup_no_cache():
+        plum.clear_all_cache()
+        for g in plum.Function._instances:
+            g._resolve_pending_registrations()
+
+    dur_first = benchmark(f, (int,), n=250, burn=10, setup=setup_no_cache)
+    plum.clear_all_cache()
+    for g in plum.Function._instances:
+        g._resolve_pending_registrations()
+    dur = benchmark(f, (int,), n=250, burn=10)
+    assert dur <= dur_first / 4
