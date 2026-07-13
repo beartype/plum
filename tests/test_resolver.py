@@ -326,6 +326,49 @@ def test_sort_most_specific_first_safety_valve():
     assert set(result) == {m1, m2, m3}
 
 
+def test_sort_most_specific_first_stable_within_layer():
+    """Incomparable methods that reach in-degree 0 in the same layer are emitted
+    in original-index order, not in the discovery order in which their
+    predecessors happened to free them.
+
+    Layout (→ = "strictly more specific than"):
+
+        m0 → m3      m1 → m2
+
+    m0, m1 are the sources (layer 0, incomparable to each other); m2, m3 are the
+    second layer (also incomparable).  Processing the sources in index order
+    frees m3 (via m0) before m2 (via m1), so the raw discovery order of the
+    second layer is [m3, m2].  Sorting each layer by original index restores
+    [m2, m3], matching the documented stability guarantee.
+    """
+
+    class A2:
+        pass
+
+    class A3:
+        pass
+
+    class A0(A3):  # A0 is strictly more specific than A3
+        pass
+
+    class A1(A2):  # A1 is strictly more specific than A2
+        pass
+
+    def f(*xs):
+        return xs
+
+    m0 = plum.Method(f, plum.Signature(A0))
+    m1 = plum.Method(f, plum.Signature(A1))
+    m2 = plum.Method(f, plum.Signature(A2))
+    m3 = plum.Method(f, plum.Signature(A3))
+
+    result = _sort_most_specific_first([m0, m1, m2, m3])
+
+    # Sources first (index order), then the second layer in index order — NOT
+    # the [m0, m1, m3, m2] discovery order produced without the per-layer sort.
+    assert result == [m0, m1, m2, m3]
+
+
 def test_register_replace_faithful_triggers_rescan():
     """When a faithful method replaces an existing one while
     ``is_faithful_for_non_generic`` is False (due to a *different* unfaithful

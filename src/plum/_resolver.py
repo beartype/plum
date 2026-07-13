@@ -298,6 +298,10 @@ def _sort_most_specific_first(methods: list["Method"]) -> list["Method"]:
             # else: equal or incomparable — no edge
 
     # Kahn's BFS: process in stable original-index order within each layer.
+    # The initial queue is in index order (the comprehension preserves it), and
+    # each successive layer is re-sorted by original index.  Without that sort,
+    # a layer's nodes would come out in discovery order (which predecessor
+    # freed them last), reordering incomparable methods within the layer.
     result: list[Method] = []
     queue = [i for i, d in enumerate(in_degree) if not d]
     while queue:
@@ -308,6 +312,7 @@ def _sort_most_specific_first(methods: list["Method"]) -> list["Method"]:
                 in_degree[j] -= 1
                 if in_degree[j] == 0:
                     next_queue.append(j)
+        next_queue.sort()
         queue = next_queue
 
     if len(result) < n:
