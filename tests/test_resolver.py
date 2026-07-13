@@ -153,10 +153,9 @@ def test_register():
     assert r.methods[1] is new_m
 
 
-def test_register_short_circuits_on_first_match():
-    """register() uses next() to stop scanning after the first matching signature.
-    Re-registering the first of two methods must call Signature.__eq__ exactly once.
-    """
+def test_register_replaces_existing_signature_in_place():
+    """Re-registering an existing signature replaces the method in place, keeping
+    the method count and position stable."""
 
     def f(*xs):
         return xs
@@ -165,22 +164,30 @@ def test_register_short_circuits_on_first_match():
     r.register(plum.Method(f, plum.Signature(int)))  # index 0
     r.register(plum.Method(f, plum.Signature(float)))  # index 1
 
-    eq_calls = 0
-    real_eq = plum.Signature.__eq__
-
-    def counting_eq(self, other):
-        nonlocal eq_calls
-        eq_calls += 1
-        return real_eq(self, other)
-
-    # Re-register the FIRST method.  next() stops after int==int = 1 call.
-    with patch.object(plum.Signature, "__eq__", counting_eq):
-        r.register(plum.Method(f, plum.Signature(int)))
+    # Re-register the FIRST method with a fresh Method object.
+    new_m = plum.Method(f, plum.Signature(int))
+    r.register(new_m)
 
     assert len(r) == 2, "Redefinition must not change the method count"
-    assert (
-        eq_calls == 1
-    ), f"Expected 1 Signature.__eq__ call (early break on match), got {eq_calls}"
+    assert r.methods[0] is new_m, "Replacement must occur in place at index 0"
+
+
+def test_register_raises_on_duplicate_signatures():
+    """register() exhaustively scans and raises if the new signature is equal to
+    more than one existing method, catching a violated "at most one equal
+    signature" invariant instead of silently overwriting the first match."""
+
+    def f(*xs):
+        return xs
+
+    r = Resolver()
+    # Circumvent register() to seed two methods with equal signatures, breaking
+    # the invariant that register() itself maintains.
+    r.methods.append(plum.Method(f, plum.Signature(int)))
+    r.methods.append(plum.Method(f, plum.Signature(int)))
+
+    with pytest.raises(AssertionError, match="is equal to 2 existing methods"):
+        r.register(plum.Method(f, plum.Signature(int)))
 
 
 def test_register_metadata_updated_incrementally():

@@ -126,12 +126,12 @@ class ModuleType(ResolvableType):
     def deliver(self: TModuleType, delivered_type: type, /) -> TModuleType:
         return_value = super().deliver(delivered_type)
         if self._faithful is not None:
-            # Only set `delivered_type.__faithful__` if it is not already set to a
-            # different value.
+            # Only set `delivered_type.__faithful__` if it is not already set to
+            # a different value.
             if (
-                # Use `hasattr` instead of `_has_dunder_faithful` so `mypy` remains
-                # aware that `delivered_type` is a `type` and won't complain about
-                # `delivered_type.__name__`.
+                # Use `hasattr` instead of `_has_dunder_faithful` so `mypy`
+                # remains aware that `delivered_type` is a `type` and won't
+                # complain about `delivered_type.__name__`.
                 hasattr(delivered_type, "__faithful__")
                 and delivered_type.__faithful__ != self._faithful
             ):
@@ -149,14 +149,15 @@ class ModuleType(ResolvableType):
             bool: Whether the retrieval succeeded.
         """
         if self._type is None and self._module in sys.modules:
-            # If a condition is given, check the condition before attempting to import.
+            # If a condition is given, check the condition before attempting to
+            # import.
             if self._condition is not None and not self._condition():
                 return False
 
             retrieved: object = sys.modules[self._module]
             for name in self._name.split("."):
-                # If `retrieved` does not contain `name` and `self._allow_fail` is
-                # set, then silently fail.
+                # If `retrieved` does not contain `name` and `self._allow_fail`
+                # is set, then silently fail.
                 if not hasattr(retrieved, name) and self._allow_fail:
                     return False
                 retrieved = getattr(retrieved, name)
@@ -176,8 +177,8 @@ def _is_hint(x: object) -> bool:
     """
     try:
         if x.__module__ == "builtins":
-            # Check if `x` is a subscripted built-in. We do this by checking the module
-            # of the type of `x`.
+            # Check if `x` is a subscripted built-in. We do this by checking the
+            # module of the type of `x`.
             x = type(x)
         return x.__module__ in {
             "types",  # E.g., `tuple[int]`
@@ -253,19 +254,18 @@ def resolve_type_hint(x: object, /) -> object:
         if not isinstance(x, ResolvableType):
             return x
         elif isinstance(x, ModuleType) and not x.retrieve():
-            # If the type could not be retrieved, then just return the
-            # wrapper. Namely, `x.resolve()` will then return `x`, which
-            # means that the below call will result in an infinite
-            # recursion.
+            # If the type could not be retrieved, then just return the wrapper.
+            # Namely, `x.resolve()` will then return `x`, which means that the
+            # below call will result in an infinite recursion.
             return x
 
         return resolve_type_hint(x.resolve())
 
     elif get_origin(x) is not None:
-        # Parameterised user-defined Generic, e.g. ``Box[int]`` where ``Box``
-        # is a subclass of ``Generic[T]``.  ``_is_hint`` does not recognise
-        # these because their ``__module__`` points to user code, but they
-        # still carry origin/args that we can recurse into.
+        # Parameterised user-defined Generic, e.g. ``Box[int]`` where ``Box`` is
+        # a subclass of ``Generic[T]``.  ``_is_hint`` does not recognise these
+        # because their ``__module__`` points to user code, but they still carry
+        # origin/args that we can recurse into.
         origin = get_origin(x)
         args = get_args(x)
         if args:
@@ -351,13 +351,22 @@ def _is_faithful(x: object, /) -> bool:
         # never faithful: ``isinstance(Box("a"), Box)`` is True regardless of
         # the type argument, so the element type cannot be inferred from the
         # container type alone.
+        #
+        # "Never faithful" does NOT mean "poisons dispatch caching".  A generic
+        # overload is reached only via the resolver's generic arm (see
+        # ``Resolver.is_faithful_for_non_generic`` and
+        # ``Function._generic_cache``), so it does not disable the bare-type
+        # cache for co-existing faithful non-generic overloads.  What actually
+        # forces per-call re-resolution is an unfaithful *non-generic* type
+        # (e.g. ``Literal[1]`` or a beartype validator).  See ``docs/types.md``
+        # -> "Generic types and caching".
         return False
     elif isinstance(x, type):
         if _has_dunder_faithful(x):
             return x.__faithful__
         else:
-            # This is the fallback method. Check whether `__instancecheck__` is default
-            # or not. If it is, assume that it is faithful.
+            # This is the fallback method. Check whether `__instancecheck__` is
+            # default or not. If it is, assume that it is faithful.
             return type(x).__instancecheck__ in {
                 type.__instancecheck__,
                 abc.ABCMeta.__instancecheck__,

@@ -317,6 +317,43 @@ def test_faithful_method_cached_in_generic_function(dispatch: plum.Dispatcher):
     assert (len(f._cache), len(f._generic_cache)) == cache_snap
 
 
+def test_user_generic_does_not_poison_non_generic_cache(dispatch: plum.Dispatcher):
+    """A parameterized user-defined Generic (Box[int]) must not poison the
+    bare-type cache for co-existing faithful non-generic methods.
+
+    This is the user-defined-Generic analogue of ``test_cache_unfaithful``,
+    which uses the stdlib ``list[int]``.  Box[int] is unfaithful — an isinstance
+    check on the bare Box cannot recover the type argument — so it flips the
+    resolver-wide ``is_faithful`` to False.  But because it carries a generic
+    hint it is reachable only via the generic arm, so ``is_faithful_for_non_generic``
+    stays True and the ``int`` dispatch keeps hitting the bare-type ``_cache``.
+    """
+
+    @dispatch
+    def f(x: int) -> str:
+        return "int"
+
+    @dispatch
+    def f(x: Box[int]) -> str:
+        return "Box[int]"
+
+    assert f(42) == "int"
+    # Box[int] makes the resolver as a whole unfaithful ...
+    assert not f._resolver.is_faithful
+    # ... but the generic method is exempt, so the non-generic arm stays cacheable.
+    assert f._resolver.is_faithful_for_non_generic
+    assert len(f._cache) > 0, "int dispatch must be cached, not re-resolved each call"
+
+    # Repeat int call is an O(1) hit — no re-resolution, no cache growth.
+    cache_snap = len(f._cache), len(f._generic_cache)
+    assert f(42) == "int"
+    assert (len(f._cache), len(f._generic_cache)) == cache_snap
+
+    # The generic call routes to (and is cached by) the separate generic arm.
+    assert f(Box[int](1)) == "Box[int]"
+    assert len(f._generic_cache) > 0
+
+
 def test_generic_call_cached_after_first_call(dispatch: plum.Dispatcher):
     """Repeated same-type list calls should be cache hits (no growth)."""
 

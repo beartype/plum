@@ -184,8 +184,8 @@ def _document(f: Callable[..., object], f_name: str | None = None, /) -> str:
     Returns:
         str: Documentation for `f`.
     """
-    # Ensure that the implementation has the right name, because this name
-    # will show up in the docstring.
+    # Ensure that the implementation has the right name, because this name will
+    # show up in the docstring.
     if f_name is not None and getattr(f, "__name__", None) != f_name:
         f = _change_function_name(f, f_name)
 
@@ -193,16 +193,17 @@ def _document(f: Callable[..., object], f_name: str | None = None, /) -> str:
     # erroneously in Sphinx.
     parts = pydoc._PlainTextDoc().document(f).rstrip().split("\n")  # type: ignore[attr-defined]
 
-    # Separate out the function definition and the lines corresponding to the body.
+    # Separate out the function definition and the lines corresponding to the
+    # body.
     title = parts[0]
     body = parts[1:]
 
-    # Remove indentation from every line of the body. This indentation defaults to
-    # four spaces.
+    # Remove indentation from every line of the body. This indentation defaults
+    # to four spaces.
     body = [line[4:] for line in body]
 
-    # If `sphinx` is imported, assume that we're building the documentation. In that
-    # case, display the function definition in a nice way.
+    # If `sphinx` is imported, assume that we're building the documentation. In
+    # that case, display the function definition in a nice way.
     if "sphinx" in sys.modules:
         title = ".. py:function:: " + title + "\n   :noindex:"
     else:
@@ -310,8 +311,8 @@ def _sort_most_specific_first(methods: list["Method"]) -> list["Method"]:
         queue = next_queue
 
     if len(result) < n:
-        # Safety valve — should never happen with a valid partial order.
-        # A cyclic __le__ relation leaves some nodes with in_degree > 0.
+        # Safety valve — should never happen with a valid partial order.  A
+        # cyclic __le__ relation leaves some nodes with in_degree > 0.
         seen = {id(m) for m in result}
         result.extend(m for m in methods if id(m) not in seen)
 
@@ -398,13 +399,19 @@ class Resolver:
         """
         signature = method.signature
 
-        # Find the index of the first existing method with an equal signature,
-        # using a generator so we stop at the first match rather than scanning
-        # the full list and building a boolean array.
-        existing_idx = next(
-            (i for i, m in enumerate(self.methods) if m.signature == signature),
-            None,
-        )
+        # Exhaustively scan for existing methods with an equal signature.
+        # register() is not a hot path, and it is more important to detect a
+        # broken "at most one equal signature" invariant than to stop at the
+        # first match.
+        _equal_indices = [
+            i for i, m in enumerate(self.methods) if m.signature == signature
+        ]
+        if len(_equal_indices) > 1:
+            raise AssertionError(
+                f"The added method `{method}` is equal to {len(_equal_indices)} "
+                f"existing methods. This should never happen."
+            )
+        existing_idx = _equal_indices[0] if _equal_indices else None
         if existing_idx is not None:
             # Save the replaced method before overwriting: needed below to swap
             # the reference inside _arity1_methods buckets.
@@ -488,8 +495,9 @@ class Resolver:
         # The dict is valid iff has_generic_signatures AND every registered method
         # is single-argument (no varargs).
         if existing_idx is not None:
-            # REPLACE: same signature ⇒ same arity ⇒ fast-path eligibility unchanged.
-            # Only swap the old method reference with the new one in each bucket.
+            # REPLACE: same signature ⇒ same arity ⇒ fast-path eligibility
+            # unchanged.  Only swap the old method reference with the new one in
+            # each bucket.
             if self._arity1_methods:
                 for _bucket in self._arity1_methods.values():
                     for _i, _m in enumerate(_bucket):
@@ -513,7 +521,8 @@ class Resolver:
             elif not _was_generic_before and all(
                 # First generic method added; _arity1_methods was empty because
                 # all previous methods were non-generic (not because one was
-                # non-arity-1).  Do a one-time full build if all methods are arity-1.
+                # non-arity-1).  Do a one-time full build if all methods are
+                # arity-1.
                 len((s := m.signature).types) == 1 and not s.has_varargs
                 for m in self.methods
             ):
@@ -576,7 +585,8 @@ class Resolver:
                 continue
 
             # The signature under consideration is comparable with at least one
-            # of the candidates. First, filter any strictly more general candidates.
+            # of the candidates. First, filter any strictly more general
+            # candidates.
             new_candidates = [
                 c for c in candidates if not method.signature < c.signature
             ]
@@ -596,8 +606,9 @@ class Resolver:
             # There is exactly one matching signature. Success!
             return candidates[0]
         else:
-            # There are multiple matching signatures. Before raising an exception,
-            # attempt to resolve the ambiguity using the precedence of the signatures.
+            # There are multiple matching signatures. Before raising an
+            # exception, attempt to resolve the ambiguity using the precedence
+            # of the signatures.
             precedences = [c.signature.precedence for c in candidates]
             max_precendence = max(precedences)
             if sum([p == max_precendence for p in precedences]) == 1:
@@ -641,8 +652,9 @@ class Resolver:
             # Unexpected; fall back to full resolution.
             return self.resolve(target)
 
-        # Gather methods from all registered origins that arg_type is a subtype of,
-        # deduplicating across overlapping origin buckets (e.g. list & Sequence).
+        # Gather methods from all registered origins that arg_type is a subtype
+        # of, deduplicating across overlapping origin buckets (e.g. list &
+        # Sequence).
         seen: set[int] = set()
         relevant: list[Method] = [
             m
