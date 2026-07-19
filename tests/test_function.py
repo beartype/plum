@@ -1,6 +1,8 @@
 import abc
 import os
+import sys
 import textwrap
+import threading
 import typing
 
 import pytest
@@ -622,3 +624,87 @@ def test_name_after_clearing_cache(dispatch: plum.Dispatcher):
     some_function_name.clear_cache()
 
     assert some_function_name._resolver.function_name == "some_function_name"
+
+
+@pytest.fixture
+def make_stringly_annotated_function():
+    """Factory for a fresh, unresolved dispatch function with *string* annotations.
+
+    String annotations force beartype's PEP 563 resolution (`resolve_pep563`) to mutate
+    `__annotations__` in place, which is the unsynchronised operation that races across
+    threads. See GitHub issue #274.
+
+    This is a factory rather than the function itself because the race only occurs on a
+    `Function`'s first resolution, so each iteration needs its own `Dispatcher`. Reusing
+    one `Dispatcher` would redefine the same `Function` object instead, which exercises
+    re-registration rather than first resolution.
+    """
+
+    def make() -> plum.Function:
+        dispatch = plum.Dispatcher()
+
+        @dispatch
+        def f(x: "int") -> "str":
+            return "int"
+
+        @dispatch
+        def f(x: "str") -> "str":
+            return "str"
+
+        @dispatch
+        def f(x: "float") -> "str":
+            return "float"
+
+        return f
+
+    return make
+
+
+def test_concurrent_resolution_is_thread_safe(make_stringly_annotated_function):
+    """Multiple threads racing `_resolve_pending_registrations` on the same `Function`
+    must not corrupt its registrations. Without the lock this raises `AssertionError:
+    ... not stringified type hint` (among other errors) because beartype's
+    `resolve_pep563` mutates the shared `__annotations__` dict concurrently. See GitHub
+    issue #274.
+
+    Note: this exercises the resolution race that the per-`Function` lock fixes. A
+    separate, unrelated race in beartype's lazy type-checker *compilation*, triggered
+    later via `is_bearable` during matching, is tracked upstream in beartype and is out
+    of scope here.
+    """
+    n_threads = 16
+    # Force frequent GIL hand-offs so the race reliably reproduces pre-fix: the window
+    # is tiny at the default 5ms switch interval.
+    old_interval = sys.getswitchinterval()
+    sys.setswitchinterval(1e-6)
+    try:
+        # The race only occurs on a `Function`'s first resolution, so use a fresh,
+        # unresolved function each iteration and loop enough to trip it reliably.
+        # Without the lock this fails on essentially every iteration.
+        for _ in range(100):
+            f = make_stringly_annotated_function()
+            barrier = threading.Barrier(n_threads)
+            errors: list[BaseException] = []
+
+            def worker(f=f, barrier=barrier, errors=errors):
+                try:
+                    barrier.wait()  # Release all threads onto resolution together.
+                    f._resolve_pending_registrations()
+                except BaseException as e:  # noqa: BLE001
+                    errors.append(e)
+
+            threads = [threading.Thread(target=worker) for _ in range(n_threads)]
+            for t in threads:
+                t.start()
+            for t in threads:
+                t.join()
+
+            assert not errors, errors
+            # Resolution completed exactly once and left a clean, usable state.
+            assert f._pending == []
+            assert len(f._resolver) == 3
+            assert f(1) == "int"
+            assert f("x") == "str"
+            assert f(1.0) == "float"
+    finally:
+        sys.setswitchinterval(old_interval)
