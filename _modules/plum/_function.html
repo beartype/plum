@@ -353,6 +353,7 @@ document.write(`
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">textwrap</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">copy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
@@ -438,6 +439,14 @@ document.write(`
         <span class="c1"># actual types (from `__call__`) or `TypeHints` (from `invoke`).</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">TypeHint</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">TypeHint</span><span class="p">]]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Guards the lazy resolution of pending registrations, which mutates each</span>
+        <span class="c1"># registered function&#39;s `__annotations__` in place (via beartype&#39;s</span>
+        <span class="c1"># `resolve_pep563`) and is otherwise not thread-safe. Reentrant because</span>
+        <span class="c1"># `_resolve_pending_registrations` calls `clear_cache`, which also acquires this</span>
+        <span class="c1"># lock. See GitHub issue #274.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">RLock</span><span class="p">()</span>
+
         <span class="n">wraps</span><span class="p">(</span><span class="n">f</span><span class="p">)(</span><span class="bp">self</span><span class="p">)</span>  <span class="c1"># Sets `self._doc`.</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="vm">__name__</span>
@@ -605,18 +614,21 @@ document.write(`
 <span class="sd">            reregister (bool, optional): Also reregister all methods. Defaults to</span>
 <span class="sd">                `True`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="c1"># Serialise against concurrent resolution: the `reregister` branch swaps</span>
+        <span class="c1"># `_pending`/`_resolved`/`_resolver` in multiple steps. See GitHub issue #274.</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 
-        <span class="k">if</span> <span class="n">reregister</span><span class="p">:</span>
-            <span class="c1"># Add all resolved to pending.</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_pending</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_resolved</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">reregister</span><span class="p">:</span>
+                <span class="c1"># Add all resolved to pending.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_pending</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_resolved</span><span class="p">)</span>
 
-            <span class="c1"># Clear resolved.</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_resolved</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span> <span class="o">=</span> <span class="n">Resolver</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="o">.</span><span class="n">function_name</span><span class="p">,</span>
-                <span class="n">warn_redefinition</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_warn_redefinition</span><span class="p">,</span>
-            <span class="p">)</span></div>
+                <span class="c1"># Clear resolved.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_resolved</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span> <span class="o">=</span> <span class="n">Resolver</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="o">.</span><span class="n">function_name</span><span class="p">,</span>
+                    <span class="n">warn_redefinition</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_warn_redefinition</span><span class="p">,</span>
+                <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Function.register">
@@ -642,35 +654,48 @@ document.write(`
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_pending_registrations</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># Keep track of whether anything registered.</span>
-        <span class="n">registered</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="c1"># Fast path: nothing pending. This unlocked check keeps the common</span>
+        <span class="c1"># already-resolved case, which is the hot dispatch path, lock-free.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pending</span><span class="p">:</span>
+            <span class="k">return</span>
 
-        <span class="c1"># Perform any pending registrations.</span>
-        <span class="k">for</span> <span class="n">f</span><span class="p">,</span> <span class="n">signature</span><span class="p">,</span> <span class="n">precedence</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pending</span><span class="p">:</span>
-            <span class="c1"># Add to resolved registrations.</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_resolved</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">f</span><span class="p">,</span> <span class="n">signature</span><span class="p">,</span> <span class="n">precedence</span><span class="p">))</span>
+        <span class="c1"># Resolution mutates each registered function&#39;s annotations in place and is not</span>
+        <span class="c1"># thread-safe, so serialise it. See GitHub issue #274.</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="c1"># Re-check under the lock: another thread may have completed the resolution</span>
+            <span class="c1"># while we were waiting to acquire it.</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pending</span><span class="p">:</span>
+                <span class="k">return</span>
 
-            <span class="c1"># Obtain the signature if it is not available.</span>
-            <span class="k">if</span> <span class="n">signature</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="c1"># When signature is `None`, precedence should always be set.</span>
-                <span class="k">assert</span> <span class="n">precedence</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                <span class="n">signature</span> <span class="o">=</span> <span class="n">Signature</span><span class="o">.</span><span class="n">from_callable</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">precedence</span><span class="o">=</span><span class="n">precedence</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># Ensure that the implementation is `f`, but make a copy before</span>
-                <span class="c1"># mutating.</span>
-                <span class="n">signature</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="n">signature</span><span class="p">)</span>
+            <span class="c1"># Keep track of whether anything registered.</span>
+            <span class="n">registered</span> <span class="o">=</span> <span class="kc">False</span>
 
-            <span class="c1"># Process default values.</span>
-            <span class="k">for</span> <span class="n">subsignature</span> <span class="ow">in</span> <span class="n">append_default_args</span><span class="p">(</span><span class="n">signature</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
-                <span class="n">submethod</span> <span class="o">=</span> <span class="n">Method</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">subsignature</span><span class="p">,</span> <span class="n">function_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">submethod</span><span class="p">)</span>
-                <span class="n">registered</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="c1"># Perform any pending registrations.</span>
+            <span class="k">for</span> <span class="n">f</span><span class="p">,</span> <span class="n">signature</span><span class="p">,</span> <span class="n">precedence</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pending</span><span class="p">:</span>
+                <span class="c1"># Add to resolved registrations.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_resolved</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">f</span><span class="p">,</span> <span class="n">signature</span><span class="p">,</span> <span class="n">precedence</span><span class="p">))</span>
 
-        <span class="k">if</span> <span class="n">registered</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_pending</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="c1"># Obtain the signature if it is not available.</span>
+                <span class="k">if</span> <span class="n">signature</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="c1"># When signature is `None`, precedence should always be set.</span>
+                    <span class="k">assert</span> <span class="n">precedence</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                    <span class="n">signature</span> <span class="o">=</span> <span class="n">Signature</span><span class="o">.</span><span class="n">from_callable</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">precedence</span><span class="o">=</span><span class="n">precedence</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># Ensure that the implementation is `f`, but make a copy before</span>
+                    <span class="c1"># mutating.</span>
+                    <span class="n">signature</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="n">signature</span><span class="p">)</span>
 
-            <span class="c1"># Clear cache.</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">clear_cache</span><span class="p">(</span><span class="n">reregister</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="c1"># Process default values.</span>
+                <span class="k">for</span> <span class="n">subsignature</span> <span class="ow">in</span> <span class="n">append_default_args</span><span class="p">(</span><span class="n">signature</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
+                    <span class="n">submethod</span> <span class="o">=</span> <span class="n">Method</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">subsignature</span><span class="p">,</span> <span class="n">function_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">submethod</span><span class="p">)</span>
+                    <span class="n">registered</span> <span class="o">=</span> <span class="kc">True</span>
+
+            <span class="k">if</span> <span class="n">registered</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_pending</span> <span class="o">=</span> <span class="p">[]</span>
+
+                <span class="c1"># Clear cache. Reenters `self._lock`, which is why it is an `RLock`.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">clear_cache</span><span class="p">(</span><span class="n">reregister</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Function.resolve_method">
 <a class="viewcode-back" href="../../api.html#plum._function.Function.resolve_method">[docs]</a>
