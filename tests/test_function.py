@@ -688,7 +688,7 @@ def test_concurrent_resolution_is_thread_safe(make_stringly_annotated_function):
 
             def worker(f=f, barrier=barrier, errors=errors):
                 try:
-                    barrier.wait()  # release all threads onto resolution together
+                    barrier.wait()  # Release all threads onto resolution together.
                     f._resolve_pending_registrations()
                 except BaseException as e:  # noqa: BLE001
                     errors.append(e)
