@@ -459,3 +459,29 @@ def test_append_default_args():
     # Test that `itemgetter` is supported.
     f = operator.itemgetter(0)
     assert len(plum.append_default_args(Sig.from_callable(f), f)) == 1
+
+
+@pytest.mark.parametrize(
+    "hint",
+    [
+        type[int],
+        type[int] | str,
+        list[type[int]],
+        dict[str, list[type[int]]],
+    ],
+)
+def test_dispatches_on_classes_detects_nested_occurrences(hint):
+    """`type[X]` nested inside another hint must still opt in to the class-aware key.
+
+    Under-approximating here would make the dispatch cache unsound, so detection
+    recurses through type arguments.
+    """
+    assert Sig(hint).dispatches_on_classes
+    assert Sig(int, hint).dispatches_on_classes
+    assert Sig(varargs=hint).dispatches_on_classes
+
+
+@pytest.mark.parametrize("hint", [int, object, type, int | str, list[int]])
+def test_dispatches_on_classes_ignores_hints_without_type_subscript(hint):
+    """Hints with no subscripted `type[X]`, including bare `type`, keep the fast key."""
+    assert not Sig(hint).dispatches_on_classes

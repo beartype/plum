@@ -47,13 +47,21 @@ def _cache_key(args: tuple[object, ...], /) -> tuple[object, ...]:
     """Compute the dispatch cache key for a tuple of arguments.
 
     For a normal argument, the key element is its runtime type `type(arg)`. For an
-    argument that is itself a class, the key element is `type[arg]` instead: a class
-    argument *is* its own dispatch-relevant value (dispatch on `type[X]` depends on
-    `issubclass(arg, X)`, a function of the class identity alone, not of the metaclass
-    `type(arg)`). Keying such arguments on `type[arg]` makes dispatch on `type[X]`
-    cacheable. `type[arg]` is hashable, never collides with a runtime `type(x)` key,
-    and coincides with `invoke(type[arg])`, since resolving the concrete class `arg`
-    selects the same method as resolving the hint `type[arg]`.
+    argument that is itself a class, the key element is `type[arg]` instead, which makes
+    dispatch on `type[X]` cacheable: membership is `issubclass(arg, X)`, a function of
+    the class identity alone, not of the metaclass `type(arg)`.
+
+    Soundness does not depend on the *annotations* being of the form `type[X]`. The key
+    never takes part in matching: on a cache miss, resolution runs against the arguments
+    themselves, so the key only defines an equivalence relation on argument tuples, and
+    the requirement is merely that equal keys imply equal resolution. Since `type[arg]`
+    is an injective encoding of the identity of `arg`, this key is *strictly finer* than
+    `type(arg)` for class arguments -- it separates classes that the metaclass key would
+    have merged -- and refining an equivalence relation cannot introduce a wrong hit.
+
+    This key is only used for functions that actually dispatch on `type[X]`, since it is
+    slower to compute than `map(type, args)` and produces one cache entry per distinct
+    class argument. See `Signature.dispatches_on_classes`.
 
     Args:
         args (tuple[object, ...]): Arguments.
@@ -439,7 +447,12 @@ class Function(metaclass=_FunctionMeta):
             # Attempt to use the cache based on the types of the arguments.
             # At this point, `args` must be a tuple (not `Signature` or `None`).
             assert isinstance(args, tuple)
-            types = _cache_key(args)
+            # Only pay for the class-aware key on functions that actually dispatch
+            # on `type[X]`. Everyone else keeps the fast C-level `map(type, ...)`.
+            if self._resolver.dispatches_on_classes:
+                types = _cache_key(args)
+            else:
+                types = tuple(map(type, args))
         try:
             return self._cache[types]
         except KeyError:

@@ -202,3 +202,62 @@ def test_cache_type_dispatch(dispatch: plum.Dispatcher):
         g._resolve_pending_registrations()
     dur = benchmark(f, (int,), n=250, burn=10)
     assert dur <= dur_first / 4
+
+
+def test_cache_class_key_only_when_dispatching_on_classes(dispatch: plum.Dispatcher):
+    """The class-aware cache key is only used by functions that need it.
+
+    Keying class arguments on their identity is slower to compute and produces one cache
+    entry per distinct class, so functions that do not dispatch on `type[X]` must keep
+    the plain `type(arg)` key.
+    """
+
+    @dispatch
+    def f(x: object):
+        return "object"
+
+    @dispatch
+    def g(x: type[int]):
+        return "type[int]"
+
+    f._resolve_pending_registrations()
+    g._resolve_pending_registrations()
+
+    assert not f._resolver.dispatches_on_classes
+    assert g._resolver.dispatches_on_classes
+
+    # All class arguments share the single `type` key, rather than one entry each.
+    for cls in (int, str, float, list, dict):
+        assert f(cls) == "object"
+    assert len(f._cache) == 1
+
+    assert g(int) == "type[int]"
+    assert list(g._cache) == [(type[int],)]
+
+
+def test_cache_class_key_is_contagious_within_a_function(dispatch: plum.Dispatcher):
+    """One `type[X]` method opts the whole function into the class-aware key."""
+
+    @dispatch
+    def f(x: object):
+        return "object"
+
+    f._resolve_pending_registrations()
+    assert not f._resolver.dispatches_on_classes
+
+    # Populate the cache under the coarse key before the `type[X]` method appears.
+    assert f(int) == "object"
+    assert len(f._cache) == 1
+
+    @dispatch
+    def f(x: type[int]):
+        return "type[int]"
+
+    f._resolve_pending_registrations()
+    assert f._resolver.dispatches_on_classes
+
+    # Registering must have cleared the stale coarse-keyed entry, so `int` and `str`
+    # now resolve independently rather than sharing it.
+    assert f(int) == "type[int]"
+    assert f(str) == "object"
+    assert len(f._cache) == 2
