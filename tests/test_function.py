@@ -626,29 +626,41 @@ def test_name_after_clearing_cache(dispatch: plum.Dispatcher):
     assert some_function_name._resolver.function_name == "some_function_name"
 
 
-def _make_stringly_annotated_function() -> plum.Function:
-    """Create a fresh dispatch function with several overloads using *string*
-    annotations. String annotations force beartype's PEP 563 resolution
-    (`resolve_pep563`) to mutate `__annotations__` in place, which is the unsynchronised
-    operation that races across threads. See GitHub issue #274."""
-    dispatch = plum.Dispatcher()
+@pytest.fixture
+def make_stringly_annotated_function():
+    """Factory for a fresh, unresolved dispatch function with *string* annotations.
 
-    @dispatch
-    def f(x: "int") -> "str":
-        return "int"
+    String annotations force beartype's PEP 563 resolution (`resolve_pep563`) to mutate
+    `__annotations__` in place, which is the unsynchronised operation that races across
+    threads. See GitHub issue #274.
 
-    @dispatch
-    def f(x: "str") -> "str":
-        return "str"
+    This is a factory rather than the function itself because the race only occurs on a
+    `Function`'s first resolution, so each iteration needs its own `Dispatcher`. Reusing
+    one `Dispatcher` would redefine the same `Function` object instead, which exercises
+    re-registration rather than first resolution.
+    """
 
-    @dispatch
-    def f(x: "float") -> "str":
-        return "float"
+    def make() -> plum.Function:
+        dispatch = plum.Dispatcher()
 
-    return f
+        @dispatch
+        def f(x: "int") -> "str":
+            return "int"
+
+        @dispatch
+        def f(x: "str") -> "str":
+            return "str"
+
+        @dispatch
+        def f(x: "float") -> "str":
+            return "float"
+
+        return f
+
+    return make
 
 
-def test_concurrent_resolution_is_thread_safe():
+def test_concurrent_resolution_is_thread_safe(make_stringly_annotated_function):
     """Multiple threads racing `_resolve_pending_registrations` on the same `Function`
     must not corrupt its registrations. Without the lock this raises `AssertionError:
     ... not stringified type hint` (among other errors) because beartype's
@@ -670,7 +682,7 @@ def test_concurrent_resolution_is_thread_safe():
         # unresolved function each iteration and loop enough to trip it reliably.
         # Without the lock this fails on essentially every iteration.
         for _ in range(100):
-            f = _make_stringly_annotated_function()
+            f = make_stringly_annotated_function()
             barrier = threading.Barrier(n_threads)
             errors: list[BaseException] = []
 
