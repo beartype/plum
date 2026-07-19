@@ -629,8 +629,8 @@ def test_name_after_clearing_cache(dispatch: plum.Dispatcher):
 def _make_stringly_annotated_function() -> plum.Function:
     """Create a fresh dispatch function with several overloads using *string*
     annotations. String annotations force beartype's PEP 563 resolution
-    (`resolve_pep563`) to mutate `__annotations__` in place, which is the
-    unsynchronised operation that races across threads (see issue #274)."""
+    (`resolve_pep563`) to mutate `__annotations__` in place, which is the unsynchronised
+    operation that races across threads. See GitHub issue #274."""
     dispatch = plum.Dispatcher()
 
     @dispatch
@@ -649,25 +649,26 @@ def _make_stringly_annotated_function() -> plum.Function:
 
 
 def test_concurrent_resolution_is_thread_safe():
-    """Multiple threads racing `_resolve_pending_registrations` on the same
-    `Function` must not corrupt its registrations. Without the lock this
-    intermittently raises `AssertionError: ... not stringified type hint` (and
-    other errors) because beartype's `resolve_pep563` mutates the shared
-    `__annotations__` dict concurrently. See issue #274.
+    """Multiple threads racing `_resolve_pending_registrations` on the same `Function`
+    must not corrupt its registrations. Without the lock this raises `AssertionError:
+    ... not stringified type hint` (among other errors) because beartype's
+    `resolve_pep563` mutates the shared `__annotations__` dict concurrently. See GitHub
+    issue #274.
 
-    Note: this exercises the resolution race that the per-`Function` lock fixes.
-    A separate, unrelated race in beartype's lazy type-checker *compilation*
-    (triggered later via `is_bearable` during matching) is tracked upstream in
-    beartype and is out of scope here.
+    Note: this exercises the resolution race that the per-`Function` lock fixes. A
+    separate, unrelated race in beartype's lazy type-checker *compilation*, triggered
+    later via `is_bearable` during matching, is tracked upstream in beartype and is out
+    of scope here.
     """
     n_threads = 16
-    # Force frequent GIL hand-offs so the race reliably reproduces pre-fix (the
-    # window is tiny at the default 5ms switch interval).
+    # Force frequent GIL hand-offs so the race reliably reproduces pre-fix: the window
+    # is tiny at the default 5ms switch interval.
     old_interval = sys.getswitchinterval()
     sys.setswitchinterval(1e-6)
     try:
         # The race only occurs on a `Function`'s first resolution, so use a fresh,
         # unresolved function each iteration and loop enough to trip it reliably.
+        # Without the lock this fails on essentially every iteration.
         for _ in range(100):
             f = _make_stringly_annotated_function()
             barrier = threading.Barrier(n_threads)

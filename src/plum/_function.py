@@ -90,8 +90,8 @@ class Function(metaclass=_FunctionMeta):
         # Guards the lazy resolution of pending registrations, which mutates each
         # registered function's `__annotations__` in place (via beartype's
         # `resolve_pep563`) and is otherwise not thread-safe. Reentrant because
-        # `_resolve_pending_registrations` calls `clear_cache`, which also acquires
-        # this lock. See GitHub issue #274.
+        # `_resolve_pending_registrations` calls `clear_cache`, which also acquires this
+        # lock. See GitHub issue #274.
         self._lock = threading.RLock()
 
         wraps(f)(self)  # Sets `self._doc`.
@@ -254,7 +254,7 @@ class Function(metaclass=_FunctionMeta):
                 `True`.
         """
         # Serialise against concurrent resolution: the `reregister` branch swaps
-        # `_pending`/`_resolved`/`_resolver` in multiple steps. See issue #274.
+        # `_pending`/`_resolved`/`_resolver` in multiple steps. See GitHub issue #274.
         with self._lock:
             self._cache.clear()
 
@@ -290,15 +290,15 @@ class Function(metaclass=_FunctionMeta):
 
     def _resolve_pending_registrations(self) -> None:
         # Fast path: nothing pending. This unlocked check keeps the common
-        # already-resolved case (the hot dispatch path) lock-free.
+        # already-resolved case, which is the hot dispatch path, lock-free.
         if not self._pending:
             return
 
-        # Resolution mutates each registered function's annotations in place and is
-        # not thread-safe, so serialise it. See GitHub issue #274.
+        # Resolution mutates each registered function's annotations in place and is not
+        # thread-safe, so serialise it. See GitHub issue #274.
         with self._lock:
-            # Re-check under the lock: another thread may have completed the
-            # resolution while we were waiting to acquire it.
+            # Re-check under the lock: another thread may have completed the resolution
+            # while we were waiting to acquire it.
             if not self._pending:
                 return
 
