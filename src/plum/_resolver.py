@@ -242,6 +242,8 @@ class Resolver:
     Attributes:
         methods (list[:class:`.method.Method`]): Registered methods.
         is_faithful (bool): Whether all methods are faithful or not.
+        dispatches_on_classes (bool): Whether any method dispatches on a subscripted
+            `type[X]`, and hence needs the class-aware dispatch cache key.
         warn_redefinition (bool): Throw a warning whenever a method is redefined.
     """
 
@@ -249,6 +251,7 @@ class Resolver:
         "function_name",
         "methods",
         "is_faithful",
+        "dispatches_on_classes",
         "warn_redefinition",
     )
 
@@ -265,6 +268,7 @@ class Resolver:
         self.function_name = function_name
         self.methods: MethodList = MethodList()
         self.is_faithful: bool = True
+        self.dispatches_on_classes: bool = False
         self.warn_redefinition = warn_redefinition
 
     def doc(self, exclude: Callable[..., object] | None = None) -> str:
@@ -333,6 +337,9 @@ class Resolver:
 
         # Use a double negation for slightly better performance.
         self.is_faithful = not any(not s.signature.is_faithful for s in self.methods)
+        self.dispatches_on_classes = any(
+            m.signature.dispatches_on_classes for m in self.methods
+        )
 
     def __len__(self) -> int:
         return len(self.methods)

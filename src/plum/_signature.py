@@ -6,7 +6,7 @@ import inspect
 import operator
 from collections.abc import Callable, Iterable
 from copy import copy
-from typing import Any, ClassVar, get_type_hints
+from typing import Any, ClassVar, get_args, get_origin, get_type_hints
 from typing_extensions import Self
 
 from rich.console import Console, ConsoleOptions
@@ -25,6 +25,26 @@ from ._util import (
     wrap_lambda,
 )
 from .repr import repr_short, rich_repr
+
+
+def _mentions_type_subscript(x: TypeHint, /) -> bool:
+    """Whether `x` contains a subscripted `type[X]` anywhere.
+
+    Dispatch on `type[X]` requires the cache to key class arguments on their identity
+    rather than on their metaclass (see `_function._cache_key`). That key is more
+    expensive to compute, so it is only used for functions that need it, which this
+    predicate detects. Over-approximating is safe (merely slower); under-approximating
+    would make the cache unsound, so nested occurrences count too.
+
+    Args:
+        x (:obj:`.TypeHint`): Type hint.
+
+    Returns:
+        bool: `True` if `x` mentions a subscripted `type[X]` and `False` otherwise.
+    """
+    if get_origin(x) is type:
+        return True
+    return any(_mentions_type_subscript(arg) for arg in get_args(x))
 
 
 @rich_repr
@@ -46,12 +66,20 @@ class Signature(Comparable):
         has_varargs (bool): Whether `varargs` is not :class:`.util.Missing`.
         precedence (int): Precedence.
         is_faithful (bool): Whether this signature only uses faithful types.
+        dispatches_on_classes (bool): Whether this signature mentions a subscripted
+            `type[X]`, and hence needs the class-aware dispatch cache key.
     """
 
     _default_varargs: ClassVar = Missing
     _default_precedence: ClassVar[int] = 0
 
-    __slots__: tuple[str, ...] = ("types", "varargs", "precedence", "is_faithful")
+    __slots__: tuple[str, ...] = (
+        "types",
+        "varargs",
+        "precedence",
+        "is_faithful",
+        "dispatches_on_classes",
+    )
 
     def __init__(
         self,
@@ -74,6 +102,9 @@ class Signature(Comparable):
         types_are_faithful = all(is_faithful(t) for t in types)
         varargs_are_faithful = self.varargs is Missing or is_faithful(self.varargs)
         self.is_faithful = types_are_faithful and varargs_are_faithful
+        self.dispatches_on_classes = any(
+            _mentions_type_subscript(t) for t in (*types, self.varargs)
+        )
 
     @staticmethod
     def from_callable(f: Callable[..., Any], precedence: int = 0) -> "Signature":

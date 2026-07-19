@@ -228,6 +228,17 @@ def test_is_faithful():
     assert is_faithful(int | float)  # noqa: UP007
     assert not is_faithful(int | t_nf)
 
+    # `type[X]`: dispatching on a class is faithful, since membership depends only on
+    # the class identity of the argument (see `_function._cache_key`). This holds for
+    # the bare `type`, `type[X]`, and the `typing.Type[X]` spelling alike.
+    class SomeClass:
+        pass
+
+    assert is_faithful(type)
+    assert is_faithful(type[int])
+    assert is_faithful(type[SomeClass])
+    assert is_faithful(typing.Type[int])  # noqa: UP006
+
     # Test warning.
     with pytest.warns(
         Warning, match=r"(?i)could not determine whether `(.*)` is faithful or not"

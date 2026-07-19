@@ -324,7 +324,12 @@ def _is_faithful(x: object, /) -> bool:
         if origin in UNION_TYPES:
             return all(is_faithful(arg) for arg in args)
 
-        return False
+        # `type[X]` membership is `issubclass(x, X)`, a function of the class identity
+        # of `x` alone (not of the metaclass `type(x)`). Plum's dispatch cache keys
+        # class arguments on their identity (see `_function._cache_key`), so `type[X]`
+        # is faithful for any `X`. This also keeps `type[Any]` consistent with the bare,
+        # unsubscripted `type`, which is faithful. Any other subscripted hint is not.
+        return origin is type
 
     elif x is None or x == Ellipsis:
         return True

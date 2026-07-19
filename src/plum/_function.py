@@ -43,6 +43,35 @@ _owner_transfer: dict[type, type] = {}
 a function (see :meth:`Function.owner`), make the corresponding value the owner."""
 
 
+def _cache_key(args: tuple[object, ...], /) -> tuple[object, ...]:
+    """Compute the dispatch cache key for a tuple of arguments.
+
+    For a normal argument, the key element is its runtime type `type(arg)`. For an
+    argument that is itself a class, the key element is `type[arg]` instead, which makes
+    dispatch on `type[X]` cacheable: membership is `issubclass(arg, X)`, a function of
+    the class identity alone, not of the metaclass `type(arg)`.
+
+    Soundness does not depend on the *annotations* being of the form `type[X]`. The key
+    never takes part in matching: on a cache miss, resolution runs against the arguments
+    themselves, so the key only defines an equivalence relation on argument tuples, and
+    the requirement is merely that equal keys imply equal resolution. Since `type[arg]`
+    is an injective encoding of the identity of `arg`, this key is *strictly finer* than
+    `type(arg)` for class arguments -- it separates classes that the metaclass key would
+    have merged -- and refining an equivalence relation cannot introduce a wrong hit.
+
+    This key is only used for functions that actually dispatch on `type[X]`, since it is
+    slower to compute than `map(type, args)` and produces one cache entry per distinct
+    class argument. See `Signature.dispatches_on_classes`.
+
+    Args:
+        args (tuple[object, ...]): Arguments.
+
+    Returns:
+        tuple[object, ...]: Cache key.
+    """
+    return tuple(type[arg] if isinstance(arg, type) else type(arg) for arg in args)
+
+
 class _FunctionMeta(type):
     """:class:`Function` implements `__doc__`, which overrides the docstring of the
     class. This simple metaclass ensures that `Function.__doc__` still prints as the
@@ -411,14 +440,19 @@ class Function(metaclass=_FunctionMeta):
             self._resolve_pending_registrations()
 
         # Compute cache key. When called from `__call__`, types will be actual
-        # runtime types from `map(type, args)`. When called from `invoke`, types
-        # may be `TypeHints` like `Union[int, str]`. Both are hashable and work
-        # as cache keys.
+        # runtime types from `_cache_key(args)` (which keys class arguments on
+        # `type[arg]`; see `_cache_key`). When called from `invoke`, types may be
+        # `TypeHints` like `Union[int, str]`. Both are hashable and work as cache keys.
         if types is None:
             # Attempt to use the cache based on the types of the arguments.
             # At this point, `args` must be a tuple (not `Signature` or `None`).
             assert isinstance(args, tuple)
-            types = tuple(map(type, args))
+            # Only pay for the class-aware key on functions that actually dispatch
+            # on `type[X]`. Everyone else keeps the fast C-level `map(type, ...)`.
+            if self._resolver.dispatches_on_classes:
+                types = _cache_key(args)
+            else:
+                types = tuple(map(type, args))
         try:
             return self._cache[types]
         except KeyError:

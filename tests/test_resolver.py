@@ -140,6 +140,11 @@ def test_register():
     r.register(Method(f, plum.Signature(tuple[int])))
     assert not r.is_faithful
 
+    # Dispatching on a class via `type[X]` keeps the resolver faithful.
+    r2 = Resolver()
+    r2.register(Method(f, plum.Signature(type[int])))
+    assert r2.is_faithful
+
     # Test that signatures can be replaced.
     new_m = Method(f, plum.Signature(float))
     assert len(r) == 3
