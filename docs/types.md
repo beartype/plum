@@ -53,6 +53,12 @@ supported, they do incur a performance penalty.
 For optimal performance, is recommended to use parametric types only where necessary.
 `Union` and `Optional` do not incur a performance penalty.
 
+```{note}
+Dispatching on your *own* generic classes (subclasses of `typing.Generic[T]`)
+is also partially supported via Python's `__orig_class__` mechanism — see
+[Custom Generic Types](generics) for the recommended pattern and its limitations.
+```
+
 ````{important}
 Plum's type system is powered by [Beartype](https://github.com/beartype/beartype).
 To ensure constant-time performance,
@@ -164,6 +170,65 @@ class MyClass(metaclass=MyMeta):
 
     ...
 ```
+
+### Generic types and caching
+
+Parameterised generic types are never faithful.
+This holds both for standard-library containers such as `list[int]` and for
+parameterised user-defined `Generic` subclasses such as `Box[int]`:
+
+```python
+>>> from typing import Generic, TypeVar
+
+>>> T = TypeVar("T")
+
+>>> class Box(Generic[T]):
+...     def __init__(self, val):
+...         self.val = val
+
+>>> is_faithful(list[int])
+False
+
+>>> is_faithful(Box[int])
+False
+
+```
+
+The reason is that a runtime `isinstance` check cannot recover the type argument:
+`isinstance(Box("a"), Box)` is `True` no matter what `Box` was parameterised with,
+so the bare runtime type does not determine the match.
+
+Crucially, adding a generic overload does **not** disable caching for the other,
+faithful overloads of the same function.
+Plum routes generic and non-generic arguments through two separate cache paths, so
+a generic overload only affects calls whose argument actually matches its generic
+origin (here, an actual `Box`).
+A faithful overload such as one on `int` continues to use the fast cached path:
+
+```python
+>>> from plum import dispatch
+
+>>> @dispatch
+... def describe(x: int) -> str:
+...     return "int"
+
+>>> @dispatch
+... def describe(x: Box[int]) -> str:
+...     return "Box[int]"
+
+>>> describe(42)
+'int'
+
+>>> describe(Box[int](1))
+'Box[int]'
+
+```
+
+So a single parameterised generic does not "poison" dispatch performance for the
+rest of the function.
+What *does* prevent caching for a given argument is an unfaithful **non-generic**
+type — such as `Literal[1]` or a `beartype` validator — because such a type must
+be re-resolved on every call.
 
 (moduletype)=
 ## `ModuleType`

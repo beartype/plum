@@ -18,6 +18,8 @@ __all__ = (
     # Overload
     "overload",  # TODO: deprecate
     "get_overloads",  # TODO: deprecate
+    # Generic decorator
+    "generic",
     # Parametric
     "CovariantMeta",
     "parametric",
@@ -69,6 +71,7 @@ from ._autoreload import activate_autoreload, deactivate_autoreload
 from ._bear import is_bearable as _is_bearable
 from ._dispatcher import Dispatcher, clear_all_cache, dispatch
 from ._function import Function
+from ._generic import generic
 from ._method import Method, extract_return_type
 from ._overload import get_overloads, overload
 from ._parametric import (

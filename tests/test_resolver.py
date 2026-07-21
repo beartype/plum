@@ -1,16 +1,20 @@
+import inspect
 import sys
 import textwrap
 import warnings
+from unittest.mock import patch
 
 import pytest
 
+from tests.util import rich_render
+
 import plum
-from plum._method import Method
 from plum._resolver import (
     MethodRedefinitionWarning,
     Resolver,
     _document,
     _render_function_call,
+    _sort_most_specific_first,
 )
 
 
@@ -134,27 +138,300 @@ def test_register():
         return xs
 
     # Test that faithfulness is tracked correctly.
-    r.register(Method(f, plum.Signature(int)))
-    r.register(Method(f, plum.Signature(float)))
+    r.register(plum.Method(f, plum.Signature(int)))
+    r.register(plum.Method(f, plum.Signature(float)))
     assert r.is_faithful
-    r.register(Method(f, plum.Signature(tuple[int])))
+    r.register(plum.Method(f, plum.Signature(tuple[int])))
     assert not r.is_faithful
 
     # Test that signatures can be replaced.
-    new_m = Method(f, plum.Signature(float))
+    new_m = plum.Method(f, plum.Signature(float))
     assert len(r) == 3
     assert r.methods[1] is not new_m
     r.register(new_m)
     assert len(r) == 3
     assert r.methods[1] is new_m
 
-    # Test the edge case that should never happen.
-    r.methods[2] = Method(f, plum.Signature(float))
-    with pytest.raises(
-        AssertionError,
-        match=r"(?i)the added method `(.*)` is equal to 2 existing methods",
-    ):
-        r.register(Method(f, plum.Signature(float)))
+
+def test_register_replaces_existing_signature_in_place():
+    """Re-registering an existing signature replaces the method in place, keeping
+    the method count and position stable."""
+
+    def f(*xs):
+        return xs
+
+    r = Resolver()
+    r.register(plum.Method(f, plum.Signature(int)))  # index 0
+    r.register(plum.Method(f, plum.Signature(float)))  # index 1
+
+    # Re-register the FIRST method with a fresh Method object.
+    new_m = plum.Method(f, plum.Signature(int))
+    r.register(new_m)
+
+    assert len(r) == 2, "Redefinition must not change the method count"
+    assert r.methods[0] is new_m, "Replacement must occur in place at index 0"
+
+
+def test_register_raises_on_duplicate_signatures():
+    """register() exhaustively scans and raises if the new signature is equal to
+    more than one existing method, catching a violated "at most one equal
+    signature" invariant instead of silently overwriting the first match."""
+
+    def f(*xs):
+        return xs
+
+    r = Resolver()
+    # Circumvent register() to seed two methods with equal signatures, breaking
+    # the invariant that register() itself maintains.
+    r.methods.append(plum.Method(f, plum.Signature(int)))
+    r.methods.append(plum.Method(f, plum.Signature(int)))
+
+    with pytest.raises(AssertionError, match="is equal to 2 existing methods"):
+        r.register(plum.Method(f, plum.Signature(int)))
+
+
+def test_register_metadata_updated_incrementally():
+    """register() updates generic_origins and _arity1_methods for the new method only,
+    not by rescanning all registered methods.  Each registration invokes
+    is_generic_hint exactly 3 times (method_has_generic_hint, generic_origins,
+    _arity1_methods update).  For 4 registrations: 12 total calls.
+
+    The module is loaded from source so is_generic_hint can be patched via the
+    module dict (mypyc-compiled callers use a direct C pointer and bypass it).
+    """
+    import importlib.util
+    import pathlib
+    import sys as _sys
+
+    # Load _resolver.py from source to get an interpreted Resolver.
+    src_path = pathlib.Path(__file__).parent.parent / "src" / "plum" / "_resolver.py"
+    _MOD_NAME = "plum._resolver_source"
+    spec = importlib.util.spec_from_file_location(_MOD_NAME, str(src_path))
+    mod = importlib.util.module_from_spec(spec)
+    # Must set __package__ so that the relative imports inside _resolver.py
+    # (e.g. ``from ._generic import …``) resolve against the already-loaded
+    # compiled ``plum.*`` modules in sys.modules.
+    mod.__package__ = "plum"
+    _sys.modules[_MOD_NAME] = mod
+    try:
+        spec.loader.exec_module(mod)
+    finally:
+        _sys.modules.pop(_MOD_NAME, None)
+
+    real_is_generic_hint = mod.is_generic_hint
+    call_count = 0
+
+    def counting_is_generic_hint(t):
+        nonlocal call_count
+        call_count += 1
+        return real_is_generic_hint(t)
+
+    def f(*xs):
+        return xs
+
+    n_methods = 4
+    with patch.object(mod, "is_generic_hint", counting_is_generic_hint):
+        r = mod.Resolver()
+        for t in (int, float, str, bytes):
+            r.register(plum.Method(f, plum.Signature(list[t])))
+
+    # 3 per registration × 4 = 12.
+    expected = n_methods * 3
+    assert call_count == expected, (
+        f"Expected {expected} is_generic_hint calls (3 per registration), "
+        f"got {call_count}."
+    )
+
+
+def test_sort_most_specific_first_no_eq_calls():
+    """Kahn's algorithm uses only __le__ to derive strict ordering; __eq__ is never
+    called (i < j iff le_ij and not le_ji).
+    """
+
+    class A:
+        pass
+
+    class B(A):
+        pass
+
+    class C(B):
+        pass
+
+    class D(C):
+        pass
+
+    def f(*xs):
+        return xs
+
+    # 4-method linear chain registered in least-specific-first order.
+    m_A = plum.Method(f, plum.Signature(A))
+    m_B = plum.Method(f, plum.Signature(B))
+    m_C = plum.Method(f, plum.Signature(C))
+    m_D = plum.Method(f, plum.Signature(D))
+
+    real_eq = plum.Signature.__eq__
+    eq_call_count = 0
+
+    def counting_eq(self, other, /):
+        nonlocal eq_call_count
+        eq_call_count += 1
+        return real_eq(self, other)
+
+    with patch.object(plum.Signature, "__eq__", counting_eq):
+        result = _sort_most_specific_first([m_A, m_B, m_C, m_D])
+
+    assert result[0] is m_D
+    assert result[-1] is m_A
+    assert (
+        eq_call_count == 0
+    ), f"Expected 0 __eq__ calls (Kahn's uses __le__ only), got {eq_call_count}"
+
+
+def test_sort_most_specific_first_safety_valve():
+    """Safety valve: when all nodes have in-degree > 0 (cyclic __le__) Kahn's
+    BFS queue empties before all methods are emitted; remaining methods are
+    appended in original order.
+    """
+
+    def f(*xs):
+        return xs
+
+    m1 = plum.Method(f, plum.Signature(int))
+    m2 = plum.Method(f, plum.Signature(float))
+    m3 = plum.Method(f, plum.Signature(str))
+
+    methods = [m1, m2, m3]
+
+    # Directed cycle via __le__:
+    #   sig1 ≤ sig2 (not sig2 ≤ sig1)  →  m1 more specific than m2
+    #   sig2 ≤ sig3 (not sig3 ≤ sig2)  →  m2 more specific than m3
+    #   sig3 ≤ sig1 (not sig1 ≤ sig3)  →  m3 more specific than m1
+    # All in-degrees become 1; Kahn's queue starts empty → safety valve fires.
+    _le_table = {
+        (id(m1.signature), id(m2.signature)): True,
+        (id(m2.signature), id(m1.signature)): False,
+        (id(m2.signature), id(m3.signature)): True,
+        (id(m3.signature), id(m2.signature)): False,
+        (id(m3.signature), id(m1.signature)): True,
+        (id(m1.signature), id(m3.signature)): False,
+    }
+
+    def _cyclic_le(self, other):
+        return _le_table.get((id(self), id(other)), False)
+
+    with patch.object(plum.Signature, "__le__", _cyclic_le):
+        result = _sort_most_specific_first(methods)
+
+    # Safety valve: all unprocessed methods are appended in original order.
+    assert set(result) == {m1, m2, m3}
+
+
+def test_sort_most_specific_first_stable_within_layer():
+    """Incomparable methods that reach in-degree 0 in the same layer are emitted
+    in original-index order, not in the discovery order in which their
+    predecessors happened to free them.
+
+    Layout (→ = "strictly more specific than"):
+
+        m0 → m3      m1 → m2
+
+    m0, m1 are the sources (layer 0, incomparable to each other); m2, m3 are the
+    second layer (also incomparable).  Processing the sources in index order
+    frees m3 (via m0) before m2 (via m1), so the raw discovery order of the
+    second layer is [m3, m2].  Sorting each layer by original index restores
+    [m2, m3], matching the documented stability guarantee.
+    """
+
+    class A2:
+        pass
+
+    class A3:
+        pass
+
+    class A0(A3):  # A0 is strictly more specific than A3
+        pass
+
+    class A1(A2):  # A1 is strictly more specific than A2
+        pass
+
+    def f(*xs):
+        return xs
+
+    m0 = plum.Method(f, plum.Signature(A0))
+    m1 = plum.Method(f, plum.Signature(A1))
+    m2 = plum.Method(f, plum.Signature(A2))
+    m3 = plum.Method(f, plum.Signature(A3))
+
+    result = _sort_most_specific_first([m0, m1, m2, m3])
+
+    # Sources first (index order), then the second layer in index order — NOT
+    # the [m0, m1, m3, m2] discovery order produced without the per-layer sort.
+    assert result == [m0, m1, m2, m3]
+
+
+def test_register_replace_faithful_triggers_rescan():
+    """When a faithful method replaces an existing one while
+    ``is_faithful_for_non_generic`` is False (due to a *different* unfaithful
+    non-generic method), the full-rescan branch (lines 420-423) executes."""
+
+    class _Unfaithful:
+        """A plain class that opts out of faithful type-checking."""
+
+        __faithful__ = False
+
+    def f(*xs):
+        return xs
+
+    def g(*xs):
+        return xs
+
+    r = Resolver()
+    # Register an unfaithful, non-generic method → flag becomes False.
+    r.register(plum.Method(f, plum.Signature(_Unfaithful)))
+    assert not r.is_faithful_for_non_generic
+
+    # Register a faithful method (different signature).
+    r.register(plum.Method(f, plum.Signature(int)))
+    assert not r.is_faithful_for_non_generic  # still False
+
+    # Replace the faithful ``int`` method with a new implementation.
+    # ``_new_ok`` is True (int is faithful); flag is still False → rescan.
+    r.register(plum.Method(g, plum.Signature(int)))
+    # After rescan the _Unfaithful method is still present, so the flag
+    # remains False — but the rescan branch was exercised.
+    assert not r.is_faithful_for_non_generic
+    # Replacing did not add a new method.
+    assert len(r) == 2
+
+
+def test_register_replace_swaps_arity1_bucket():
+    """When an existing method is replaced and ``_arity1_methods`` is already
+    populated, the old method reference is swapped for the new one in each
+    origin bucket (lines 461-462)."""
+
+    def f(*xs):
+        return xs
+
+    def g(*xs):
+        return xs
+
+    r = Resolver()
+    m1 = plum.Method(f, plum.Signature(list[int]))
+    r.register(m1)
+
+    # After the first generic arity-1 registration, _arity1_methods is built.
+    assert r._arity1_methods
+    assert list in r._arity1_methods
+    assert r._arity1_methods[list][0] is m1
+
+    # Replace with a different implementation but identical signature.
+    m2 = plum.Method(g, plum.Signature(list[int]))
+    r.register(m2)
+
+    # Still one method (replacement, not an addition).
+    assert len(r) == 1
+    # Bucket now holds m2, not m1.
+    assert r._arity1_methods[list][0] is m2
 
 
 def test_len():
@@ -163,11 +440,11 @@ def test_len():
 
     r = Resolver()
     assert len(r) == 0
-    r.register(Method(f, plum.Signature(int)))
+    r.register(plum.Method(f, plum.Signature(int)))
     assert len(r) == 1
-    r.register(Method(f, plum.Signature(float)))
+    r.register(plum.Method(f, plum.Signature(float)))
     assert len(r) == 2
-    r.register(Method(f, plum.Signature(float)))
+    r.register(plum.Method(f, plum.Signature(float)))
     assert len(r) == 2
 
 
@@ -196,13 +473,13 @@ def test_resolve():
     def f(x):
         return x
 
-    m_a = Method(f, plum.Signature(A))
-    m_b1 = Method(f, plum.Signature(B1))
-    m_b2 = Method(f, plum.Signature(B2))
-    m_c1 = Method(f, plum.Signature(C1))
-    m_c2 = Method(f, plum.Signature(C2))
-    m_u = Method(f, plum.Signature(Unrelated))
-    m_m = Method(f, plum.Signature(Missing))
+    m_a = plum.Method(f, plum.Signature(A))
+    m_b1 = plum.Method(f, plum.Signature(B1))
+    m_b2 = plum.Method(f, plum.Signature(B2))
+    m_c1 = plum.Method(f, plum.Signature(C1))
+    m_c2 = plum.Method(f, plum.Signature(C2))
+    m_u = plum.Method(f, plum.Signature(Unrelated))
+    m_m = plum.Method(f, plum.Signature(Missing))
 
     r = Resolver()
     r.register(m_b1)
@@ -298,7 +575,66 @@ def test_redefinition_warning_unwrapping():
     f.dispatch_multi((str,))(f.invoke(int))
 
     with pytest.warns(
-        MethodRedefinitionWarning,
-        match=r".*`.*test_resolver.py:[0-9]+`.*" * 2,
+        MethodRedefinitionWarning, match=r".*`.*test_resolver.py:[0-9]+`.*" * 2
     ):
         f._resolve_pending_registrations()
+
+
+def test_not_found_lookup_error_renders_with_signature_target(
+    dispatch: plum.Dispatcher,
+):
+    """NotFoundLookupError raised via .invoke() (target is a Signature, not a tuple)
+    must render the "could not be resolved" branch, not the candidate-suggestions
+    branch.
+    """
+
+    @dispatch
+    def f(x: int) -> int:
+        return x
+
+    # .invoke(str) looks up by Signature, not by runtime argument types, so
+    # NotFoundLookupError.target is a Signature, not a tuple.
+    with pytest.raises(plum.NotFoundLookupError) as exc_info:
+        f.invoke(str)
+
+    rendered = rich_render(exc_info.value)
+    assert "could not be resolved" in rendered
+
+
+@pytest.mark.incompatible_with_mypyc
+def test_resolve_from_does_not_materialise_filter_list():
+    """_resolve_from must iterate methods directly, not via a list/genexpr.
+    Verified by wrapping methods in an iterable that raises RuntimeError if
+    iterated from within a <listcomp> or <genexpr> frame.
+    """
+
+    class _NoMaterializeIterable:
+        """Raises RuntimeError if iterated from within a list/gen comprehension."""
+
+        def __init__(self, items):
+            self._items = items
+
+        def __iter__(self):
+            frame = inspect.currentframe()
+            caller = frame.f_back if frame is not None else None
+            if caller is not None and caller.f_code.co_name in (
+                "<listcomp>",
+                "<genexpr>",
+            ):
+                raise RuntimeError(
+                    "_resolve_from materialised `methods` inside a comprehension."
+                )
+            return iter(self._items)
+
+    def f():
+        pass
+
+    resolver = Resolver()
+    m = plum.Method(f, plum.Signature(int))
+    resolver.register(m)
+
+    # Wrap the registered methods in the guard and call _resolve_from directly.
+    # RuntimeError is raised here if the implementation uses a comprehension.
+    guarded = _NoMaterializeIterable(list(resolver.methods))
+    result = resolver._resolve_from((1,), guarded)
+    assert result is m

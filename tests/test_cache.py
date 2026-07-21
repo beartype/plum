@@ -1,5 +1,6 @@
 import plum
 from .util import benchmark
+from plum import AmbiguousLookupError
 
 
 def assert_cache_performance(f, f_native):
@@ -167,7 +168,39 @@ def test_cache_unfaithful(dispatch: plum.Dispatcher):
     def f(x: list[int]):
         return 2
 
-    # Since `f` is not faithful, no cache should be accumulated.
+    # int args take the faithful path → stored in _cache.
+    # list[int] args take the two-tier generic path → stored in _generic_cache.
     assert f(1) == 1
     assert f([1]) == 2
-    assert len(f._cache) == 0
+    # The resolver is not faithful as a whole (list[int] is non-faithful in
+    # plum's sense), but every non-generic method (int) IS faithful —
+    # is_faithful_for_non_generic must be True so the int result gets cached.
+    assert not f._resolver.is_faithful
+    assert f._resolver.is_faithful_for_non_generic
+    assert len(f._cache) == 1
+    assert len(f._generic_cache) == 1
+
+
+def test_generic_cache_dedup_by_hint_tuple_not_impl(dispatch: plum.Dispatcher):
+    # dispatch_multi registers *one* implementation for two different generic
+    # signatures.  After priming the cache with a list[int] and a list[str]
+    # call, an empty-list call is ambiguous and must still raise
+    # AmbiguousLookupError — it must NOT silently resolve via the first cached
+    # entry just because both entries share the same implementation object.
+    import pytest
+
+    @dispatch
+    def f(x: int):
+        return "int"
+
+    @f.dispatch_multi((list[int],), (list[str],))
+    def _impl(x):
+        return x
+
+    # Prime the generic cache: both list[int] and list[str] map to _impl.
+    assert f([1]) == [1]
+    assert f(["a"]) == ["a"]
+
+    # Both list[int] and list[str] vacuously match an empty list — ambiguous.
+    with pytest.raises(AmbiguousLookupError):
+        f([])

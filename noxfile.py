@@ -70,3 +70,17 @@ def pytest(s: nox.Session, /) -> None:
 def benchmark(s: nox.Session, /) -> None:
     """Run the benchmarks."""
     s.run("python", "tests/benchmark.py", *s.posargs)
+
+
+@session(uv_groups=["docs"], reuse_venv=True)
+def docs(s: nox.Session, /) -> None:
+    """Build the documentation.
+
+    Runs the timing script first to regenerate docs/_generated/generics_timing.md,
+    then builds the Jupyter Book.  The two steps can also be run separately:
+
+        uv run python docs/_scripts/time_generics.py
+        uv run jupyter-book build docs/
+    """
+    s.run("python", "docs/_scripts/time_generics.py")
+    s.run("jupyter-book", "build", "docs/", *s.posargs)

@@ -4,19 +4,19 @@ import sys
 import textwrap
 import threading
 import typing
+from unittest.mock import patch
 
 import pytest
 
 import plum
-from plum._function import Function, _convert, _owner_transfer
-from plum._method import Method
+import plum._function
+from plum._function import _convert, _owner_transfer
 from plum._resolver import (
     AmbiguousLookupError,
     NotFoundLookupError,
     _change_function_name,
     _unwrap_invoked_methods,
 )
-from plum._signature import Signature
 
 
 def test_convert_reference():
@@ -42,13 +42,13 @@ def test_function():
     def f(x):
         """Doc"""
 
-    g = Function(f)
+    g = plum.Function(f)
 
     assert g.__name__ == "f"
     assert g.__doc__ == "Doc"
 
     # Check global tracking of functions.
-    assert Function._instances[-1] == g
+    assert g in plum.Function._instances
 
 
 def test_repr(dispatch: plum.Dispatcher):
@@ -102,8 +102,8 @@ def test_owner():
     def f(x):
         pass
 
-    assert Function(f).owner is None
-    assert Function(f, owner="A").owner is A
+    assert plum.Function(f).owner is None
+    assert plum.Function(f, owner="A").owner is A
 
 
 def test_resolve_method_with_cache_no_arguments():
@@ -111,7 +111,7 @@ def test_resolve_method_with_cache_no_arguments():
         pass
 
     with pytest.raises(ValueError, match="`args` and `types` cannot both be `None`"):
-        Function(f)._resolve_method_with_cache()
+        plum.Function(f)._resolve_method_with_cache()
 
 
 @pytest.fixture()
@@ -136,18 +136,18 @@ def test_owner_transfer(owner_transfer):
 
     # Transfer once.
     owner_transfer[A] = B
-    assert Function(f, owner="A").owner is B
+    assert plum.Function(f, owner="A").owner is B
 
     class C:
         pass
 
     # Transfer twice.
     owner_transfer[B] = C
-    assert Function(f, owner="A").owner is C
+    assert plum.Function(f, owner="A").owner is C
 
 
 def test_functionmeta():
-    assert Function.__doc__ == Function._class_doc
+    assert plum.Function.__doc__ == plum.Function._class_doc
 
 
 def test_doc(monkeypatch):
@@ -168,7 +168,7 @@ def test_doc(monkeypatch):
     #   (2) single-line original docstring,
     #   (3) the trimming of whitespace of the original docstring, and
     #   (4) the replacement of `<separator>` by lines of the right length.
-    g = Function(f).dispatch(f)
+    g = plum.Function(f).dispatch(f)
     assert g.__doc__ == "Process an int."
     g.dispatch(f2)
     expected_doc = """
@@ -194,7 +194,7 @@ def test_doc(monkeypatch):
         """
 
     # Test multi-line original docstring.
-    g = Function(f).dispatch(f)
+    g = plum.Function(f).dispatch(f)
     expected_doc = """
     Process an int.
 
@@ -224,7 +224,7 @@ def test_doc(monkeypatch):
         pass
 
     # Test empty original docstring.
-    g = Function(f).dispatch(f)
+    g = plum.Function(f).dispatch(f)
     assert g.__doc__ is None
     g.dispatch(f2)
     expected_doc = """
@@ -269,13 +269,13 @@ def test_methods(dispatch: plum.Dispatcher):
     def f(x: int):
         pass
 
-    method1 = Method(f, Signature(int), function_name="f")
+    method1 = plum.Method(f, plum.Signature(int), function_name="f")
     f_dispatch = dispatch(f)
 
     def f(x: float):
         pass
 
-    method2 = Method(f, Signature(float), function_name="f")
+    method2 = plum.Method(f, plum.Signature(float), function_name="f")
     dispatch(f)
 
     methods = [method1, method2]
@@ -307,7 +307,7 @@ def test_function_multi_dispatch(dispatch: plum.Dispatcher):
     def f(x: int):
         return "int"
 
-    @f.dispatch_multi((float,), Signature(str, precedence=1))
+    @f.dispatch_multi((float,), plum.Signature(str, precedence=1))
     def implementation(x):
         return "float or str"
 
@@ -325,7 +325,7 @@ def test_register():
     def f(x: int):
         pass
 
-    g = Function(f)
+    g = plum.Function(f)
     g.register(f)
 
     assert g._pending == [(f, None, 0)]
@@ -358,7 +358,7 @@ def test_resolve_pending_registrations(dispatch: plum.Dispatcher):
     assert len(f._cache) == 0
 
     # Register in two ways using multi and the wrong name.
-    @f.dispatch_multi((float,), Signature(complex))
+    @f.dispatch_multi((float,), plum.Signature(complex))
     def not_f(x):
         return "float or complex"
 
@@ -708,3 +708,65 @@ def test_concurrent_resolution_is_thread_safe(make_stringly_annotated_function):
             assert f(1.0) == "float"
     finally:
         sys.setswitchinterval(old_interval)
+
+
+def test_resolve_method_with_cache_calls_type_once_per_arg(
+    dispatch: plum.Dispatcher,
+):
+    """type() must be called exactly once per argument in the non-generic path.
+
+    The optimised code hoists tuple(map(type, args)) before the generic-arm
+    check and reuses the pre-computed types tuple.  Previously type(a) was
+    called twice per argument (once for the generic-arm check, once for the
+    cache key).
+    """
+
+    @dispatch
+    def f(x: list[int]):
+        return "list"
+
+    @dispatch
+    def f(x: str):  # noqa: F811
+        return "str"
+
+    # Ensure the function is fully resolved before we start counting.
+    assert f("warmup") == "str"
+    f.clear_cache()
+
+    sentinel = "counting-sentinel"
+    real_type = type  # capture before any patching
+    call_count = 0
+
+    def counting_type(obj: object) -> type:
+        nonlocal call_count
+        if obj is sentinel:
+            call_count += 1
+        return real_type(obj)
+
+    # Shadow the ``type`` builtin inside plum._function so that every
+    # ``type(x)`` call in that module goes through ``counting_type``.
+    with patch.dict(plum._function.__dict__, {"type": counting_type}):
+        result = f(sentinel)
+
+    assert result == "str"
+    assert call_count == 1, f"Expected 1 call to type(), got {call_count}"
+
+
+def test_instances_does_not_prevent_garbage_collection():
+    """Function._instances must use weak references (WeakSet) so that Function
+    objects are garbage-collected when no longer referenced by user code.
+    """
+    import gc
+    import weakref
+
+    def f(x: int) -> int:
+        return x
+
+    g = plum.Function(f)
+    assert g in plum.Function._instances
+
+    ref = weakref.ref(g)
+    del g
+    gc.collect()
+
+    assert ref() is None, "Function not GC'd; Function._instances holds a strong ref"

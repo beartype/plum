@@ -15,7 +15,7 @@ from rich.segment import Segment
 from beartype.door import TypeHint as TypeHintWrapper
 from beartype.peps import resolve_pep563 as beartype_resolve_pep563
 
-from ._bear import is_bearable
+from ._bear import is_bearable, is_bearable_with_orig
 from ._type import is_faithful, resolve_type_hint
 from ._util import (
     Comparable,
@@ -126,16 +126,23 @@ class Signature(Comparable):
         if not isinstance(other, Signature):
             return False
 
+        # Fast early exits: check cheap scalar properties before paying the
+        # cost of TypeHintWrapper construction.
+        if (
+            len(self.types) != len(other.types)
+            or (self.varargs is Missing) != (other.varargs is Missing)
+            or self.precedence != other.precedence
+        ):
+            return False
+
         # We don't need to check faithfulness, because that is automatically
         # derived from the arguments.
         return (
             tuple(TypeHintWrapper(t) for t in self.types),
             Missing if self.varargs is Missing else TypeHintWrapper(self.varargs),
-            self.precedence,
         ) == (
             tuple(TypeHintWrapper(t) for t in other.types),
             Missing if other.varargs is Missing else TypeHintWrapper(other.varargs),
-            other.precedence,
         )
 
     def __hash__(self) -> int:
@@ -173,12 +180,14 @@ class Signature(Comparable):
         # one place.
         self_types = self.expand_varargs(len(other.types))
         other_types = other.expand_varargs(len(self.types))
-        if all(
-            [
-                TypeHintWrapper(x) == TypeHintWrapper(y)
-                for x, y in zip(self_types, other_types, strict=True)
-            ]
-        ):
+        # Build TypeHintWrapper pairs once and reuse for both the equality
+        # check and the subset check, avoiding a full second construction pass
+        # when equality fails but a subset relationship holds.
+        wrapped = [
+            (TypeHintWrapper(x), TypeHintWrapper(y))
+            for x, y in zip(self_types, other_types, strict=True)
+        ]
+        if all(wx == wy for wx, wy in wrapped):
             if self.has_varargs and other.has_varargs:
                 self_varargs = TypeHintWrapper(self.varargs)
                 other_varargs = TypeHintWrapper(other.varargs)
@@ -193,12 +202,7 @@ class Signature(Comparable):
             else:
                 return True
 
-        elif all(
-            [
-                TypeHintWrapper(x) <= TypeHintWrapper(y)
-                for x, y in zip(self_types, other_types, strict=True)
-            ]
-        ):
+        elif all(wx <= wy for wx, wy in wrapped):
             # In this case, we have that `other >= self` is `False`, so returning `True`
             # gives that `other < self` and returning `False` gives that `other` cannot
             # be compared to `self`. Regardless of the return value, `other != self`.
@@ -237,6 +241,20 @@ class Signature(Comparable):
         else:
             return False
 
+    def is_comparable(self, other: object, /) -> bool:
+        """Check whether this signature is comparable with another.
+
+        Two signatures are comparable iff one is a subtype of the other, so
+        calling ``__le__`` once per direction is sufficient.  This avoids the
+        redundant ``__eq__`` calls (and their ``TypeHintWrapper`` construction
+        cost) that the generic ``Comparable.is_comparable`` incurs.
+        """
+        if not isinstance(other, Signature):
+            return False
+        # Short-circuit: if self <= other the answer is True without checking
+        # the reverse direction.
+        return bool(self.__le__(other)) or bool(other.__le__(self))
+
     def match(self, values: tuple[object, ...], /) -> bool:
         """Check whether values match the signature.
 
@@ -255,7 +273,9 @@ class Signature(Comparable):
             return False
         else:
             types = self.expand_varargs(len(values))
-            return all(is_bearable(v, t) for v, t in zip(values, types, strict=True))
+            return all(
+                is_bearable_with_orig(v, t) for v, t in zip(values, types, strict=True)
+            )
 
     def compute_distance(self, values: tuple[object, ...], /) -> int:
         """For given values, computes the edit distance between these vales and this
@@ -276,7 +296,7 @@ class Signature(Comparable):
         # Additionally count one for every mismatching value above the
         # extra/missing arguments. There can be fewer types than values.
         for v, t in zip(values, types, strict=False):
-            if not is_bearable(v, t):
+            if not is_bearable_with_orig(v, t):
                 distance += 1
 
         return distance
@@ -303,7 +323,7 @@ class Signature(Comparable):
         varargs_matched = True
 
         for i, (v, t) in enumerate(zip(values, types, strict=False)):
-            if not is_bearable(v, t):
+            if not is_bearable_with_orig(v, t):
                 if i < n_types:
                     mismatches.add(i)
                 else:
