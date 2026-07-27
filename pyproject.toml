@@ -94,6 +94,7 @@ include = [ # TODO: include more files
     "src/plum/_resolver.py",
     "src/plum/_signature.py",
     "src/plum/_type.py",
+    "src/plum/_function.py",
 ]
 mypy-args = [
     "--ignore-missing-imports",
