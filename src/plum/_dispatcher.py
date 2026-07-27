@@ -85,7 +85,9 @@ class Dispatcher:
             elif isinstance(signature, tuple):
                 resolved_signatures.append(Signature(*signature))
             else:
-                raise ValueError(
+                # `TypeError` (not `ValueError`) to match the compiled build, where the
+                # typed vararg rejects bad input at the C boundary before this runs.
+                raise TypeError(
                     f"Signature `{signature}` must be a tuple or of type "
                     f"`plum.signature.Signature`."
                 )
