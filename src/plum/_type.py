@@ -18,9 +18,12 @@ from typing import Literal, TypeGuard, TypeVar, cast, final, get_args, get_origi
 
 from beartype.vale._core._valecore import BeartypeValidator
 
+from ._mypyc import mypyc_attr
+
 T = TypeVar("T", bound="ResolvableType")
 
 
+@mypyc_attr(native_class=False)
 class ResolvableType(type):
     """A resolvable type that will resolve to `type` after `type` has been delivered via
     :meth:`.ResolvableType.deliver`. Before then, it will resolve to itself.
@@ -60,6 +63,7 @@ class ResolvableType(type):
 
 
 @final
+@mypyc_attr(native_class=False)
 class PromisedType(ResolvableType):
     """A type that is promised to be available when you will you need it.
 
@@ -73,7 +77,9 @@ class PromisedType(ResolvableType):
         self._name = name
 
     def __new__(cls, name: str = "SomeType") -> "PromisedType":
-        return super().__new__(cls, f"PromisedType[{name}]")
+        # `ResolvableType.__new__` rather than `super().__new__` so `mypyc` can compile
+        # this (it cannot generate `object.__new__` for a non-extension class).
+        return ResolvableType.__new__(cls, f"PromisedType[{name}]")
 
     def __repr__(self) -> str:
         return f"<class 'plum.PromisedType[{self._name}]'>"
@@ -83,6 +89,7 @@ TModuleType = TypeVar("TModuleType", bound="ModuleType")
 
 
 @final
+@mypyc_attr(native_class=False)
 class ModuleType(ResolvableType):
     """A type from another module.
 
