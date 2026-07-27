@@ -68,8 +68,10 @@ def test_dispatch_multi(dispatch: plum.Dispatcher):
     assert f("1") == "float or str"
     assert dispatch.functions["f"].methods[2].signature.precedence == 1
 
-    # Check that arguments to `dispatch.multi` must be tuples or signatures.
-    with pytest.raises(ValueError):
+    # Check that arguments to `dispatch.multi` must be tuples or signatures. This is a
+    # `TypeError` in both the pure-Python and `mypyc`-compiled builds (the compiled
+    # build raises it at the typed-vararg C boundary).
+    with pytest.raises(TypeError):
         dispatch.multi(1)
 
 
