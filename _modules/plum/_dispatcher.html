@@ -440,7 +440,9 @@ document.write(`
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">signature</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
                 <span class="n">resolved_signatures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Signature</span><span class="p">(</span><span class="o">*</span><span class="n">signature</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="c1"># `TypeError` (not `ValueError`) to match the compiled build, where the</span>
+                <span class="c1"># typed vararg rejects bad input at the C boundary before this runs.</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;Signature `</span><span class="si">{</span><span class="n">signature</span><span class="si">}</span><span class="s2">` must be a tuple or of type &quot;</span>
                     <span class="sa">f</span><span class="s2">&quot;`plum.signature.Signature`.&quot;</span>
                 <span class="p">)</span>

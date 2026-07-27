@@ -369,9 +369,12 @@ document.write(`
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">beartype.vale._core._valecore</span><span class="w"> </span><span class="kn">import</span> <span class="n">BeartypeValidator</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">._mypyc</span><span class="w"> </span><span class="kn">import</span> <span class="n">mypyc_attr</span>
+
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="s2">&quot;ResolvableType&quot;</span><span class="p">)</span>
 
 
+<span class="nd">@mypyc_attr</span><span class="p">(</span><span class="n">native_class</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ResolvableType</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A resolvable type that will resolve to `type` after `type` has been delivered via</span>
 <span class="sd">    :meth:`.ResolvableType.deliver`. Before then, it will resolve to itself.</span>
@@ -413,6 +416,7 @@ document.write(`
 <div class="viewcode-block" id="PromisedType">
 <a class="viewcode-back" href="../../api.html#plum._type.PromisedType">[docs]</a>
 <span class="nd">@final</span>
+<span class="nd">@mypyc_attr</span><span class="p">(</span><span class="n">native_class</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">PromisedType</span><span class="p">(</span><span class="n">ResolvableType</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A type that is promised to be available when you will you need it.</span>
 
@@ -426,7 +430,9 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">name</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;SomeType&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;PromisedType&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;PromisedType[</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
+        <span class="c1"># `ResolvableType.__new__` rather than `super().__new__` so `mypyc` can compile</span>
+        <span class="c1"># this (it cannot generate `object.__new__` for a non-extension class).</span>
+        <span class="k">return</span> <span class="n">ResolvableType</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;PromisedType[</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&lt;class &#39;plum.PromisedType[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="si">}</span><span class="s2">]&#39;&gt;&quot;</span></div>
@@ -439,6 +445,7 @@ document.write(`
 <div class="viewcode-block" id="ModuleType">
 <a class="viewcode-back" href="../../api.html#plum._type.ModuleType">[docs]</a>
 <span class="nd">@final</span>
+<span class="nd">@mypyc_attr</span><span class="p">(</span><span class="n">native_class</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ModuleType</span><span class="p">(</span><span class="n">ResolvableType</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A type from another module.</span>
 
