@@ -626,51 +626,32 @@ def test_name_after_clearing_cache(dispatch: plum.Dispatcher):
     assert some_function_name._resolver.function_name == "some_function_name"
 
 
-@pytest.fixture
-def make_stringly_annotated_function():
-    """Factory for a fresh, unresolved dispatch function with *string* annotations.
+def _make_function_with_string_annotations():
+    """Create a new dispatcher and function with string annotations."""
 
-    String annotations force beartype's PEP 563 resolution (`resolve_pep563`) to mutate
-    `__annotations__` in place, which is the unsynchronised operation that races across
-    threads. See GitHub issue #274.
+    dispatch = plum.Dispatcher()
 
-    This is a factory rather than the function itself because the race only occurs on a
-    `Function`'s first resolution, so each iteration needs its own `Dispatcher`. Reusing
-    one `Dispatcher` would redefine the same `Function` object instead, which exercises
-    re-registration rather than first resolution.
-    """
+    @dispatch
+    def f(x: "int") -> "str":
+        return "int"
 
-    def make() -> plum.Function:
-        dispatch = plum.Dispatcher()
+    @dispatch
+    def f(x: "str") -> "str":
+        return "str"
 
-        @dispatch
-        def f(x: "int") -> "str":
-            return "int"
+    @dispatch
+    def f(x: "float") -> "str":
+        return "float"
 
-        @dispatch
-        def f(x: "str") -> "str":
-            return "str"
-
-        @dispatch
-        def f(x: "float") -> "str":
-            return "float"
-
-        return f
-
-    return make
+    return f
 
 
-def test_concurrent_resolution_is_thread_safe(make_stringly_annotated_function):
-    """Multiple threads racing `_resolve_pending_registrations` on the same `Function`
-    must not corrupt its registrations. Without the lock this raises `AssertionError:
-    ... not stringified type hint` (among other errors) because beartype's
+def test_resolve_pending_registrations_is_thread_safe():
+    """Test that `_resolve_pending_registrations` is thread-safe.
+
+    Without the lock, this test raises `AssertionError` because `beartype`'s
     `resolve_pep563` mutates the shared `__annotations__` dict concurrently. See GitHub
     issue #274.
-
-    Note: this exercises the resolution race that the per-`Function` lock fixes. A
-    separate, unrelated race in beartype's lazy type-checker *compilation*, triggered
-    later via `is_bearable` during matching, is tracked upstream in beartype and is out
-    of scope here.
     """
     n_threads = 16
     # Force frequent GIL hand-offs so the race reliably reproduces pre-fix: the window
@@ -682,7 +663,7 @@ def test_concurrent_resolution_is_thread_safe(make_stringly_annotated_function):
         # unresolved function each iteration and loop enough to trip it reliably.
         # Without the lock this fails on essentially every iteration.
         for _ in range(100):
-            f = make_stringly_annotated_function()
+            f = _make_function_with_string_annotations()
             barrier = threading.Barrier(n_threads)
             errors: list[BaseException] = []
 
