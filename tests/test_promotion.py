@@ -219,9 +219,9 @@ def _memo():
 @pytest.fixture
 def memo(convert):
     """A cleared memo, restored afterwards along with the conversion methods."""
-    plum._function._clear_identity_conversions()
+    plum._function.identity_conversions.clear()
     yield _memo()
-    plum._function._clear_identity_conversions()
+    plum._function.identity_conversions.clear()
 
 
 def test_identity_conversion_is_memoised(memo, dispatch):

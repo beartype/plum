@@ -40,11 +40,6 @@ mutated in place afterwards (`plum.type_mapping`, an undelivered `ModuleType` th
 later delivered) requires `clear_all_cache`, as its docstring already states."""
 
 
-def _clear_identity_conversions() -> None:
-    """Clear :obj:`identity_conversions`. Called by :func:`plum.clear_all_cache`."""
-    identity_conversions.clear()
-
-
 def _convert(obj: Any, target_type: TypeHint, /) -> Any:
     """Convert an object to a particular type. Only converts if `target_type` is set.
 
