@@ -86,7 +86,38 @@ version.source = "vcs"
 enable-by-default = false
 dependencies = ["hatch-mypyc>=0.16.0", "mypy>=1.18.2"]
 require-runtime-dependencies = true
-include = [ # TODO: include more files
+# TODO: include more files -- but see the note below on which files cannot be included.
+#
+# A module that *defines* plum-dispatched functions cannot be compiled. Plum builds
+# every `Signature` by reading the implementation at runtime with `inspect.signature`,
+# and `mypyc` takes both of its inputs away:
+#
+#   * A compiled module-level function is a `builtin_function_or_method` with no
+#     `__annotations__` at all, so every parameter silently degrades to `Any`. A
+#     signature declared as `(object, object, object)` resolves as `(Any, Any, Any)`.
+#   * Only the *last* of several same-named module-level definitions survives, so the
+#     `@dispatch`-a-name-repeatedly pattern loses all but its final method. Compiling
+#     `_promotion.py` leaves `promote` with one method instead of three, and
+#     `promote(1, 1.0)` raises `NotFoundLookupError`.
+#
+# Neither is reported as an error at build time; the wheel builds and imports, and the
+# damage only shows up when a call fails to resolve. (`tests/test_promotion.py` does
+# catch it, so the `Test mypyc wheel` job goes red rather than shipping it.)
+#
+# That rules out `_promotion.py` and `_parametric.py`. Two further traps apply to any
+# module considered for this list:
+#
+#   * `mypyc` evaluates `TYPE_CHECKING` as statically true, compiles that branch, and
+#     replaces the `else` with a trap that raises "Reached allegedly unreachable code!"
+#     at import. No module in this list uses `TYPE_CHECKING`; `_promotion.py` does.
+#   * A nested function becomes a native callable that `inspect.signature` cannot read
+#     at all, which breaks `append_default_args` for anything registered from a closure
+#     (as `add_conversion_method` does).
+#
+# Compiling `_promotion.py` was measured at ~7% on a direct `plum.convert` call and
+# nothing at all on the dispatch path, so the payoff does not justify restructuring the
+# module around the compiler.
+include = [
     "src/plum/_bear.py",
     "src/plum/_dispatcher.py",
     "src/plum/_method.py",
