@@ -9,6 +9,7 @@ __all__ = [
 ]
 
 from collections.abc import Callable
+from contextlib import suppress
 from typing import TYPE_CHECKING, Any, Protocol, TypeAlias, TypeVar
 
 from beartype.door import TypeHint
@@ -16,7 +17,7 @@ from beartype.door import TypeHint
 import plum._function
 from ._bear import is_bearable
 from ._dispatcher import Dispatcher
-from ._type import resolve_type_hint
+from ._type import is_faithful, resolve_type_hint
 from .repr import repr_short
 
 T = TypeVar("T")
@@ -31,6 +32,18 @@ else:
 
 _dispatch = Dispatcher()
 
+_IDENTITY_CONVERSION_LIMIT = 4096
+"""Maximum number of entries in :obj:`plum._function.identity_conversions`.
+
+An entry is built from a return annotation and an argument's type, both of which come
+from the program's source rather than its data, so the natural size is the number of
+`(argument type, return annotation)` pairs ever returned through. The limit is a
+ceiling for the pathological case only: once it is reached, further pairs simply take
+the full conversion path, exactly as they did before this cache existed.
+
+The policy lives here rather than beside the set because this module decides what is
+memoisable; `_function` only stores the answer and reads it on the hot path."""
+
 
 @_dispatch
 def convert(obj: object, type_to: typeTypeTo) -> TypeTo:
@@ -43,20 +56,67 @@ def convert(obj: object, type_to: typeTypeTo) -> TypeTo:
     Returns:
         object: `obj` converted to type `type_to`.
     """
-    type_to = resolve_type_hint(type_to)
     # TODO: Can we implement this without using `type`?!
-    return _convert.invoke(type(obj), type_to)(obj, type_to)
+    type_from = type(obj)
+    cache = plum._function.identity_conversions
+    # `type_to` is keyed unresolved because that is what the hot path holds, and it is
+    # looked up before resolving so that a known pair costs a single lookup.
+    try:
+        known: bool | None = cache.get((type_from, type_to))
+    except TypeError:  # `type_to` is unhashable, so it can never be recorded.
+        known = False
+    if known:
+        return obj
+
+    resolved = resolve_type_hint(type_to)
+    # Resolve and call the conversion method directly rather than through
+    # `_convert.invoke`, which builds a wrapper object on every call.
+    method, return_type = _convert._resolve_method_with_cache(
+        types=(type_from, resolved)
+    )
+    result = plum._function._convert(method(obj, resolved), return_type)
+
+    # Record what conversion did for this pair, so that `plum._function._convert` can
+    # skip straight to the result next time -- and so that the analysis below, which
+    # walks the annotation, runs once per pair rather than once per call. Two
+    # conditions make the outcome a property of `(type_from, type_to)` alone rather
+    # than of `obj`:
+    #
+    #   * `method is _identity_conversion`, i.e. no conversion method applied and the
+    #     fallback returned `obj` unchanged. A conversion method may be registered
+    #     later, which is why `add_conversion_method` clears the cache.
+    #   * `is_faithful(resolved)`, which is *defined* as
+    #     `isinstance(x, t) == issubclass(type(x), t)`, so the fallback's check depends
+    #     only on `type_from`. Without it the check can depend on the value (a
+    #     `Literal`, a type with a custom `__instancecheck__`) and must be re-run.
+    #
+    # A raising call never reaches here, so a recorded `True` is always a conversion
+    # that succeeded and returned `obj` itself.
+    if known is None and len(cache) < _IDENTITY_CONVERSION_LIMIT:
+        with suppress(TypeError):  # `type_to` may be unhashable.
+            cache[type_from, type_to] = method is _identity_conversion and is_faithful(
+                resolved
+            )
+
+    return result
 
 
 # Deliver `convert`.
 plum._function._promised_convert = convert
 
 
-@_dispatch
-def _convert(obj, type_to):  # type: ignore[no-untyped-def]
+def _identity_conversion(obj, type_to):  # type: ignore[no-untyped-def]
+    """Fallback conversion: check the type and return `obj` unchanged.
+
+    Bound to a module-level name so that :func:`convert` can recognise it by identity
+    and conclude that no conversion method applied.
+    """
     if not is_bearable(obj, resolve_type_hint(type_to)):
         raise TypeError(f"Cannot convert `{obj}` to `{repr_short(type_to)}`.")
     return obj
+
+
+_convert = _dispatch(_identity_conversion)
 
 
 class _ConversionCallable(Protocol[T, R]):
@@ -80,6 +140,12 @@ def add_conversion_method(
     @_convert.dispatch
     def perform_conversion(obj: type_from, _: type_to):
         return f(obj)
+
+    # A pair previously recorded as an identity conversion may now be handled by this
+    # method: `type_from` can be a subclass of a `type_to` that an earlier call proved
+    # convertible only by the fallback. The cache is a pure optimisation, so dropping
+    # all of it is both correct and cheap -- conversion methods are registered rarely.
+    plum._function._clear_identity_conversions()
 
 
 def conversion_method(

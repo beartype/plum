@@ -22,6 +22,29 @@ _promised_convert = None
 SomeExceptionType = TypeVar("SomeExceptionType", bound=Exception)
 
 
+identity_conversions: dict[tuple[Any, Any], bool] = {}
+"""What conversion does for a pair `(type(obj), target_type)`, once it is known.
+
+`True` means conversion is the identity and can be skipped. `False` means it cannot be,
+and -- just as importantly -- that the pair has already been analysed, so the analysis
+(which includes an uncached `is_faithful` walk over the annotation) is not repeated on
+every call. A missing key means "not yet analysed", and the full path runs.
+
+Populated by :func:`plum.convert`, which owns the analysis because it is the module that
+can see the registered conversion methods; read here because this is the hot path. See
+that function for why a recorded answer is a property of the key alone.
+
+Cleared by :func:`plum.clear_all_cache` and whenever a conversion method is added. It
+carries the same staleness contract as :attr:`Function._cache`: a type whose meaning is
+mutated in place afterwards (`plum.type_mapping`, an undelivered `ModuleType` that is
+later delivered) requires `clear_all_cache`, as its docstring already states."""
+
+
+def _clear_identity_conversions() -> None:
+    """Clear :obj:`identity_conversions`. Called by :func:`plum.clear_all_cache`."""
+    identity_conversions.clear()
+
+
 def _convert(obj: Any, target_type: TypeHint, /) -> Any:
     """Convert an object to a particular type. Only converts if `target_type` is set.
 
@@ -34,9 +57,18 @@ def _convert(obj: Any, target_type: TypeHint, /) -> Any:
     """
     if target_type is Any:
         return obj
-    else:
-        assert _promised_convert is not None
-        return _promised_convert(obj, target_type)
+    # A return annotation is overwhelmingly a type the method already returns, making
+    # the conversion the identity. `convert` is nonetheless a dispatched call that
+    # walks the annotation with `resolve_type_hint` twice, resolves a conversion
+    # method, and runs a `beartype` check -- all to hand back `obj`. Once a pair is
+    # known to be an identity, none of that is needed.
+    try:
+        if identity_conversions.get((type(obj), target_type)):
+            return obj
+    except TypeError:  # `target_type` is unhashable, so it is never recorded.
+        pass
+    assert _promised_convert is not None
+    return _promised_convert(obj, target_type)
 
 
 _owner_transfer: dict[type, type] = {}
