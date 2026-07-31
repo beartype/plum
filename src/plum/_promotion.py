@@ -9,7 +9,6 @@ __all__ = [
 ]
 
 from collections.abc import Callable
-from contextlib import suppress
 from typing import TYPE_CHECKING, Any, Protocol, TypeAlias, TypeVar
 
 from beartype.door import TypeHint
@@ -60,11 +59,10 @@ def convert(obj: object, type_to: typeTypeTo) -> TypeTo:
     type_from = type(obj)
     cache = plum._function.identity_conversions
     # `type_to` is keyed unresolved because that is what the hot path holds, and it is
-    # looked up before resolving so that a known pair costs a single lookup.
-    try:
-        known: bool | None = cache.get((type_from, type_to))
-    except TypeError:  # `type_to` is unhashable, so it can never be recorded.
-        known = False
+    # looked up before resolving so that a known pair costs a single lookup. An
+    # unhashable `type_to` raises `TypeError` here, as it already did further down when
+    # the conversion method was looked up.
+    known: bool | None = cache.get((type_from, type_to))
     if known:
         return obj
 
@@ -93,10 +91,9 @@ def convert(obj: object, type_to: typeTypeTo) -> TypeTo:
     # A raising call never reaches here, so a recorded `True` is always a conversion
     # that succeeded and returned `obj` itself.
     if known is None and len(cache) < _IDENTITY_CONVERSION_LIMIT:
-        with suppress(TypeError):  # `type_to` may be unhashable.
-            cache[type_from, type_to] = method is _identity_conversion and is_faithful(
-                resolved
-            )
+        cache[type_from, type_to] = method is _identity_conversion and is_faithful(
+            resolved
+        )
 
     return result
 
