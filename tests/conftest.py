@@ -42,7 +42,7 @@ def convert():
     _convert.clear_cache(reregister=True)
     # Restoring the methods changes which conversions are the identity, so the
     # memo of identity conversions has to go with them.
-    plum._function._clear_identity_conversions()
+    plum._function.identity_conversions.clear()
 
 
 @pytest.fixture

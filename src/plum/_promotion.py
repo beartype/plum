@@ -142,7 +142,7 @@ def add_conversion_method(
     # method: `type_from` can be a subclass of a `type_to` that an earlier call proved
     # convertible only by the fallback. The cache is a pure optimisation, so dropping
     # all of it is both correct and cheap -- conversion methods are registered rarely.
-    plum._function._clear_identity_conversions()
+    plum._function.identity_conversions.clear()
 
 
 def conversion_method(
