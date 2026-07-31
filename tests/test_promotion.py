@@ -206,10 +206,8 @@ def test_self_promotion(convert, promote):
         assert promote(1, 1.0) == ("1", "1.0")
 
 
-# The identity-conversion memo (`plum._function.identity_conversions`) lets a dispatched
-# call skip `convert` when its return annotation is already satisfied. These tests pin
-# the conditions that make the skip sound, not its speed. They go through a dispatched
-# function, because that -- not `plum.convert` -- is what reads the memo.
+# These pin the conditions that make the identity-conversion memo sound. They go
+# through a dispatched function, because that -- not `plum.convert` -- reads the memo.
 
 
 def _memo():
@@ -260,12 +258,7 @@ def test_memo_is_actually_read(memo, dispatch, monkeypatch):
 
 
 def test_memo_yields_to_a_later_conversion_method(memo, dispatch):
-    """A conversion method registered *after* a pair is memoised must still win.
-
-    `Sub` is a `Base`, so the first call finds no conversion method and returns the
-    object unchanged. Registering `Sub -> Base` afterwards makes the memoised answer
-    wrong, so `add_conversion_method` has to drop it.
-    """
+    """A conversion method registered *after* a pair is memoised must still win."""
 
     class Base:
         pass
@@ -286,12 +279,8 @@ def test_memo_yields_to_a_later_conversion_method(memo, dispatch):
 
 
 def test_memo_not_used_for_unfaithful_targets(memo, dispatch):
-    """A target whose match depends on the value cannot be answered from the type.
-
-    Both objects are `Thing`s, so they share the key `(Thing, Gate)`, but `Gate`
-    decides membership from the value. Memoising the first call would make the second
-    wrongly succeed -- exactly what the faithfulness gate prevents.
-    """
+    """Both objects share the key `(Thing, Gate)`, but `Gate` matches on the value,
+    so memoising the first call would make the second wrongly succeed."""
 
     class Meta(type):
         def __instancecheck__(cls, instance):
@@ -392,11 +381,8 @@ def test_memo_is_bounded(memo, dispatch, monkeypatch):
 
 
 def test_memo_not_used_when_a_conversion_method_applies(memo, dispatch):
-    """A pair a conversion method handles must never be memoised as an identity.
-
-    `Sub` is a `Base`, so the fallback *would* have returned it unchanged; what makes
-    the pair unmemoisable is that a conversion method claims it first.
-    """
+    """`Sub` is a `Base`, so the fallback *would* have returned it unchanged; what
+    makes the pair unmemoisable is that a conversion method claims it first."""
 
     class Base:
         pass
@@ -418,12 +404,8 @@ def test_memo_not_used_when_a_conversion_method_applies(memo, dispatch):
 
 
 def test_unhashable_target_still_raises(memo, dispatch):
-    """An unhashable target raises `TypeError`, as it did before the memo existed.
-
-    The memo hashes `(type(obj), type_to)`, but so does the method lookup it replaces,
-    so such a target has never been usable. This pins that the memo did not turn a
-    `TypeError` into something else.
-    """
+    """The memo hashes `(type(obj), type_to)`, but so does the method lookup it
+    replaces, so such a target has never been usable."""
 
     class Meta(type):
         __hash__ = None  # The class object itself is unhashable.

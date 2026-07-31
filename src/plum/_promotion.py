@@ -34,14 +34,8 @@ _dispatch = Dispatcher()
 _IDENTITY_CONVERSION_LIMIT = 4096
 """Maximum number of entries in :obj:`plum._function.identity_conversions`.
 
-An entry is built from a return annotation and an argument's type, both of which come
-from the program's source rather than its data, so the natural size is the number of
-`(argument type, return annotation)` pairs ever returned through. The limit is a
-ceiling for the pathological case only: once it is reached, further pairs simply take
-the full conversion path, exactly as they did before this cache existed.
-
-The policy lives here rather than beside the set because this module decides what is
-memoisable; `_function` only stores the answer and reads it on the hot path."""
+Entries come from annotations and argument types, not from data, so this is a ceiling
+for the pathological case only: past it, pairs just take the full conversion path."""
 
 
 @_dispatch
@@ -58,38 +52,24 @@ def convert(obj: object, type_to: typeTypeTo) -> TypeTo:
     # TODO: Can we implement this without using `type`?!
     type_from = type(obj)
     cache = plum._function.identity_conversions
-    # `type_to` is keyed unresolved because that is what the hot path holds, and it is
-    # looked up before resolving so that a known pair costs a single lookup. An
-    # unhashable `type_to` raises `TypeError` here, as it already did further down when
-    # the conversion method was looked up.
+    # Keyed on the *unresolved* `type_to`, which is what the hot path holds.
     known: bool | None = cache.get((type_from, type_to))
     if known:
         return obj
 
     resolved = resolve_type_hint(type_to)
-    # Resolve and call the conversion method directly rather than through
-    # `_convert.invoke`, which builds a wrapper object on every call.
+    # Call the method directly; `_convert.invoke` builds a wrapper object per call.
     method, return_type = _convert._resolve_method_with_cache(
         types=(type_from, resolved)
     )
     result = plum._function._convert(method(obj, resolved), return_type)
 
-    # Record what conversion did for this pair, so that `plum._function._convert` can
-    # skip straight to the result next time -- and so that the analysis below, which
-    # walks the annotation, runs once per pair rather than once per call. Two
-    # conditions make the outcome a property of `(type_from, type_to)` alone rather
-    # than of `obj`:
-    #
-    #   * `method is _identity_conversion`, i.e. no conversion method applied and the
-    #     fallback returned `obj` unchanged. A conversion method may be registered
-    #     later, which is why `add_conversion_method` clears the cache.
-    #   * `is_faithful(resolved)`, which is *defined* as
-    #     `isinstance(x, t) == issubclass(type(x), t)`, so the fallback's check depends
-    #     only on `type_from`. Without it the check can depend on the value (a
-    #     `Literal`, a type with a custom `__instancecheck__`) and must be re-run.
-    #
-    # A raising call never reaches here, so a recorded `True` is always a conversion
-    # that succeeded and returned `obj` itself.
+    # Two conditions make the outcome a property of the key rather than of `obj`: no
+    # conversion method applied, so the fallback returned `obj` unchanged; and
+    # `is_faithful`, i.e. `isinstance(x, t) == issubclass(type(x), t)`, so that check
+    # depends only on `type_from`. A `Literal` or a custom `__instancecheck__` fails
+    # the second. Negatives are recorded too, or `is_faithful` -- which is not cached
+    # -- would rerun on every call it cannot help.
     if known is None and len(cache) < _IDENTITY_CONVERSION_LIMIT:
         cache[type_from, type_to] = method is _identity_conversion and is_faithful(
             resolved
@@ -138,10 +118,8 @@ def add_conversion_method(
     def perform_conversion(obj: type_from, _: type_to):
         return f(obj)
 
-    # A pair previously recorded as an identity conversion may now be handled by this
-    # method: `type_from` can be a subclass of a `type_to` that an earlier call proved
-    # convertible only by the fallback. The cache is a pure optimisation, so dropping
-    # all of it is both correct and cheap -- conversion methods are registered rarely.
+    # This method may now claim a pair recorded as an identity: `type_from` can be a
+    # subclass of `type_to`. Dropping the whole cache is cheap; registration is rare.
     plum._function.identity_conversions.clear()
 
 
