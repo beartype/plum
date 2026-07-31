@@ -415,3 +415,27 @@ def test_memo_not_used_when_a_conversion_method_applies(memo, dispatch):
     assert memo[(Sub, Base)] is False
     # The second call must convert too, rather than take a memoised shortcut.
     assert f(obj) == "converted"
+
+
+def test_unhashable_target_still_raises(memo, dispatch):
+    """An unhashable target raises `TypeError`, as it did before the memo existed.
+
+    The memo hashes `(type(obj), type_to)`, but so does the method lookup it replaces,
+    so such a target has never been usable. This pins that the memo did not turn a
+    `TypeError` into something else.
+    """
+
+    class Meta(type):
+        __hash__ = None  # The class object itself is unhashable.
+
+    class Unhashable(metaclass=Meta):
+        pass
+
+    class Thing:
+        pass
+
+    with pytest.raises(TypeError, match="unhashable type"):
+        plum.convert(Thing(), Unhashable)
+
+    with pytest.raises(TypeError, match="unhashable type"):
+        plum.convert(Thing(), [int])

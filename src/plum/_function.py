@@ -62,11 +62,11 @@ def _convert(obj: Any, target_type: TypeHint, /) -> Any:
     # walks the annotation with `resolve_type_hint` twice, resolves a conversion
     # method, and runs a `beartype` check -- all to hand back `obj`. Once a pair is
     # known to be an identity, none of that is needed.
-    try:
-        if identity_conversions.get((type(obj), target_type)):
-            return obj
-    except TypeError:  # `target_type` is unhashable, so it is never recorded.
-        pass
+    #
+    # An unhashable `target_type` raises `TypeError` here rather than below, which is
+    # what it has always done: the conversion path hashes it too, to look up a method.
+    if identity_conversions.get((type(obj), target_type)):
+        return obj
     assert _promised_convert is not None
     return _promised_convert(obj, target_type)
 
