@@ -285,14 +285,8 @@ def test_is_faithful_literal(recwarn):
 
 
 def test_type_hints_equal():
-    """Regression test for https://github.com/beartype/plum/issues/295.
-
-    Since `beartype` 0.23, `is_subhint(Any, T)` is `True` for every `T` (`Any` is
-    two-way assignable to everything), which makes `beartype.door.TypeHint(Any) ==
-    TypeHint(T)` also `True` for every `T`. `_type_hints_equal` must not inherit
-    that: `Any` should compare equal only to `Any` itself, while unrelated
-    concrete types must still compare unequal, and genuinely equivalent (but not
-    identical) concrete types must still compare equal.
+    """Regression test for https://github.com/beartype/plum/issues/295: `Any`
+    must compare equal only to `Any`, never to an unrelated concrete type.
     """
     assert _type_hints_equal(Any, Any)
     assert not _type_hints_equal(Any, int)
@@ -308,13 +302,9 @@ def test_type_hints_equal():
 
 
 def test_type_hint_le():
-    """Regression test for https://github.com/beartype/plum/issues/295.
-
-    `_type_hint_le` must preserve `Any` as the unique *least specific* type for
-    plum's dispatch-specificity ordering: everything is a subhint of `Any` (as
-    before `beartype` 0.23), but `Any` must not be considered a subhint of any
-    concrete type (unlike raw `beartype.door.is_subhint`, which is now `True` in
-    that direction too as of `beartype` 0.23 -- see `_type_hint_le`'s docstring).
+    """Regression test for https://github.com/beartype/plum/issues/295: `Any`
+    must stay the unique least-specific type -- a subhint of nothing but itself,
+    even though everything else remains a subhint of it.
     """
     assert _type_hint_le(Any, Any)
     assert not _type_hint_le(Any, int)
