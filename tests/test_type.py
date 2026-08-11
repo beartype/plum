@@ -1,7 +1,8 @@
 import abc
 import sys
 import typing
-from typing import Literal
+from numbers import Number
+from typing import Any, Literal, Union
 
 import pytest
 
@@ -10,6 +11,8 @@ from plum._type import (
     PromisedType,
     ResolvableType,
     _is_hint,
+    _type_hint_le,
+    _type_hints_equal,
     is_faithful,
     resolve_type_hint,
     type_mapping,
@@ -279,3 +282,46 @@ def test_is_faithful_literal(recwarn):
     assert not is_faithful(Literal[1])
     # There should be no warnings.
     assert len(recwarn) == 0
+
+
+def test_type_hints_equal():
+    """Regression test for https://github.com/beartype/plum/issues/295.
+
+    Since `beartype` 0.23, `is_subhint(Any, T)` is `True` for every `T` (`Any` is
+    two-way assignable to everything), which makes `beartype.door.TypeHint(Any) ==
+    TypeHint(T)` also `True` for every `T`. `_type_hints_equal` must not inherit
+    that: `Any` should compare equal only to `Any` itself, while unrelated
+    concrete types must still compare unequal, and genuinely equivalent (but not
+    identical) concrete types must still compare equal.
+    """
+    assert _type_hints_equal(Any, Any)
+    assert not _type_hints_equal(Any, int)
+    assert not _type_hints_equal(int, Any)
+    assert not _type_hints_equal(Any, object)
+    assert not _type_hints_equal(object, Any)
+
+    assert _type_hints_equal(int, int)
+    assert not _type_hints_equal(int, float)
+
+    # Equivalent but not identical types should still compare equal.
+    assert _type_hints_equal(Union[int, bool], int)  # noqa: UP007
+
+
+def test_type_hint_le():
+    """Regression test for https://github.com/beartype/plum/issues/295.
+
+    `_type_hint_le` must preserve `Any` as the unique *least specific* type for
+    plum's dispatch-specificity ordering: everything is a subhint of `Any` (as
+    before `beartype` 0.23), but `Any` must not be considered a subhint of any
+    concrete type (unlike raw `beartype.door.is_subhint`, which is now `True` in
+    that direction too as of `beartype` 0.23 -- see `_type_hint_le`'s docstring).
+    """
+    assert _type_hint_le(Any, Any)
+    assert not _type_hint_le(Any, int)
+    assert not _type_hint_le(Any, object)
+
+    # Ordinary subhint relationships still work as before.
+    assert _type_hint_le(int, Any)
+    assert _type_hint_le(int, int)
+    assert _type_hint_le(int, Number)
+    assert not _type_hint_le(Number, int)

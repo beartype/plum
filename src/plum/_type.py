@@ -14,8 +14,9 @@ from collections.abc import Callable, Hashable
 from functools import reduce
 from operator import or_
 from types import UnionType
-from typing import Literal, TypeGuard, TypeVar, cast, final, get_args, get_origin
+from typing import Any, Literal, TypeGuard, TypeVar, cast, final, get_args, get_origin
 
+from beartype.door import TypeHint as TypeHintWrapper
 from beartype.vale._core._valecore import BeartypeValidator
 
 from ._mypyc import mypyc_attr
@@ -281,6 +282,67 @@ def resolve_type_hint(x: object, /) -> object:
             stacklevel=2,
         )
     return x
+
+
+def _type_hints_equal(x: object, y: object, /) -> bool:
+    """Check whether two already-resolved type hints denote the *same* type, for
+    bookkeeping purposes such as detecting whether a newly registered method
+    redefines an existing one, or comparing the specificity of two signatures.
+
+    This differs from `beartype.door.TypeHint(x) == TypeHint(y)` in exactly one
+    respect: `typing.Any` is considered equal only to `typing.Any` itself.
+    Beartype's `TypeHint` equality is built from
+    ``is_subhint(x, y) and is_subhint(y, x)``, and, since ``is_subhint(Any, T)``
+    is `True` for every `T` (`Any` is two-way assignable to everything, per
+    :pep:`484`; see `beartype#530 <https://github.com/beartype/beartype/issues/530>`_
+    and `beartype#616 <https://github.com/beartype/beartype/pull/616>`_), that
+    makes ``TypeHint(Any) == TypeHint(T)`` also `True` for every `T`. That is
+    correct for `Any`'s assignability semantics, but wrong here: an unannotated
+    parameter (which resolves to `Any`) must never be mistaken for an unrelated
+    concrete type, or method registration silently overwrites the wrong method
+    (see `plum#295 <https://github.com/beartype/plum/issues/295>`_).
+
+    Args:
+        x (object): First, already-resolved type hint.
+        y (object): Second, already-resolved type hint.
+
+    Returns:
+        bool: Whether `x` and `y` denote the same type.
+    """
+    x_is_any = x is Any
+    y_is_any = y is Any
+    if x_is_any or y_is_any:
+        return x_is_any and y_is_any
+    return bool(TypeHintWrapper(x) == TypeHintWrapper(y))
+
+
+def _type_hint_le(x: object, y: object, /) -> bool:
+    """Subhint check used for plum's own signature-specificity ordering.
+
+    This differs from `beartype.door.TypeHint(x) <= TypeHint(y)` in exactly one
+    respect: `typing.Any` is only considered a subhint of `typing.Any` itself,
+    preserving `Any` as plum's unique *least specific* type. Beartype's
+    ``is_subhint(Any, T)`` is `True` for every `T` since `beartype` 0.23 (`Any`
+    is two-way assignable to everything, per :pep:`484`; see
+    `beartype#530 <https://github.com/beartype/beartype/issues/530>`_ and
+    `beartype#616 <https://github.com/beartype/beartype/pull/616>`_). That is
+    correct for assignability, but breaks the strict partial order plum's
+    dispatch specificity relies on: without this guard, an unannotated
+    (`Any`-typed) parameter would appear exactly as specific as any
+    concretely-typed overload, so whichever of the two happens to be
+    registered *last* would silently win, instead of the genuinely more
+    specific one (see `plum#295 <https://github.com/beartype/plum/issues/295>`_).
+
+    Args:
+        x (object): First, already-resolved type hint.
+        y (object): Second, already-resolved type hint.
+
+    Returns:
+        bool: Whether `x` is a subhint of `y` for specificity-ordering purposes.
+    """
+    if x is Any:
+        return y is Any
+    return bool(TypeHintWrapper(x) <= TypeHintWrapper(y))
 
 
 def is_faithful(x: object, /) -> bool:
