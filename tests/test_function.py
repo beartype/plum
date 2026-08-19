@@ -8,7 +8,7 @@ import typing
 import pytest
 
 import plum
-from plum._function import Function, _convert, _owner_transfer
+from plum._function import Function, _BoundFunction, _convert, _owner_transfer
 from plum._method import Method
 from plum._resolver import (
     AmbiguousLookupError,
@@ -148,6 +148,14 @@ def test_owner_transfer(owner_transfer):
 
 def test_functionmeta():
     assert Function.__doc__ == Function._class_doc
+
+
+@pytest.mark.parametrize("cls", [Function, _BoundFunction])
+def test_class_doc_and_module(cls):
+    # Class access must give each class its own docstring and a real module string:
+    # the descriptors serve the instance values, but `help` and Sphinx read these.
+    assert cls.__doc__ == cls._class_doc
+    assert cls.__module__ == "plum._function"
 
 
 def test_doc(monkeypatch):

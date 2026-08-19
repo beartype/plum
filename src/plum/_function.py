@@ -54,11 +54,10 @@ class _Wrappable(Protocol):
 
 
 def _wraps(wrapper: _Wrappable, wrapped: Callable[..., Any], /) -> None:
-    """:func:`functools.wraps` for a `mypyc` native wrapper.
+    """Copy `wrapped`'s metadata onto `wrapper`, like :func:`functools.wraps`.
 
-    Copies the metadata a native instance can hold. `functools.wraps` cannot be used: it
-    also writes the read-only native `__module__` and updates a `__dict__` that native
-    classes lack. `__module__`/`__doc__` are served by the descriptors below instead.
+    `functools.wraps` cannot be used: it writes the read-only native `__module__` and
+    updates a `__dict__` that native instances lack.
     """
     wrapper.__name__ = wrapped.__name__
     wrapper.__qualname__ = _generate_qualname(wrapped)
@@ -67,10 +66,11 @@ def _wraps(wrapper: _Wrappable, wrapped: Callable[..., Any], /) -> None:
 
 @mypyc_attr(native_class=False)
 class _InvokedMethod:
-    """Callable returned by :meth:`Function.invoke`: it runs the resolved `method` and
-    converts the result. A class (holding `method`/`return_type` as attributes) rather
-    than a `self`-capturing closure, which `mypyc` cannot compile (mypyc/mypyc#1205).
-    Non-native so :func:`functools.wraps` can copy `__name__`/`__doc__` onto instances.
+    """Run the resolved `method` and convert the result.
+
+    Callable returned by :meth:`Function.invoke`. A class rather than a closure,
+    which `mypyc` cannot compile (mypyc/mypyc#1205); non-native so
+    :func:`functools.wraps` can copy `__name__`/`__doc__` onto instances.
     """
 
     def __init__(
@@ -86,30 +86,28 @@ class _InvokedMethod:
 
 
 class _DocDescriptor:
-    """Serves `__doc__` for both class access (`-> _class_doc`) and instance access
-    (`-> _compute_doc()`, the computed/merged docstring), replacing the old metaclass.
-    Shared by `Function` and `_BoundFunction`. Attached with `setattr` below because
-    `mypyc` replaces a class-body `__doc__` with a filler. A descriptor (not a
-    metaclass) lets the classes be native, which makes the hot `__call__` path faster.
+    """Serve `__doc__`: `_class_doc` on class access, `_compute_doc()` on instances.
+
+    Shared by `Function` and `_BoundFunction`.
     """
 
     def __get__(self, instance: Any, owner: type) -> str | None:
         if instance is None:
-            return Function._class_doc
+            return getattr(owner, "_class_doc", None)
         doc: str | None = instance._compute_doc()
         return doc
 
 
 @mypyc_attr(native_class=False)
 class _ModuleDescriptor(str):
-    """Serves `__module__` as the wrapped function's module on instance access (as
-    `functools.wraps` did; native instances cannot hold `__module__` themselves), while
-    reading as a plain module string on class access. Shared by `Function`/`_BoundFn`.
+    """Serve `__module__` as the wrapped function's module on instance access.
 
-    A `str` subclass because CPython returns a class-level `__module__` verbatim without
-    calling `__get__`, so the value itself must be a valid module string for tools like
-    Sphinx; instance access does call `__get__`. (`str` subclass -> non-native, but
-    `__module__` access is not on the hot path.)
+    Shared by `Function` and `_BoundFunction`.
+
+    A `str` subclass because CPython returns a class-level `__module__` verbatim
+    without calling `__get__`, so the value itself must be a valid module string for
+    tools like Sphinx; instance access does call `__get__`. (A `str` subclass is
+    non-native, but `__module__` access is not on the hot path.)
     """
 
     __slots__ = ()
@@ -139,10 +137,10 @@ class Function:
     _owner_name: str | None
     _owner: type | None
     _warn_redefinition: bool
-    _pending: list[tuple[Callable[..., Any], "Signature | None", int | None]]
-    _resolved: list[tuple[Callable[..., Any], "Signature | None", int | None]]
+    _pending: list[tuple[Callable[..., Any], Signature | None, int | None]]
+    _resolved: list[tuple[Callable[..., Any], Signature | None, int | None]]
     _resolver: Resolver
-    _lock: "threading.RLock"
+    _lock: threading.RLock
     __name__: str
     __qualname__: str
     __wrapped__: Callable[..., Any]
@@ -200,11 +198,10 @@ class Function:
         return self._owner
 
     def _compute_doc(self) -> str | None:
-        """Compute the function's documentation: the documentation given at
-        initialisation with the documentation of all other registered methods appended.
+        """Compute the function's documentation.
 
-        Served as the instance `__doc__` by :class:`_DocDescriptor` (mypyc clobbers a
-        class-body property named `__doc__`).
+        This is the documentation given at initialisation, with the documentation of
+        all other registered methods appended.
         """
         try:
             self._resolve_pending_registrations()
@@ -272,8 +269,8 @@ class Function:
             function: Decorator.
         """
         if method is None:
-            return partial(self._dispatch_one, precedence=precedence)
-        return self._dispatch_one(method, precedence=precedence)
+            return partial(self._register_one, precedence=precedence)
+        return self._register_one(method, precedence=precedence)
 
     def dispatch_multi(
         self: Self, *signatures: Signature | tuple[TypeHint, ...]
@@ -300,29 +297,31 @@ class Function:
                     f"Signature `{signature}` must be a tuple or of type "
                     f"`plum.signature.Signature`."
                 )
-        return partial(self._dispatch_one, signatures=resolved_signatures)
+        return partial(self._register_multiple, signatures=resolved_signatures)
 
-    def _dispatch_one(
-        self: Self,
-        method: Callable[..., Any],
-        /,
-        *,
-        signatures: list[Signature] | None = None,
-        precedence: int = 0,
+    def _register_one(
+        self: Self, method: Callable[..., Any], /, *, precedence: int = 0
     ) -> Self:
-        """Register `method` and return the function itself.
+        """Register `method` by `precedence` and return the function itself.
 
-        Shared registration path for :meth:`dispatch` (single method, by `precedence`)
-        and :meth:`dispatch_multi` (explicit `signatures`). Kept a bound method so the
-        decorator forms can be built with :func:`functools.partial` rather than a
-        `self`-capturing closure, which `mypyc` cannot compile (mypyc/mypyc#1205).
+        Registration path for :meth:`dispatch`. A bound method so the decorator form
+        can be built with :func:`functools.partial` rather than a `self`-capturing
+        closure, which `mypyc` cannot compile (mypyc/mypyc#1205).
         """
-        if signatures is None:
-            self.register(method, precedence=precedence)
-        else:
+        self.register(method, precedence=precedence)
+        return self
+
+    def _register_multiple(
+        self: Self, method: Callable[..., Any], /, *, signatures: list[Signature]
+    ) -> Self:
+        """Register `method` for every signature and return the function itself.
+
+        Registration path for :meth:`dispatch_multi`. See :meth:`_register_one` for
+        why this is a bound method.
+        """
+        for signature in signatures:
             # `precedence` is derived from each signature, so it is left as `None`.
-            for signature in signatures:
-                self.register(method, signature=signature, precedence=None)
+            self.register(method, signature=signature, precedence=None)
         return self
 
     def clear_cache(self, reregister: bool = True) -> None:
@@ -640,21 +639,25 @@ class _BoundFunctionProto(Protocol):
 
 @mypyc_attr(native_class=False)
 class _BoundFunction:
-    """A bound instance of `.function.Function`.
+    #: The class-level docstring, served as `_BoundFunction.__doc__` by
+    #: `_DocDescriptor`.
+    _class_doc: ClassVar[str] = """A bound instance of `.function.Function`.
 
     Args:
         f (:class:`.function.Function`): Bound function.
         instance (object): Instance to which the function is bound.
     """
 
+    # Declared so `_wraps` can write them (see the `_Wrappable` protocol).
+    __name__: str
+    __qualname__: str
+    __wrapped__: Callable[..., Any]
+
     def __init__(self, f: "Function", instance: object) -> None:
         self._f: _BoundFunctionProto = f
         self._instance = instance
-        # Set explicitly instead of `functools.wraps`; `__doc__`/`__module__` are the
-        # descriptors attached below.
-        self.__name__ = f.__name__
-        self.__qualname__ = f.__qualname__
-        self.__wrapped__ = f._f
+        # `__doc__`/`__module__` are served by the descriptors attached below.
+        _wraps(self, f._f)
 
     def _compute_doc(self) -> str | None:
         return self._f.__doc__
@@ -681,7 +684,7 @@ class _BoundFunction:
 
 # See `Function` above: the descriptors serve `__doc__`/`__module__` on instances.
 setattr(_BoundFunction, "__doc__", _DocDescriptor())  # noqa: B010
-setattr(_BoundFunction, "__module__", _ModuleDescriptor())  # noqa: B010
+setattr(_BoundFunction, "__module__", _ModuleDescriptor(__name__))  # noqa: B010
 
 
 @mypyc_attr(native_class=False)
@@ -696,5 +699,6 @@ class _BoundInvokedMethod:
         wraps(bound.__wrapped__)(self)
 
     def __call__(self, *args: Any, **kw: Any) -> Any:
+        # TODO: Can we do this without `type` here?
         method = self._bound._f.invoke(type(self._bound._instance), *self._types)
         return method(self._bound._instance, *args, **kw)
