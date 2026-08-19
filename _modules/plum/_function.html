@@ -356,18 +356,21 @@ document.write(`
 <span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">copy</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span><span class="p">,</span> <span class="n">wraps</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">MethodType</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">overload</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">overload</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">._method</span><span class="w"> </span><span class="kn">import</span> <span class="n">Method</span><span class="p">,</span> <span class="n">MethodList</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._mypyc</span><span class="w"> </span><span class="kn">import</span> <span class="n">mypyc_attr</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._resolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">AmbiguousLookupError</span><span class="p">,</span> <span class="n">NotFoundLookupError</span><span class="p">,</span> <span class="n">Resolver</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._signature</span><span class="w"> </span><span class="kn">import</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">append_default_args</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._type</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_type_hint</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._util</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeHint</span>
 
-<span class="n">_promised_convert</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="c1"># Annotated (not left to inference as `None`) so a `mypyc`-compiled `_function` accepts</span>
+<span class="c1"># the external assignment `plum._function._promised_convert = convert` in `_promotion`.</span>
+<span class="n">_promised_convert</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="sd">&quot;&quot;&quot;function or None: This will be set to :func:`.parametric.convert`.&quot;&quot;&quot;</span>
 
 <span class="n">SomeExceptionType</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;SomeExceptionType&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="ne">Exception</span><span class="p">)</span>
@@ -395,35 +398,105 @@ document.write(`
 <span class="sd">a function (see :meth:`Function.owner`), make the corresponding value the owner.&quot;&quot;&quot;</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">_FunctionMeta</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`Function` implements `__doc__`, which overrides the docstring of the</span>
-<span class="sd">    class. This simple metaclass ensures that `Function.__doc__` still prints as the</span>
-<span class="sd">    docstring of the class.&quot;&quot;&quot;</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_Wrappable</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+    <span class="vm">__name__</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="vm">__qualname__</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">__wrapped__</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
 
-    <span class="n">_class_doc</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">__doc__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># type: ignore[override]</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_class_doc</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_wraps</span><span class="p">(</span><span class="n">wrapper</span><span class="p">:</span> <span class="n">_Wrappable</span><span class="p">,</span> <span class="n">wrapped</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Copy `wrapped`&#39;s metadata onto `wrapper`, like :func:`functools.wraps`.</span>
+
+<span class="sd">    `functools.wraps` cannot be used: it writes the read-only native `__module__` and</span>
+<span class="sd">    updates a `__dict__` that native instances lack.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">wrapper</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">=</span> <span class="n">wrapped</span><span class="o">.</span><span class="vm">__name__</span>
+    <span class="n">wrapper</span><span class="o">.</span><span class="vm">__qualname__</span> <span class="o">=</span> <span class="n">_generate_qualname</span><span class="p">(</span><span class="n">wrapped</span><span class="p">)</span>
+    <span class="n">wrapper</span><span class="o">.</span><span class="n">__wrapped__</span> <span class="o">=</span> <span class="n">wrapped</span>
+
+
+<span class="nd">@mypyc_attr</span><span class="p">(</span><span class="n">native_class</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_InvokedMethod</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the resolved `method` and convert the result.</span>
+
+<span class="sd">    Callable returned by :meth:`Function.invoke`. A class rather than a closure,</span>
+<span class="sd">    which `mypyc` cannot compile (mypyc/mypyc#1205); non-native so</span>
+<span class="sd">    :func:`functools.wraps` can copy `__name__`/`__doc__` onto instances.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">return_type</span><span class="p">:</span> <span class="n">TypeHint</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_method</span> <span class="o">=</span> <span class="n">method</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_return_type</span> <span class="o">=</span> <span class="n">return_type</span>
+        <span class="n">wraps</span><span class="p">(</span><span class="n">f</span><span class="p">)(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__wrapped_by_plum__</span> <span class="o">=</span> <span class="n">method</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_convert</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_method</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_return_type</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_DocDescriptor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Serve `__doc__`: `_class_doc` on class access, `_compute_doc()` on instances.</span>
+
+<span class="sd">    Shared by `Function` and `_BoundFunction`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">owner</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">instance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">owner</span><span class="p">,</span> <span class="s2">&quot;_class_doc&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">doc</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">_compute_doc</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">doc</span>
+
+
+<span class="nd">@mypyc_attr</span><span class="p">(</span><span class="n">native_class</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_ModuleDescriptor</span><span class="p">(</span><span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Serve `__module__` as the wrapped function&#39;s module on instance access.</span>
+
+<span class="sd">    Shared by `Function` and `_BoundFunction`.</span>
+
+<span class="sd">    A `str` subclass because CPython returns a class-level `__module__` verbatim</span>
+<span class="sd">    without calling `__get__`, so the value itself must be a valid module string for</span>
+<span class="sd">    tools like Sphinx; instance access does call `__get__`. (A `str` subclass is</span>
+<span class="sd">    non-native, but `__module__` access is not on the hot path.)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">owner</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">module</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">instance</span><span class="o">.</span><span class="n">_f</span><span class="o">.</span><span class="vm">__module__</span>
+        <span class="k">return</span> <span class="n">module</span>
 
 
 <div class="viewcode-block" id="Function">
 <a class="viewcode-back" href="../../api.html#plum._function.Function">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">Function</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">_FunctionMeta</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A function.</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Function</span><span class="p">:</span>
+    <span class="c1">#: The class-level docstring, served as `Function.__doc__` by `_DocDescriptor`.</span>
+    <span class="n">_class_doc</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;A function.</span>
 
-<span class="sd">    Args:</span>
-<span class="sd">        f (function): Function that is wrapped.</span>
-<span class="sd">        owner (str, optional): Name of the class that owns the function.</span>
-<span class="sd">        warn_redefinition (bool, optional): Throw a warning whenever a method is</span>
-<span class="sd">            redefined. Defaults to `False`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="s2">    Args:</span>
+<span class="s2">        f (function): Function that is wrapped.</span>
+<span class="s2">        owner (str, optional): Name of the class that owns the function.</span>
+<span class="s2">        warn_redefinition (bool, optional): Throw a warning whenever a method is</span>
+<span class="s2">            redefined. Defaults to `False`.</span>
+<span class="s2">    &quot;&quot;&quot;</span>
 
-    <span class="c1"># When we set `__doc__`, we will lose the docstring of the class, so we save it now.</span>
-    <span class="c1"># Correctly printing the docstring is handled by :class:`_FunctionMeta`.</span>
-    <span class="n">_class_doc</span> <span class="o">=</span> <span class="vm">__doc__</span>
+    <span class="n">_instances</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="s2">&quot;Function&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
 
-    <span class="n">_instances</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="s2">&quot;Function&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># Instance attributes are declared so `Function` can be a `mypyc` native class.</span>
+    <span class="n">_f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="n">_cache</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">TypeHint</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">TypeHint</span><span class="p">]]</span>
+    <span class="n">_doc</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">_owner_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">_owner</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">_warn_redefinition</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">_pending</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Signature</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span>
+    <span class="n">_resolved</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Signature</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span>
+    <span class="n">_resolver</span><span class="p">:</span> <span class="n">Resolver</span>
+    <span class="n">_lock</span><span class="p">:</span> <span class="n">threading</span><span class="o">.</span><span class="n">RLock</span>
+    <span class="vm">__name__</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="vm">__qualname__</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">__wrapped__</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -434,10 +507,9 @@ document.write(`
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">Function</span><span class="o">.</span><span class="n">_instances</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_f</span> <span class="o">=</span> <span class="n">f</span>
         <span class="c1"># Cache maps type tuples to `(method, return_type)`. Keys can be either</span>
         <span class="c1"># actual types (from `__call__`) or `TypeHints` (from `invoke`).</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">TypeHint</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">TypeHint</span><span class="p">]]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="c1"># Guards the lazy resolution of pending registrations, which mutates each</span>
@@ -447,29 +519,24 @@ document.write(`
         <span class="c1"># lock. See GitHub issue #274.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">RLock</span><span class="p">()</span>
 
-        <span class="n">wraps</span><span class="p">(</span><span class="n">f</span><span class="p">)(</span><span class="bp">self</span><span class="p">)</span>  <span class="c1"># Sets `self._doc`.</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="vm">__name__</span>
-        <span class="bp">self</span><span class="o">.</span><span class="vm">__qualname__</span> <span class="o">=</span> <span class="n">_generate_qualname</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="c1"># `__doc__` is the `_DocDescriptor`, so store the raw docstring in `self._doc`.</span>
+        <span class="n">_wraps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_doc</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="vm">__doc__</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="vm">__doc__</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
 
         <span class="c1"># `owner` is the name of the owner. We will later attempt to resolve to</span>
         <span class="c1"># which class it actually points.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_owner_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">owner</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_owner</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_owner_name</span> <span class="o">=</span> <span class="n">owner</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_owner</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_warn_redefinition</span> <span class="o">=</span> <span class="n">warn_redefinition</span>
 
         <span class="c1"># Initialise pending and resolved methods.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_pending</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span>
-            <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Signature</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span>
-        <span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pending</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span> <span class="o">=</span> <span class="n">Resolver</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
             <span class="n">warn_redefinition</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_warn_redefinition</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_resolved</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span>
-            <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Signature</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span>
-        <span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_resolved</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">owner</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
@@ -483,13 +550,11 @@ document.write(`
                 <span class="bp">self</span><span class="o">.</span><span class="n">_owner</span> <span class="o">=</span> <span class="n">_owner_transfer</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_owner</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_owner</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">__doc__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;str or None: Documentation of the function. This consists of the</span>
-<span class="sd">        documentation of the function given at initialisation with the documentation</span>
-<span class="sd">        of all other registered methods appended.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_doc</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the function&#39;s documentation.</span>
 
-<span class="sd">        Upon instantiation, this property is available through `obj.__doc__`.</span>
+<span class="sd">        This is the documentation given at initialisation, with the documentation of</span>
+<span class="sd">        all other registered methods appended.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_pending_registrations</span><span class="p">()</span>
@@ -539,11 +604,6 @@ document.write(`
         <span class="c1"># the docstring.</span>
         <span class="k">return</span> <span class="n">doc</span> <span class="k">if</span> <span class="n">doc</span> <span class="k">else</span> <span class="kc">None</span>
 
-    <span class="nd">@__doc__</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">__doc__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># Ensure that `self._doc` remains a string.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_doc</span> <span class="o">=</span> <span class="n">value</span> <span class="k">if</span> <span class="n">value</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
-
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">methods</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MethodList</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;list[:class:`.method.Method`]: All available methods.&quot;&quot;&quot;</span>
@@ -564,10 +624,8 @@ document.write(`
 <span class="sd">            function: Decorator.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">method</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">precedence</span><span class="o">=</span><span class="n">precedence</span><span class="p">)</span>  <span class="c1"># type: ignore[return-value]</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">precedence</span><span class="o">=</span><span class="n">precedence</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span></div>
+            <span class="k">return</span> <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_register_one</span><span class="p">,</span> <span class="n">precedence</span><span class="o">=</span><span class="n">precedence</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_register_one</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">precedence</span><span class="o">=</span><span class="n">precedence</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Function.dispatch_multi">
@@ -591,19 +649,39 @@ document.write(`
             <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">signature</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
                 <span class="n">resolved_signatures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Signature</span><span class="p">(</span><span class="o">*</span><span class="n">signature</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="c1"># `TypeError` (not `ValueError`) to match the compiled build, where the</span>
+                <span class="c1"># typed vararg rejects bad input at the C boundary before this runs.</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;Signature `</span><span class="si">{</span><span class="n">signature</span><span class="si">}</span><span class="s2">` must be a tuple or of type &quot;</span>
                     <span class="sa">f</span><span class="s2">&quot;`plum.signature.Signature`.&quot;</span>
                 <span class="p">)</span>
+        <span class="k">return</span> <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_register_multiple</span><span class="p">,</span> <span class="n">signatures</span><span class="o">=</span><span class="n">resolved_signatures</span><span class="p">)</span></div>
 
-        <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;Function&quot;</span><span class="p">:</span>
-            <span class="c1"># The precedence will not be used, so we can safely set it to `None`.</span>
-            <span class="k">for</span> <span class="n">signature</span> <span class="ow">in</span> <span class="n">resolved_signatures</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">signature</span><span class="o">=</span><span class="n">signature</span><span class="p">,</span> <span class="n">precedence</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-            <span class="k">return</span> <span class="bp">self</span>
 
-        <span class="k">return</span> <span class="n">decorator</span>  <span class="c1"># type: ignore[return-value]</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_register_one</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">:</span> <span class="n">Self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">precedence</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Register `method` by `precedence` and return the function itself.</span>
 
+<span class="sd">        Registration path for :meth:`dispatch`. A bound method so the decorator form</span>
+<span class="sd">        can be built with :func:`functools.partial` rather than a `self`-capturing</span>
+<span class="sd">        closure, which `mypyc` cannot compile (mypyc/mypyc#1205).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">precedence</span><span class="o">=</span><span class="n">precedence</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_register_multiple</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">:</span> <span class="n">Self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">signatures</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Signature</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Register `method` for every signature and return the function itself.</span>
+
+<span class="sd">        Registration path for :meth:`dispatch_multi`. See :meth:`_register_one` for</span>
+<span class="sd">        why this is a bound method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">signature</span> <span class="ow">in</span> <span class="n">signatures</span><span class="p">:</span>
+            <span class="c1"># `precedence` is derived from each signature, so it is left as `None`.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">signature</span><span class="o">=</span><span class="n">signature</span><span class="p">,</span> <span class="n">precedence</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
 
 <div class="viewcode-block" id="Function.clear_cache">
 <a class="viewcode-back" href="../../api.html#plum._function.Function.clear_cache">[docs]</a>
@@ -720,21 +798,25 @@ document.write(`
             <span class="n">impl</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">implementation</span>
             <span class="n">return_type</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">return_type</span>
 
-        <span class="k">except</span> <span class="n">AmbiguousLookupError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="c1"># The two `except` clauses use distinct variable names (`e_ambiguous` /</span>
+        <span class="c1"># `e_not_found`) rather than a shared `e`: `mypyc` gives a reused exception</span>
+        <span class="c1"># variable a single type, so binding the second exception type to it fails a</span>
+        <span class="c1"># runtime type check.</span>
+        <span class="k">except</span> <span class="n">AmbiguousLookupError</span> <span class="k">as</span> <span class="n">e_ambiguous</span><span class="p">:</span>
             <span class="n">__tracebackhide__</span> <span class="o">=</span> <span class="kc">True</span>
 
             <span class="c1"># Change the function name if this is a method.</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">owner</span><span class="p">:</span>
-                <span class="n">e</span><span class="o">.</span><span class="n">f_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__qualname__</span>
-            <span class="k">raise</span> <span class="n">e</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
+                <span class="n">e_ambiguous</span><span class="o">.</span><span class="n">f_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__qualname__</span>
+            <span class="k">raise</span> <span class="n">e_ambiguous</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
 
-        <span class="k">except</span> <span class="n">NotFoundLookupError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">except</span> <span class="n">NotFoundLookupError</span> <span class="k">as</span> <span class="n">e_not_found</span><span class="p">:</span>
             <span class="n">__tracebackhide__</span> <span class="o">=</span> <span class="kc">True</span>
 
             <span class="c1"># Change the function name if this is a method.</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">owner</span><span class="p">:</span>
-                <span class="n">e</span><span class="o">.</span><span class="n">f_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__qualname__</span>
-            <span class="n">impl</span><span class="p">,</span> <span class="n">return_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handle_not_found_lookup_error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                <span class="n">e_not_found</span><span class="o">.</span><span class="n">f_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__qualname__</span>
+            <span class="n">impl</span><span class="p">,</span> <span class="n">return_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handle_not_found_lookup_error</span><span class="p">(</span><span class="n">e_not_found</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">impl</span><span class="p">,</span> <span class="n">return_type</span></div>
 
@@ -840,14 +922,7 @@ document.write(`
 <span class="sd">            function: Method.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_method_with_cache</span><span class="p">(</span><span class="n">types</span><span class="o">=</span><span class="n">types</span><span class="p">)</span>
-
-        <span class="nd">@wraps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_f</span><span class="p">)</span>
-        <span class="k">def</span><span class="w"> </span><span class="nf">wrapped_method</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">_convert</span><span class="p">(</span><span class="n">method</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">),</span> <span class="n">return_type</span><span class="p">)</span>
-
-        <span class="n">wrapped_method</span><span class="o">.</span><span class="n">__wrapped_by_plum__</span> <span class="o">=</span> <span class="n">method</span>  <span class="c1"># type: ignore[attr-defined]</span>
-
-        <span class="k">return</span> <span class="n">wrapped_method</span></div>
+        <span class="k">return</span> <span class="n">_InvokedMethod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_f</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span><span class="p">)</span></div>
 
 
     <span class="nd">@overload</span>
@@ -869,6 +944,14 @@ document.write(`
             <span class="sa">f</span><span class="s2">&quot; pending method(s))&gt;&quot;</span>
         <span class="p">)</span></div>
 
+
+
+<span class="c1"># Attach `__doc__`/`__module__` here, not in the class body: `mypyc` replaces a class</span>
+<span class="c1"># `__doc__` with a filler, and `__module__` is read-only on a native instance. These</span>
+<span class="c1"># descriptors serve instance access (`f.__doc__`, `f.__module__`). `setattr` also stops</span>
+<span class="c1"># `mypy` treating these as class variables.</span>
+<span class="nb">setattr</span><span class="p">(</span><span class="n">Function</span><span class="p">,</span> <span class="s2">&quot;__doc__&quot;</span><span class="p">,</span> <span class="n">_DocDescriptor</span><span class="p">())</span>  <span class="c1"># noqa: B010</span>
+<span class="nb">setattr</span><span class="p">(</span><span class="n">Function</span><span class="p">,</span> <span class="s2">&quot;__module__&quot;</span><span class="p">,</span> <span class="n">_ModuleDescriptor</span><span class="p">(</span><span class="vm">__name__</span><span class="p">))</span>  <span class="c1"># noqa: B010</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_generate_qualname</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -926,52 +1009,39 @@ document.write(`
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span> <span class="o">...</span>
 
 
+<span class="nd">@mypyc_attr</span><span class="p">(</span><span class="n">native_class</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">_BoundFunction</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A bound instance of `.function.Function`.</span>
+    <span class="c1">#: The class-level docstring, served as `_BoundFunction.__doc__` by</span>
+    <span class="c1">#: `_DocDescriptor`.</span>
+    <span class="n">_class_doc</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;A bound instance of `.function.Function`.</span>
 
-<span class="sd">    Args:</span>
-<span class="sd">        f (:class:`.function.Function`): Bound function.</span>
-<span class="sd">        instance (object): Instance to which the function is bound.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="s2">    Args:</span>
+<span class="s2">        f (:class:`.function.Function`): Bound function.</span>
+<span class="s2">        instance (object): Instance to which the function is bound.</span>
+<span class="s2">    &quot;&quot;&quot;</span>
 
-    <span class="n">_f</span><span class="p">:</span> <span class="s2">&quot;_BoundFunctionProto&quot;</span>
-    <span class="n">_instance</span><span class="p">:</span> <span class="nb">object</span>
+    <span class="c1"># Declared so `_wraps` can write them (see the `_Wrappable` protocol).</span>
+    <span class="vm">__name__</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="vm">__qualname__</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">__wrapped__</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="s2">&quot;Function&quot;</span><span class="p">,</span> <span class="n">instance</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_f</span> <span class="o">=</span> <span class="n">f</span>
-        <span class="n">wraps</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">_f</span><span class="p">)(</span><span class="bp">self</span><span class="p">)</span>  <span class="c1"># This will call the setter for `__doc__`.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_f</span><span class="p">:</span> <span class="n">_BoundFunctionProto</span> <span class="o">=</span> <span class="n">f</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_instance</span> <span class="o">=</span> <span class="n">instance</span>
+        <span class="c1"># `__doc__`/`__module__` are served by the descriptors attached below.</span>
+        <span class="n">_wraps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">_f</span><span class="p">)</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">__doc__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_doc</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_f</span><span class="o">.</span><span class="vm">__doc__</span>
-
-    <span class="nd">@__doc__</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">__doc__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># Don&#39;t need to do anything here. The docstring will be derived from `self._f`.</span>
-        <span class="c1"># We, however, do need to implement this method, because :func:`wraps` calls</span>
-        <span class="c1"># it.</span>
-        <span class="k">pass</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_f</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_instance</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">invoke</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">types</span><span class="p">:</span> <span class="n">TypeHint</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;See :meth:`.Function.invoke`.&quot;&quot;&quot;</span>
-
-        <span class="nd">@wraps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_f</span><span class="o">.</span><span class="n">_f</span><span class="p">)</span>
-        <span class="k">def</span><span class="w"> </span><span class="nf">wrapped_method</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-            <span class="c1"># TODO: Can we do this without `type` here?</span>
-            <span class="n">method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_f</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_instance</span><span class="p">),</span> <span class="o">*</span><span class="n">types</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">method</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_instance</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
-
-        <span class="c1"># We set `f.__wrapped_by_plum__` for :func:`Function.invoke`, but here</span>
-        <span class="c1"># we do not: this method has `self._instance` prepended to its</span>
-        <span class="c1"># arguments, so there is no &quot;wrapped method&quot;. In addition, bound</span>
-        <span class="c1"># functions cannot be directly extended, so unwrapping is likely never</span>
-        <span class="c1"># desired.</span>
-
-        <span class="k">return</span> <span class="n">wrapped_method</span>
+        <span class="c1"># Unlike `Function.invoke`, `_BoundInvokedMethod` sets no `__wrapped_by_plum__`:</span>
+        <span class="c1"># it prepends `self._instance`, so there is no extendable method to unwrap to.</span>
+        <span class="k">return</span> <span class="n">_BoundInvokedMethod</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">types</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">methods</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MethodList</span><span class="p">:</span>
@@ -982,6 +1052,28 @@ document.write(`
     <span class="k">def</span><span class="w"> </span><span class="nf">dispatch</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_DispatchFunction</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;See :meth:`.Function.dispatch`.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_f</span><span class="o">.</span><span class="n">dispatch</span>
+
+
+<span class="c1"># See `Function` above: the descriptors serve `__doc__`/`__module__` on instances.</span>
+<span class="nb">setattr</span><span class="p">(</span><span class="n">_BoundFunction</span><span class="p">,</span> <span class="s2">&quot;__doc__&quot;</span><span class="p">,</span> <span class="n">_DocDescriptor</span><span class="p">())</span>  <span class="c1"># noqa: B010</span>
+<span class="nb">setattr</span><span class="p">(</span><span class="n">_BoundFunction</span><span class="p">,</span> <span class="s2">&quot;__module__&quot;</span><span class="p">,</span> <span class="n">_ModuleDescriptor</span><span class="p">(</span><span class="vm">__name__</span><span class="p">))</span>  <span class="c1"># noqa: B010</span>
+
+
+<span class="nd">@mypyc_attr</span><span class="p">(</span><span class="n">native_class</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_BoundInvokedMethod</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Callable returned by :meth:`_BoundFunction.invoke` (see there).&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bound</span><span class="p">:</span> <span class="s2">&quot;_BoundFunction&quot;</span><span class="p">,</span> <span class="n">types</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TypeHint</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bound</span> <span class="o">=</span> <span class="n">bound</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_types</span> <span class="o">=</span> <span class="n">types</span>
+        <span class="c1"># `bound.__wrapped__` is the underlying function (`f._f`), set in</span>
+        <span class="c1"># `_BoundFunction.__init__`.</span>
+        <span class="n">wraps</span><span class="p">(</span><span class="n">bound</span><span class="o">.</span><span class="n">__wrapped__</span><span class="p">)(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="c1"># TODO: Can we do this without `type` here?</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bound</span><span class="o">.</span><span class="n">_f</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_bound</span><span class="o">.</span><span class="n">_instance</span><span class="p">),</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_types</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">method</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_bound</span><span class="o">.</span><span class="n">_instance</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
 </pre></div>
 
                 </article>
