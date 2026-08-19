@@ -1,5 +1,6 @@
 import sys
 import textwrap
+import typing
 import warnings
 
 import pytest
@@ -162,8 +163,8 @@ def test_register_any_never_collides_with_concrete_type(register_any_first):
     """Regression test for https://github.com/beartype/plum/issues/295.
 
     An unannotated parameter resolves to `Signature(Any)`. `Any` must never be
-    treated as "the same registered signature" as a concrete type -- regardless
-    of registration order -- or one of the two methods silently overwrites the
+    treated as "the same registered signature" as a concrete type - regardless
+    of registration order - or one of the two methods silently overwrites the
     other and the resolver ends up with only one of them registered.
     """
     r = Resolver()
@@ -195,6 +196,37 @@ def test_register_any_never_collides_with_concrete_type(register_any_first):
     # a matching call, regardless of the order the two were registered in.
     assert r.resolve((1,)) == m_int
     assert r.resolve((1.5,)) == m_any
+
+
+@pytest.mark.parametrize("register_any_first", [True, False])
+def test_register_nested_any_never_collides_with_concrete_type(register_any_first):
+    """Regression test for https://github.com/beartype/plum/issues/295.
+
+    `beartype>=0.23` collapses `list[Any]` onto `list[int]` just as it collapses
+    `Any` onto `int`, so the same silent overwrite happens one level down. Only a
+    rewrite that reaches every level of the hint keeps the two methods apart.
+    """
+    r = Resolver()
+
+    def f_any(x: list[typing.Any]):
+        return x
+
+    def f_int(x: list[int]):
+        return x
+
+    m_any = Method(f_any, plum.Signature.from_callable(f_any))
+    m_int = Method(f_int, plum.Signature.from_callable(f_int))
+
+    if register_any_first:
+        r.register(m_any)
+        r.register(m_int)
+    else:
+        r.register(m_int)
+        r.register(m_any)
+
+    assert len(r) == 2
+    assert r.resolve(([1],)) == m_int
+    assert r.resolve((["a"],)) == m_any
 
 
 def test_len():

@@ -15,7 +15,7 @@ from rich.segment import Segment
 from beartype.peps import resolve_pep563 as beartype_resolve_pep563
 
 from ._bear import is_bearable
-from ._type import _type_hint_le, _type_hints_equal, is_faithful, resolve_type_hint
+from ._type import _type_hint_eq, _type_hint_le, is_faithful, resolve_type_hint
 from ._util import (
     Comparable,
     Missing,
@@ -131,18 +131,20 @@ class Signature(Comparable):
         # We don't need to check faithfulness, because that is automatically
         # derived from the arguments.
         #
-        # We use `_type_hints_equal` rather than comparing `TypeHintWrapper`s
-        # directly, because `beartype.door.TypeHint(Any) == TypeHint(T)` is `True`
-        # for every `T` (see `_type_hints_equal`'s docstring). Comparing directly
-        # would make two signatures with unrelated concrete types spuriously equal
-        # whenever one of them has an unannotated (and hence `Any`-typed) parameter.
+        # Use `_type_hint_eq` rather than comparing `TypeHintWrapper`s directly
+        # so that `Any` only equals `Any` itself; see its docstring.
         types_equal = all(
-            _type_hints_equal(x, y)
-            for x, y in zip(self.types, other.types, strict=True)
+            _type_hint_eq(x, y) for x, y in zip(self.types, other.types, strict=True)
         )
-        varargs_equal = (self.varargs is Missing) == (other.varargs is Missing) and (
-            self.varargs is Missing or _type_hints_equal(self.varargs, other.varargs)
-        )
+        if self.varargs is Missing:
+            # Both must be missing.
+            varargs_equal = other.varargs is Missing
+        elif other.varargs is Missing:
+            # Neither must be missing.
+            varargs_equal = False
+        else:
+            # And they must be equal.
+            varargs_equal = _type_hint_eq(self.varargs, other.varargs)
         return types_equal and varargs_equal and self.precedence == other.precedence
 
     def __hash__(self) -> int:
@@ -180,14 +182,10 @@ class Signature(Comparable):
         # one place.
         self_types = self.expand_varargs(len(other.types))
         other_types = other.expand_varargs(len(self.types))
-        # As in `__eq__`, use `_type_hints_equal` here rather than comparing
-        # `TypeHintWrapper`s directly, so an unannotated (`Any`-typed) parameter
-        # is never mistaken for an unrelated concrete type.
+        # As in `__eq__`, use `_type_hint_eq` so that `Any` only equals `Any`
+        # itself; see its docstring.
         if all(
-            [
-                _type_hints_equal(x, y)
-                for x, y in zip(self_types, other_types, strict=True)
-            ]
+            [_type_hint_eq(x, y) for x, y in zip(self_types, other_types, strict=True)]
         ):
             if self.has_varargs and other.has_varargs:
                 return _type_hint_le(self.varargs, other.varargs)
@@ -201,10 +199,8 @@ class Signature(Comparable):
             else:
                 return True
 
-        # As above, use `_type_hint_le` rather than comparing `TypeHintWrapper`s
-        # directly: `beartype.door.is_subhint(Any, T)` is `True` for every `T`
-        # since `beartype` 0.23, which would make an unannotated (`Any`-typed)
-        # parameter appear exactly as specific as any concrete overload.
+        # As above, use `_type_hint_le` so that `Any` is only a subhint of `Any`
+        # itself; see its docstring.
         elif all(
             [_type_hint_le(x, y) for x, y in zip(self_types, other_types, strict=True)]
         ):

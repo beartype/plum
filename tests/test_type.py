@@ -11,8 +11,9 @@ from plum._type import (
     PromisedType,
     ResolvableType,
     _is_hint,
+    _substitute_nested_any,
+    _type_hint_eq,
     _type_hint_le,
-    _type_hints_equal,
     is_faithful,
     resolve_type_hint,
     type_mapping,
@@ -284,27 +285,29 @@ def test_is_faithful_literal(recwarn):
     assert len(recwarn) == 0
 
 
-def test_type_hints_equal():
-    """Regression test for https://github.com/beartype/plum/issues/295: `Any`
-    must compare equal only to `Any`, never to an unrelated concrete type.
-    """
-    assert _type_hints_equal(Any, Any)
-    assert not _type_hints_equal(Any, int)
-    assert not _type_hints_equal(int, Any)
-    assert not _type_hints_equal(Any, object)
-    assert not _type_hints_equal(object, Any)
+def test_type_hint_eq():
+    """Regression test for https://github.com/beartype/plum/issues/295.
 
-    assert _type_hints_equal(int, int)
-    assert not _type_hints_equal(int, float)
+    `Any` must compare equal only to `Any`, never to an unrelated concrete type.
+    """
+    assert _type_hint_eq(Any, Any)
+    assert not _type_hint_eq(Any, int)
+    assert not _type_hint_eq(int, Any)
+    assert not _type_hint_eq(Any, object)
+    assert not _type_hint_eq(object, Any)
+
+    assert _type_hint_eq(int, int)
+    assert not _type_hint_eq(int, float)
 
     # Equivalent but not identical types should still compare equal.
-    assert _type_hints_equal(Union[int, bool], int)  # noqa: UP007
+    assert _type_hint_eq(Union[int, bool], int)  # noqa: UP007
 
 
 def test_type_hint_le():
-    """Regression test for https://github.com/beartype/plum/issues/295: `Any`
-    must stay the unique least-specific type -- a subhint of nothing but itself,
-    even though everything else remains a subhint of it.
+    """Regression test for https://github.com/beartype/plum/issues/295.
+
+    `Any` must stay the unique least-specific type - a subhint of nothing but
+    itself, even though everything else remains a subhint of it.
     """
     assert _type_hint_le(Any, Any)
     assert not _type_hint_le(Any, int)
@@ -315,3 +318,48 @@ def test_type_hint_le():
     assert _type_hint_le(int, int)
     assert _type_hint_le(int, Number)
     assert not _type_hint_le(Number, int)
+
+
+def test_type_hint_eq_nested_any():
+    """`Any` nested inside a parameterised hint must not collide either.
+
+    `beartype>=0.23` collapses `list[Any]` onto `list[int]` exactly as it collapses
+    `Any` onto `int`, so the rewrite in `_substitute_nested_any` has to reach every
+    level, not just the root.
+    """
+    assert not _type_hint_eq(list[Any], list[int])
+    assert not _type_hint_eq(dict[str, Any], dict[str, int])
+    assert not _type_hint_eq(list[list[Any]], list[list[int]])
+    assert not _type_hint_eq(tuple[int, Any], tuple[int, str])
+
+    # A nested `Any` stays the least specific argument, as at the root.
+    assert _type_hint_le(list[int], list[Any])
+    assert not _type_hint_le(list[Any], list[int])
+
+    # Identical nestings still compare equal, and unrelated ones still do not.
+    assert _type_hint_eq(list[Any], list[Any])
+    assert _type_hint_eq(list[int], list[int])
+    assert not _type_hint_eq(list[Any], dict[str, Any])
+
+
+def test_substitute_nested_any_rebuilds_hints():
+    """Every hint form plum may hold must survive the rewrite unchanged in shape."""
+    # `Literal`'s arguments are values, not hints, so they must be left alone.
+    assert _substitute_nested_any(Literal["a", "b"]) == Literal["a", "b"]
+    # The root is the caller's business, so it is not rewritten here.
+    assert _substitute_nested_any(Any) is Any
+    # Hints without a nested `Any` come back untouched.
+    assert _substitute_nested_any(list[int]) == list[int]
+    assert _substitute_nested_any(int) is int
+
+    assert _substitute_nested_any(list[Any]) == list[object]
+    assert _substitute_nested_any(dict[str, Any]) == dict[str, object]
+    assert _substitute_nested_any(tuple[Any, ...]) == tuple[object, ...]
+    assert _substitute_nested_any(list[list[Any]]) == list[list[object]]
+    assert _substitute_nested_any(Union[int, Any]) == Union[int, object]  # noqa: UP007
+    # `Callable` stores its parameters in a list, so it needs its own rebuild path.
+    assert (
+        _substitute_nested_any(Callable[[int, Any], Any])
+        == Callable[[int, object], object]
+    )
+    assert _substitute_nested_any(Callable[..., Any]) == Callable[..., object]

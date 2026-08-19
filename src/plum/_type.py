@@ -14,7 +14,17 @@ from collections.abc import Callable, Hashable
 from functools import reduce
 from operator import or_
 from types import UnionType
-from typing import Any, Literal, TypeGuard, TypeVar, cast, final, get_args, get_origin
+from typing import (
+    Any,
+    Literal,
+    TypeGuard,
+    TypeVar,
+    Union,
+    cast,
+    final,
+    get_args,
+    get_origin,
+)
 
 from beartype.door import TypeHint as TypeHintWrapper
 from beartype.vale._core._valecore import BeartypeValidator
@@ -284,21 +294,77 @@ def resolve_type_hint(x: object, /) -> object:
     return x
 
 
-def _type_hint_le(x: object, y: object, /) -> bool:
-    """Subhint check for plum's signature bookkeeping: redefinition detection
-    (`Signature.__eq__`, via `_type_hints_equal`) and specificity ordering
-    (`Signature.__le__`).
+def _substitute_nested_any(hint: object, /) -> object:
+    """Replace every `Any` strictly below the root of `hint` with `object`.
 
-    This differs from `beartype.door.TypeHint(x) <= TypeHint(y)` in exactly one
-    respect: `typing.Any` is only a subhint of `typing.Any` itself, preserving
-    `Any` as plum's unique *least specific* type. Since `beartype` 0.23,
-    ``is_subhint(Any, T)`` is `True` for every `T` (`Any` is two-way assignable
-    to everything, per :pep:`484`; see
-    `beartype#530 <https://github.com/beartype/beartype/issues/530>`_ /
-    `beartype#616 <https://github.com/beartype/beartype/pull/616>`_), which
-    would otherwise make an unannotated (`Any`-typed) parameter compare equal
-    to, and as specific as, any concrete type (see
-    `plum#295 <https://github.com/beartype/plum/issues/295>`_).
+    `_type_hint_le` handles a root `Any` itself; this handles the parameters of a
+    hint, where `beartype>=0.23` collapses `list[Any]` onto `list[int]` in exactly
+    the way it collapses `Any` onto `int`. Substituting `object` hands the whole
+    comparison, variance included, back to `beartype`: `object` is a subhint of
+    nothing but itself, and everything is a subhint of it, which is precisely the
+    ordering `Any` is meant to have.
+
+    A hint that cannot be rebuilt is returned unchanged, leaving `beartype`'s own
+    semantics in place rather than failing the comparison.
+
+    Args:
+        hint (object): Already-resolved type hint.
+
+    Returns:
+        object: `hint` with every nested `Any` replaced by `object`.
+    """
+    origin = get_origin(hint)
+    # `Literal`'s arguments are values, not hints, so they must not be rewritten.
+    if origin is None or origin is Literal:
+        return hint
+    args = get_args(hint)
+    if not args:
+        return hint
+    new_args = tuple(_substitute_any(arg) for arg in args)
+    if new_args == args:
+        return hint
+    try:
+        if origin is Union or origin is UnionType:
+            # `reduce(or_, ...)` rather than `Union[...]`: the arguments are only
+            # known at runtime, and `X | Y` is the modern spelling.
+            return reduce(or_, new_args)
+        if origin is Callable:
+            # `Callable`'s arguments are `(parameters, return)`, where `parameters`
+            # is a list or `...`, so it does not rebuild by subscripting a tuple.
+            return Callable[new_args[0], new_args[1]]  # pyright: ignore[reportInvalidTypeForm]
+        return origin[new_args]
+    except Exception:  # noqa: BLE001
+        return hint
+
+
+def _substitute_any(arg: object, /) -> object:
+    """Replace `Any` with `object` in a single argument of a type hint."""
+    if arg is Any:
+        return object
+    if isinstance(arg, list):
+        # The parameter list of a `Callable`.
+        return [_substitute_any(x) for x in arg]
+    if arg is Ellipsis or arg is None:
+        return arg
+    return _substitute_nested_any(arg)
+
+
+def _type_hint_le(x: object, y: object, /) -> bool:
+    """Check whether `x` is a subhint of `y`, where `Any` is only a subhint of itself.
+
+    This check is used for Plum's signature bookkeeping: redefinition detection
+    (`Signature.__eq__`, via `_type_hint_eq`) and specificity ordering
+    (`Signature.__le__`). It differs from `beartype.door.TypeHint(x) <= TypeHint(y)`
+    in exactly one respect: `Any` is only a subhint of `Any` itself, preserving `Any`
+    as Plum's unique least specific type. Since `beartype` 0.23, `is_subhint(Any, T)`
+    is `True` for every `T`, which would otherwise make an unannotated (`Any`-typed)
+    parameter compare equal to, and as specific as, any concrete type. See
+    https://github.com/beartype/plum/issues/295.
+
+    This holds at every depth: a nested `Any` is rewritten to `object` by
+    `_substitute_nested_any`, so `list[Any]` and `list[int]` stay distinct. The one
+    approximation is that a nested `Any` and a nested `object` then compare equal,
+    even though a root `Any` remains strictly less specific than a root `object`.
 
     Args:
         x (object): First, already-resolved type hint.
@@ -309,13 +375,19 @@ def _type_hint_le(x: object, y: object, /) -> bool:
     """
     if x is Any:
         return y is Any
-    return bool(TypeHintWrapper(x) <= TypeHintWrapper(y))
+    if y is Any:
+        return True
+    return bool(
+        TypeHintWrapper(_substitute_nested_any(x))
+        <= TypeHintWrapper(_substitute_nested_any(y))
+    )
 
 
-def _type_hints_equal(x: object, y: object, /) -> bool:
-    """Check whether two already-resolved type hints are the same, for signature
-    bookkeeping (see `_type_hint_le`, on which this is built via the usual
-    antisymmetry syllogism: `x <= y and y <= x` implies `x == y`).
+def _type_hint_eq(x: object, y: object, /) -> bool:
+    """Check whether two already-resolved type hints are the same.
+
+    This equality check is used for signature bookkeeping and is built on
+    `_type_hint_le` via antisymmetry: `x <= y and y <= x` implies `x == y`.
 
     Args:
         x (object): First, already-resolved type hint.
