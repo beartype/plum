@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from functools import partial
 from typing import Any, TypeVar, cast, overload
 
-from ._function import Function, identity_conversions
+from ._function import Function, _identity_conversions
 from ._overload import get_overloads
 from ._signature import Signature
 from ._util import Callable, TypeHint, get_class, is_in_class
@@ -148,7 +148,7 @@ def clear_all_cache() -> None:
     if types are modified."""
     for f in Function._instances:
         f.clear_cache()
-    identity_conversions.clear()
+    _identity_conversions.clear()
 
 
 dispatch: Dispatcher = Dispatcher()  #: A default dispatcher for convenience purposes.
