@@ -104,7 +104,7 @@ print()
 
 # Every benchmark above returns through an unannotated method, which plum
 # short-circuits. An annotated return goes through `convert` instead, so it is measured
-# separately here -- and a union is the case that costs the most to check.
+# separately here - and a union is the case that costs the most to check.
 
 
 class R1:

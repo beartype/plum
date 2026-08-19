@@ -206,39 +206,22 @@ def test_self_promotion(convert, promote):
         assert promote(1, 1.0) == ("1", "1.0")
 
 
-# These pin the conditions that make the identity-conversion memo sound. They go
-# through a dispatched function, because that -- not `plum.convert` -- reads the memo.
-
-
-def _memo():
-    return plum._function.identity_conversions
+# These pin the conditions that make the identity-conversion cache sound. They go
+# through a dispatched function, because that - not `plum.convert` - reads the cache.
 
 
 @pytest.fixture
-def memo(convert):
-    """A cleared memo, restored afterwards along with the conversion methods."""
-    plum._function.identity_conversions.clear()
-    yield _memo()
-    plum._function.identity_conversions.clear()
+def identity_conversions(convert):
+    """`plum._function._identity_conversions`, cleared before and after the test."""
+    plum._function._identity_conversions.clear()
+    yield plum._function._identity_conversions
+    plum._function._identity_conversions.clear()
 
 
-def test_identity_conversion_is_memoised(memo, dispatch):
-    class Base:
-        pass
-
-    @dispatch
-    def f(x: Base) -> Base:
-        return x
-
-    obj = Base()
-    assert f(obj) is obj
-    assert memo[Base, Base] is True
-    # The memoised answer is the same answer.
-    assert f(obj) is obj
-
-
-def test_memo_is_actually_read(memo, dispatch, monkeypatch):
-    """Once a pair is memoised, the call must not reach `convert` at all."""
+def test_identity_conversion_is_recorded_and_read(
+    identity_conversions, dispatch, monkeypatch
+):
+    """Once a pair is recorded, a repeat call must not reach `convert` at all."""
 
     class Base:
         pass
@@ -248,17 +231,22 @@ def test_memo_is_actually_read(memo, dispatch, monkeypatch):
         return x
 
     obj = Base()
-    assert f(obj) is obj  # Populates the memo.
+    assert f(obj) is obj
+    assert identity_conversions[Base, Base] is True
 
     def explode(*args, **kw):
-        raise AssertionError("convert was called despite a memoised identity")
+        raise AssertionError("convert was called despite a recorded identity")
 
     monkeypatch.setattr(plum._function, "_promised_convert", explode)
     assert f(obj) is obj
 
 
-def test_memo_yields_to_a_later_conversion_method(memo, dispatch):
-    """A conversion method registered *after* a pair is memoised must still win."""
+def test_conversion_methods_beat_recorded_identities(identity_conversions, dispatch):
+    """A conversion method must win regardless of registration order.
+
+    Registered *after* the pair is recorded as an identity, it must invalidate the
+    entry; once it claims the pair, the pair must be recorded as not an identity.
+    """
 
     class Base:
         pass
@@ -272,15 +260,21 @@ def test_memo_yields_to_a_later_conversion_method(memo, dispatch):
 
     obj = Sub()
     assert f(obj) is obj
-    assert memo[Sub, Base] is True
+    assert identity_conversions[Sub, Base] is True
 
     add_conversion_method(Sub, Base, lambda _: "converted")
     assert f(obj) == "converted"
+    # The re-analysed pair is no longer an identity, and the call keeps converting.
+    assert identity_conversions[Sub, Base] is False
+    assert f(obj) == "converted"
 
 
-def test_memo_not_used_for_unfaithful_targets(memo, dispatch):
-    """Both objects share the key `(Thing, Gate)`, but `Gate` matches on the value,
-    so memoising the first call would make the second wrongly succeed."""
+def test_unfaithful_targets_are_not_recorded(identity_conversions, dispatch):
+    """`Gate` and `Literal` match on the value, so their pairs must never be recorded.
+
+    Both `Thing` objects share the key `(Thing, Gate)`: recording the first call
+    would make the second wrongly succeed.
+    """
 
     class Meta(type):
         def __instancecheck__(cls, instance):
@@ -300,23 +294,21 @@ def test_memo_not_used_for_unfaithful_targets(memo, dispatch):
     good.ok, bad.ok = True, False
 
     assert f(good) is good
-    assert memo[(Thing, Gate)] is False
+    assert identity_conversions[(Thing, Gate)] is False
     with pytest.raises(TypeError):
         f(bad)
 
-
-def test_memo_not_used_for_literals(memo, dispatch):
     @dispatch
-    def f(x: int) -> typing.Literal[1]:
+    def g(x: int) -> typing.Literal[1]:
         return x
 
-    assert f(1) == 1
-    assert memo[(int, typing.Literal[1])] is False
+    assert g(1) == 1
+    assert identity_conversions[(int, typing.Literal[1])] is False
     with pytest.raises(TypeError):
-        f(2)
+        g(2)
 
 
-def test_memo_does_not_mask_failures(memo, dispatch):
+def test_failed_conversions_are_not_recorded(identity_conversions, dispatch):
     class Base:
         pass
 
@@ -327,12 +319,12 @@ def test_memo_does_not_mask_failures(memo, dispatch):
     with pytest.raises(TypeError):
         f(1.0)
     # A raising conversion never reaches the recording step, so nothing is stored.
-    assert (float, Base) not in memo
+    assert (float, Base) not in identity_conversions
     with pytest.raises(TypeError):
         f(1.0)
 
 
-def test_memo_cleared_by_clear_all_cache(memo, dispatch):
+def test_recorded_identities_cleared_by_clear_all_cache(identity_conversions, dispatch):
     class Base:
         pass
 
@@ -341,13 +333,13 @@ def test_memo_cleared_by_clear_all_cache(memo, dispatch):
         return x
 
     assert f(Base()) is not None
-    assert memo
+    assert identity_conversions
     plum.clear_all_cache()
-    assert not memo
+    assert not identity_conversions
 
 
-def test_memo_handles_union_targets(memo, dispatch):
-    """A union of faithful types is faithful, so it is memoisable as a whole."""
+def test_union_targets_are_recorded(identity_conversions, dispatch):
+    """A union of faithful types is faithful, so it is recordable as a whole."""
 
     class A:
         pass
@@ -361,13 +353,13 @@ def test_memo_handles_union_targets(memo, dispatch):
 
     a = A()
     assert f(a) is a
-    assert memo[A, A | B] is True
+    assert identity_conversions[A, A | B] is True
     with pytest.raises(TypeError):
         f(1.0)
 
 
-def test_memo_is_bounded(memo, dispatch, monkeypatch):
-    """The memo stops growing at its limit instead of retaining types forever."""
+def test_recorded_identities_are_bounded(identity_conversions, dispatch, monkeypatch):
+    """Recording stops at the limit instead of retaining types forever."""
     monkeypatch.setattr(plum._promotion, "_IDENTITY_CONVERSION_LIMIT", 3)
 
     @dispatch
@@ -377,35 +369,15 @@ def test_memo_is_bounded(memo, dispatch, monkeypatch):
     types = [type(f"C{i}", (), {}) for i in range(10)]
     for t in types:
         assert f(t()) is not None
-    assert len(memo) == 3
+    assert len(identity_conversions) == 3
 
 
-def test_memo_not_used_when_a_conversion_method_applies(memo, dispatch):
-    """`Sub` is a `Base`, so the fallback *would* have returned it unchanged; what
-    makes the pair unmemoisable is that a conversion method claims it first."""
+def test_unhashable_target_still_raises(identity_conversions, dispatch):
+    """An unhashable target raises, as it always has.
 
-    class Base:
-        pass
-
-    class Sub(Base):
-        pass
-
-    add_conversion_method(Sub, Base, lambda _: "converted")
-
-    @dispatch
-    def f(x: Sub) -> Base:
-        return x
-
-    obj = Sub()
-    assert f(obj) == "converted"
-    assert memo[(Sub, Base)] is False
-    # The second call must convert too, rather than take a memoised shortcut.
-    assert f(obj) == "converted"
-
-
-def test_unhashable_target_still_raises(memo, dispatch):
-    """The memo hashes `(type(obj), type_to)`, but so does the method lookup it
-    replaces, so such a target has never been usable."""
+    The cache hashes `(type(obj), type_to)`, but so does the method lookup it
+    replaces, so such a target has never been usable.
+    """
 
     class Meta(type):
         __hash__ = None  # The class object itself is unhashable.
