@@ -5,18 +5,21 @@ import textwrap
 import threading
 from collections.abc import Callable
 from copy import copy
-from functools import wraps
+from functools import partial, wraps
 from types import MethodType
-from typing import Any, Protocol, TypeVar, overload
+from typing import Any, ClassVar, Protocol, TypeVar, overload
 from typing_extensions import Self
 
 from ._method import Method, MethodList
+from ._mypyc import mypyc_attr
 from ._resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
 from ._signature import Signature, append_default_args
 from ._type import resolve_type_hint
 from ._util import TypeHint
 
-_promised_convert = None
+# Annotated (not left to inference as `None`) so a `mypyc`-compiled `_function` accepts
+# the external assignment `plum._function._promised_convert = convert` in `_promotion`.
+_promised_convert: Callable[..., Any] | None = None
 """function or None: This will be set to :func:`.parametric.convert`."""
 
 SomeExceptionType = TypeVar("SomeExceptionType", bound=Exception)
@@ -44,20 +47,79 @@ _owner_transfer: dict[type, type] = {}
 a function (see :meth:`Function.owner`), make the corresponding value the owner."""
 
 
-class _FunctionMeta(type):
-    """:class:`Function` implements `__doc__`, which overrides the docstring of the
-    class. This simple metaclass ensures that `Function.__doc__` still prints as the
-    docstring of the class."""
-
-    _class_doc: str | None
-
-    @property
-    def __doc__(self) -> str | None:  # type: ignore[override]
-        return self._class_doc
+class _Wrappable(Protocol):
+    __name__: str
+    __qualname__: str
+    __wrapped__: Callable[..., Any]
 
 
-class Function(metaclass=_FunctionMeta):
-    """A function.
+def _wraps(wrapper: _Wrappable, wrapped: Callable[..., Any], /) -> None:
+    """Copy `wrapped`'s metadata onto `wrapper`, like :func:`functools.wraps`.
+
+    `functools.wraps` cannot be used: it writes the read-only native `__module__` and
+    updates a `__dict__` that native instances lack.
+    """
+    wrapper.__name__ = wrapped.__name__
+    wrapper.__qualname__ = _generate_qualname(wrapped)
+    wrapper.__wrapped__ = wrapped
+
+
+@mypyc_attr(native_class=False)
+class _InvokedMethod:
+    """Run the resolved `method` and convert the result.
+
+    Callable returned by :meth:`Function.invoke`. A class rather than a closure,
+    which `mypyc` cannot compile (mypyc/mypyc#1205); non-native so
+    :func:`functools.wraps` can copy `__name__`/`__doc__` onto instances.
+    """
+
+    def __init__(
+        self, f: Callable[..., Any], method: Callable[..., Any], return_type: TypeHint
+    ) -> None:
+        self._method = method
+        self._return_type = return_type
+        wraps(f)(self)
+        self.__wrapped_by_plum__ = method
+
+    def __call__(self, *args: Any, **kw: Any) -> Any:
+        return _convert(self._method(*args, **kw), self._return_type)
+
+
+class _DocDescriptor:
+    """Serve `__doc__`: `_class_doc` on class access, `_compute_doc()` on instances.
+
+    Shared by `Function` and `_BoundFunction`.
+    """
+
+    def __get__(self, instance: Any, owner: type) -> str | None:
+        if instance is None:
+            return getattr(owner, "_class_doc", None)
+        doc: str | None = instance._compute_doc()
+        return doc
+
+
+@mypyc_attr(native_class=False)
+class _ModuleDescriptor(str):
+    """Serve `__module__` as the wrapped function's module on instance access.
+
+    Shared by `Function` and `_BoundFunction`.
+
+    A `str` subclass because CPython returns a class-level `__module__` verbatim
+    without calling `__get__`, so the value itself must be a valid module string for
+    tools like Sphinx; instance access does call `__get__`. (A `str` subclass is
+    non-native, but `__module__` access is not on the hot path.)
+    """
+
+    __slots__ = ()
+
+    def __get__(self, instance: Any, owner: type) -> str:
+        module: str = instance._f.__module__
+        return module
+
+
+class Function:
+    #: The class-level docstring, served as `Function.__doc__` by `_DocDescriptor`.
+    _class_doc: ClassVar[str] = """A function.
 
     Args:
         f (function): Function that is wrapped.
@@ -66,11 +128,22 @@ class Function(metaclass=_FunctionMeta):
             redefined. Defaults to `False`.
     """
 
-    # When we set `__doc__`, we will lose the docstring of the class, so we save it now.
-    # Correctly printing the docstring is handled by :class:`_FunctionMeta`.
-    _class_doc = __doc__
+    _instances: ClassVar[list["Function"]] = []
 
-    _instances: list["Function"] = []
+    # Instance attributes are declared so `Function` can be a `mypyc` native class.
+    _f: Callable[..., Any]
+    _cache: dict[tuple[TypeHint, ...], tuple[Callable[..., Any], TypeHint]]
+    _doc: str
+    _owner_name: str | None
+    _owner: type | None
+    _warn_redefinition: bool
+    _pending: list[tuple[Callable[..., Any], Signature | None, int | None]]
+    _resolved: list[tuple[Callable[..., Any], Signature | None, int | None]]
+    _resolver: Resolver
+    _lock: threading.RLock
+    __name__: str
+    __qualname__: str
+    __wrapped__: Callable[..., Any]
 
     def __init__(
         self,
@@ -81,10 +154,9 @@ class Function(metaclass=_FunctionMeta):
     ) -> None:
         Function._instances.append(self)
 
-        self._f: Callable[..., Any] = f
+        self._f = f
         # Cache maps type tuples to `(method, return_type)`. Keys can be either
         # actual types (from `__call__`) or `TypeHints` (from `invoke`).
-        self._cache: dict[tuple[TypeHint, ...], tuple[Callable[..., Any], TypeHint]]
         self._cache = {}
 
         # Guards the lazy resolution of pending registrations, which mutates each
@@ -94,29 +166,24 @@ class Function(metaclass=_FunctionMeta):
         # lock. See GitHub issue #274.
         self._lock = threading.RLock()
 
-        wraps(f)(self)  # Sets `self._doc`.
-
-        self.__name__ = f.__name__
-        self.__qualname__ = _generate_qualname(f)
+        # `__doc__` is the `_DocDescriptor`, so store the raw docstring in `self._doc`.
+        _wraps(self, f)
+        self._doc = f.__doc__ if f.__doc__ else ""
 
         # `owner` is the name of the owner. We will later attempt to resolve to
         # which class it actually points.
-        self._owner_name: str | None = owner
-        self._owner: type | None = None
+        self._owner_name = owner
+        self._owner = None
 
         self._warn_redefinition = warn_redefinition
 
         # Initialise pending and resolved methods.
-        self._pending: list[
-            tuple[Callable[..., Any], Signature | None, int | None]
-        ] = []
+        self._pending = []
         self._resolver = Resolver(
             self.__name__,
             warn_redefinition=self._warn_redefinition,
         )
-        self._resolved: list[
-            tuple[Callable[..., Any], Signature | None, int | None]
-        ] = []
+        self._resolved = []
 
     @property
     def owner(self) -> type | None:
@@ -130,13 +197,11 @@ class Function(metaclass=_FunctionMeta):
                 self._owner = _owner_transfer[self._owner]
         return self._owner
 
-    @property
-    def __doc__(self) -> str | None:
-        """str or None: Documentation of the function. This consists of the
-        documentation of the function given at initialisation with the documentation
-        of all other registered methods appended.
+    def _compute_doc(self) -> str | None:
+        """Compute the function's documentation.
 
-        Upon instantiation, this property is available through `obj.__doc__`.
+        This is the documentation given at initialisation, with the documentation of
+        all other registered methods appended.
         """
         try:
             self._resolve_pending_registrations()
@@ -186,11 +251,6 @@ class Function(metaclass=_FunctionMeta):
         # the docstring.
         return doc if doc else None
 
-    @__doc__.setter
-    def __doc__(self, value: str | None, /) -> None:
-        # Ensure that `self._doc` remains a string.
-        self._doc = value if value else ""
-
     @property
     def methods(self) -> MethodList:
         """list[:class:`.method.Method`]: All available methods."""
@@ -209,10 +269,8 @@ class Function(metaclass=_FunctionMeta):
             function: Decorator.
         """
         if method is None:
-            return lambda m: self.dispatch(m, precedence=precedence)  # type: ignore[return-value]
-
-        self.register(method, precedence=precedence)
-        return self
+            return partial(self._register_one, precedence=precedence)
+        return self._register_one(method, precedence=precedence)
 
     def dispatch_multi(
         self: Self, *signatures: Signature | tuple[TypeHint, ...]
@@ -233,18 +291,38 @@ class Function(metaclass=_FunctionMeta):
             elif isinstance(signature, tuple):
                 resolved_signatures.append(Signature(*signature))
             else:
-                raise ValueError(
+                # `TypeError` (not `ValueError`) to match the compiled build, where the
+                # typed vararg rejects bad input at the C boundary before this runs.
+                raise TypeError(
                     f"Signature `{signature}` must be a tuple or of type "
                     f"`plum.signature.Signature`."
                 )
+        return partial(self._register_multiple, signatures=resolved_signatures)
 
-        def decorator(method: Callable[..., Any]) -> "Function":
-            # The precedence will not be used, so we can safely set it to `None`.
-            for signature in resolved_signatures:
-                self.register(method, signature=signature, precedence=None)
-            return self
+    def _register_one(
+        self: Self, method: Callable[..., Any], /, *, precedence: int = 0
+    ) -> Self:
+        """Register `method` by `precedence` and return the function itself.
 
-        return decorator  # type: ignore[return-value]
+        Registration path for :meth:`dispatch`. A bound method so the decorator form
+        can be built with :func:`functools.partial` rather than a `self`-capturing
+        closure, which `mypyc` cannot compile (mypyc/mypyc#1205).
+        """
+        self.register(method, precedence=precedence)
+        return self
+
+    def _register_multiple(
+        self: Self, method: Callable[..., Any], /, *, signatures: list[Signature]
+    ) -> Self:
+        """Register `method` for every signature and return the function itself.
+
+        Registration path for :meth:`dispatch_multi`. See :meth:`_register_one` for
+        why this is a bound method.
+        """
+        for signature in signatures:
+            # `precedence` is derived from each signature, so it is left as `None`.
+            self.register(method, signature=signature, precedence=None)
+        return self
 
     def clear_cache(self, reregister: bool = True) -> None:
         """Clear cache.
@@ -353,21 +431,25 @@ class Function(metaclass=_FunctionMeta):
             impl = method.implementation
             return_type = method.return_type
 
-        except AmbiguousLookupError as e:
+        # The two `except` clauses use distinct variable names (`e_ambiguous` /
+        # `e_not_found`) rather than a shared `e`: `mypyc` gives a reused exception
+        # variable a single type, so binding the second exception type to it fails a
+        # runtime type check.
+        except AmbiguousLookupError as e_ambiguous:
             __tracebackhide__ = True
 
             # Change the function name if this is a method.
             if self.owner:
-                e.f_name = self.__qualname__
-            raise e from None
+                e_ambiguous.f_name = self.__qualname__
+            raise e_ambiguous from None
 
-        except NotFoundLookupError as e:
+        except NotFoundLookupError as e_not_found:
             __tracebackhide__ = True
 
             # Change the function name if this is a method.
             if self.owner:
-                e.f_name = self.__qualname__
-            impl, return_type = self._handle_not_found_lookup_error(e)
+                e_not_found.f_name = self.__qualname__
+            impl, return_type = self._handle_not_found_lookup_error(e_not_found)
 
         return impl, return_type
 
@@ -470,14 +552,7 @@ class Function(metaclass=_FunctionMeta):
             function: Method.
         """
         method, return_type = self._resolve_method_with_cache(types=types)
-
-        @wraps(self._f)
-        def wrapped_method(*args: Any, **kw: Any) -> Any:
-            return _convert(method(*args, **kw), return_type)
-
-        wrapped_method.__wrapped_by_plum__ = method  # type: ignore[attr-defined]
-
-        return wrapped_method
+        return _InvokedMethod(self._f, method, return_type)
 
     @overload
     def __get__(self, instance: None, owner: type, /) -> "Function": ...
@@ -497,6 +572,14 @@ class Function(metaclass=_FunctionMeta):
             f" {len(self._resolver)} registered and {len(self._pending)}"
             f" pending method(s))>"
         )
+
+
+# Attach `__doc__`/`__module__` here, not in the class body: `mypyc` replaces a class
+# `__doc__` with a filler, and `__module__` is read-only on a native instance. These
+# descriptors serve instance access (`f.__doc__`, `f.__module__`). `setattr` also stops
+# `mypy` treating these as class variables.
+setattr(Function, "__doc__", _DocDescriptor())  # noqa: B010
+setattr(Function, "__module__", _ModuleDescriptor(__name__))  # noqa: B010
 
 
 def _generate_qualname(f: Callable[..., Any], /) -> str:
@@ -554,52 +637,39 @@ class _BoundFunctionProto(Protocol):
     ) -> Any: ...
 
 
+@mypyc_attr(native_class=False)
 class _BoundFunction:
-    """A bound instance of `.function.Function`.
+    #: The class-level docstring, served as `_BoundFunction.__doc__` by
+    #: `_DocDescriptor`.
+    _class_doc: ClassVar[str] = """A bound instance of `.function.Function`.
 
     Args:
         f (:class:`.function.Function`): Bound function.
         instance (object): Instance to which the function is bound.
     """
 
-    _f: "_BoundFunctionProto"
-    _instance: object
+    # Declared so `_wraps` can write them (see the `_Wrappable` protocol).
+    __name__: str
+    __qualname__: str
+    __wrapped__: Callable[..., Any]
 
     def __init__(self, f: "Function", instance: object) -> None:
-        self._f = f
-        wraps(f._f)(self)  # This will call the setter for `__doc__`.
+        self._f: _BoundFunctionProto = f
         self._instance = instance
+        # `__doc__`/`__module__` are served by the descriptors attached below.
+        _wraps(self, f._f)
 
-    @property
-    def __doc__(self) -> str | None:
+    def _compute_doc(self) -> str | None:
         return self._f.__doc__
-
-    @__doc__.setter
-    def __doc__(self, value: str | None, /) -> None:
-        # Don't need to do anything here. The docstring will be derived from `self._f`.
-        # We, however, do need to implement this method, because :func:`wraps` calls
-        # it.
-        pass
 
     def __call__(self, _: object, *args: object, **kw: object) -> object:
         return self._f(self._instance, *args, **kw)
 
     def invoke(self, *types: TypeHint) -> Callable[..., Any]:
         """See :meth:`.Function.invoke`."""
-
-        @wraps(self._f._f)
-        def wrapped_method(*args: Any, **kw: Any) -> Any:
-            # TODO: Can we do this without `type` here?
-            method = self._f.invoke(type(self._instance), *types)
-            return method(self._instance, *args, **kw)
-
-        # We set `f.__wrapped_by_plum__` for :func:`Function.invoke`, but here
-        # we do not: this method has `self._instance` prepended to its
-        # arguments, so there is no "wrapped method". In addition, bound
-        # functions cannot be directly extended, so unwrapping is likely never
-        # desired.
-
-        return wrapped_method
+        # Unlike `Function.invoke`, `_BoundInvokedMethod` sets no `__wrapped_by_plum__`:
+        # it prepends `self._instance`, so there is no extendable method to unwrap to.
+        return _BoundInvokedMethod(self, types)
 
     @property
     def methods(self) -> MethodList:
@@ -610,3 +680,25 @@ class _BoundFunction:
     def dispatch(self) -> _DispatchFunction:
         """See :meth:`.Function.dispatch`."""
         return self._f.dispatch
+
+
+# See `Function` above: the descriptors serve `__doc__`/`__module__` on instances.
+setattr(_BoundFunction, "__doc__", _DocDescriptor())  # noqa: B010
+setattr(_BoundFunction, "__module__", _ModuleDescriptor(__name__))  # noqa: B010
+
+
+@mypyc_attr(native_class=False)
+class _BoundInvokedMethod:
+    """Callable returned by :meth:`_BoundFunction.invoke` (see there)."""
+
+    def __init__(self, bound: "_BoundFunction", types: tuple[TypeHint, ...]) -> None:
+        self._bound = bound
+        self._types = types
+        # `bound.__wrapped__` is the underlying function (`f._f`), set in
+        # `_BoundFunction.__init__`.
+        wraps(bound.__wrapped__)(self)
+
+    def __call__(self, *args: Any, **kw: Any) -> Any:
+        # TODO: Can we do this without `type` here?
+        method = self._bound._f.invoke(type(self._bound._instance), *self._types)
+        return method(self._bound._instance, *args, **kw)
