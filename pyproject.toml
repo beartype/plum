@@ -185,6 +185,7 @@ addopts = [
 minversion = "6.0"
 markers = [
     "incompatible_with_mypyc: marks tests as incompatible with mypyc-compiled code",
+    "benchmark: marks tests that assert on timings; deselect with `-m 'not benchmark'`",
 ]
 
 

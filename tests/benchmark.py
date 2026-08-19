@@ -105,6 +105,7 @@ print()
 # Every benchmark above returns through an unannotated method, which plum
 # short-circuits. An annotated return goes through `convert` instead, so it is measured
 # separately here - and a union is the case that costs the most to check.
+# This script only reports; `tests/test_benchmark.py` asserts on the same ratio.
 
 
 class R1:
