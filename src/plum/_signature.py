@@ -185,7 +185,7 @@ class Signature(Comparable):
         # As in `__eq__`, use `_type_hint_eq` so that `Any` only equals `Any`
         # itself; see its docstring.
         if all(
-            [_type_hint_eq(x, y) for x, y in zip(self_types, other_types, strict=True)]
+            _type_hint_eq(x, y) for x, y in zip(self_types, other_types, strict=True)
         ):
             if self.has_varargs and other.has_varargs:
                 return _type_hint_le(self.varargs, other.varargs)
@@ -202,7 +202,7 @@ class Signature(Comparable):
         # As above, use `_type_hint_le` so that `Any` is only a subhint of `Any`
         # itself; see its docstring.
         elif all(
-            [_type_hint_le(x, y) for x, y in zip(self_types, other_types, strict=True)]
+            _type_hint_le(x, y) for x, y in zip(self_types, other_types, strict=True)
         ):
             # In this case, we have that `other >= self` is `False`, so returning `True`
             # gives that `other < self` and returning `False` gives that `other` cannot

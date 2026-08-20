@@ -11,7 +11,7 @@ import sys
 import typing
 import warnings
 from collections.abc import Callable, Hashable
-from functools import reduce
+from functools import lru_cache, reduce
 from operator import or_
 from types import UnionType
 from typing import (
@@ -294,6 +294,7 @@ def resolve_type_hint(x: object, /) -> object:
     return x
 
 
+@lru_cache(maxsize=4096)
 def _substitute_nested_any(hint: object, /) -> object:
     """Replace every `Any` strictly below the root of `hint` with `object`.
 
@@ -306,6 +307,18 @@ def _substitute_nested_any(hint: object, /) -> object:
 
     A hint that cannot be rebuilt is returned unchanged, leaving `beartype`'s own
     semantics in place rather than failing the comparison.
+
+    `_type_hint_le`/`_type_hint_eq` call this on every non-`Any` signature
+    comparison, i.e. on essentially every dispatch resolution and method
+    registration -- but the set of distinct type hints in a program is small and
+    fixed (the annotations written in its `@dispatch`-decorated signatures), while
+    the number of *comparisons* between them is not: the same hints get walked
+    over and over. `lru_cache` turns that from "recurse and rebuild every time"
+    into "recurse once per distinct hint, then a dict lookup", including for
+    hints nested inside others (`int` inside `list[int]` inside `dict[str,
+    list[int]]`, ...) -- self-recursive calls hit the cache too. Hints reachable
+    here are already required to be hashable elsewhere (`Signature.__hash__`
+    hashes them directly), so this adds no new constraint.
 
     Args:
         hint (object): Already-resolved type hint.
