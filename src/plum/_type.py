@@ -384,10 +384,14 @@ def _type_hint_le(x: object, y: object, /) -> bool:
 
 
 def _type_hint_eq(x: object, y: object, /) -> bool:
-    """Check whether two already-resolved type hints are the same.
+    """Check whether two already-resolved type hints are the same, for the same
+    signature-bookkeeping purposes as `_type_hint_le` (and with the same `Any`
+    and nested-`Any` handling).
 
-    This equality check is used for signature bookkeeping and is built on
-    `_type_hint_le` via antisymmetry: `x <= y and y <= x` implies `x == y`.
+    This does not call `_type_hint_le(x, y) and _type_hint_le(y, x)`: each call
+    would independently substitute and wrap both `x` and `y`, doubling that work
+    for no benefit, since `beartype.door.TypeHint.__eq__` already performs (and
+    caches) the equivalent bidirectional subhint check in a single pass.
 
     Args:
         x (object): First, already-resolved type hint.
@@ -396,7 +400,14 @@ def _type_hint_eq(x: object, y: object, /) -> bool:
     Returns:
         bool: Whether `x` and `y` denote the same type.
     """
-    return _type_hint_le(x, y) and _type_hint_le(y, x)
+    x_is_any = x is Any
+    y_is_any = y is Any
+    if x_is_any or y_is_any:
+        return x_is_any and y_is_any
+    return bool(
+        TypeHintWrapper(_substitute_nested_any(x))
+        == TypeHintWrapper(_substitute_nested_any(y))
+    )
 
 
 def is_faithful(x: object, /) -> bool:
