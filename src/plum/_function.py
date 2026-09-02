@@ -637,7 +637,6 @@ class _BoundFunctionProto(Protocol):
     ) -> Any: ...
 
 
-@mypyc_attr(native_class=False)
 class _BoundFunction:
     #: The class-level docstring, served as `_BoundFunction.__doc__` by
     #: `_DocDescriptor`.
@@ -648,15 +647,20 @@ class _BoundFunction:
         instance (object): Instance to which the function is bound.
     """
 
-    # Declared so `_wraps` can write them (see the `_Wrappable` protocol).
+    # Declared so `_BoundFunction` is a `mypyc` native class (like `Function`), which
+    # speeds up bound (class-method) dispatch. `_f` holds a `Function` (typed as proto);
+    # the dunders are also what `_wraps` writes (see the `_Wrappable` protocol).
+    _f: _BoundFunctionProto
+    _instance: object
     __name__: str
     __qualname__: str
     __wrapped__: Callable[..., Any]
 
     def __init__(self, f: "Function", instance: object) -> None:
-        self._f: _BoundFunctionProto = f
+        self._f = f
         self._instance = instance
-        # `__doc__`/`__module__` are served by the descriptors attached below.
+        # Wrap the underlying function `f._f`, like `Function`. `__doc__`/`__module__`
+        # are served by the descriptors attached below.
         _wraps(self, f._f)
 
     def _compute_doc(self) -> str | None:
