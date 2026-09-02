@@ -1009,7 +1009,6 @@ document.write(`
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span> <span class="o">...</span>
 
 
-<span class="nd">@mypyc_attr</span><span class="p">(</span><span class="n">native_class</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">_BoundFunction</span><span class="p">:</span>
     <span class="c1">#: The class-level docstring, served as `_BoundFunction.__doc__` by</span>
     <span class="c1">#: `_DocDescriptor`.</span>
@@ -1020,15 +1019,20 @@ document.write(`
 <span class="s2">        instance (object): Instance to which the function is bound.</span>
 <span class="s2">    &quot;&quot;&quot;</span>
 
-    <span class="c1"># Declared so `_wraps` can write them (see the `_Wrappable` protocol).</span>
+    <span class="c1"># Declared so `_BoundFunction` is a `mypyc` native class (like `Function`), which</span>
+    <span class="c1"># speeds up bound (class-method) dispatch. `_f` holds a `Function` (typed as proto);</span>
+    <span class="c1"># the dunders are also what `_wraps` writes (see the `_Wrappable` protocol).</span>
+    <span class="n">_f</span><span class="p">:</span> <span class="n">_BoundFunctionProto</span>
+    <span class="n">_instance</span><span class="p">:</span> <span class="nb">object</span>
     <span class="vm">__name__</span><span class="p">:</span> <span class="nb">str</span>
     <span class="vm">__qualname__</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">__wrapped__</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="s2">&quot;Function&quot;</span><span class="p">,</span> <span class="n">instance</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_f</span><span class="p">:</span> <span class="n">_BoundFunctionProto</span> <span class="o">=</span> <span class="n">f</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_f</span> <span class="o">=</span> <span class="n">f</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_instance</span> <span class="o">=</span> <span class="n">instance</span>
-        <span class="c1"># `__doc__`/`__module__` are served by the descriptors attached below.</span>
+        <span class="c1"># Wrap the underlying function `f._f`, like `Function`. `__doc__`/`__module__`</span>
+        <span class="c1"># are served by the descriptors attached below.</span>
         <span class="n">_wraps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">_f</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_compute_doc</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
