@@ -1,4 +1,5 @@
 import abc
+import enum
 import sys
 import typing
 from numbers import Number
@@ -6,8 +7,11 @@ from typing import Annotated, Any, Literal, Union
 
 import pytest
 
+from plum._bear import is_bearable
 from plum._type import (
+    _ARG_KEYS,
     _IDENTITY,
+    KeyPart,
     ModuleType,
     PromisedType,
     ResolvableType,
@@ -426,7 +430,8 @@ class _Unfaithful:
         (tuple[()], False, False),
         (typing.Tuple[()], False, False),  # noqa: UP006
         (typing.Union[tuple[()], int], False, False),  # noqa: UP007
-        (typing.Literal[1], False, False),
+        (typing.Literal[1], False, True),
+        (list[typing.Literal[1]], False, False),
         (list[type[int]], False, False),
         (type[_Unfaithful], False, False),
     ],
@@ -478,6 +483,107 @@ def test_cache_spec_no_eq():
     class NoEq:
         def __eq__(self, other):
             raise AssertionError("`__eq__` must not be called.")
+
+
+def test_is_cacheable_literal():
+    """`Literal` is cacheable (via the value key part) but not faithful."""
+    assert not is_faithful(Literal[1])
+    assert is_cacheable(Literal[1])
+    assert is_cacheable(Literal[1, 2])
+    assert is_cacheable(Literal["a", None])
+    # Unions and containers combine as usual.
+    assert is_cacheable(typing.Union[Literal[1], str])  # noqa: UP007
+    assert is_cacheable(typing.Union[Literal[1], type[int]])  # noqa: UP007
+    assert not is_cacheable(list[Literal[1]])
+
+
+def test_cache_key_value_part_is_opt_in():
+    """Only a resolver that asks for `VALUE` pays for the value slot."""
+    identity_only = frozenset({KeyPart.IDENTITY})
+    value_only = frozenset({KeyPart.VALUE})
+
+    # A `type[X]`-only resolver's key is unchanged: `(type(x), identity(x))`.
+    assert cache_key(1, spec=identity_only) == (int, None)
+    assert len(cache_key(int, spec=identity_only)) == 2
+
+    # A `Literal`-only resolver captures the value and nothing else.
+    assert cache_key(1, spec=value_only) == (int, 1)
+    assert cache_key(2, spec=value_only) == (int, 2)
+    assert cache_key(1, spec=value_only) != cache_key(2, spec=value_only)
+    # `True` and `1` are equal but not interchangeable for `Literal`: the type slot
+    # keeps them apart.
+    assert cache_key(True, spec=value_only) != cache_key(1, spec=value_only)
+    # A value that can never match any `Literal` gets an empty slot.
+    assert cache_key(1.5, spec=value_only) == (float, None)
+    assert cache_key([1], spec=value_only) == (list, None)
+
+
+def test_cache_key_value_covers_literal_matching_subclasses():
+    """Subclass instances match `Literal`s, so their value must be captured."""
+    value_only = frozenset({KeyPart.VALUE})
+
+    class MyInt(int):
+        pass
+
+    assert is_bearable(MyInt(1), Literal[1])
+    assert not is_bearable(MyInt(2), Literal[1])
+    assert cache_key(MyInt(1), spec=value_only) != cache_key(MyInt(2), spec=value_only)
+
+    class MyEnum(enum.IntEnum):
+        A = 1
+        B = 2
+
+    assert is_bearable(MyEnum.A, Literal[1])
+    assert cache_key(MyEnum.A, spec=value_only) != cache_key(MyEnum.B, spec=value_only)
+
+
+def test_cache_key_value_survives_unhashable_values():
+    """An unhashable argument must not make the key raise."""
+    value_only = frozenset({KeyPart.VALUE})
+
+    class Unhashable(str):
+        def __eq__(self, other):
+            return str(self) == str(other)
+
+        __hash__ = None  # type: ignore[assignment]
+
+    a, b = Unhashable("a"), Unhashable("b")
+    assert is_bearable(a, Literal["a"])
+    assert not is_bearable(b, Literal["a"])
+
+    d = {cache_key(a, spec=value_only): 1, cache_key(b, spec=value_only): 2}
+    assert len(d) == 2
+    assert d[cache_key(a, spec=value_only)] == 1
+
+    # Plain unhashable values are fine too.
+    hash(cache_key([1], spec=value_only))
+
+
+def test_arg_keys_agree_with_cache_key():
+    """`_ARG_KEYS` is a hot-path specialisation of `cache_key`: keep them in sync."""
+    from itertools import chain, combinations
+
+    subsets = [
+        frozenset(s)
+        for s in chain.from_iterable(
+            combinations(KeyPart, r) for r in range(len(KeyPart) + 1)
+        )
+    ]
+    assert set(_ARG_KEYS) == set(subsets)
+
+    class SomeClass:
+        pass
+
+    values = [1, True, "x", b"x", None, 1.5, [1], SomeClass, int, SomeClass()]
+    for spec in subsets:
+        for x in values:
+            expected = cache_key(x, spec=spec)
+            actual = _ARG_KEYS[spec](x)
+            if spec:
+                assert actual == expected, (spec, x)
+            else:
+                # The faithful specialisation is plain `type`, not a 1-tuple.
+                assert (actual,) == expected, (spec, x)
 
     with pytest.warns(UserWarning, match="faithful or cacheable"):
         assert _cache_spec(NoEq()) is None

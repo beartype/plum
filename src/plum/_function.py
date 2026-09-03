@@ -14,9 +14,25 @@ from ._method import Method, MethodList
 from ._mypyc import NativeBase, mypyc_attr
 from ._resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
 from ._signature import Signature, append_default_args
-from ._type import resolve_type_hint
+from ._type import KeyPart, resolve_type_hint
 from ._util import TypeHint
 from ._wraps import update_wrapper, update_wrapper_names
+
+_VALUE_CACHE_LIMIT = 4096
+"""Maximum number of entries cached for a function whose methods dispatch on a
+`Literal`.
+
+Such a function gets one entry per distinct *value* ever passed, and the key holds a
+strong reference to it, so `Literal["ready"]` beside a `str` fallback would otherwise
+grow with the caller's data forever. Past the cap, arguments resolve normally: the cap
+costs time, never correctness. 4096 entries is a few hundred kilobytes, and a genuine
+vocabulary of literals -- states, flags, enum names -- is far smaller.
+
+Only `VALUE` is capped: a literal vocabulary is caller *data*, unbounded by
+construction, whereas a type vocabulary is program *code*, bounded by what the program
+declares. `f.clear_cache()` releases the type-keyed entries; evicting them one at a
+time would want a `weakref.finalize` per cached class and a reverse index from class
+to keys."""
 
 # Annotated (not left to inference as `None`) so a `mypyc`-compiled `_function` accepts
 # the external assignment `plum._function._promised_convert = convert` in `_promotion`.
@@ -540,7 +556,11 @@ class Function(NativeBase):
         # dictionary, which nothing reads any more.
         cache = self._cache
         method, return_type = self.resolve_method(args)
-        if self._resolver.cache_spec is not None:
+        spec = self._resolver.cache_spec
+        # A resolver keyed on `Literal` values is capped; see `_VALUE_CACHE_LIMIT`.
+        if spec is not None and not (
+            KeyPart.VALUE in spec and len(cache) >= _VALUE_CACHE_LIMIT
+        ):
             cache[key] = method, return_type
         return method, return_type
 

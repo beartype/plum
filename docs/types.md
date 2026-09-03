@@ -93,7 +93,7 @@ For example, this means that `list[T1]` is a subtype of `list[T2]` whenever
 Plum achieves performance by caching the dispatch process.
 Unfortunately, efficient caching is not always possible.
 Efficient caching is possible for so-called _cacheable_ types.
-The dispatch result for an argument `x` is cached under a key `cache_key(x)`, which captures `type(x)` and, if some method dispatches on a class, the identity of `x`.
+The dispatch result for an argument `x` is cached under a key `cache_key(x)`, which captures `type(x)` and, if some method needs it, the identity of `x` if `x` is a class and the value of `x` if a `Literal` could match it.
 Equal keys imply the same match result, but do not depend on the layout of the key, which may change.
 
 ````{admonition} Definition: cacheable type
@@ -114,10 +114,28 @@ isinstance(x, t) == issubclass(type(x), t)
 ````
 
 Every faithful type is cacheable.
-Dispatching on a class via `type[X]` (or `typing.Type[X]`) is cacheable but _not_ faithful: `issubclass(x, X)` depends on the identity of the class `x`, which `cache_key` captures.
+Two kinds of types are cacheable but _not_ faithful:
 
-For example, `int` is faithful, since `type(1) == int`;
-but `Literal[1]` is not faithful, since `issubclass(int, Literal[1])` is false.
+- `type[X]` (or `typing.Type[X]`): `issubclass(x, X)` depends on the identity of the
+  class `x`, which `cache_key` captures.
+- `Literal[...]`: the match depends on the *value* of `x`, likewise captured.
+
+For example, `int` is faithful, since `type(1) == int`; but `Literal[1]` is not
+faithful, since `issubclass(int, Literal[1])` is false. It is still cacheable, so
+dispatching on it is fast.
+
+```{admonition} Caching a `Literal` is bounded; caching `type[X]` is not
+:class: warning
+A key slot holds a strong reference to what it captures -- that is what makes
+identity-based keying sound. A function dispatching on `Literal` therefore gets one
+entry per distinct *value* ever passed, which for `Literal["ready"]` beside a `str`
+fallback would grow with the caller's data, so that cache stops growing at 4096
+entries; beyond it, arguments simply resolve as they did before `Literal` was cacheable
+at all. A function dispatching on `type[X]` gets one entry per distinct argument class
+and is *not* capped, since classes are bounded in practice -- but dynamically created
+classes stay alive for the function's lifetime. Call `f.clear_cache()` or
+`plum.clear_all_cache()` to release them.
+```
 
 Methods which have signatures that depend only on cacheable types will
 be performant.
@@ -138,15 +156,15 @@ def add_5_faithful(x: int):
 
 
 @dispatch
-def add_5_unfaithful(x: Literal[1]):
-    return x + 5
+def add_5_uncacheable(x: list[int]):
+    return x + [5]
 ```
 
 ```python
 >>> %timeit add_5_faithful(1)  # doctest:+SKIP
 585 ns ± 6.2 ns per loop (mean ± std. dev. of 7 runs, 1,000,000 loops each)
 
->>> %timeit add_5_unfaithful(1)  # doctest:+SKIP
+>>> %timeit add_5_uncacheable([1])  # doctest:+SKIP
 6.24 µs ± 68.9 ns per loop (mean ± std. dev. of 7 runs, 100,000 loops each)
 ```
 
@@ -167,6 +185,12 @@ False
 
 >>> is_cacheable(type[int])
 True
+
+>>> is_cacheable(Literal[1])
+True
+
+>>> is_cacheable(list[int])
+False
 ```
 
 If you implement, e.g., a type with a custom `__instancecheck__`, then `is_faithful`

@@ -455,10 +455,12 @@ UNION_TYPES = (typing.Union, UnionType, typing.Optional)
 class KeyPart(enum.Enum):
     """Part of a cache key beyond `type(x)` that a non-faithful type may need.
 
-    `IDENTITY` is the class `x` itself, which `type[X]` needs.
+    `IDENTITY` is the class `x` itself, which `type[X]` needs. `VALUE` is the value of
+    `x`, which `Literal[...]` needs.
     """
 
     IDENTITY = "identity"
+    VALUE = "value"
 
 
 CacheSpec = frozenset[KeyPart]
@@ -480,6 +482,7 @@ here. Equal specs are then the same object and can be compared with `is`."""
 
 _NO_PARTS: CacheSpec = _CANONICAL_SPECS[frozenset()]
 _IDENTITY: CacheSpec = _CANONICAL_SPECS[frozenset({KeyPart.IDENTITY})]
+_VALUE: CacheSpec = _CANONICAL_SPECS[frozenset({KeyPart.VALUE})]
 _ALL_PARTS: CacheSpec = _CANONICAL_SPECS[frozenset(KeyPart)]
 
 
@@ -493,14 +496,14 @@ def _has_dunder_faithful(x: type, /) -> TypeGuard[_SupportsDunderFaithful]:
 
 
 class _Identity:
-    """Wrap a class so that it hashes by `id` and compares by identity.
+    """Wrap an object so that it hashes by `id` and compares by identity.
 
     The hash and equality of a class come from its metaclass, which can make distinct
-    classes compare equal or make a class unhashable. Holding `obj` ensures that its
-    `id` is not reused while the wrapper exists.
+    classes compare equal or make a class unhashable. A value can be unhashable too.
+    Holding `obj` ensures that its `id` is not reused while the wrapper exists.
 
     Args:
-        obj (type): Class to wrap.
+        obj (object): Object to wrap.
     """
 
     __slots__ = ("obj",)
@@ -526,12 +529,58 @@ def _identity(x: object, /) -> object | None:
     return x if type(x) is type else _Identity(x)
 
 
+_LITERAL_TYPES: frozenset[type] = frozenset({bool, int, str, bytes, type(None)})
+"""The exact types PEP 586 allows a `Literal` to hold; a value of one of these is
+keyed by its own value. Instances of *subclasses* also match a `Literal`, and are
+keyed differently -- see `_value`."""
+
+_LITERAL_BASES: tuple[type, ...] = (int, str, bytes, enum.Enum)
+"""Bases whose instances can also match a `Literal`: an `int` subclass and an
+`Enum` member both do. `bool` and `NoneType` cannot be subclassed, so they need no
+entry here."""
+
+
+def _value(x: object, /) -> object | None:
+    """The value component of `cache_key` for `x`.
+
+    Beartype matches `x` against `Literal[v]` exactly when `isinstance(x, type(v))`
+    and `x == v`. The first half is settled by `type(x)`, which the key already
+    carries; this slot settles the second half.
+
+    An `x` that is not an instance of any legal `Literal` type can never match any
+    `Literal`, so `type(x)` alone determines the answer and the slot is `None` — this
+    is also what keeps unhashable arguments (a `list`, say) out of the key.
+
+    Only an `x` of one of those types *exactly* is keyed on its value. Such an `x`
+    has the built-in `__eq__` and `__hash__`, under which equal keys really do imply
+    equal `x == literal` for every literal. A *subclass* instance can also match
+    (`is_bearable(MyInt(1), Literal[1])` is `True`), but its `__eq__` and `__hash__`
+    are user code and may be non-transitive, so two arguments could share a key while
+    matching different literals. It is therefore keyed on its identity instead, which
+    is strictly finer than its value and so never collides. This is the same
+    precaution :class:`_Identity` already takes for classes.
+
+    Args:
+        x (object): Value.
+
+    Returns:
+        object or None: The value component of the cache key for `x`.
+    """
+    if type(x) in _LITERAL_TYPES:
+        return x
+    if isinstance(x, _LITERAL_BASES):
+        # Note: this caches per object rather than per value. `Enum` members are
+        # singletons, so for them the two coincide.
+        return _Identity(x)
+    return None
+
+
 def cache_key(x: object, /, spec: CacheSpec = _ALL_PARTS) -> tuple[object, ...]:
     """Get a cache key for `x` with the parts in `spec`.
 
     If `is_cacheable(t)`, then whether `x` matches `t` depends only on `cache_key(x)`.
-    The layout of the key is an implementation detail. The `IDENTITY` part holds a
-    reference to `x`.
+    The layout of the key is an implementation detail. The `IDENTITY` and `VALUE` parts
+    can hold a reference to `x`.
 
     Args:
         x (object): Value.
@@ -543,7 +592,22 @@ def cache_key(x: object, /, spec: CacheSpec = _ALL_PARTS) -> tuple[object, ...]:
     key: tuple[object, ...] = (type(x),)
     if KeyPart.IDENTITY in spec:
         key += (_identity(x),)
+    if KeyPart.VALUE in spec:
+        key += (_value(x),)
     return key
+
+
+_ARG_KEYS: "dict[CacheSpec, Callable[[object], object]]" = {
+    _NO_PARTS: type,
+    _IDENTITY: lambda x: (type(x), _identity(x)),
+    _VALUE: lambda x: (type(x), _value(x)),
+    _IDENTITY | _VALUE: lambda x: (type(x), _identity(x), _value(x)),
+}
+"""`cache_key` specialised to each combination of spec, for :class:`.Resolver` to
+bind on the hot path. Testing `KeyPart` membership per call costs ~80 ns per key part
+(hashing an `Enum` member is not cheap), which is the bulk of a cached dispatch; these
+do the same work with the spec already decided. One entry per subset of `KeyPart`;
+`test_arg_keys_agree_with_cache_key` holds them to `cache_key`."""
 
 
 def is_faithful(x: object, /) -> bool:
@@ -574,8 +638,8 @@ def is_cacheable(x: object, /) -> bool:
     """Check whether a type hint is cacheable.
 
     A type or type hint `t` is _cacheable_ if, for all `x`, whether `x` matches `t`
-    depends only on `cache_key(x)`. Every faithful type is cacheable. `type[X]` is
-    cacheable, but not faithful.
+    depends only on `cache_key(x)`. Every faithful type is cacheable. `type[X]` and
+    `Literal[...]` are cacheable, but not faithful.
 
     Args:
         x (type or type hint): Type hint.
@@ -622,6 +686,8 @@ def _cache_spec(x: object, /) -> CacheSpec | None:
         if origin is type:
             # `issubclass(x, X)` depends only on `x` if `X` is faithful.
             return _IDENTITY if _combine(args) is _NO_PARTS else None
+        if origin is Literal:
+            return _VALUE
         if origin in UNION_TYPES:
             return _combine(args)
         return None
