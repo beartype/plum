@@ -32,11 +32,13 @@ _VerifyBucket = tuple[tuple[_VerifyEntry, ...], bool]
 entry that matches settles the call. See :meth:`Function._build_verify_bucket`."""
 
 _LITERAL_CACHE_LIMIT = 4096
-"""int: Maximum number of cache entries of a function that dispatches on `Literal`.
+"""int: Maximum number of cache entries of a function that dispatches on `Literal` or
+on a parametrised user generic.
 
 Such a function keys an instance of a subclass of `int`, `str` or `bytes` by identity,
-so a new entry could be added for every call. When the limit is reached, the cache is
-emptied."""
+and a parametrisation with unhashable arguments, like `Box[Annotated[int, {"a": 1}]]`,
+by identity too, so a new entry could be added for every call. When the limit is
+reached, the cache is emptied."""
 
 _VERIFY_CACHE_LIMIT = 4096
 """Maximum number of entries in the verify cache of a function.
@@ -698,7 +700,8 @@ class Function(NativeBase):
         if resolver.is_cacheable:
             # Empty a full cache rather than stop caching, so that arguments that are
             # first seen later are still cached.
-            if resolver.literals and len(cache) >= _LITERAL_CACHE_LIMIT:
+            bounded = resolver.literals or resolver.has_generic
+            if bounded and len(cache) >= _LITERAL_CACHE_LIMIT:
                 cache.clear()
             cache[key] = method, return_type
         return method, return_type
