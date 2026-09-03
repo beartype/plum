@@ -72,6 +72,7 @@ test_runtime = [
     "ipython>=8.18.1",
     "numpy>=2.0.2",
     "pytest>=8.4.2",
+    "pytest-benchmark>=5.1.0",
     "pytest-cov>=7.0.0",
     "sybil[pytest]>=9.2.0",
 ]
@@ -129,6 +130,8 @@ test-requires = [
     "ipython>=8.18.1",
     "numpy>=2.0.2",
     "pytest>=8.4.2",
+    # `addopts` passes `--benchmark-disable`, so the plugin has to be installed.
+    "pytest-benchmark>=5.1.0",
     "sybil[pytest]>=9.2.0",
 ]
 # Skip testing arm64 builds on Intel Macs
@@ -181,11 +184,20 @@ addopts = [
     "-ra",
     "-p",
     "no:doctest",
+    # Collect and run the benchmarks, but do not time them. `nox -s benchmark`
+    # passes `--benchmark-enable` to time them. Note that this makes
+    # `pytest-benchmark` required to run *any* test: without it `pytest` aborts
+    # with "unrecognized arguments" before collecting. It is in the `test_runtime`
+    # group and in `[tool.cibuildwheel] test-requires` for that reason.
+    "--benchmark-disable",
 ]
 minversion = "6.0"
 markers = [
     "incompatible_with_mypyc: marks tests as incompatible with mypyc-compiled code",
-    "benchmark: marks tests that assert on timings; deselect with `-m 'not benchmark'`",
+    # `pytest-benchmark` reads this marker for per-benchmark configuration (`group`,
+    # and so on); `tests/test_benchmark.py` also uses it, bare, to tag a test that
+    # asserts on a timing ratio. Either way `-m 'not benchmark'` deselects them.
+    "benchmark: configures a `pytest-benchmark` benchmark, or tags a timing assertion",
 ]
 
 
