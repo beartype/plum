@@ -3,7 +3,7 @@ import enum
 import sys
 import typing
 from numbers import Number
-from typing import Annotated, Any, Literal, Union
+from typing import Annotated, Any, Generic, Literal, TypeVar, Union
 
 import pytest
 
@@ -565,7 +565,24 @@ def test_arg_keys_agree_with_cache_key():
     class SomeClass:
         pass
 
-    values = [1, True, "x", b"x", None, 1.5, [1], SomeClass, int, SomeClass()]
+    class SomeGeneric(Generic[TypeVar("T")]):
+        pass
+
+    values = [
+        1,
+        True,
+        "x",
+        b"x",
+        None,
+        1.5,
+        [1],
+        SomeClass,
+        int,
+        SomeClass(),
+        # Carries `__orig_class__`, and the same class without one.
+        SomeGeneric[int](),
+        SomeGeneric(),
+    ]
     for spec in subsets:
         for x in values:
             expected = cache_key(x, spec=spec)
