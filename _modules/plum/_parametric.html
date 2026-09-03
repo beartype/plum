@@ -368,7 +368,7 @@ document.write(`
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">._dispatcher</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dispatcher</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._function</span><span class="w"> </span><span class="kn">import</span> <span class="n">_owner_transfer</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">._type</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_type_hint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._type</span><span class="w"> </span><span class="kn">import</span> <span class="n">_type_hint_le</span><span class="p">,</span> <span class="n">resolve_type_hint</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._util</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeHint</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.repr</span><span class="w"> </span><span class="kn">import</span> <span class="n">repr_short</span>
 
@@ -474,9 +474,9 @@ document.write(`
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_default_le_type_par</span><span class="p">(</span><span class="n">p_left</span><span class="p">:</span> <span class="n">TypeHint</span> <span class="o">|</span> <span class="nb">object</span><span class="p">,</span> <span class="n">p_right</span><span class="p">:</span> <span class="n">TypeHint</span> <span class="o">|</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
     <span class="k">if</span> <span class="n">is_type</span><span class="p">(</span><span class="n">p_left</span><span class="p">)</span> <span class="ow">and</span> <span class="n">is_type</span><span class="p">(</span><span class="n">p_right</span><span class="p">):</span>
-        <span class="n">p_left</span> <span class="o">=</span> <span class="n">beartype</span><span class="o">.</span><span class="n">door</span><span class="o">.</span><span class="n">TypeHint</span><span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">p_left</span><span class="p">))</span>
-        <span class="n">p_right</span> <span class="o">=</span> <span class="n">beartype</span><span class="o">.</span><span class="n">door</span><span class="o">.</span><span class="n">TypeHint</span><span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">p_right</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">p_left</span> <span class="o">&lt;=</span> <span class="n">p_right</span>
+        <span class="c1"># Use `_type_hint_le` rather than comparing `TypeHint`s directly so that a type</span>
+        <span class="c1"># parameter of `Any` stays distinct from a concrete one; see its docstring.</span>
+        <span class="k">return</span> <span class="n">_type_hint_le</span><span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">p_left</span><span class="p">),</span> <span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">p_right</span><span class="p">))</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">p_left</span> <span class="o">==</span> <span class="n">p_right</span>
 

@@ -362,11 +362,21 @@ document.write(`
 <span class="kn">import</span><span class="w"> </span><span class="nn">typing</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Hashable</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">reduce</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">lru_cache</span><span class="p">,</span> <span class="n">reduce</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">operator</span><span class="w"> </span><span class="kn">import</span> <span class="n">or_</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnionType</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">TypeGuard</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">final</span><span class="p">,</span> <span class="n">get_args</span><span class="p">,</span> <span class="n">get_origin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Any</span><span class="p">,</span>
+    <span class="n">Literal</span><span class="p">,</span>
+    <span class="n">TypeGuard</span><span class="p">,</span>
+    <span class="n">TypeVar</span><span class="p">,</span>
+    <span class="n">cast</span><span class="p">,</span>
+    <span class="n">final</span><span class="p">,</span>
+    <span class="n">get_args</span><span class="p">,</span>
+    <span class="n">get_origin</span><span class="p">,</span>
+<span class="p">)</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">beartype.door</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeHint</span> <span class="k">as</span> <span class="n">TypeHintWrapper</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">beartype.vale._core._valecore</span><span class="w"> </span><span class="kn">import</span> <span class="n">BeartypeValidator</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">._mypyc</span><span class="w"> </span><span class="kn">import</span> <span class="n">mypyc_attr</span>
@@ -647,6 +657,101 @@ document.write(`
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">x</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_substitute_any</span><span class="p">(</span><span class="n">hint</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Replace every `Any` in `hint` with `object`.</span>
+
+<span class="sd">    For Plum&#39;s signature bookkeeping, `object` has exactly the ordering that `Any`</span>
+<span class="sd">    should have: it is a subhint of nothing but itself, and everything is a subhint</span>
+<span class="sd">    of it. Rewriting `Any` to `object` therefore leaves nesting and variance to</span>
+<span class="sd">    `beartype`. A hint that cannot be rebuilt is returned unchanged.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        hint (object): Already-resolved type hint.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        object: `hint` with every `Any` replaced by `object`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># The same hints are compared over and over, so cache the rewrite. Not every hint</span>
+    <span class="c1"># is hashable, e.g. `Annotated[int, {&quot;a&quot;: 1}]`, so only cache when possible.</span>
+    <span class="k">if</span> <span class="n">_hashable</span><span class="p">(</span><span class="n">hint</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">_substitute_any_cached</span><span class="p">(</span><span class="n">hint</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_substitute_any_uncached</span><span class="p">(</span><span class="n">hint</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_substitute_any_uncached</span><span class="p">(</span><span class="n">hint</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">hint</span> <span class="ow">is</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">object</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hint</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="c1"># The parameters of a `Callable`.</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">_substitute_any</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">hint</span><span class="p">]</span>
+    <span class="n">origin</span> <span class="o">=</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">hint</span><span class="p">)</span>
+    <span class="c1"># `Literal`&#39;s arguments are values, not hints, so they must not be rewritten.</span>
+    <span class="k">if</span> <span class="n">origin</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">origin</span> <span class="ow">is</span> <span class="n">Literal</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">hint</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">get_args</span><span class="p">(</span><span class="n">hint</span><span class="p">)</span>
+    <span class="n">new_args</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">_substitute_any</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">new_args</span> <span class="o">==</span> <span class="n">args</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">hint</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">origin</span> <span class="ow">is</span> <span class="n">UnionType</span><span class="p">:</span>
+            <span class="c1"># `types.UnionType` cannot be subscripted.</span>
+            <span class="k">return</span> <span class="n">reduce</span><span class="p">(</span><span class="n">or_</span><span class="p">,</span> <span class="n">new_args</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">origin</span><span class="p">[</span><span class="n">new_args</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">hint</span>
+
+
+<span class="n">_substitute_any_cached</span> <span class="o">=</span> <span class="n">lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">4096</span><span class="p">)(</span><span class="n">_substitute_any_uncached</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_type_hint_le</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check whether `x` is a subhint of `y`, where `Any` is only a subhint of itself.</span>
+
+<span class="sd">    Since `beartype` 0.23, `is_subhint(Any, T)` is `True` for every `T`, which would</span>
+<span class="sd">    make an unannotated (`Any`-typed) parameter compare equal to, and as specific as,</span>
+<span class="sd">    any concrete type. See https://github.com/beartype/plum/issues/295. For Plum&#39;s</span>
+<span class="sd">    signature bookkeeping, `Any` must instead be the unique least specific type. This</span>
+<span class="sd">    check therefore differs from `beartype.door.TypeHint(x) &lt;= TypeHint(y)` in exactly</span>
+<span class="sd">    one respect: a root `Any` is only a subhint of `Any`, and a nested `Any` is</span>
+<span class="sd">    rewritten to `object` by `_substitute_any`, which reproduces `beartype&lt;0.23`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x (object): First, already-resolved type hint.</span>
+<span class="sd">        y (object): Second, already-resolved type hint.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bool: Whether `x` is a subhint of `y`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">y</span> <span class="ow">is</span> <span class="n">Any</span>
+    <span class="k">if</span> <span class="n">y</span> <span class="ow">is</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span>
+        <span class="n">TypeHintWrapper</span><span class="p">(</span><span class="n">_substitute_any</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="o">&lt;=</span> <span class="n">TypeHintWrapper</span><span class="p">(</span><span class="n">_substitute_any</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_type_hint_eq</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check whether `x` and `y` are the same hint, where `Any` equals only itself.</span>
+
+<span class="sd">    See `_type_hint_le`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x (object): First, already-resolved type hint.</span>
+<span class="sd">        y (object): Second, already-resolved type hint.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bool: Whether `x` and `y` denote the same type.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="n">Any</span> <span class="ow">or</span> <span class="n">y</span> <span class="ow">is</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">x</span> <span class="ow">is</span> <span class="n">y</span>
+    <span class="c1"># Do not derive this from `_type_hint_le`: `TypeHintWrapper.__eq__` already checks</span>
+    <span class="c1"># both directions in one pass.</span>
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span>
+        <span class="n">TypeHintWrapper</span><span class="p">(</span><span class="n">_substitute_any</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="o">==</span> <span class="n">TypeHintWrapper</span><span class="p">(</span><span class="n">_substitute_any</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+    <span class="p">)</span>
 
 
 <div class="viewcode-block" id="is_faithful">

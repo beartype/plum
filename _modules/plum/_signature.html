@@ -363,11 +363,10 @@ document.write(`
 <span class="kn">from</span><span class="w"> </span><span class="nn">rich.console</span><span class="w"> </span><span class="kn">import</span> <span class="n">Console</span><span class="p">,</span> <span class="n">ConsoleOptions</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">rich.segment</span><span class="w"> </span><span class="kn">import</span> <span class="n">Segment</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">beartype.door</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeHint</span> <span class="k">as</span> <span class="n">TypeHintWrapper</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">beartype.peps</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_pep563</span> <span class="k">as</span> <span class="n">beartype_resolve_pep563</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">._bear</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_bearable</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">._type</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_faithful</span><span class="p">,</span> <span class="n">resolve_type_hint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._type</span><span class="w"> </span><span class="kn">import</span> <span class="n">_type_hint_eq</span><span class="p">,</span> <span class="n">_type_hint_le</span><span class="p">,</span> <span class="n">is_faithful</span><span class="p">,</span> <span class="n">resolve_type_hint</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._util</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Comparable</span><span class="p">,</span>
     <span class="n">Missing</span><span class="p">,</span>
@@ -482,17 +481,27 @@ document.write(`
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Signature</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">False</span>
 
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">types</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">types</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
         <span class="c1"># We don&#39;t need to check faithfulness, because that is automatically</span>
         <span class="c1"># derived from the arguments.</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="nb">tuple</span><span class="p">(</span><span class="n">TypeHintWrapper</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">types</span><span class="p">),</span>
-            <span class="n">Missing</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">varargs</span> <span class="ow">is</span> <span class="n">Missing</span> <span class="k">else</span> <span class="n">TypeHintWrapper</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">varargs</span><span class="p">),</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">precedence</span><span class="p">,</span>
-        <span class="p">)</span> <span class="o">==</span> <span class="p">(</span>
-            <span class="nb">tuple</span><span class="p">(</span><span class="n">TypeHintWrapper</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">other</span><span class="o">.</span><span class="n">types</span><span class="p">),</span>
-            <span class="n">Missing</span> <span class="k">if</span> <span class="n">other</span><span class="o">.</span><span class="n">varargs</span> <span class="ow">is</span> <span class="n">Missing</span> <span class="k">else</span> <span class="n">TypeHintWrapper</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">varargs</span><span class="p">),</span>
-            <span class="n">other</span><span class="o">.</span><span class="n">precedence</span><span class="p">,</span>
+        <span class="c1">#</span>
+        <span class="c1"># Use `_type_hint_eq` rather than comparing `TypeHintWrapper`s directly</span>
+        <span class="c1"># so that `Any` only equals `Any` itself; see its docstring.</span>
+        <span class="n">types_equal</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span>
+            <span class="n">_type_hint_eq</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">types</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">types</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">varargs</span> <span class="ow">is</span> <span class="n">Missing</span><span class="p">:</span>
+            <span class="c1"># Both must be missing.</span>
+            <span class="n">varargs_equal</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">varargs</span> <span class="ow">is</span> <span class="n">Missing</span>
+        <span class="k">elif</span> <span class="n">other</span><span class="o">.</span><span class="n">varargs</span> <span class="ow">is</span> <span class="n">Missing</span><span class="p">:</span>
+            <span class="c1"># Neither must be missing.</span>
+            <span class="n">varargs_equal</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># And they must be equal.</span>
+            <span class="n">varargs_equal</span> <span class="o">=</span> <span class="n">_type_hint_eq</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">varargs</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">varargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">types_equal</span> <span class="ow">and</span> <span class="n">varargs_equal</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">precedence</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">precedence</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">hash</span><span class="p">((</span><span class="n">Signature</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">types</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">varargs</span><span class="p">))</span>
@@ -532,16 +541,13 @@ document.write(`
         <span class="c1"># one place.</span>
         <span class="n">self_types</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expand_varargs</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">types</span><span class="p">))</span>
         <span class="n">other_types</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">expand_varargs</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">types</span><span class="p">))</span>
+        <span class="c1"># As in `__eq__`, use `_type_hint_eq` so that `Any` only equals `Any`</span>
+        <span class="c1"># itself; see its docstring.</span>
         <span class="k">if</span> <span class="nb">all</span><span class="p">(</span>
-            <span class="p">[</span>
-                <span class="n">TypeHintWrapper</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="n">TypeHintWrapper</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">self_types</span><span class="p">,</span> <span class="n">other_types</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="p">]</span>
+            <span class="n">_type_hint_eq</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">self_types</span><span class="p">,</span> <span class="n">other_types</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="p">):</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_varargs</span> <span class="ow">and</span> <span class="n">other</span><span class="o">.</span><span class="n">has_varargs</span><span class="p">:</span>
-                <span class="n">self_varargs</span> <span class="o">=</span> <span class="n">TypeHintWrapper</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">varargs</span><span class="p">)</span>
-                <span class="n">other_varargs</span> <span class="o">=</span> <span class="n">TypeHintWrapper</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">varargs</span><span class="p">)</span>
-                <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">self_varargs</span> <span class="o">&lt;=</span> <span class="n">other_varargs</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">_type_hint_le</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">varargs</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">varargs</span><span class="p">)</span>
 
             <span class="c1"># Having variable arguments makes you slightly larger.</span>
             <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_varargs</span><span class="p">:</span>
@@ -552,11 +558,10 @@ document.write(`
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">return</span> <span class="kc">True</span>
 
+        <span class="c1"># As above, use `_type_hint_le` so that `Any` is only a subhint of `Any`</span>
+        <span class="c1"># itself; see its docstring.</span>
         <span class="k">elif</span> <span class="nb">all</span><span class="p">(</span>
-            <span class="p">[</span>
-                <span class="n">TypeHintWrapper</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">TypeHintWrapper</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">self_types</span><span class="p">,</span> <span class="n">other_types</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="p">]</span>
+            <span class="n">_type_hint_le</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">self_types</span><span class="p">,</span> <span class="n">other_types</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="p">):</span>
             <span class="c1"># In this case, we have that `other &gt;= self` is `False`, so returning `True`</span>
             <span class="c1"># gives that `other &lt; self` and returning `False` gives that `other` cannot</span>
@@ -570,9 +575,7 @@ document.write(`
                 <span class="c1">#       is `1.0`, then reasonably the variable arguments should be</span>
                 <span class="c1">#       ignored and `(int, *A)` should be considered more specific</span>
                 <span class="c1">#       than `(Number, *B)`.</span>
-                <span class="n">self_varargs</span> <span class="o">=</span> <span class="n">TypeHintWrapper</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">varargs</span><span class="p">)</span>
-                <span class="n">other_varargs</span> <span class="o">=</span> <span class="n">TypeHintWrapper</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">varargs</span><span class="p">)</span>
-                <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">self_varargs</span> <span class="o">&lt;=</span> <span class="n">other_varargs</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">_type_hint_le</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">varargs</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">varargs</span><span class="p">)</span>
 
             <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_varargs</span><span class="p">:</span>
                 <span class="c1"># Previously, this returned `False`, which would implement the subset</span>

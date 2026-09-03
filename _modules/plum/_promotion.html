@@ -367,7 +367,7 @@ document.write(`
 <span class="kn">import</span><span class="w"> </span><span class="nn">plum._function</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._bear</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_bearable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._dispatcher</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dispatcher</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">._type</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_type_hint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._type</span><span class="w"> </span><span class="kn">import</span> <span class="n">_type_hint_eq</span><span class="p">,</span> <span class="n">resolve_type_hint</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.repr</span><span class="w"> </span><span class="kn">import</span> <span class="n">repr_short</span>
 
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
@@ -510,8 +510,10 @@ document.write(`
         <span class="k">return</span> <span class="n">type_to</span>
 
     <span class="c1"># If the types are the same, we don&#39;t need to add the reverse rule. Resolve the</span>
-    <span class="c1"># types to handle the case where types are equal, but not identical.</span>
-    <span class="k">if</span> <span class="n">TypeHint</span><span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">type1</span><span class="p">))</span> <span class="o">==</span> <span class="n">TypeHint</span><span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">type2</span><span class="p">)):</span>
+    <span class="c1"># types to handle the case where types are equal, but not identical. Use</span>
+    <span class="c1"># `_type_hint_eq` rather than comparing `TypeHint`s directly so that `Any`</span>
+    <span class="c1"># is never mistaken for an unrelated concrete type.</span>
+    <span class="k">if</span> <span class="n">_type_hint_eq</span><span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">type1</span><span class="p">),</span> <span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">type2</span><span class="p">)):</span>
         <span class="k">return</span>  <span class="c1"># Escape early.</span>
 
     <span class="nd">@_promotion_rule</span><span class="o">.</span><span class="n">dispatch</span>
