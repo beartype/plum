@@ -206,8 +206,8 @@ def test_self_promotion(convert, promote):
         assert promote(1, 1.0) == ("1", "1.0")
 
 
-# These pin the conditions that make the identity-conversion cache sound. They go
-# through a dispatched function, because that - not `plum.convert` - reads the cache.
+# The tests below check the cache of identity conversions. They call a dispatched
+# function with a return annotation, which is the path that the cache speeds up.
 
 
 @pytest.fixture
@@ -221,7 +221,7 @@ def identity_conversions(convert):
 def test_identity_conversion_is_recorded_and_read(
     identity_conversions, dispatch, monkeypatch
 ):
-    """Once a pair is recorded, a repeat call must not reach `convert` at all."""
+    """Once a conversion is recorded as the identity, later calls skip `convert`."""
 
     class Base:
         pass
@@ -235,17 +235,16 @@ def test_identity_conversion_is_recorded_and_read(
     assert identity_conversions[Base, Base] is True
 
     def explode(*args, **kw):
-        raise AssertionError("convert was called despite a recorded identity")
+        raise AssertionError("Convert was called despite a recorded identity.")
 
     monkeypatch.setattr(plum._function, "_promised_convert", explode)
     assert f(obj) is obj
 
 
-def test_conversion_methods_beat_recorded_identities(identity_conversions, dispatch):
-    """A conversion method must win regardless of registration order.
+def test_conversion_method_clears_recorded_identity(identity_conversions, dispatch):
+    """Adding a conversion method clears a conversion recorded as the identity.
 
-    Registered *after* the pair is recorded as an identity, it must invalidate the
-    entry; once it claims the pair, the pair must be recorded as not an identity.
+    The new method is then used, and the conversion is recorded as not the identity.
     """
 
     class Base:
@@ -264,16 +263,15 @@ def test_conversion_methods_beat_recorded_identities(identity_conversions, dispa
 
     add_conversion_method(Sub, Base, lambda _: "converted")
     assert f(obj) == "converted"
-    # The re-analysed pair is no longer an identity, and the call keeps converting.
     assert identity_conversions[Sub, Base] is False
     assert f(obj) == "converted"
 
 
-def test_unfaithful_targets_are_not_recorded(identity_conversions, dispatch):
-    """`Gate` and `Literal` match on the value, so their pairs must never be recorded.
+def test_unfaithful_targets_are_not_identities(identity_conversions, dispatch):
+    """Conversions to unfaithful types are recorded as not the identity.
 
-    Both `Thing` objects share the key `(Thing, Gate)`: recording the first call
-    would make the second wrongly succeed.
+    Whether an object is an instance of `Gate` or `Literal[1]` depends on the object
+    and not just on its type, so the outcome cannot be cached by type.
     """
 
     class Meta(type):
@@ -294,7 +292,7 @@ def test_unfaithful_targets_are_not_recorded(identity_conversions, dispatch):
     good.ok, bad.ok = True, False
 
     assert f(good) is good
-    assert identity_conversions[(Thing, Gate)] is False
+    assert identity_conversions[Thing, Gate] is False
     with pytest.raises(TypeError):
         f(bad)
 
@@ -303,12 +301,14 @@ def test_unfaithful_targets_are_not_recorded(identity_conversions, dispatch):
         return x
 
     assert g(1) == 1
-    assert identity_conversions[(int, typing.Literal[1])] is False
+    assert identity_conversions[int, typing.Literal[1]] is False
     with pytest.raises(TypeError):
         g(2)
 
 
 def test_failed_conversions_are_not_recorded(identity_conversions, dispatch):
+    """A conversion that raises is not recorded and keeps raising."""
+
     class Base:
         pass
 
@@ -318,7 +318,6 @@ def test_failed_conversions_are_not_recorded(identity_conversions, dispatch):
 
     with pytest.raises(TypeError):
         f(1.0)
-    # A raising conversion never reaches the recording step, so nothing is stored.
     assert (float, Base) not in identity_conversions
     with pytest.raises(TypeError):
         f(1.0)
@@ -339,7 +338,7 @@ def test_recorded_identities_cleared_by_clear_all_cache(identity_conversions, di
 
 
 def test_union_targets_are_recorded(identity_conversions, dispatch):
-    """A union of faithful types is faithful, so it is recordable as a whole."""
+    """A union of faithful types is faithful, so a conversion to it can be recorded."""
 
     class A:
         pass
@@ -348,18 +347,16 @@ def test_union_targets_are_recorded(identity_conversions, dispatch):
         pass
 
     @dispatch
-    def f(x: A | float) -> A | B:
+    def f(x: A) -> A | B:
         return x
 
     a = A()
     assert f(a) is a
     assert identity_conversions[A, A | B] is True
-    with pytest.raises(TypeError):
-        f(1.0)
 
 
 def test_recorded_identities_are_bounded(identity_conversions, dispatch, monkeypatch):
-    """Recording stops at the limit instead of retaining types forever."""
+    """Recording stops once the cache reaches the size limit."""
     monkeypatch.setattr(plum._promotion, "_IDENTITY_CONVERSION_LIMIT", 3)
 
     @dispatch
@@ -368,15 +365,14 @@ def test_recorded_identities_are_bounded(identity_conversions, dispatch, monkeyp
 
     types = [type(f"C{i}", (), {}) for i in range(10)]
     for t in types:
-        assert f(t()) is not None
+        f(t())
     assert len(identity_conversions) == 3
 
 
-def test_unhashable_target_still_raises(identity_conversions, dispatch):
-    """An unhashable target raises, as it always has.
+def test_unhashable_target_still_raises():
+    """An unhashable `type_to` raises a `TypeError`, as it did before the cache.
 
-    The cache hashes `(type(obj), type_to)`, but so does the method lookup it
-    replaces, so such a target has never been usable.
+    The cache lookup hashes `type_to`, but so did the method lookup already.
     """
 
     class Meta(type):

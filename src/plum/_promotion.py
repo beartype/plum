@@ -32,7 +32,7 @@ else:
 _dispatch = Dispatcher()
 
 _IDENTITY_CONVERSION_LIMIT = 4096
-"""Maximum number of entries in :obj:`plum._function._identity_conversions`.
+"""int: Maximum number of entries in :obj:`plum._function._identity_conversions`.
 
 Entries come from annotations and argument types, not from data, so this is a ceiling
 for the pathological case only: past it, pairs just take the full conversion path."""
@@ -49,6 +49,13 @@ def convert(obj: object, type_to: typeTypeTo) -> TypeTo:
     Returns:
         object: `obj` converted to type `type_to`.
     """
+    # The fallback conversion method only checks that `obj` is an instance of `type_to`
+    # and returns `obj` unchanged. Every call of a function with a return annotation
+    # goes through here, so this is worth optimising. If `type_to` is faithful, the
+    # instance check depends only on `type(obj)`, so whether the conversion is the
+    # identity can be cached by `(type(obj), type_to)`. That is what is implemented
+    # below.
+
     # TODO: Can we implement this without using `type`?!
     type_from = type(obj)
     cache = plum._function._identity_conversions
@@ -58,23 +65,22 @@ def convert(obj: object, type_to: typeTypeTo) -> TypeTo:
         return obj
 
     type_to_resolved = resolve_type_hint(type_to)
-    # Call the method directly; `_convert.invoke` builds a wrapper object per call.
+    # Resolve and call the method directly. `_convert.invoke` would read better, but
+    # it builds a `functools.wraps` wrapper per call, which costs ~1.5 us on every
+    # call that does not hit the cache above.
     method, return_type = _convert._resolve_method_with_cache(
         types=(type_from, type_to_resolved)
     )
-    # As in `invoke`, convert the result per the method's own return annotation. This
-    # is `Any` for every current conversion method, so it is effectively free.
+    # As `invoke` does, convert the result per the method's own return annotation.
+    # That annotation is `Any` for every conversion method, so this is free.
     result = plum._function._convert(method(obj, type_to_resolved), return_type)
 
-    # Two conditions make the outcome a property of the key rather than of `obj`: no
-    # conversion method applied, so the fallback returned `obj` unchanged; and
-    # `is_faithful`, i.e. `isinstance(x, t) == issubclass(type(x), t)`, so that check
-    # depends only on `type_from`. A `Literal` or a custom `__instancecheck__` fails
-    # the second. Negatives are recorded too: `is_faithful` is not cached and would
-    # rerun on every call it cannot help.
+    # Record whether the conversion is the identity: the fallback applied, and
+    # `type_to` is faithful so that its instance check depends only on `type_from`.
+    # Negatives are recorded too, because `is_faithful` is not cached and would
+    # otherwise run on every call.
     if known is None and len(cache) < _IDENTITY_CONVERSION_LIMIT:
-        # `_convert._f` is the fallback that `_convert` wraps, so `method` being it
-        # means that no conversion method applied.
+        # `_convert._f` is the fallback that `_convert` wraps.
         no_method_applied = method is _convert._f
         cache[type_from, type_to] = no_method_applied and is_faithful(type_to_resolved)
 
