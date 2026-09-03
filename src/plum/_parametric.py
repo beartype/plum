@@ -123,10 +123,8 @@ class ParametricTypeMeta(type):
 
 def _default_le_type_par(p_left: TypeHint | object, p_right: TypeHint | object) -> bool:
     if is_type(p_left) and is_type(p_right):
-        # `_type_hint_le` rather than comparing `TypeHint`s directly, so that a type
+        # Use `_type_hint_le` rather than comparing `TypeHint`s directly so that a type
         # parameter of `Any` stays distinct from a concrete one; see its docstring.
-        # Without this, `P[Any]` and `P[int]` collide under `beartype>=0.23` exactly
-        # as `Any` and `int` do. See https://github.com/beartype/plum/issues/295.
         return _type_hint_le(resolve_type_hint(p_left), resolve_type_hint(p_right))
     else:
         return p_left == p_right

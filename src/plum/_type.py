@@ -19,7 +19,6 @@ from typing import (
     Literal,
     TypeGuard,
     TypeVar,
-    Union,
     cast,
     final,
     get_args,
@@ -294,117 +293,84 @@ def resolve_type_hint(x: object, /) -> object:
     return x
 
 
-@lru_cache(maxsize=4096)
-def _substitute_nested_any(hint: object, /) -> object:
-    """Replace every `Any` strictly below the root of `hint` with `object`.
+def _substitute_any(hint: object, /) -> object:
+    """Replace every `Any` in `hint` with `object`.
 
-    `_type_hint_le` handles a root `Any` itself; this handles the parameters of a
-    hint, where `beartype>=0.23` collapses `list[Any]` onto `list[int]` in exactly
-    the way it collapses `Any` onto `int`. Substituting `object` hands the whole
-    comparison, variance included, back to `beartype`: `object` is a subhint of
-    nothing but itself, and everything is a subhint of it, which is precisely the
-    ordering `Any` is meant to have.
-
-    A hint that cannot be rebuilt is returned unchanged, leaving `beartype`'s own
-    semantics in place rather than failing the comparison.
-
-    `_type_hint_le`/`_type_hint_eq` call this on every non-`Any` signature
-    comparison, i.e. on essentially every dispatch resolution and method
-    registration -- but the set of distinct type hints in a program is small and
-    fixed (the annotations written in its `@dispatch`-decorated signatures), while
-    the number of *comparisons* between them is not: the same hints get walked
-    over and over. `lru_cache` turns that from "recurse and rebuild every time"
-    into "recurse once per distinct hint, then a dict lookup", including for
-    hints nested inside others (`int` inside `list[int]` inside `dict[str,
-    list[int]]`, ...) -- self-recursive calls hit the cache too. Hints reachable
-    here are already required to be hashable elsewhere (`Signature.__hash__`
-    hashes them directly), so this adds no new constraint.
+    For Plum's signature bookkeeping, `object` has exactly the ordering that `Any`
+    should have: it is a subhint of nothing but itself, and everything is a subhint
+    of it. Rewriting `Any` to `object` therefore leaves nesting and variance to
+    `beartype`. A hint that cannot be rebuilt is returned unchanged.
 
     Args:
         hint (object): Already-resolved type hint.
 
     Returns:
-        object: `hint` with every nested `Any` replaced by `object`.
+        object: `hint` with every `Any` replaced by `object`.
     """
+    # The same hints are compared over and over, so cache the rewrite. Not every hint
+    # is hashable, e.g. `Annotated[int, {"a": 1}]`, so only cache when possible.
+    if _hashable(hint):
+        return _substitute_any_cached(hint)
+    return _substitute_any_uncached(hint)
+
+
+def _substitute_any_uncached(hint: object, /) -> object:
+    if hint is Any:
+        return object
+    if isinstance(hint, list):
+        # The parameters of a `Callable`.
+        return [_substitute_any(arg) for arg in hint]
     origin = get_origin(hint)
     # `Literal`'s arguments are values, not hints, so they must not be rewritten.
     if origin is None or origin is Literal:
         return hint
     args = get_args(hint)
-    if not args:
-        return hint
     new_args = tuple(_substitute_any(arg) for arg in args)
     if new_args == args:
         return hint
     try:
-        if origin is Union or origin is UnionType:
-            # `reduce(or_, ...)` rather than `Union[...]`: the arguments are only
-            # known at runtime, and `X | Y` is the modern spelling.
+        if origin is UnionType:
+            # `types.UnionType` cannot be subscripted.
             return reduce(or_, new_args)
-        if origin is Callable:
-            # `Callable`'s arguments are `(parameters, return)`, where `parameters`
-            # is a list or `...`, so it does not rebuild by subscripting a tuple.
-            return Callable[new_args[0], new_args[1]]  # pyright: ignore[reportInvalidTypeForm]
         return origin[new_args]
-    except Exception:  # noqa: BLE001
+    except Exception:
         return hint
 
 
-def _substitute_any(arg: object, /) -> object:
-    """Replace `Any` with `object` in a single argument of a type hint."""
-    if arg is Any:
-        return object
-    if isinstance(arg, list):
-        # The parameter list of a `Callable`.
-        return [_substitute_any(x) for x in arg]
-    if arg is Ellipsis or arg is None:
-        return arg
-    return _substitute_nested_any(arg)
+_substitute_any_cached = lru_cache(maxsize=4096)(_substitute_any_uncached)
 
 
 def _type_hint_le(x: object, y: object, /) -> bool:
     """Check whether `x` is a subhint of `y`, where `Any` is only a subhint of itself.
 
-    This check is used for Plum's signature bookkeeping: redefinition detection
-    (`Signature.__eq__`, via `_type_hint_eq`) and specificity ordering
-    (`Signature.__le__`). It differs from `beartype.door.TypeHint(x) <= TypeHint(y)`
-    in exactly one respect: `Any` is only a subhint of `Any` itself, preserving `Any`
-    as Plum's unique least specific type. Since `beartype` 0.23, `is_subhint(Any, T)`
-    is `True` for every `T`, which would otherwise make an unannotated (`Any`-typed)
-    parameter compare equal to, and as specific as, any concrete type. See
-    https://github.com/beartype/plum/issues/295.
-
-    This holds at every depth: a nested `Any` is rewritten to `object` by
-    `_substitute_nested_any`, so `list[Any]` and `list[int]` stay distinct. The one
-    approximation is that a nested `Any` and a nested `object` then compare equal,
-    even though a root `Any` remains strictly less specific than a root `object`.
+    Since `beartype` 0.23, `is_subhint(Any, T)` is `True` for every `T`, which would
+    make an unannotated (`Any`-typed) parameter compare equal to, and as specific as,
+    any concrete type. See https://github.com/beartype/plum/issues/295. For Plum's
+    signature bookkeeping, `Any` must instead be the unique least specific type. This
+    check therefore differs from `beartype.door.TypeHint(x) <= TypeHint(y)` in exactly
+    one respect: a root `Any` is only a subhint of `Any`, and a nested `Any` is
+    rewritten to `object` by `_substitute_any`, which reproduces `beartype<0.23`.
 
     Args:
         x (object): First, already-resolved type hint.
         y (object): Second, already-resolved type hint.
 
     Returns:
-        bool: Whether `x` is a subhint of `y` for these bookkeeping purposes.
+        bool: Whether `x` is a subhint of `y`.
     """
     if x is Any:
         return y is Any
     if y is Any:
         return True
     return bool(
-        TypeHintWrapper(_substitute_nested_any(x))
-        <= TypeHintWrapper(_substitute_nested_any(y))
+        TypeHintWrapper(_substitute_any(x)) <= TypeHintWrapper(_substitute_any(y))
     )
 
 
 def _type_hint_eq(x: object, y: object, /) -> bool:
-    """Check whether two already-resolved type hints are the same, for the same
-    signature-bookkeeping purposes as `_type_hint_le` (and with the same `Any`
-    and nested-`Any` handling).
+    """Check whether `x` and `y` are the same hint, where `Any` equals only itself.
 
-    This does not call `_type_hint_le(x, y) and _type_hint_le(y, x)`: each call
-    would independently substitute and wrap both `x` and `y`, doubling that work
-    for no benefit, since `beartype.door.TypeHint.__eq__` already performs (and
-    caches) the equivalent bidirectional subhint check in a single pass.
+    See `_type_hint_le`.
 
     Args:
         x (object): First, already-resolved type hint.
@@ -413,13 +379,12 @@ def _type_hint_eq(x: object, y: object, /) -> bool:
     Returns:
         bool: Whether `x` and `y` denote the same type.
     """
-    x_is_any = x is Any
-    y_is_any = y is Any
-    if x_is_any or y_is_any:
-        return x_is_any and y_is_any
+    if x is Any or y is Any:
+        return x is y
+    # Do not derive this from `_type_hint_le`: `TypeHintWrapper.__eq__` already checks
+    # both directions in one pass.
     return bool(
-        TypeHintWrapper(_substitute_nested_any(x))
-        == TypeHintWrapper(_substitute_nested_any(y))
+        TypeHintWrapper(_substitute_any(x)) == TypeHintWrapper(_substitute_any(y))
     )
 
 

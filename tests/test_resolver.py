@@ -159,25 +159,27 @@ def test_register():
 
 
 @pytest.mark.parametrize("register_any_first", [True, False])
-def test_register_any_never_collides_with_concrete_type(register_any_first):
+@pytest.mark.parametrize(
+    "any_hint, int_hint, any_value, int_value",
+    [(typing.Any, int, 1.5, 1), (list[typing.Any], list[int], ["a"], [1])],
+)
+def test_register_any_never_collides_with_concrete_type(
+    register_any_first, any_hint, int_hint, any_value, int_value
+):
     """Regression test for https://github.com/beartype/plum/issues/295.
 
-    An unannotated parameter resolves to `Signature(Any)`. `Any` must never be
-    treated as "the same registered signature" as a concrete type - regardless
-    of registration order - or one of the two methods silently overwrites the
+    `Any`, which an unannotated parameter resolves to, must never be treated as "the
+    same registered signature" as a concrete type, also when nested and regardless
+    of registration order. Otherwise one of the two methods silently overwrites the
     other and the resolver ends up with only one of them registered.
     """
     r = Resolver()
 
-    def f_any(x):
+    def f(x):
         return x
 
-    def f_int(x: int):
-        return x
-
-    # `f_any`'s unannotated parameter resolves to `Signature(Any)`.
-    m_any = Method(f_any, plum.Signature.from_callable(f_any))
-    m_int = Method(f_int, plum.Signature.from_callable(f_int))
+    m_any = Method(f, plum.Signature(any_hint))
+    m_int = Method(f, plum.Signature(int_hint))
 
     if register_any_first:
         r.register(m_any)
@@ -186,47 +188,11 @@ def test_register_any_never_collides_with_concrete_type(register_any_first):
         r.register(m_int)
         r.register(m_any)
 
-    # Both methods must survive registration: neither is "the same signature" as
-    # the other, so neither should have overwritten the other.
+    # Both methods must survive registration, and the more specific one must be
+    # selected regardless of registration order.
     assert len(r) == 2
-    assert m_any in r.methods
-    assert m_int in r.methods
-
-    # And the more specific, concretely-typed method must be the one selected for
-    # a matching call, regardless of the order the two were registered in.
-    assert r.resolve((1,)) == m_int
-    assert r.resolve((1.5,)) == m_any
-
-
-@pytest.mark.parametrize("register_any_first", [True, False])
-def test_register_nested_any_never_collides_with_concrete_type(register_any_first):
-    """Regression test for https://github.com/beartype/plum/issues/295.
-
-    `beartype>=0.23` collapses `list[Any]` onto `list[int]` just as it collapses
-    `Any` onto `int`, so the same silent overwrite happens one level down. Only a
-    rewrite that reaches every level of the hint keeps the two methods apart.
-    """
-    r = Resolver()
-
-    def f_any(x: list[typing.Any]):
-        return x
-
-    def f_int(x: list[int]):
-        return x
-
-    m_any = Method(f_any, plum.Signature.from_callable(f_any))
-    m_int = Method(f_int, plum.Signature.from_callable(f_int))
-
-    if register_any_first:
-        r.register(m_any)
-        r.register(m_int)
-    else:
-        r.register(m_int)
-        r.register(m_any)
-
-    assert len(r) == 2
-    assert r.resolve(([1],)) == m_int
-    assert r.resolve((["a"],)) == m_any
+    assert r.resolve((int_value,)) == m_int
+    assert r.resolve((any_value,)) == m_any
 
 
 def test_len():

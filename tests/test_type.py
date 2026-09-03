@@ -2,7 +2,7 @@ import abc
 import sys
 import typing
 from numbers import Number
-from typing import Any, Literal, Union
+from typing import Annotated, Any, Literal, Union
 
 import pytest
 
@@ -11,7 +11,7 @@ from plum._type import (
     PromisedType,
     ResolvableType,
     _is_hint,
-    _substitute_nested_any,
+    _substitute_any,
     _type_hint_eq,
     _type_hint_le,
     is_faithful,
@@ -342,24 +342,27 @@ def test_type_hint_eq_nested_any():
     assert not _type_hint_eq(list[Any], dict[str, Any])
 
 
-def test_substitute_nested_any_rebuilds_hints():
+def test_substitute_any_rebuilds_hints():
     """Every hint form plum may hold must survive the rewrite unchanged in shape."""
     # `Literal`'s arguments are values, not hints, so they must be left alone.
-    assert _substitute_nested_any(Literal["a", "b"]) == Literal["a", "b"]
-    # The root is the caller's business, so it is not rewritten here.
-    assert _substitute_nested_any(Any) is Any
-    # Hints without a nested `Any` come back untouched.
-    assert _substitute_nested_any(list[int]) == list[int]
-    assert _substitute_nested_any(int) is int
+    assert _substitute_any(Literal["a", "b"]) == Literal["a", "b"]
+    # Hints without an `Any` come back untouched.
+    assert _substitute_any(list[int]) == list[int]
+    assert _substitute_any(int) is int
 
-    assert _substitute_nested_any(list[Any]) == list[object]
-    assert _substitute_nested_any(dict[str, Any]) == dict[str, object]
-    assert _substitute_nested_any(tuple[Any, ...]) == tuple[object, ...]
-    assert _substitute_nested_any(list[list[Any]]) == list[list[object]]
-    assert _substitute_nested_any(Union[int, Any]) == Union[int, object]  # noqa: UP007
-    # `Callable` stores its parameters in a list, so it needs its own rebuild path.
-    assert (
-        _substitute_nested_any(Callable[[int, Any], Any])
-        == Callable[[int, object], object]
-    )
-    assert _substitute_nested_any(Callable[..., Any]) == Callable[..., object]
+    assert _substitute_any(Any) is object
+    assert _substitute_any(list[Any]) == list[object]
+    assert _substitute_any(dict[str, Any]) == dict[str, object]
+    assert _substitute_any(tuple[Any, ...]) == tuple[object, ...]
+    assert _substitute_any(list[list[Any]]) == list[list[object]]
+    assert _substitute_any(Union[int, Any]) == Union[int, object]  # noqa: UP007
+    assert _substitute_any(int | Any) == int | object
+    # `Callable` stores its parameters in a list.
+    assert _substitute_any(Callable[[int, Any], Any]) == Callable[[int, object], object]
+    assert _substitute_any(Callable[..., Any]) == Callable[..., object]
+
+
+def test_substitute_any_unhashable_metadata():
+    """An unhashable hint must not reach `lru_cache`; it is rewritten uncached."""
+    hint = Annotated[list[Any], {"a": 1}]
+    assert _substitute_any(hint) == Annotated[list[object], {"a": 1}]
