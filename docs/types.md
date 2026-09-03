@@ -314,6 +314,77 @@ True
 False
 ```
 
+### Inferring the Parameter for Bare Instantiations
+
+Since only a subscripted instantiation sets `__orig_class__`, `Box(1)` can never reach
+a `Box[int]` method — even though the value it wraps says plainly what the parameter
+ought to be. If your class can work the parameter out from a finished instance, decorate
+it with `plum.generic` and give it an `__infer_type_parameter__` classmethod:
+
+```python
+from typing import Generic, TypeVar
+
+from plum import dispatch, generic
+
+S = TypeVar("S")
+
+
+@generic
+class Crate(Generic[S]):
+    def __init__(self, v):
+        self.v = v
+
+    @classmethod
+    def __infer_type_parameter__(cls, instance):
+        return type(instance.v)
+
+
+@dispatch
+def uncrate(c: Crate[int]):
+    return "an integer"
+
+
+@dispatch
+def uncrate(c: Crate[str]):
+    return "a string"
+```
+
+A bare instantiation now dispatches like a subscripted one:
+
+```python
+>>> uncrate(Crate(1))
+'an integer'
+
+>>> uncrate(Crate("a"))
+'a string'
+```
+
+An explicit subscript still wins, because Python assigns `__orig_class__` *after*
+`__init__` returns:
+
+```python
+>>> uncrate(Crate[str](1))
+'a string'
+```
+
+Return a tuple from `__infer_type_parameter__` for a generic with several parameters.
+The attribute is written with `object.__setattr__`, so frozen dataclasses work too, and
+the parametrisation is built from `type(instance)`, so a generic subclass infers itself:
+
+```python
+>>> class SubCrate(Crate[S]):
+...     pass
+
+>>> SubCrate(1).__orig_class__ == SubCrate[int]
+True
+```
+
+The decorator moves work into the constructor: every instantiation runs the inference
+and then builds `Crate[...]`, which is the expensive half. On CPython 3.14 that takes a
+bare `Crate(1)` from about 90 ns to about 1 µs. Dispatch on the result is not affected —
+it is cacheable exactly as a subscripted instantiation is — so this is a cost paid per
+object, not per call.
+
 (moduletype)=
 ## `ModuleType`
 
