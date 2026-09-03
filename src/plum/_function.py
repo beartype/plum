@@ -12,10 +12,24 @@ from typing_extensions import Self
 
 from ._method import Method, MethodList
 from ._mypyc import NativeBase, mypyc_attr
-from ._resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
-from ._signature import Signature, append_default_args
+from ._resolver import (
+    AmbiguousLookupError,
+    NotFoundLookupError,
+    Resolver,
+    resolution_order,
+)
+from ._signature import Signature, _matcher, append_default_args
 from ._type import KeyPart, resolve_type_hint
 from ._util import TypeHint
+
+_VerifyEntry = tuple[Callable[[tuple[object, ...]], bool], Callable[..., Any], TypeHint]
+"""A method of a verify-cache bucket, prepared for verification: a matcher bound to
+the arity of the bucket, the implementation, and the return type."""
+
+_VerifyBucket = tuple[MethodList, tuple[_VerifyEntry, ...], bool]
+"""A verify-cache bucket: the narrowed methods in registration order, their entries,
+and whether the first entry that matches settles the call. See
+:meth:`Function._build_verify_bucket`."""
 
 _VALUE_CACHE_LIMIT = 4096
 """Maximum number of entries cached for a function whose methods dispatch on a
@@ -38,9 +52,9 @@ _VERIFY_CACHE_LIMIT = 4096
 
 A bucket is keyed on the runtime types of the arguments, so the key space of an
 `n`-argument function is combinatorial in what its callers pass: twenty types across
-three arguments is eight thousand buckets, and a bucket costs several times what a
-method-cache entry does. Past the cap a call resolves over every method instead: the
-cap costs time, never correctness."""
+three arguments is eight thousand buckets, and an ordered bucket costs several times
+what a method-cache entry does. Past the cap a call builds its bucket, uses it and
+drops it: the cap costs time, never correctness."""
 
 # Annotated (not left to inference as `None`) so a `mypyc`-compiled `_function` accepts
 # the external assignment `plum._function._promised_convert = convert` in `_promotion`.
@@ -253,7 +267,7 @@ class Function(NativeBase):
     # Instance attributes are declared so `Function` can be a `mypyc` native class.
     _f: Callable[..., Any]
     _cache: dict[tuple[TypeHint, ...], tuple[Callable[..., Any], TypeHint]]
-    _verify_cache: "dict[tuple[TypeHint, ...], MethodList] | None"
+    _verify_cache: "dict[tuple[TypeHint, ...], _VerifyBucket] | None"
     _doc: str
     _owner_name: str | None
     _owner: type | None
@@ -285,7 +299,7 @@ class Function(NativeBase):
         # runtime types of the arguments to the methods that arguments with those
         # types could possibly match, which is all a `type(x)` key can settle. The
         # methods still have to be verified against the actual arguments, hence the
-        # name; see `_resolve_miss`.
+        # name; see `_resolve_miss` and `_build_verify_bucket`.
         #
         # `None` until the first tier-two miss, rather than an empty dict: most
         # functions are cacheable and so never read this at all, and an unused dict
@@ -737,23 +751,40 @@ class Function(NativeBase):
             if cache is None:
                 cache = self._verify_cache = {}
             try:
-                methods = cache[key]
+                methods, entries, first_wins = cache[key]
             except KeyError:
-                # Bounded for the same reason `_store` bounds the method cache, and
-                # more urgently: a bucket is keyed on the *runtime types* of the
-                # arguments, so a function of `n` arguments has a key space that is
-                # combinatorial in the types its callers pass, and a bucket costs
-                # several times what a method-cache entry does.
                 if len(cache) >= _VERIFY_CACHE_LIMIT:
-                    # Resolve over every method, which is what this did before the
-                    # cache existed. Narrowing first would only pay if the bucket
-                    # could be kept, and it cannot: building one to use once and drop
+                    # At the cap the bucket cannot be kept, and one built to be used
+                    # once and dropped costs more than it saves: narrow-then-resolve
                     # measured 27.5 us against 10.9 us for resolving over all nine
-                    # methods of the function under test.
+                    # methods of the function under test, before the quadratic
+                    # ordering `_build_verify_bucket` adds on top. So resolve over
+                    # every method, which is what this did before the cache existed.
                     return self.resolve_method(args)
-                cache[key] = methods = MethodList(
-                    m for m in self._resolver.methods if m.signature.might_match(args)
-                )
+                methods, entries, first_wins = self._build_verify_bucket(args, key)
+            if first_wins:
+                # The bucket is in resolution order, so the first method that matches
+                # is the one full resolution would select; see
+                # :func:`.resolver.resolution_order`.
+                for match, impl, return_type in entries:
+                    if match(args):
+                        return impl, return_type
+            else:
+                # No such order. The one thing matching settles on its own is a
+                # unique match: a single matching method is the only candidate
+                # `Resolver.resolve` can collect, whatever the other methods look
+                # like, so it is what full resolution returns. Zero matches or
+                # several fall through, and full resolution raises the right error
+                # or picks between the candidates.
+                hit = None
+                for entry in entries:
+                    if entry[0](args):
+                        if hit is not None:
+                            hit = None
+                            break
+                        hit = entry
+                if hit is not None:
+                    return hit[1], hit[2]
             return self.resolve_method(args, methods)
 
         # The dict is captured before resolving: the store is outside the lock, so a
@@ -797,6 +828,38 @@ class Function(NativeBase):
             KeyPart.VALUE in spec and len(cache) >= _VALUE_CACHE_LIMIT
         ):
             cache[key] = method, return_type
+
+    def _build_verify_bucket(
+        self, args: tuple[object, ...], types: tuple[TypeHint, ...], /
+    ) -> _VerifyBucket:
+        """Build and store the verify-cache bucket for arguments of these types.
+
+        Args:
+            args (tuple[object, ...]): Arguments that missed the cache.
+            types (tuple[:obj:`.TypeHint`, ...]): Key to store the bucket under.
+
+        Returns:
+            :obj:`_VerifyBucket`: The bucket.
+        """
+        methods = MethodList(
+            m for m in self._resolver.methods if m.signature.might_match(args)
+        )
+        # Ordering the bucket costs a quadratic number of signature comparisons, but
+        # only here, once per bucket, and it saves the whole candidate selection of
+        # `Resolver.resolve` on every call that hits it.
+        order = resolution_order(methods)
+        n = len(args)
+        entries = tuple(
+            (_matcher(m.signature, n), m.implementation, m.return_type)
+            for m in (methods if order is None else order)
+        )
+        bucket: _VerifyBucket = (methods, entries, order is not None)
+        # Bounded like the method cache, and more urgently; see
+        # `_VERIFY_CACHE_LIMIT`.
+        cache = self._verify_cache
+        if cache is not None and len(cache) < _VERIFY_CACHE_LIMIT:
+            cache[types] = bucket
+        return bucket
 
     def invoke(self, *types: TypeHint) -> Callable[..., Any]:
         """Invoke a particular method.
