@@ -4,7 +4,7 @@ import pydoc
 import sys
 import warnings
 from collections.abc import Callable, Iterable
-from functools import partial, wraps
+from functools import wraps
 
 from rich.console import Console, ConsoleOptions
 from rich.padding import Padding
@@ -13,7 +13,7 @@ from rich.text import Text
 from ._util import argsort
 from plum._method import Method, MethodList
 from plum._signature import Signature
-from plum._type import _CANONICAL_SPECS, _NO_PARTS, CacheSpec, cache_key
+from plum._type import _ARG_KEYS, _CANONICAL_SPECS, _NO_PARTS, CacheSpec
 from plum.repr import repr_source_path, rich_repr
 
 
@@ -358,7 +358,7 @@ class Resolver:
             if sub is not acc:
                 acc = _CANONICAL_SPECS[acc | sub]
         self.cache_spec = acc
-        self._arg_key = type if not acc else partial(cache_key, spec=acc)
+        self._arg_key = _ARG_KEYS[acc]
 
     def __len__(self) -> int:
         return len(self.methods)
