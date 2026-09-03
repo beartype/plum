@@ -10,10 +10,12 @@ from plum._type import (
     ModuleType,
     PromisedType,
     ResolvableType,
+    TypeHintWrapper,
     _is_hint,
     _substitute_any,
     _type_hint_eq,
     _type_hint_le,
+    _wrap_type_hint,
     is_faithful,
     resolve_type_hint,
     type_mapping,
@@ -362,7 +364,9 @@ def test_substitute_any_rebuilds_hints():
     assert _substitute_any(Callable[..., Any]) == Callable[..., object]
 
 
-def test_substitute_any_unhashable_metadata():
-    """An unhashable hint must not reach `lru_cache`; it is rewritten uncached."""
+def test_wrap_type_hint_unhashable_hint():
+    """An unhashable hint cannot be cached but must still be wrapped."""
     hint = Annotated[list[Any], {"a": 1}]
-    assert _substitute_any(hint) == Annotated[list[object], {"a": 1}]
+    assert _wrap_type_hint(hint) == TypeHintWrapper(Annotated[list[object], {"a": 1}])
+    # A hashable one is cached, which is the point of the helper.
+    assert _wrap_type_hint(list[Any]) is _wrap_type_hint(list[Any])
