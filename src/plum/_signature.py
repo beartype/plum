@@ -14,11 +14,12 @@ from rich.segment import Segment
 
 from beartype.peps import resolve_pep563 as beartype_resolve_pep563
 
-from ._bear import is_bearable
+from ._bear import is_bearable, is_bearable_with_orig
 from ._type import (
     UNION_TYPES,
     CacheSpec,
     _combine,
+    _has_generic_hint,
     _type_hint_eq,
     _type_hint_le,
     is_faithful,
@@ -147,9 +148,6 @@ class Signature(Comparable):
         self.precedence = precedence
 
         self.cache_spec: CacheSpec | None = None
-        # Bind the matcher once, at construction, rather than reaching for it on
-        # every candidate check. It is `is_bearable` for every signature; binding it
-        # here is what lets a signature select a different one.
         self._check: Callable[[object, TypeHint], bool] = is_bearable
         # Bound matchers, by arity; see `_matcher`. `None` until one is asked for,
         # since only a signature reached through the tier-two path ever needs one.
@@ -161,13 +159,26 @@ class Signature(Comparable):
 
         `append_default_args` copies a signature and then truncates `types` and drops
         `varargs`, so the copy's derived fields describe the *original*. Carrying them
-        is conservative rather than wrong -- truncation can only remove key parts,
-        never add them -- but the shorter signature can end up keyed more widely than
-        it needs, and so capped or pushed to a slower tier for no reason.
+        is conservative rather than wrong -- truncation can only remove key parts and
+        generic hints, never add them -- but the shorter signature can end up keyed
+        more widely than it needs, and checked with the slower `is_bearable_with_orig`
+        when plain `is_bearable` would do.
         """
         types = self.types
         all_types = types if self.varargs is Missing else (*types, self.varargs)
         self.cache_spec = _combine(all_types)
+        # Bind the matcher once, rather than testing a flag on every match: a
+        # signature with no user generic anywhere gets plain `is_bearable`, exactly
+        # the function it always used.
+        check: Callable[[object, TypeHint], bool] = is_bearable
+        for t in all_types:
+            # A plain class can never be a *parametrised* generic, and is what almost
+            # every annotation is, so it is ruled out inline: a generator expression
+            # here costs more than the whole rest of the test.
+            if not isinstance(t, type) and _has_generic_hint(t):
+                check = is_bearable_with_orig
+                break
+        self._check = check
         # A matcher is bound to the arity and types it was built from.
         self._matchers = None
 

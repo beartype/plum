@@ -1,5 +1,6 @@
 import inspect
 import operator
+import typing
 from collections.abc import Callable, Iterable
 from contextlib import contextmanager
 from numbers import Number as Num, Real as Re
@@ -646,3 +647,27 @@ def test_is_comparable_does_not_detour_via_eq():
     assert calls == [], calls
 
     assert not Sig(int).is_comparable(1)
+
+
+def test_default_args_signatures_recompute_the_bound_check():
+    """A truncated copy must not inherit the generic-aware check it no longer needs.
+
+    `_check` is `is_bearable_with_orig` only when some type is a user generic. Drop
+    that argument and plain `is_bearable` suffices; carrying the slower one is
+    correct but pays for a lookup no remaining type needs.
+    """
+    from plum._bear import is_bearable
+    from plum._signature import append_default_args
+
+    T = typing.TypeVar("T")
+
+    class G(typing.Generic[T]):
+        pass
+
+    def f(x: int, y: G[int] = None):
+        pass
+
+    full, truncated = append_default_args(Sig(int, G[int]), f)
+    assert full._check is not is_bearable
+    assert truncated.types == (int,)
+    assert truncated._check is is_bearable
