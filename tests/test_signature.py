@@ -1,11 +1,13 @@
 import inspect
 import operator
+from collections.abc import Callable, Iterable
 from numbers import Number as Num, Real as Re
-from typing import Any, Union
+from typing import Annotated, Any, Literal, Optional, Union
 
 import pytest
 
 from beartype.door import TypeHint
+from beartype.vale import Is
 
 import plum
 from plum import Signature as Sig
@@ -472,3 +474,81 @@ def test_signature_cache_spec_and_derived_flags():
     s = Sig(list[int])
     assert s.cache_spec is None
     assert not s.is_faithful
+
+
+# A grid of hints and values wide enough to exercise every branch of
+# `_might_match_hint`: faithful and unfaithful, subscripted and bare, unions,
+# `Literal`, `Annotated`, and hints without an origin.
+
+_MIGHT_MATCH_HINTS = [
+    Any,
+    int,
+    str,
+    object,
+    list,
+    list[int],
+    list[str],
+    tuple[int, ...],
+    dict[str, int],
+    Callable[[int], int],
+    Iterable[int],
+    type[int],
+    Literal[1],
+    Literal["a"],
+    int | list[int],
+    Optional[list[str]],  # noqa: UP007, UP045
+    Annotated[int, Is[lambda x: x > 0]],
+    Annotated[list[int], Is[lambda x: len(x) > 0]],
+]
+
+# Grouped by runtime type, since that is all `might_match` may depend on.
+_MIGHT_MATCH_VALUES = [
+    [1, 2, -1],
+    [1.0, 2.5],
+    ["a", "b"],
+    [True, False],
+    [None],
+    [[1], ["a"], [], [1, 2]],
+    [(1, 2), ()],
+    [{"a": 1}, {1: "a"}, {}],
+    [int, str],
+    [lambda x: x],
+    [object()],
+]
+
+
+@pytest.mark.parametrize("hint", _MIGHT_MATCH_HINTS)
+def test_might_match_is_implied_by_match(hint):
+    # Under-inclusion is a wrong answer: whatever matches must be kept.
+    s = Sig(hint)
+    for group in _MIGHT_MATCH_VALUES:
+        for v in group:
+            assert not s.match((v,)) or s.might_match((v,))
+
+
+@pytest.mark.parametrize("hint", _MIGHT_MATCH_HINTS)
+def test_might_match_depends_only_on_the_runtime_type(hint):
+    # The verify cache is keyed on `tuple(map(type, args))`, so `might_match` must
+    # not distinguish two values of the same type.
+    s = Sig(hint)
+    for group in _MIGHT_MATCH_VALUES:
+        assert len({s.might_match((v,)) for v in group}) == 1
+
+
+def test_might_match_arity_and_varargs():
+    s = Sig(int, varargs=list[int])
+    assert s.might_match((1,))
+    assert s.might_match((1, [1]))
+    assert s.might_match((1, [1], [2]))
+    assert not s.might_match(())
+    assert not s.might_match(("a",))
+    # The varargs must be checked too, not just the fixed types.
+    assert not s.might_match((1, "a"))
+
+    s = Sig(int, list[int])
+    assert not s.might_match((1,))
+    assert not s.might_match((1, [1], [2]))
+    assert s.might_match((1, [1]))
+    # A list of the wrong element type cannot be ruled out by the runtime type.
+    assert s.might_match((1, ["a"]))
+    assert not s.match((1, ["a"]))

@@ -58,6 +58,15 @@ accepts a static type such as `int` on every Python plum supports (checked on 3.
 through 3.14), and simply never fires for one, so no fallback path is needed. It is
 the reverse index, not weak references, that makes it real work."""
 
+_VERIFY_CACHE_LIMIT = 4096
+"""Maximum number of tier-two buckets kept for one function.
+
+A bucket is keyed on the runtime types of the arguments, so the key space of an
+`n`-argument function is combinatorial in what its callers pass: twenty types across
+three arguments is eight thousand buckets, and a bucket costs several times what a
+method-cache entry does. Past this many, a call resolves over every method instead --
+exactly what it did before tier two existed, so nothing can get a wrong answer."""
+
 # Annotated (not left to inference as `None`) so a `mypyc`-compiled `_function` accepts
 # the external assignment `plum._function._promised_convert = convert` in `_promotion`.
 _promised_convert: Callable[..., Any] | None = None
@@ -267,6 +276,7 @@ class Function:
     _cache: dict[tuple[TypeHint, ...], tuple[Callable[..., Any], TypeHint]]
     _generation: int
     _invoke_cache: dict[tuple[TypeHint, ...], "_InvokedMethod"]
+    _verify_cache: "dict[tuple[TypeHint, ...], MethodList] | None"
     _doc: str
     _owner_name: str | None
     _owner: type | None
@@ -300,6 +310,16 @@ class Function:
         self._generation = 0
         # `invoke` returns the same wrapper for the same types, so it is built once.
         self._invoke_cache = {}
+        # Verify cache, used only when the resolver is uncacheable. It maps the bare
+        # runtime types of the arguments to the methods that arguments with those
+        # types could possibly match, which is all a `type(x)` key can settle. The
+        # methods still have to be verified against the actual arguments, hence the
+        # name; see `_resolve_miss`.
+        #
+        # `None` until the first tier-two miss, rather than an empty dict: most
+        # functions are cacheable and so never read this at all, and an unused dict
+        # is 64 bytes each across every function a program defines.
+        self._verify_cache = None
 
         # Guards the lazy resolution of pending registrations, which mutates each
         # registered function's `__annotations__` in place (via beartype's
@@ -479,6 +499,7 @@ class Function:
             self._cache.clear()
             self._invoke_cache.clear()
             self._generation += 1
+            self._verify_cache = None
 
             if reregister:
                 # Add all resolved to pending.
@@ -555,12 +576,16 @@ class Function:
                 self.clear_cache(reregister=False)
 
     def resolve_method(
-        self, target: tuple[object, ...] | Signature
+        self,
+        target: tuple[object, ...] | Signature,
+        methods: MethodList | None = None,
     ) -> tuple[Callable[..., Any], TypeHint]:
         """Find the method and return type for arguments.
 
         Args:
             target (object): Target.
+            methods (:class:`.method.MethodList`, optional): Narrowed list of methods
+                to consider. See :meth:`.resolver.Resolver.resolve`.
 
         Returns:
             `tuple[function, type]`:
@@ -571,7 +596,7 @@ class Function:
 
         try:
             # Attempt to find the method using the resolver.
-            method = self._resolver.resolve(target)
+            method = self._resolver.resolve(target, methods)
             impl = method.implementation
             return_type = method.return_type
 
@@ -662,14 +687,7 @@ class Function:
             # no cache can serve misses on every call, so it would pay both every
             # time. `resolve_method` resolves pending registrations itself, so the
             # key cannot have been built against a stale method set.
-            #
-            # The generation is read before resolving and compared before storing,
-            # as in `_resolve_method_with_cache`: this store is outside the lock, so
-            # a resolution overtaken by a `clear_cache` must not write its stale
-            # answer back afterwards.
-            generation = self._generation
-            method, return_type = self.resolve_method(args)
-            self._store(key, method, return_type, generation)
+            method, return_type = self._resolve_miss(args, key)
         return _convert(method(*args, **kw), return_type)
 
     def _resolve_method_with_cache(
@@ -705,13 +723,63 @@ class Function:
             if args is None:
                 args = Signature(*(resolve_type_hint(t) for t in types))
 
-            # Cache miss. Read the generation before resolving: `clear_cache` bumps
-            # it under the lock, so if it has moved by the time the answer is ready,
-            # a registration landed in between and storing would pin a stale method.
-            generation = self._generation
-            method, return_type = self.resolve_method(args)
-            self._store(types, method, return_type, generation)
-            return method, return_type
+            # Cache miss. Run the resolver based on the arguments.
+            return self._resolve_miss(args, types)
+
+    def _resolve_miss(
+        self,
+        args: tuple[object, ...] | Signature,
+        key: tuple[TypeHint, ...],
+        /,
+    ) -> tuple[Callable[..., Any], TypeHint]:
+        """Resolve `args`, whose key just missed the method cache.
+
+        Both miss paths -- the one inlined into `__call__` and the one in
+        `_resolve_method_with_cache` -- come through here, so the tier decision is
+        made in exactly one place.
+
+        Tier two. An uncacheable resolver cannot memoise a *method*, because no
+        bounded key determines which one matches. What it can memoise is which methods
+        are worth *considering*: the ones that arguments with these bare runtime types
+        could possibly match, which is all a `type(x)` key can settle. Resolution then
+        runs over that list through the resolver's own selection logic. The list
+        contains every method that can match, so the sequence of matching methods the
+        selection loop sees is identical to the one it would see over all methods, and
+        it therefore selects the same method, breaks precedence ties the same way, and
+        raises the same errors. Errors still report all methods.
+
+        A `Signature` reaches here from `invoke`, which has no runtime arguments to
+        narrow on, so it takes the ordinary path.
+        """
+        __tracebackhide__ = True
+        if isinstance(args, tuple) and not self._resolver.is_cacheable:
+            cache = self._verify_cache
+            if cache is None:
+                cache = self._verify_cache = {}
+            try:
+                methods = cache[key]
+            except KeyError:
+                methods = MethodList(
+                    m for m in self._resolver.methods if m.signature.might_match(args)
+                )
+                # Bounded for the same reason `_store` bounds the method cache, and
+                # more urgently: a bucket is keyed on the *runtime types* of the
+                # arguments, so a function of `n` arguments has a key space that is
+                # combinatorial in the types its callers pass, and a bucket costs
+                # several times what a method-cache entry does. Past the limit a call
+                # simply resolves over every method, which is what it did before this
+                # cache existed -- a memory ceiling, not a change of behaviour.
+                if len(cache) < _VERIFY_CACHE_LIMIT:
+                    cache[key] = methods
+            return self.resolve_method(args, methods)
+
+        # The generation is read before resolving and compared inside `_store`: the
+        # store is outside the lock, so a resolution overtaken by a `clear_cache` must
+        # not write its stale answer back afterwards.
+        generation = self._generation
+        method, return_type = self.resolve_method(args)
+        self._store(key, method, return_type, generation)
+        return method, return_type
 
     def _store(
         self,

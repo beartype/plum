@@ -1139,3 +1139,25 @@ def test_keyerror_from_method_body_propagates(dispatch):
         with pytest.raises(KeyError, match="from the method body"):
             f(1)
     assert calls == [1, 1]
+
+
+class UncacheableBase:
+    def do_uncacheable(self, x):
+        return "base"
+
+
+class UncacheableChild(UncacheableBase):
+    @dispatch
+    def do_uncacheable(self, x: list[int]):
+        return "child"
+
+
+def test_call_mro_uncacheable():
+    # The tier-two verify cache narrows the methods that dispatch considers. It must
+    # not swallow the fallback to the next method in the MRO, warm or cold.
+    c = UncacheableChild()
+    assert c.do_uncacheable([1]) == "child"
+    assert UncacheableChild.do_uncacheable._verify_cache  # The bucket is warm.
+    assert c.do_uncacheable(["a"]) == "base"
+    assert c.do_uncacheable(["a"]) == "base"
+    assert c.do_uncacheable([1]) == "child"
