@@ -198,7 +198,13 @@ class Signature(Comparable):
         if not isinstance(other, Signature):
             return False
 
-        if len(self.types) != len(other.types):
+        # Settle the scalar properties first: any of them differing rules equality
+        # out, and wrapping the types is the expensive part.
+        if (
+            len(self.types) != len(other.types)
+            or (self.varargs is Missing) != (other.varargs is Missing)
+            or self.precedence != other.precedence
+        ):
             return False
 
         # We don't need to check faithfulness, because that is automatically
@@ -209,16 +215,12 @@ class Signature(Comparable):
         types_equal = all(
             _type_hint_eq(x, y) for x, y in zip(self.types, other.types, strict=True)
         )
-        if self.varargs is Missing:
-            # Both must be missing.
-            varargs_equal = other.varargs is Missing
-        elif other.varargs is Missing:
-            # Neither must be missing.
-            varargs_equal = False
-        else:
-            # And they must be equal.
-            varargs_equal = _type_hint_eq(self.varargs, other.varargs)
-        return types_equal and varargs_equal and self.precedence == other.precedence
+        # The guard above settled precedence, and that the two agree on *whether* they
+        # have varargs; all that is left is comparing them when both do.
+        varargs_equal = self.varargs is Missing or _type_hint_eq(
+            self.varargs, other.varargs
+        )
+        return types_equal and varargs_equal
 
     def __hash__(self) -> int:
         return hash((Signature, *self.types, self.varargs))
@@ -312,6 +314,22 @@ class Signature(Comparable):
 
         else:
             return False
+
+    def is_comparable(self, other: object, /) -> bool:
+        """Check whether this signature is comparable with another one.
+
+        Two signatures are comparable exactly when one is below the other, so one
+        `__le__` per direction settles it, and the first direction short-circuits.
+        The inherited implementation spells the same question as `self < other or
+        self == other or self > other`, which additionally runs :meth:`__eq__` twice.
+
+        Args:
+            other (object): Object to check comparability with.
+
+        Returns:
+            bool: Whether this signature is comparable with `other`.
+        """
+        return isinstance(other, Signature) and (self <= other or other <= self)
 
     def match(self, values: tuple[object, ...], /) -> bool:
         """Check whether values match the signature.
