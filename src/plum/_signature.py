@@ -15,9 +15,10 @@ from rich.segment import Segment
 
 from beartype.peps import resolve_pep563 as beartype_resolve_pep563
 
-from ._bear import is_bearable
+from ._bear import is_bearable, is_bearable_with_orig
 from ._type import (
     UNION_TYPES,
+    _has_generic_hint,
     _is_cacheable,
     _is_faithful,
     _literals,
@@ -105,6 +106,7 @@ class Signature(Comparable):
         is_faithful (bool): Whether this signature only uses faithful types.
         is_cacheable (bool): Whether this signature only uses cacheable types.
         literals (frozenset): All `Literal` values in the types.
+        has_generic (bool): Whether the types contain a parametrised user generic.
     """
 
     _default_varargs: ClassVar = Missing
@@ -117,6 +119,8 @@ class Signature(Comparable):
         "is_faithful",
         "is_cacheable",
         "literals",
+        "has_generic",
+        "_check",
         "_matchers",
     )
 
@@ -156,6 +160,14 @@ class Signature(Comparable):
             frozenset().union(*(_literals(t) for t in resolved))
             if self.is_cacheable and not self.is_faithful
             else frozenset()
+        )
+        # A faithful signature contains no user generic.
+        self.has_generic = not self.is_faithful and any(
+            _has_generic_hint(t) for t in resolved
+        )
+        # Only a user generic needs `is_bearable_with_orig`.
+        self._check: Callable[[object, TypeHint], bool] = (
+            is_bearable_with_orig if self.has_generic else is_bearable
         )
         # A matcher is bound to the arity and types it was built from.
         self._matchers = None
@@ -356,7 +368,8 @@ class Signature(Comparable):
             return False
         else:
             types = self.expand_varargs(len(values))
-            return all(is_bearable(v, t) for v, t in zip(values, types, strict=True))
+            check = self._check
+            return all(check(v, t) for v, t in zip(values, types, strict=True))
 
     def might_match(self, values: tuple[object, ...], /) -> bool:
         """Check whether *any* values with the runtime types of `values` could match.
@@ -401,8 +414,9 @@ class Signature(Comparable):
 
         # Additionally count one for every mismatching value above the
         # extra/missing arguments. There can be fewer types than values.
+        check = self._check
         for v, t in zip(values, types, strict=False):
-            if not is_bearable(v, t):
+            if not check(v, t):
                 distance += 1
 
         return distance
@@ -428,8 +442,9 @@ class Signature(Comparable):
         # there is an explicit mismatch.
         varargs_matched = True
 
+        check = self._check
         for i, (v, t) in enumerate(zip(values, types, strict=False)):
-            if not is_bearable(v, t):
+            if not check(v, t):
                 if i < n_types:
                     mismatches.add(i)
                 else:
@@ -485,7 +500,7 @@ def _bind_matcher(
     if not (len(types_) == n or (len(types_) < n and signature.has_varargs)):
         return lambda values: False
     types = signature.expand_varargs(n)
-    check = is_bearable
+    check = signature._check
     if n == 1:
         # By far the most common arity, and worth not paying a `zip` for.
         (t,) = types

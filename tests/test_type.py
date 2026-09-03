@@ -12,8 +12,8 @@ from plum._type import (
     PromisedType,
     ResolvableType,
     TypeHintWrapper,
+    _bound_key,
     _is_hint,
-    _literal_key,
     _literals,
     _OpaqueHint,
     _substitute_any,
@@ -546,9 +546,8 @@ def test_literals():
     assert _literals((Literal[1], Literal[True])) == {1}
 
 
-def test_literal_key_agrees_with_cache_key():
-    """Test that `_literal_key` gives the same keys as `cache_key`."""
-    literals = frozenset({1, "a", None})
+def test_bound_key_agrees_with_cache_key():
+    """Test that `_bound_key` gives the same keys as `cache_key`."""
 
     class MyInt(int):
         pass
@@ -562,8 +561,16 @@ def test_literal_key_agrees_with_cache_key():
     class WithMeta(metaclass=Meta):
         pass
 
-    key = _literal_key(literals)
+    T = typing.TypeVar("T")
+
+    class Box(typing.Generic[T]):
+        pass
+
     one = MyInt(1)
-    for x in [1, 2, True, False, "a", "b", b"a", None, 1.5, [1], int, WithMeta, one]:
-        assert key(x) == cache_key(x, literals), x
-    assert key(Color.RED) == cache_key(Color.RED, literals)
+    values = [1, 2, True, False, "a", "b", b"a", None, 1.5, [1], int, WithMeta, one]
+    values += [Color.RED, Box(), Box[int](), Box[Annotated[int, {}]]()]
+    for literals in (frozenset(), frozenset({1, "a", None})):
+        for generic in (False, True):
+            key = _bound_key(literals, generic)
+            for x in values:
+                assert key(x) == cache_key(x, literals, generic), (literals, generic, x)
