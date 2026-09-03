@@ -16,7 +16,7 @@ from beartype.door import TypeHint
 import plum._function
 from ._bear import is_bearable
 from ._dispatcher import Dispatcher
-from ._type import resolve_type_hint
+from ._type import _type_hint_eq, resolve_type_hint
 from .repr import repr_short
 
 T = TypeVar("T")
@@ -148,8 +148,10 @@ def add_promotion_rule(type1: object, type2: object, type_to: object) -> None:
         return type_to
 
     # If the types are the same, we don't need to add the reverse rule. Resolve the
-    # types to handle the case where types are equal, but not identical.
-    if TypeHint(resolve_type_hint(type1)) == TypeHint(resolve_type_hint(type2)):
+    # types to handle the case where types are equal, but not identical. Use
+    # `_type_hint_eq` rather than comparing `TypeHint`s directly so that `Any`
+    # is never mistaken for an unrelated concrete type.
+    if _type_hint_eq(resolve_type_hint(type1), resolve_type_hint(type2)):
         return  # Escape early.
 
     @_promotion_rule.dispatch

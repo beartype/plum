@@ -11,11 +11,21 @@ import sys
 import typing
 import warnings
 from collections.abc import Callable, Hashable
-from functools import reduce
+from functools import lru_cache, reduce
 from operator import or_
 from types import UnionType
-from typing import Literal, TypeGuard, TypeVar, cast, final, get_args, get_origin
+from typing import (
+    Any,
+    Literal,
+    TypeGuard,
+    TypeVar,
+    cast,
+    final,
+    get_args,
+    get_origin,
+)
 
+from beartype.door import TypeHint as TypeHintWrapper
 from beartype.vale._core._valecore import BeartypeValidator
 
 from ._mypyc import mypyc_attr
@@ -281,6 +291,101 @@ def resolve_type_hint(x: object, /) -> object:
             stacklevel=2,
         )
     return x
+
+
+def _substitute_any(hint: object, /) -> object:
+    """Replace every `Any` in `hint` with `object`.
+
+    For Plum's signature bookkeeping, `object` has exactly the ordering that `Any`
+    should have: it is a subhint of nothing but itself, and everything is a subhint
+    of it. Rewriting `Any` to `object` therefore leaves nesting and variance to
+    `beartype`. A hint that cannot be rebuilt is returned unchanged.
+
+    Args:
+        hint (object): Already-resolved type hint.
+
+    Returns:
+        object: `hint` with every `Any` replaced by `object`.
+    """
+    # The same hints are compared over and over, so cache the rewrite. Not every hint
+    # is hashable, e.g. `Annotated[int, {"a": 1}]`, so only cache when possible.
+    if _hashable(hint):
+        return _substitute_any_cached(hint)
+    return _substitute_any_uncached(hint)
+
+
+def _substitute_any_uncached(hint: object, /) -> object:
+    if hint is Any:
+        return object
+    if isinstance(hint, list):
+        # The parameters of a `Callable`.
+        return [_substitute_any(arg) for arg in hint]
+    origin = get_origin(hint)
+    # `Literal`'s arguments are values, not hints, so they must not be rewritten.
+    if origin is None or origin is Literal:
+        return hint
+    args = get_args(hint)
+    new_args = tuple(_substitute_any(arg) for arg in args)
+    if new_args == args:
+        return hint
+    try:
+        if origin is UnionType:
+            # `types.UnionType` cannot be subscripted.
+            return reduce(or_, new_args)
+        return origin[new_args]
+    except Exception:
+        return hint
+
+
+_substitute_any_cached = lru_cache(maxsize=4096)(_substitute_any_uncached)
+
+
+def _type_hint_le(x: object, y: object, /) -> bool:
+    """Check whether `x` is a subhint of `y`, where `Any` is only a subhint of itself.
+
+    Since `beartype` 0.23, `is_subhint(Any, T)` is `True` for every `T`, which would
+    make an unannotated (`Any`-typed) parameter compare equal to, and as specific as,
+    any concrete type. See https://github.com/beartype/plum/issues/295. For Plum's
+    signature bookkeeping, `Any` must instead be the unique least specific type. This
+    check therefore differs from `beartype.door.TypeHint(x) <= TypeHint(y)` in exactly
+    one respect: a root `Any` is only a subhint of `Any`, and a nested `Any` is
+    rewritten to `object` by `_substitute_any`, which reproduces `beartype<0.23`.
+
+    Args:
+        x (object): First, already-resolved type hint.
+        y (object): Second, already-resolved type hint.
+
+    Returns:
+        bool: Whether `x` is a subhint of `y`.
+    """
+    if x is Any:
+        return y is Any
+    if y is Any:
+        return True
+    return bool(
+        TypeHintWrapper(_substitute_any(x)) <= TypeHintWrapper(_substitute_any(y))
+    )
+
+
+def _type_hint_eq(x: object, y: object, /) -> bool:
+    """Check whether `x` and `y` are the same hint, where `Any` equals only itself.
+
+    See `_type_hint_le`.
+
+    Args:
+        x (object): First, already-resolved type hint.
+        y (object): Second, already-resolved type hint.
+
+    Returns:
+        bool: Whether `x` and `y` denote the same type.
+    """
+    if x is Any or y is Any:
+        return x is y
+    # Do not derive this from `_type_hint_le`: `TypeHintWrapper.__eq__` already checks
+    # both directions in one pass.
+    return bool(
+        TypeHintWrapper(_substitute_any(x)) == TypeHintWrapper(_substitute_any(y))
+    )
 
 
 def is_faithful(x: object, /) -> bool:

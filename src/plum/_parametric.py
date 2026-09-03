@@ -17,7 +17,7 @@ from beartype.roar import BeartypeDoorNonpepException
 
 from ._dispatcher import Dispatcher
 from ._function import _owner_transfer
-from ._type import resolve_type_hint
+from ._type import _type_hint_le, resolve_type_hint
 from ._util import TypeHint
 from .repr import repr_short
 
@@ -123,9 +123,9 @@ class ParametricTypeMeta(type):
 
 def _default_le_type_par(p_left: TypeHint | object, p_right: TypeHint | object) -> bool:
     if is_type(p_left) and is_type(p_right):
-        p_left = beartype.door.TypeHint(resolve_type_hint(p_left))
-        p_right = beartype.door.TypeHint(resolve_type_hint(p_right))
-        return p_left <= p_right
+        # Use `_type_hint_le` rather than comparing `TypeHint`s directly so that a type
+        # parameter of `Any` stays distinct from a concrete one; see its docstring.
+        return _type_hint_le(resolve_type_hint(p_left), resolve_type_hint(p_right))
     else:
         return p_left == p_right
 

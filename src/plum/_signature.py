@@ -12,11 +12,10 @@ from typing_extensions import Self
 from rich.console import Console, ConsoleOptions
 from rich.segment import Segment
 
-from beartype.door import TypeHint as TypeHintWrapper
 from beartype.peps import resolve_pep563 as beartype_resolve_pep563
 
 from ._bear import is_bearable
-from ._type import is_faithful, resolve_type_hint
+from ._type import _type_hint_eq, _type_hint_le, is_faithful, resolve_type_hint
 from ._util import (
     Comparable,
     Missing,
@@ -126,17 +125,27 @@ class Signature(Comparable):
         if not isinstance(other, Signature):
             return False
 
+        if len(self.types) != len(other.types):
+            return False
+
         # We don't need to check faithfulness, because that is automatically
         # derived from the arguments.
-        return (
-            tuple(TypeHintWrapper(t) for t in self.types),
-            Missing if self.varargs is Missing else TypeHintWrapper(self.varargs),
-            self.precedence,
-        ) == (
-            tuple(TypeHintWrapper(t) for t in other.types),
-            Missing if other.varargs is Missing else TypeHintWrapper(other.varargs),
-            other.precedence,
+        #
+        # Use `_type_hint_eq` rather than comparing `TypeHintWrapper`s directly
+        # so that `Any` only equals `Any` itself; see its docstring.
+        types_equal = all(
+            _type_hint_eq(x, y) for x, y in zip(self.types, other.types, strict=True)
         )
+        if self.varargs is Missing:
+            # Both must be missing.
+            varargs_equal = other.varargs is Missing
+        elif other.varargs is Missing:
+            # Neither must be missing.
+            varargs_equal = False
+        else:
+            # And they must be equal.
+            varargs_equal = _type_hint_eq(self.varargs, other.varargs)
+        return types_equal and varargs_equal and self.precedence == other.precedence
 
     def __hash__(self) -> int:
         return hash((Signature, *self.types, self.varargs))
@@ -173,16 +182,13 @@ class Signature(Comparable):
         # one place.
         self_types = self.expand_varargs(len(other.types))
         other_types = other.expand_varargs(len(self.types))
+        # As in `__eq__`, use `_type_hint_eq` so that `Any` only equals `Any`
+        # itself; see its docstring.
         if all(
-            [
-                TypeHintWrapper(x) == TypeHintWrapper(y)
-                for x, y in zip(self_types, other_types, strict=True)
-            ]
+            _type_hint_eq(x, y) for x, y in zip(self_types, other_types, strict=True)
         ):
             if self.has_varargs and other.has_varargs:
-                self_varargs = TypeHintWrapper(self.varargs)
-                other_varargs = TypeHintWrapper(other.varargs)
-                return bool(self_varargs <= other_varargs)
+                return _type_hint_le(self.varargs, other.varargs)
 
             # Having variable arguments makes you slightly larger.
             elif self.has_varargs:
@@ -193,11 +199,10 @@ class Signature(Comparable):
             else:
                 return True
 
+        # As above, use `_type_hint_le` so that `Any` is only a subhint of `Any`
+        # itself; see its docstring.
         elif all(
-            [
-                TypeHintWrapper(x) <= TypeHintWrapper(y)
-                for x, y in zip(self_types, other_types, strict=True)
-            ]
+            _type_hint_le(x, y) for x, y in zip(self_types, other_types, strict=True)
         ):
             # In this case, we have that `other >= self` is `False`, so returning `True`
             # gives that `other < self` and returning `False` gives that `other` cannot
@@ -211,9 +216,7 @@ class Signature(Comparable):
                 #       is `1.0`, then reasonably the variable arguments should be
                 #       ignored and `(int, *A)` should be considered more specific
                 #       than `(Number, *B)`.
-                self_varargs = TypeHintWrapper(self.varargs)
-                other_varargs = TypeHintWrapper(other.varargs)
-                return bool(self_varargs <= other_varargs)
+                return _type_hint_le(self.varargs, other.varargs)
 
             elif self.has_varargs:
                 # Previously, this returned `False`, which would implement the subset
