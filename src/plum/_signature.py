@@ -15,7 +15,7 @@ from rich.segment import Segment
 from beartype.peps import resolve_pep563 as beartype_resolve_pep563
 
 from ._bear import is_bearable
-from ._type import _type_hint_eq, _type_hint_le, is_faithful, resolve_type_hint
+from ._type import CacheSpec, _combine, _type_hint_eq, _type_hint_le, resolve_type_hint
 from ._util import (
     Comparable,
     Missing,
@@ -44,13 +44,14 @@ class Signature(Comparable):
             arguments.
         has_varargs (bool): Whether `varargs` is not :class:`.util.Missing`.
         precedence (int): Precedence.
-        is_faithful (bool): Whether this signature only uses faithful types.
+        cache_spec (frozenset | None): The cache spec this signature's types need, or
+            `None` if any type is uncacheable. See :func:`plum.is_cacheable`.
     """
 
     _default_varargs: ClassVar = Missing
     _default_precedence: ClassVar[int] = 0
 
-    __slots__: tuple[str, ...] = ("types", "varargs", "precedence", "is_faithful")
+    __slots__: tuple[str, ...] = ("types", "varargs", "precedence", "cache_spec")
 
     def __init__(
         self,
@@ -70,9 +71,21 @@ class Signature(Comparable):
         self.varargs = varargs
         self.precedence = precedence
 
-        types_are_faithful = all(is_faithful(t) for t in types)
-        varargs_are_faithful = self.varargs is Missing or is_faithful(self.varargs)
-        self.is_faithful = types_are_faithful and varargs_are_faithful
+        self.cache_spec: CacheSpec | None = None
+        self._derive()
+
+    def _derive(self) -> None:
+        """(Re)compute everything determined by `types` and `varargs`.
+
+        `append_default_args` copies a signature and then truncates `types` and drops
+        `varargs`, so the copy's derived fields describe the *original*. Carrying them
+        is conservative rather than wrong -- truncation can only remove key parts,
+        never add them -- but the shorter signature can end up keyed more widely than
+        it needs, and so capped or pushed to a slower tier for no reason.
+        """
+        types = self.types
+        all_types = types if self.varargs is Missing else (*types, self.varargs)
+        self.cache_spec = _combine(all_types)
 
     @staticmethod
     def from_callable(f: Callable[..., Any], precedence: int = 0) -> "Signature":
@@ -95,6 +108,17 @@ class Signature(Comparable):
     @property
     def has_varargs(self) -> bool:
         return self.varargs is not Missing
+
+    @property
+    def is_faithful(self) -> bool:
+        """Whether every type is faithful (the cache can key on `type(x)` alone)."""
+        # `not` rather than `== frozenset()`, which allocates on every access.
+        return self.cache_spec is not None and not self.cache_spec
+
+    @property
+    def is_cacheable(self) -> bool:
+        """Whether dispatch on this signature can be cached at all."""
+        return self.cache_spec is not None
 
     def __copy__(self) -> Self:
         cls = type(self)
@@ -445,6 +469,10 @@ def append_default_args(signature: Signature, f: Callable[..., Any]) -> list[Sig
 
         # Remove the last positional argument.
         signature_copy.types = signature_copy.types[:-1]
+
+        # `types` and `varargs` both changed, so everything derived from them has to
+        # be recomputed rather than inherited from the signature copied above.
+        signature_copy._derive()
 
         signatures.append(signature_copy)
 
