@@ -15,11 +15,12 @@ from rich.segment import Segment
 
 from beartype.peps import resolve_pep563 as beartype_resolve_pep563
 
-from ._bear import is_bearable
+from ._bear import is_bearable, is_bearable_with_orig
 from ._type import (
     UNION_TYPES,
     CacheSpec,
     _combine,
+    _has_generic_hint,
     _type_hint_eq,
     _type_hint_le,
     is_faithful,
@@ -113,6 +114,7 @@ class Signature(Comparable):
         "varargs",
         "precedence",
         "cache_spec",
+        "_check",
         "_matchers",
     )
 
@@ -135,6 +137,7 @@ class Signature(Comparable):
         self.precedence = precedence
 
         self.cache_spec: CacheSpec | None = None
+        self._check: Callable[[object, TypeHint], bool] = is_bearable
         # Bound matchers, by arity; see `_matcher`. `None` until one is asked for,
         # since only the verify cache of an uncacheable function uses them.
         self._matchers: dict[int, Callable[[tuple[object, ...]], bool]] | None = None
@@ -145,6 +148,18 @@ class Signature(Comparable):
         types = self.types
         all_types = types if self.varargs is Missing else (*types, self.varargs)
         self.cache_spec = _combine(all_types)
+        # Bind the matcher once, rather than testing a flag on every match: a
+        # signature with no user generic anywhere gets plain `is_bearable`, exactly
+        # the function it always used.
+        check: Callable[[object, TypeHint], bool] = is_bearable
+        for t in all_types:
+            # A plain class can never be a *parametrised* generic, and is what almost
+            # every annotation is, so it is ruled out inline: a generator expression
+            # here costs more than the whole rest of the test.
+            if not isinstance(t, type) and _has_generic_hint(t):
+                check = is_bearable_with_orig
+                break
+        self._check = check
         # A matcher is bound to the arity and types it was built from.
         self._matchers = None
 
@@ -354,7 +369,8 @@ class Signature(Comparable):
             return False
         else:
             types = self.expand_varargs(len(values))
-            return all(is_bearable(v, t) for v, t in zip(values, types, strict=True))
+            check = self._check
+            return all(check(v, t) for v, t in zip(values, types, strict=True))
 
     def might_match(self, values: tuple[object, ...], /) -> bool:
         """Check whether *any* values with the runtime types of `values` could match.
@@ -399,8 +415,9 @@ class Signature(Comparable):
 
         # Additionally count one for every mismatching value above the
         # extra/missing arguments. There can be fewer types than values.
+        check = self._check
         for v, t in zip(values, types, strict=False):
-            if not is_bearable(v, t):
+            if not check(v, t):
                 distance += 1
 
         return distance
@@ -426,8 +443,9 @@ class Signature(Comparable):
         # there is an explicit mismatch.
         varargs_matched = True
 
+        check = self._check
         for i, (v, t) in enumerate(zip(values, types, strict=False)):
-            if not is_bearable(v, t):
+            if not check(v, t):
                 if i < n_types:
                     mismatches.add(i)
                 else:
@@ -483,7 +501,7 @@ def _bind_matcher(
     if not (len(types_) == n or (len(types_) < n and signature.has_varargs)):
         return lambda values: False
     types = signature.expand_varargs(n)
-    check = is_bearable
+    check = signature._check
     if n == 1:
         # By far the most common arity, and worth not paying a `zip` for.
         (t,) = types

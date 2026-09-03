@@ -93,7 +93,7 @@ For example, this means that `list[T1]` is a subtype of `list[T2]` whenever
 Plum achieves performance by caching the dispatch process.
 Unfortunately, efficient caching is not always possible.
 Efficient caching is possible for so-called _cacheable_ types.
-The dispatch result for an argument `x` is cached under a key `cache_key(x)`, which captures `type(x)` and, if some method needs it, the identity of `x` if `x` is a class and the value of `x` if a `Literal` could match it.
+The dispatch result for an argument `x` is cached under a key `cache_key(x)`, which captures `type(x)` and, if some method needs it, the identity of `x` if `x` is a class, the value of `x` if a `Literal` could match it, and `x.__orig_class__` if `x` is an instance of a parametrised user generic.
 Equal keys imply the same match result, but do not depend on the layout of the key, which may change.
 
 ````{admonition} Definition: cacheable type
@@ -199,6 +199,96 @@ class MyClass(metaclass=MyMeta):
     __faithful__ = True   # Yes, `MyClass` is faithful!
 
     ...
+```
+
+(generics)=
+## Dispatching on User-Defined Generics
+
+You can dispatch on a parametrised subclass of `typing.Generic`.
+At runtime, `Box[int](1)` and `Box[str]("a")` are both plain `Box` instances, so an
+instance check cannot tell them apart.
+Python does record the intent, though: instantiating a subscripted generic sets
+`__orig_class__` on the instance, and Plum dispatches on that.
+
+```python
+from typing import Generic, TypeVar
+
+from plum import dispatch
+
+T = TypeVar("T")
+
+
+class Box(Generic[T]):
+    def __init__(self, v):
+        self.v = v
+
+
+@dispatch
+def unbox(b: Box[int]):
+    return "an integer"
+
+
+@dispatch
+def unbox(b: Box[str]):
+    return "a string"
+
+
+@dispatch
+def unbox(b: Box):
+    return "unparametrised"
+```
+
+```python
+>>> unbox(Box[int](1))
+'an integer'
+
+>>> unbox(Box[str]("a"))
+'a string'
+```
+
+An instance created without a parameter records nothing, so it matches only the
+unparametrised method:
+
+```python
+>>> unbox(Box(1.0))
+'unparametrised'
+```
+
+A subclass of a parametrised generic records its parameter statically, in
+`__orig_bases__`, so it dispatches even though its instances carry no `__orig_class__`:
+
+```python
+>>> class IntBox(Box[int]):
+...     def __init__(self):
+...         super().__init__(1)
+
+>>> unbox(IntBox())
+'an integer'
+```
+
+Whether one parametrisation is a subtype of another — that is, how a `TypeVar`'s
+variance is interpreted — is Beartype's decision, not Plum's.
+
+A parametrised *user* generic is cacheable, though not faithful: whether an argument
+matches depends on its `__orig_class__`, and the pair `(type(x), x.__orig_class__)` is
+a bounded key, so dispatch on it is cached like any other. The unparametrised class
+stays faithful.
+
+Parametrised *builtins* are the ones that are not cacheable. Beartype decides
+`list[int]` by inspecting the elements, which no key derived from the argument can
+capture, so a function dispatching on one uses the **verify** cache described above.
+
+```python
+>>> from plum import is_cacheable
+
+>>> is_cacheable(Box[int])
+True
+
+>>> is_cacheable(Box)
+True
+
+>>> is_cacheable(list[int])
+False
 ```
 
 (moduletype)=
