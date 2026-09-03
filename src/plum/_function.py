@@ -259,8 +259,10 @@ class Function:
         Function._instances.append(self)
 
         self._f = f
-        # Cache maps type tuples to `(method, return_type)`. Keys can be either
-        # actual types (from `__call__`) or `TypeHints` (from `invoke`).
+        # Cache maps argument keys to `(method, return_type)`. Keys come either from
+        # `__call__`, where each element is `self._resolver._arg_key(arg)` (a plain
+        # `type`, or a `cache_key` tuple when the resolver needs spec), or from
+        # `invoke`, where each element is a `TypeHint`.
         self._cache = {}
         # Bumped by `clear_cache`, under the lock. A resolution that started before a
         # concurrent clear compares this before storing, so it cannot write an answer
@@ -610,7 +612,35 @@ class Function:
 
     def __call__(self, *args: object, **kw: object) -> object:
         __tracebackhide__ = True
-        method, return_type = self._resolve_method_with_cache(args=args)
+        # The cache hit is inlined here: on a hit, none of the argument juggling in
+        # `_resolve_method_with_cache` is needed, and the call itself costs more than
+        # the lookup. `self._pending` must be checked *before* the lookup, since
+        # `register` leaves stale entries until the registrations are resolved. Only
+        # the lookup is inside the `try`, and deliberately not the dispatched call:
+        # a `KeyError` raised by the method body must propagate rather than be
+        # mistaken for a miss and silently re-dispatched. (User code does run inside
+        # the `try` -- hashing the key calls a metaclass `__hash__` -- but a
+        # `KeyError` from there re-raises out of `_resolve_miss` anyway.)
+        if self._pending:
+            self._resolve_pending_registrations()
+        key = tuple(map(self._resolver._arg_key, args))
+        try:
+            method, return_type = self._cache[key]
+        except KeyError:
+            # Resolve here rather than through `_resolve_method_with_cache`, which
+            # would rebuild the key and repeat the lookup that just missed. A function
+            # no cache can serve misses on every call, so it would pay both every
+            # time. `resolve_method` resolves pending registrations itself, so the
+            # key cannot have been built against a stale method set.
+            #
+            # The generation is read before resolving and compared before storing,
+            # as in `_resolve_method_with_cache`: this store is outside the lock, so
+            # a resolution overtaken by a `clear_cache` must not write its stale
+            # answer back afterwards.
+            generation = self._generation
+            method, return_type = self.resolve_method(args)
+            if self._resolver.cache_spec is not None and generation == self._generation:
+                self._cache[key] = method, return_type
         return _convert(method(*args, **kw), return_type)
 
     def _resolve_method_with_cache(
@@ -629,15 +659,15 @@ class Function:
         if self._pending:
             self._resolve_pending_registrations()
 
-        # Compute cache key. When called from `__call__`, types will be actual
-        # runtime types from `map(type, args)`. When called from `invoke`, types
-        # may be `TypeHints` like `Union[int, str]`. Both are hashable and work
-        # as cache keys.
+        # Compute the cache key via the resolver's bound key callable (`type` for a
+        # faithful or uncacheable resolver, a `cache_key` specialised to the
+        # resolver's spec otherwise). When called from `invoke`, `types` is passed
+        # directly. Both are hashable and work as cache keys.
         if types is None:
             # Attempt to use the cache based on the types of the arguments.
             # At this point, `args` must be a tuple (not `Signature` or `None`).
             assert isinstance(args, tuple)
-            types = tuple(map(type, args))
+            types = tuple(map(self._resolver._arg_key, args))
         try:
             return self._cache[types]
         except KeyError:
@@ -651,13 +681,12 @@ class Function:
             # a registration landed in between and storing would pin a stale method.
             generation = self._generation
             method, return_type = self.resolve_method(args)
-            # If the resolver is faithful, then we can perform caching using the types
-            # of the arguments. If the resolver is not faithful, then we cannot. And
-            # only if no `clear_cache` has run since the generation was read: this
-            # store is outside the lock, so without the check a resolution begun
-            # before a registration could overwrite the cleared entry afterwards, and
-            # nothing would ever invalidate it again.
-            if self._resolver.is_faithful and generation == self._generation:
+            # Cache only when the resolver is cacheable; otherwise `cache_key` would
+            # not uniquely determine the matching method. And only if no `clear_cache`
+            # has run since the generation was read: this store is outside the lock, so
+            # without it a resolution begun before a registration could overwrite the
+            # cleared entry afterwards, and nothing would invalidate it again.
+            if self._resolver.cache_spec is not None and generation == self._generation:
                 self._cache[types] = method, return_type
             return method, return_type
 

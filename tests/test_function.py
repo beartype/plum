@@ -1016,3 +1016,126 @@ def test_bound_invoke_sees_later_methods(dispatch: plum.Dispatcher):
         return "int"
 
     assert a.do.invoke(int)(1) == "int"
+
+
+def test_type_dispatch_correctness(dispatch):
+    class Base:
+        pass
+
+    class Sub(Base):
+        pass
+
+    @dispatch
+    def f(x: int):
+        return "inst-int"
+
+    @dispatch
+    def f(x: type[int]):
+        return "type[int]"
+
+    @dispatch
+    def f(x: type[Base]):
+        return "type[Base]"
+
+    @dispatch
+    def f(x: type[Sub]):
+        return "type[Sub]"
+
+    assert f(5) == "inst-int"  # instance vs class: no collision
+    assert f(int) == "type[int]"
+    assert f(Sub) == "type[Sub]"  # subclass beats base
+    assert f(Base) == "type[Base]"
+
+
+def test_type_dispatch_pathological_metaclass(dispatch):
+    # Unhashable class must dispatch, not raise TypeError.
+    class MetaUnhashable(type):
+        def __eq__(cls, other):
+            return cls is other
+
+    class C(metaclass=MetaUnhashable):
+        pass
+
+    @dispatch
+    def f(x: type[int]):
+        return "int"
+
+    @dispatch
+    def f(x: type[object]):
+        return "object"
+
+    assert f(C) == "object"
+
+    # Lying-eq metaclass must not mis-cache.
+    class MetaLie(type):
+        def __eq__(cls, other):
+            return True
+
+        def __hash__(cls):
+            return 7
+
+    class A(int, metaclass=MetaLie):
+        pass
+
+    class B(metaclass=MetaLie):
+        pass
+
+    assert f(A) == "int"
+    assert f(B) == "object"
+
+
+def test_type_match_implies_identity_slot_beartype_invariant():
+    # Pins the one external assumption behind cacheable `type[X]`: whenever `x`
+    # matches `type[X]`, the cache key's identity slot is non-`None`, so the key
+    # captures what the match depended on. If beartype ever matches an `x` that
+    # `_identity` maps to `None`, `cache_key` soundness breaks.
+    #
+    # Asserting instead that no non-class matches `type[T]` would be weaker (with
+    # `type[object]` beartype short-circuits to `isinstance(x, type)`, never reaching
+    # the `issubclass` half) and outright false for `LiesAboutClass` below.
+    from plum._bear import is_bearable
+    from plum._type import _identity
+
+    class SomeClass:
+        pass
+
+    class LiesAboutClass:
+        @property
+        def __class__(self):
+            return type
+
+    liar = LiesAboutClass()
+    corpus = [5, list[int], tuple[int], (lambda: 0), int | str, int, SomeClass, liar]
+    matched = []
+    for x in corpus:
+        for hint in (type[object], type[int], type[SomeClass]):
+            try:
+                match = is_bearable(x, hint)
+            except TypeError:
+                # `issubclass` rejects `x`. Not a match, so nothing to capture.
+                continue
+            if match:
+                matched.append((x, hint))
+                assert _identity(x) is not None
+
+    # `isinstance` consults `__class__`, so the liar really does match `type[object]`.
+    assert (liar, type[object]) in matched
+    # And the corpus must not have degenerated into vacuous truth.
+    assert (int, type[int]) in matched
+
+
+def test_keyerror_from_method_body_propagates(dispatch):
+    # `Function.__call__` inlines the cache hit in a `try`/`except KeyError`. The
+    # dispatched call must stay outside it, so a `KeyError` raised by user code
+    # propagates instead of being caught and re-dispatched.
+    calls = []
+
+    @dispatch
+    def f(x: int):
+        calls.append(x)
+        raise KeyError("from the method body")
+
+    for _ in range(2):  # once on a cache miss, once on a cache hit
+        with pytest.raises(KeyError, match="from the method body"):
+            f(1)
+    assert calls == [1, 1]
