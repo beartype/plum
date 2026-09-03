@@ -8,7 +8,13 @@ import typing
 import pytest
 
 import plum
-from plum._function import Function, _BoundFunction, _convert, _owner_transfer
+from plum._function import (
+    _INVOKE_CACHE_LIMIT,
+    Function,
+    _BoundFunction,
+    _convert,
+    _owner_transfer,
+)
 from plum._method import Method
 from plum._resolver import (
     AmbiguousLookupError,
@@ -587,6 +593,53 @@ def test_invoke_wrapping(dispatch: plum.Dispatcher):
     assert f.invoke(int).__doc__ == "Docs"
 
 
+def test_invoke_is_cached(dispatch: plum.Dispatcher):
+    """The same types give back the identical wrapper, rather than a fresh one."""
+
+    @dispatch
+    def f(x: int):
+        return "int"
+
+    @dispatch
+    def f(x: str):
+        return "str"
+
+    assert f.invoke(int) is f.invoke(int)
+    # Different types are cached separately.
+    assert f.invoke(int)(None) == "int"
+    assert f.invoke(str)(None) == "str"
+
+
+def test_invoke_cache_sees_later_methods(dispatch: plum.Dispatcher):
+    """A method registered after `invoke` must not be masked by the cached wrapper."""
+
+    @dispatch
+    def f(x: object):
+        return "object"
+
+    assert f.invoke(int)(None) == "object"
+
+    @dispatch
+    def f(x: int):
+        return "int"
+
+    # The pending registration is resolved before the cache is consulted.
+    assert f.invoke(int)(None) == "int"
+
+
+def test_invoke_cache_cleared_by_clear_cache(dispatch: plum.Dispatcher):
+    """`clear_cache` drops the wrappers along with the resolved methods."""
+
+    @dispatch
+    def f(x: int):
+        return "int"
+
+    first = f.invoke(int)
+    f.clear_cache()
+    assert f.invoke(int) is not first
+    assert f.invoke(int)(None) == "int"
+
+
 def test_invoke_implementation_unwrapping(dispatch: plum.Dispatcher):
     def f(x: int):
         return type(x)
@@ -852,3 +905,114 @@ def test_wraps_without_qualname():
     assert not hasattr(wrapped, "__qualname__")
     _wraps(wrapper, wrapped)
     assert wrapper.__name__ == wrapper.__qualname__ == "no_qualname"
+
+
+@pytest.mark.incompatible_with_mypyc
+def test_invoke_does_not_cache_a_result_a_clear_invalidated(dispatch: plum.Dispatcher):
+    """A registration landing mid-`invoke` must not leave a stale wrapper cached.
+
+    `clear_cache` clears `_invoke_cache` under `_lock`, but `invoke` resolves and
+    stores outside it, so without the generation check a wrapper resolved before the
+    clear can be written after it. `_pending` is empty by then, so nothing would ever
+    invalidate it again and `invoke` would disagree with `__call__` for good. The
+    resolver here is deliberately uncacheable -- `list[int]` matches on the elements,
+    not the type -- which is the case `_cache` sidesteps by refusing to store at all,
+    so a stale answer here can only have come from the wrapper cache. See GitHub
+    issue #274.
+    """
+
+    @dispatch
+    def f(x: list[int]):
+        return "list"
+
+    @dispatch
+    def f(x: int):  # noqa: F811
+        return "int-v1"
+
+    f._resolve_pending_registrations()
+    assert not f._resolver.is_faithful
+
+    resolved, invalidated = threading.Event(), threading.Event()
+    original = Function.resolve_method
+    target, park = f, [True]
+
+    def parked(self, *args, **kw_args):
+        out = original(self, *args, **kw_args)
+        # Scoped by identity, not by an attribute: `Function` is a `mypyc` native
+        # class, so its instances have no `__dict__` to hang a flag on. Other
+        # functions (`_convert`, say) resolve during this test and must not park.
+        if self is target and park[0]:
+            resolved.set()
+            # Park between resolving and storing, which is where the clear lands.
+            invalidated.wait(5)
+        return out
+
+    Function.resolve_method = parked
+    try:
+        thread = threading.Thread(target=lambda: f.invoke(int))
+        thread.start()
+        assert resolved.wait(5)
+
+        @dispatch
+        def f(x: int):  # noqa: F811
+            return "int-v2"
+
+        f._resolve_pending_registrations()
+        invalidated.set()
+        thread.join(5)
+    finally:
+        park[0] = False
+        Function.resolve_method = original
+
+    assert f(2) == "int-v2"
+    assert f.invoke(int)(2) == "int-v2"
+
+
+def test_invoke_cache_is_bounded(dispatch: plum.Dispatcher):
+    """`_invoke_cache` is not gated on `is_faithful`, so it must be bounded instead.
+
+    Its keys are whatever hints callers pass, and for a process-global function such
+    as `_promotion._convert` that is bounded only by the caller's data.
+    """
+
+    @dispatch
+    def f(x: typing.Literal[1]):
+        return "literal"
+
+    @dispatch
+    def f(x: object):  # noqa: F811
+        return "object"
+
+    f._resolve_pending_registrations()
+    assert not f._resolver.is_faithful
+    assert f._cache == {}  # `_cache` refuses to store at all here.
+
+    for i in range(_INVOKE_CACHE_LIMIT + 100):
+        f.invoke(type(f"T{i}", (object,), {}))
+    assert len(f._invoke_cache) == _INVOKE_CACHE_LIMIT
+
+    # Past the cap dispatch still resolves, it just stops being memoised.
+    class Late:
+        pass
+
+    assert f.invoke(Late)(Late()) == "object"
+    assert f.invoke(typing.Literal[1])(1) == "literal"
+
+
+def test_bound_invoke_sees_later_methods(dispatch: plum.Dispatcher):
+    """`_BoundInvokedMethod.__call__` re-enters `Function.invoke`, so the bound path
+    inherits the wrapper cache and must see later registrations too."""
+
+    class A:
+        @dispatch
+        def do(self, x: object):
+            return "object"
+
+    a = A()
+    assert a.do.invoke(int)(1) == "object"
+
+    @A.do.dispatch
+    def do(self, x: int):  # noqa: F811
+        return "int"
+
+    assert a.do.invoke(int)(1) == "int"

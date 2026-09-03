@@ -17,6 +17,17 @@ from ._signature import Signature, append_default_args
 from ._type import resolve_type_hint
 from ._util import TypeHint
 
+_INVOKE_CACHE_LIMIT = 4096
+"""Maximum number of wrappers cached for one function.
+
+Unlike `_cache`, this is not gated on `is_faithful`, so it fills for functions whose
+method cache stays empty. The keys are whatever type hints callers pass, and
+`_BoundInvokedMethod` adds one per `(type(instance), *types)` combination, so for a
+process-global function such as `_promotion._convert` the key space is bounded only by
+the caller's data. Past this many, `invoke` simply rebuilds its wrapper each time --
+exactly what it did before this cache existed, so no call can get a wrong answer."""
+
+
 # Annotated (not left to inference as `None`) so a `mypyc`-compiled `_function` accepts
 # the external assignment `plum._function._promised_convert = convert` in `_promotion`.
 _promised_convert: Callable[..., Any] | None = None
@@ -213,6 +224,7 @@ class Function:
     _f: Callable[..., Any]
     _cache: dict[tuple[TypeHint, ...], tuple[Callable[..., Any], TypeHint]]
     _generation: int
+    _invoke_cache: dict[tuple[TypeHint, ...], "_InvokedMethod"]
     _doc: str
     _owner_name: str | None
     _owner: type | None
@@ -240,8 +252,10 @@ class Function:
         self._cache = {}
         # Bumped by `clear_cache`, under the lock. A resolution that started before a
         # concurrent clear compares this before storing, so it cannot write an answer
-        # the clear was meant to discard. See `_resolve_method_with_cache`.
+        # the clear was meant to discard. Guards both caches below.
         self._generation = 0
+        # `invoke` returns the same wrapper for the same types, so it is built once.
+        self._invoke_cache = {}
 
         # Guards the lazy resolution of pending registrations, which mutates each
         # registered function's `__annotations__` in place (via beartype's
@@ -419,6 +433,7 @@ class Function:
         # `_pending`/`_resolved`/`_resolver` in multiple steps. See GitHub issue #274.
         with self._lock:
             self._cache.clear()
+            self._invoke_cache.clear()
             self._generation += 1
 
             if reregister:
@@ -637,14 +652,40 @@ class Function:
     def invoke(self, *types: TypeHint) -> Callable[..., Any]:
         """Invoke a particular method.
 
+        Repeated calls with the same `types` return the identical wrapper, until
+        :meth:`clear_cache`.
+
         Args:
             *types: Types to resolve.
 
         Returns:
             function: Method.
         """
-        method, return_type = self._resolve_method_with_cache(types=types)
-        return _InvokedMethod(self._f, method, return_type)
+        # As in `_resolve_method_with_cache`, resolve pending registrations before
+        # consulting the cache, or a method registered since the last call is missed.
+        if self._pending:
+            self._resolve_pending_registrations()
+
+        try:
+            return self._invoke_cache[types]
+        except KeyError:
+            # Read the generation *before* resolving: `clear_cache` bumps it under the
+            # lock, so if it has moved by the time the wrapper is built, a registration
+            # landed in between and this result is already stale. Storing it anyway
+            # would pin it for good -- `_pending` is empty by then, so every later call
+            # would hit it and `invoke` would permanently disagree with `__call__`.
+            generation = self._generation
+            method, return_type = self._resolve_method_with_cache(types=types)
+            invoked = _InvokedMethod(self._f, method, return_type)
+            # Unlike `_cache`, this is not gated on `is_faithful`: `types` are explicit
+            # hints, so resolution does not depend on any runtime value. It is bounded
+            # instead; see `_INVOKE_CACHE_LIMIT`.
+            if (
+                generation == self._generation
+                and len(self._invoke_cache) < _INVOKE_CACHE_LIMIT
+            ):
+                self._invoke_cache[types] = invoked
+            return invoked
 
     @overload
     def __get__(self, instance: None, owner: type, /) -> "Function": ...
