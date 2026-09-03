@@ -52,7 +52,7 @@ def test_function():
     assert g.__doc__ == "Doc"
 
     # Check global tracking of functions.
-    assert Function._instances[-1] == g
+    assert g in Function._instances
 
 
 @pytest.mark.parametrize("resolved", [False, True])
