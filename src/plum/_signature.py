@@ -447,6 +447,34 @@ class Signature(Comparable):
             for v, t in zip(values, self.expand_varargs(len(values)), strict=True)
         )
 
+    def might_match(self, values: tuple[object, ...], /) -> bool:
+        """Check whether *any* values with the runtime types of `values` could match.
+
+        This is :meth:`match` weakened to depend only on `tuple(map(type, values))`.
+        It may be `True` where :meth:`match` is `False`, but it is never `False`
+        where :meth:`match` is `True`. That is what makes it sound to bucket methods
+        by the bare runtime types of the arguments: a method left out of a bucket
+        cannot match any arguments with those types.
+
+        Args:
+            values (tuple): Values.
+
+        Returns:
+            bool: `False` only if no values with these runtime types can match this
+                signature.
+        """
+        # Arity is settled by the number of values alone, so this is exact.
+        if not (
+            len(self.types) == len(values)
+            or (len(self.types) < len(values) and self.has_varargs)
+        ):
+            return False
+
+        return all(
+            _might_match_hint(v, t)
+            for v, t in zip(values, self.expand_varargs(len(values)), strict=True)
+        )
+
     def compute_distance(self, values: tuple[object, ...], /) -> int:
         """For given values, computes the edit distance between these vales and this
         signature.
