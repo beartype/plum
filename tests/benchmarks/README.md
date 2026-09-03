@@ -56,13 +56,12 @@ Cautions, all learned the hard way on this project:
 - **Confirm a surprising result outside the harness** before believing it. A direct
   `timeit` loop takes a minute and settles the question.
 - **Scope `--benchmark-enable` to this directory.** The registration benchmarks build
-  a `plum.Function` per iteration, and `Function._instances` is a list that never
-  releases them, so a run leaves tens of thousands behind. That is harmless here, but
-  `tests/test_cache.py` walks `Function._instances` before every timed call in its own
-  setup, so running the whole tree with `--benchmark-enable` turns that walk
-  quadratic and the run does not finish in any useful time. `nox -s benchmark` passes
-  `tests/benchmarks`, which is why it is unaffected. (The registry becomes weak later
-  in this series, which removes the interaction.)
+  a `plum.Function` per iteration, and `tests/test_cache.py` walks
+  `Function._instances` before every timed call in its own setup, so running the
+  whole tree with `--benchmark-enable` puts the two together. `Function._instances`
+  is a weak live-set, so the benchmark's functions are collected and the walk stays
+  short -- but only because nothing else holds them; keep the scope, and `nox -s
+  benchmark` passes `tests/benchmarks` for that reason.
 - **Check what you are actually measuring after building a wheel.** A `mypyc` build
   leaves `.so` files in `src/plum/`, and they shadow the editable install, so a later
   benchmark run silently measures the compiled build. `python -c "import plum;
