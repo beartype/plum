@@ -54,7 +54,7 @@ def test_function():
     assert g.__doc__ == "Doc"
 
     # Check global tracking of functions.
-    assert Function._instances[-1] == g
+    assert g in Function._instances
 
 
 def test_repr(dispatch: plum.Dispatcher):
@@ -1161,3 +1161,28 @@ def test_call_mro_uncacheable():
     assert c.do_uncacheable(["a"]) == "base"
     assert c.do_uncacheable(["a"]) == "base"
     assert c.do_uncacheable([1]) == "child"
+
+
+def test_instances_does_not_pin_functions():
+    """Global tracking must not keep a dead `Function` alive."""
+    import gc
+
+    def f(x):
+        pass
+
+    # Asserted through the registry rather than a `weakref.ref` to the function: a
+    # `mypyc`-compiled `Function` is a native class and cannot be weakly referenced.
+    gc.collect()
+    before = len(Function._instances)
+
+    # While it is reachable it must be tracked, so that `clear_all_cache` reaches it.
+    # Checking this as well as the count means an unrelated function being collected
+    # between the two `gc.collect()` calls cannot net out to a spurious pass.
+    live = Function(f)
+    assert live in Function._instances
+    assert len(Function._instances) == before + 1
+
+    # Once unreachable it must go, which is the point of the weak registry.
+    del live
+    gc.collect()
+    assert len(Function._instances) == before

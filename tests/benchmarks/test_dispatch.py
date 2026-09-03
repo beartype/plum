@@ -8,9 +8,10 @@ rather than as a single aggregate number. Run them with::
 `--benchmark-disable` is set in ``addopts``, so an ordinary ``pytest`` run still
 executes every benchmark once -- they cannot rot -- but times nothing.
 
-Note that timing a *fresh registration* creates a `plum.Function` per round, and
-`Function._instances` keeps them all. That is harmless here but is why the benchmarks
-get their own `pytest` invocation instead of being timed inside the main suite.
+Note that timing a *fresh registration* builds a `plum.Function` per round. They are
+collected once out of scope, but the rounds still churn through registration state, so
+the benchmarks get their own `pytest` invocation rather than being timed inside the
+main suite.
 """
 
 from collections.abc import Callable
