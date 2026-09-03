@@ -489,6 +489,17 @@ def test_signature_is_cacheable(sig, faithful, cacheable):
     assert sig.is_cacheable is cacheable
 
 
+def test_append_default_args_derives_fields():
+    """Test that `append_default_args` derives the fields again after truncating."""
+
+    def f(x: int, y: type[int] = int):
+        pass
+
+    full, truncated = plum.append_default_args(Sig(int, type[int]), f)
+    assert not full.is_faithful and full.is_cacheable
+    assert truncated.is_faithful
+
+
 def test_signature_literals():
     """Test that `literals` collects the values of all `Literal`s, also in varargs."""
     assert Sig(int).literals == frozenset()
