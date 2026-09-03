@@ -15,7 +15,7 @@ main suite.
 """
 
 from collections.abc import Callable
-from typing import Literal
+from typing import Generic, Literal, TypeVar
 
 import pytest
 
@@ -142,6 +142,30 @@ def parametric_wide(x: Callable[[int], int]):
     return x
 
 
+_T = TypeVar("_T")
+
+
+class Box(Generic[_T]):
+    """A user-defined generic. Matching consults `__orig_class__`, which the
+    `GENERIC` key part captures, so dispatch on it is cacheable."""
+
+    def __init__(self, value):
+        self.value = value
+
+
+@_dispatch
+def generic(x: Box[int]):
+    return x
+
+
+@_dispatch
+def generic(x: Box[str]):
+    return x
+
+
+_box_int = Box[int](1)
+
+
 @pytest.mark.benchmark(group="call")
 @pytest.mark.parametrize(
     ("f", "args"),
@@ -152,6 +176,7 @@ def parametric_wide(x: Callable[[int], int]):
         pytest.param(faithful2, (1, 2), id="faithful-2-args"),
         pytest.param(on_class, (Derived,), id="type[X]"),
         pytest.param(on_literal, ("a",), id="Literal"),
+        pytest.param(generic, (_box_int,), id="generic"),
         pytest.param(parametric, ((1,),), id="parametric"),
         pytest.param(parametric_wide, ((1,),), id="parametric-8-methods"),
     ],

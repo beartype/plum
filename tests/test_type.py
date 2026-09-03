@@ -3,7 +3,7 @@ import enum
 import sys
 import typing
 from numbers import Number
-from typing import Annotated, Any, Literal, Union
+from typing import Annotated, Any, Generic, Literal, TypeVar, Union
 
 import pytest
 
@@ -444,9 +444,15 @@ def test_cache_key_contract():
     class SomeClass:
         pass
 
-    # Non-classes keyed on their type and value.
-    assert cache_key(1) == (int, None, 1)
-    assert cache_key("x") == (str, None, "x")
+    # Non-classes are told apart by type and by value, without pinning the width:
+    # every member added to `KeyPart` adds a slot, so asserting the tuple would have
+    # to be rewritten each time and would stop testing the contract.
+    assert cache_key(1) == cache_key(1)
+    assert cache_key(1) != cache_key(2)
+    assert cache_key("x") != cache_key("y")
+    assert cache_key(1) != cache_key(1.0)
+    # `True == 1`, but `Literal[1]` matches only one of them.
+    assert cache_key(True) != cache_key(1)
     # Classes keyed on identity; distinct from a same-type instance key.
     assert cache_key(int) == cache_key(int)
     assert cache_key(int) != cache_key(str)
@@ -583,7 +589,24 @@ def test_arg_keys_agree_with_cache_key():
     class SomeClass:
         pass
 
-    values = [1, True, "x", b"x", None, 1.5, [1], SomeClass, int, SomeClass()]
+    class SomeGeneric(Generic[TypeVar("T")]):
+        pass
+
+    values = [
+        1,
+        True,
+        "x",
+        b"x",
+        None,
+        1.5,
+        [1],
+        SomeClass,
+        int,
+        SomeClass(),
+        # Carries `__orig_class__`, and the same class without one.
+        SomeGeneric[int](),
+        SomeGeneric(),
+    ]
     for spec in subsets:
         for x in values:
             expected = cache_key(x, spec=spec)

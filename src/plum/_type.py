@@ -210,6 +210,59 @@ def _is_hint(x: object) -> bool:
         return False
 
 
+def _is_generic_hint(x: object, /) -> bool:
+    """Check if an object is a parametrised :class:`typing.Generic` subclass.
+
+    The test is that the origin is a class inheriting :class:`typing.Generic`, which
+    is exactly the population whose parameter cannot be recovered from the value: such
+    an instance records it in `__orig_class__` instead. Everything else is excluded by
+    that same test rather than by name — the parametrised builtins (`list[int]`), the
+    abstract base classes (`Sequence[int]`), `re.Pattern[str]` and
+    `AbstractContextManager[int]` are not `Generic` subclasses and beartype checks
+    them structurally, while `Annotated`, `Union`, `Optional`, `Literal` and
+    `type[X]` have origins that are not classes at all. Plum's own parametric types
+    have no origin.
+
+    Deliberately *not* keyed on `__module__` (as :func:`_is_hint` is): a generic
+    declared in an `exec`'d namespace, a doctest among them, reports its module as
+    `builtins`, and its subscript is a `typing._GenericAlias`, so a module test
+    mistakes it for a `typing` special form.
+
+    Args:
+        x (object): Object.
+
+    Returns:
+        bool: `True` if `x` is a parametrised user generic and `False` otherwise.
+    """
+    origin = get_origin(x)
+    return (
+        isinstance(origin, type)
+        and issubclass(origin, typing.Generic)
+        and get_args(x) != ()
+    )
+
+
+def _has_generic_hint(x: object, /) -> bool:
+    """Check whether a parametrised user generic occurs anywhere in the hint `x`.
+
+    This walks the arguments, so it also finds generics nested inside a union, an
+    `Annotated`, or a parametrised builtin. It is computed once per signature, at
+    registration, to keep the check off the matching path.
+
+    Args:
+        x (object): Type hint.
+
+    Returns:
+        bool: `True` if `x` contains a parametrised user generic.
+    """
+    if isinstance(x, type):
+        # A parametrised generic is a `_GenericAlias`, never a class, and a class has
+        # no arguments to recurse into. This is the common case at registration --
+        # every plain annotation lands here -- and it skips two `typing` lookups.
+        return False
+    return _is_generic_hint(x) or any(_has_generic_hint(a) for a in get_args(x))
+
+
 def _hashable(x: object | type) -> TypeGuard[Hashable]:
     """Check if an object is hashable.
 
@@ -281,6 +334,19 @@ def resolve_type_hint(x: object, /) -> object:
             return x
 
         return resolve_type_hint(x.resolve())
+
+    # This sits below the plain-`type` case on purpose. `resolve_type_hint` runs twice
+    # per call for any method with a return annotation (via `convert`), and a plain
+    # type such as `int` is by far the commonest argument. Testing it here means such
+    # a type returns above without ever paying for the origin lookup; a parametrised
+    # user generic is not a `type`, so it still reaches this branch.
+    elif _is_generic_hint(x):
+        # A parametrised user generic, e.g. `Box[int]`. Rebuild it from its origin so
+        # that a `ResolvableType` nested in its arguments is resolved too.
+        origin = get_origin(x)
+        assert origin is not None
+        resolved_args = tuple(resolve_type_hint(arg) for arg in get_args(x))
+        return origin[resolved_args]
 
     # For example, `Is[lambda x: x > 0]` is an example of a `BeartypeValidator`.
     # We shouldn't resolve those.
@@ -415,12 +481,14 @@ class KeyPart(enum.Enum):
     A faithful type needs none of these: `type(x)` settles its match on its own.
     Each member names a further property of the argument that `cache_key` must
     encode for a category of non-faithful types to become cacheable at all.
-    `IDENTITY` is what makes `type[X]` cacheable, and `VALUE` `Literal[...]`. Members
-    are append-only, so a new category is an addition rather than a redesign.
+    `IDENTITY` is what makes `type[X]` cacheable, `VALUE` `Literal[...]`, and
+    `GENERIC` a parametrised user generic such as `Box[int]`. Members are
+    append-only, so a new category is an addition rather than a redesign.
     """
 
     IDENTITY = "identity"
     VALUE = "value"
+    GENERIC = "generic"
 
 
 CacheSpec = frozenset[KeyPart]
@@ -433,6 +501,7 @@ r"""What a type needs its cache key to carry: the set of :class:`KeyPart`\ s.
 _NO_PARTS: CacheSpec = frozenset()
 _IDENTITY: CacheSpec = frozenset({KeyPart.IDENTITY})
 _VALUE: CacheSpec = frozenset({KeyPart.VALUE})
+_GENERIC: CacheSpec = frozenset({KeyPart.GENERIC})
 _ALL_PARTS: CacheSpec = frozenset(KeyPart)
 
 
@@ -527,6 +596,38 @@ def _value(x: object, /) -> object | None:
     return None
 
 
+def _generic(x: object, /) -> object | None:
+    """The generic component of `cache_key` for `x`.
+
+    A parametrised user generic is matched by :func:`._bear.is_bearable_with_orig`,
+    which decides on `__orig_class__` — the parametrisation Python records on the
+    instance — and falls back to `type(x)` when there is none. This slot is exactly
+    that record, so the pair `(type(x), __orig_class__)` settles the match: two
+    values sharing it are decided identically.
+
+    `None` for a value that records no parametrisation, which is also the fallback
+    the matcher itself uses. As elsewhere in plum, `__orig_class__` is trusted to be
+    the type it claims: Python sets it, and so do :func:`plum.parametric` and
+    :func:`plum.generic`.
+
+    A parametrisation can itself be unhashable -- `Box[Annotated[int, {"a": 1}]]` is
+    a legal thing to write -- and putting it in the key verbatim would make the key
+    unhashable, so the dict lookup in `Function.__call__` would raise rather than
+    dispatch. Fall back to keying on its identity, which is finer than the value and
+    so never collides; the same precaution :func:`_value` takes.
+
+    Args:
+        x (object): Value.
+
+    Returns:
+        object or None: The generic component of the cache key for `x`.
+    """
+    orig = getattr(x, "__orig_class__", None)
+    if orig is None or _hashable(orig):
+        return orig
+    return _Identity(orig)
+
+
 def cache_key(x: object, /, spec: CacheSpec = _ALL_PARTS) -> tuple[object, ...]:
     """Cache key for a value `x`, carrying the key parts named by `spec`.
 
@@ -540,7 +641,8 @@ def cache_key(x: object, /, spec: CacheSpec = _ALL_PARTS) -> tuple[object, ...]:
     the default key. Only the contract is stable: equal keys imply the same match
     result.
 
-    Note that the identity and value slots keep a strong reference to `x` — necessarily,
+    Note that the identity, value and generic slots keep a strong reference to `x`
+    or to a type derived from it — necessarily,
     since that is what makes `id`-based hashing safe. A function dispatching on
     `type[X]` or `Literal` therefore accumulates one cache entry per distinct argument
     class or value, and pins that class or value, for the function's lifetime;
@@ -563,6 +665,8 @@ def cache_key(x: object, /, spec: CacheSpec = _ALL_PARTS) -> tuple[object, ...]:
         key += (_identity(x),)
     if KeyPart.VALUE in spec:
         key += (_value(x),)
+    if KeyPart.GENERIC in spec:
+        key += (_generic(x),)
     return key
 
 
@@ -570,13 +674,29 @@ _ARG_KEYS: "dict[CacheSpec, Callable[[object], object]]" = {
     _NO_PARTS: type,
     _IDENTITY: lambda x: (type(x), _identity(x)),
     _VALUE: lambda x: (type(x), _value(x)),
+    _GENERIC: lambda x: (type(x), _generic(x)),
     _IDENTITY | _VALUE: lambda x: (type(x), _identity(x), _value(x)),
+    _IDENTITY | _GENERIC: lambda x: (type(x), _identity(x), _generic(x)),
+    _VALUE | _GENERIC: lambda x: (type(x), _value(x), _generic(x)),
+    _IDENTITY | _VALUE | _GENERIC: lambda x: (
+        type(x),
+        _identity(x),
+        _value(x),
+        _generic(x),
+    ),
 }
 """`cache_key` specialised to each combination of spec, for :class:`.Resolver` to
-bind on the hot path. Testing `KeyPart` membership per call costs ~80 ns per key part
-(hashing an `Enum` member is not cheap), which is the bulk of a cached dispatch; these
-do the same work with the spec already decided. One entry per subset of `KeyPart`;
-`test_arg_keys_agree_with_cache_key` holds them to `cache_key`."""
+bind on the hot path. Testing `KeyPart` membership per call costs ~95 ns per key part
+(hashing an `Enum` member is not cheap), and building the key by concatenation rather
+than as one tuple costs a further ~45 ns per part; together that is most of the cost of
+a cached dispatch. These do the same work with the spec already decided.
+
+One entry per subset of `KeyPart`, so a fourth member would double this to sixteen. At
+that point stop writing them out: keep a per-part table of `(KeyPart, getter)` and
+generate the callable from the getters a spec selects, with one branch per arity so
+that each stays a fixed-width tuple literal. That was measured at within ~10 ns of
+these, but it is longer than the table at three members, which is why the table is
+still here. `test_arg_keys_agree_with_cache_key` holds them to `cache_key`."""
 
 
 def is_faithful(x: object, /) -> bool:
@@ -610,8 +730,13 @@ def is_cacheable(x: object, /) -> bool:
     `t` is _cacheable_ if, for all `x`, whether `x` matches `t` is a function of
     :func:`cache_key(x) <cache_key>` alone. Every faithful type is cacheable; in
     addition `type[X]` is cacheable but not faithful (its match `issubclass(x, X)`
-    depends on the class identity of `x`, which `cache_key` captures), and so is
-    `Literal[...]` (its match depends on the value of `x`, likewise captured).
+    depends on the class identity of `x`, which `cache_key` captures), and so are
+    `Literal[...]` (its match depends on the value of `x`, likewise captured) and a
+    parametrised user generic such as `Box[int]` (its match depends on the `x`'s
+    `__orig_class__`, likewise captured).
+
+    A parametrised *builtin* such as `list[int]` is not cacheable: matching it
+    inspects the elements, so two values of the same type can match differently.
 
     Args:
         x (type or type hint): Type hint.
@@ -655,7 +780,7 @@ def _cache_spec(x: object, /) -> CacheSpec | None:
     """Classify a **resolved** hint into the :obj:`CacheSpec` it needs, or `None`.
 
     `frozenset()` = faithful (type-key suffices); `{IDENTITY}` = `type[X]`;
-    `{VALUE}` = `Literal[...]`; a union is
+    `{VALUE}` = `Literal[...]`; `{GENERIC}` = a parametrised user generic; a union is
     the union of its members (`None` if any member is uncacheable); everything else
     that is not a plainly faithful type is `None` (uncacheable). This is the single
     classifier `is_faithful` and `is_cacheable` derive from.
@@ -682,6 +807,14 @@ def _cache_spec(x: object, /) -> CacheSpec | None:
             return _VALUE
         if origin in UNION_TYPES:
             return _combine(args)
+        if _is_generic_hint(x):
+            # A parametrised user generic can land here rather than in the branch
+            # below: `_is_hint` decides on `__module__`, and a generic declared in an
+            # `exec`'d namespace -- a doctest among them -- reports `builtins`, the
+            # same module as `list[int]`. Classify it on what it is, not where it was
+            # written; `_is_generic_hint` tests for inheritance from `typing.Generic`,
+            # which no parametrised builtin and no `typing` special form satisfies.
+            return _GENERIC
         return None
 
     elif x is None or x is Ellipsis:
@@ -699,6 +832,21 @@ def _cache_spec(x: object, /) -> CacheSpec | None:
             abc.ABCMeta.__instancecheck__,
         }
         return _NO_PARTS if faithful else None
+
+    elif _is_generic_hint(x):
+        # A parametrised user generic, e.g. `Box[int]`. Whether a value matches
+        # depends on its `__orig_class__` and on nothing else — see
+        # `is_bearable_with_orig`, which falls back to `type(x)` when there is no
+        # such record — and the generic component of the cache key is precisely
+        # that. Ordered below the plain-`type` case for the same reason as in
+        # `resolve_type_hint`.
+        #
+        # Note how narrow this is: it holds only for hints that go through
+        # `__orig_class__`. A parametrised builtin such as `list[int]` is matched by
+        # inspecting the elements, which no key derived from the value's type can
+        # predict, and `_is_generic_hint` excludes it. That exclusion is what keeps
+        # this sound, so do not widen it.
+        return _GENERIC
 
     else:
         warnings.warn(
