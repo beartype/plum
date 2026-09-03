@@ -1,9 +1,14 @@
+import itertools
+import random
+from collections.abc import Iterable
+from functools import partial
 from typing import Literal
 
 import pytest
 
 import plum
 from .util import benchmark
+from plum._resolver import resolution_order
 
 
 def assert_cache_performance(f, f_native):
@@ -501,8 +506,8 @@ def test_verify_cache_narrows_the_methods_considered(dispatch):
     # But the methods that could possibly match are, bucketed by bare types.
     assert set(f._verify_cache) == {(list,), (int,)}
     # A `list` argument can never match `int`, and vice versa.
-    assert len(f._verify_cache[(list,)]) == 2
-    assert len(f._verify_cache[(int,)]) == 1
+    assert len(f._verify_cache[(list,)][0]) == 2
+    assert len(f._verify_cache[(int,)][0]) == 1
 
 
 def test_verify_cache_is_invalidated_by_registration(dispatch):
@@ -615,10 +620,283 @@ def test_verify_cache_handles_varargs_and_arities(dispatch):
     # method can match any arity, but only for arguments its varargs type admits:
     # it is in the `(int,)` bucket, where the varargs go unused, but not in the
     # `(int, int)` one, where `2` can never be a `list[int]`.
-    assert len(f._verify_cache[(int,)]) == 2
-    assert len(f._verify_cache[(int, int)]) == 1
-    assert len(f._verify_cache[(int, list)]) == 1
-    assert len(f._verify_cache[(int, list, list)]) == 1
+    assert len(f._verify_cache[(int,)][0]) == 2
+    assert len(f._verify_cache[(int, int)][0]) == 1
+    assert len(f._verify_cache[(int, list)][0]) == 1
+    assert len(f._verify_cache[(int, list, list)][0]) == 1
+
+
+# When a bucket can be put in resolution order, the first method that matches is the
+# one full resolution would select, so the call can return on it.
+
+_mro_dispatch = plum.Dispatcher()
+
+
+class _MroBase:
+    def f(self, x):
+        return "base"
+
+
+class _MroSub(_MroBase):
+    @_mro_dispatch
+    def f(self, x: list[int]):
+        return "sub"
+
+
+def test_verify_cache_orders_a_comparable_bucket(dispatch):
+    @dispatch
+    def f(x: list):
+        return "list"
+
+    @dispatch
+    def f(x: list[int]):
+        return "list[int]"
+
+    assert f([1]) == "list[int]"
+    assert f([1]) == "list[int]"
+    assert f(["a"]) == "list"
+
+    methods, entries, first_wins = f._verify_cache[(list,)]
+    assert first_wins
+
+    # `methods` stays in registration order: `Resolver.resolve` and the error
+    # messages both want it that way.
+    assert [m.signature.types for m in methods] == [(list,), (list[int],)]
+
+    # The *ordered* list is what the first-match fast path walks, and it is what the
+    # `first_wins` claim rests on. Assert the ordering itself, most specific first,
+    # rather than inferring it from the bucket.
+    ordered = resolution_order(methods)
+    assert ordered is not None
+    assert [m.signature.types for m in ordered] == [(list[int],), (list,)]
+    # And the fast path walks exactly that many candidates, in that order.
+    assert len(entries) == len(ordered)
+
+
+def test_verify_cache_does_not_order_an_incomparable_bucket(dispatch):
+    @dispatch
+    def f(x: list[int]):
+        return "list[int]"
+
+    @dispatch
+    def f(x: list[str]):
+        return "list[str]"
+
+    assert f([1]) == "list[int]"
+    # Neither signature is below the other, and the empty list matches both, so the
+    # bucket cannot return on a first match.
+    assert not f._verify_cache[(list,)][2]
+    with pytest.raises(plum.AmbiguousLookupError):
+        f([])
+
+
+def test_verify_cache_settles_an_unordered_bucket_on_a_unique_match(dispatch):
+    @dispatch
+    def f(x: list[int]):
+        return "list[int]"
+
+    @dispatch
+    def f(x: list[str]):
+        return "list[str]"
+
+    # An unordered bucket can still settle a call that matches exactly one of its
+    # methods: that method is the only candidate full resolution can collect.
+    assert f([1]) == "list[int]"
+    assert f(["a"]) == "list[str]"
+    assert not f._verify_cache[(list,)][2]
+
+    # Several matches fall through to full resolution, which finds the ambiguity.
+    with pytest.raises(plum.AmbiguousLookupError):
+        f([])
+    # So does no match at all, which reports every method, not just the bucket.
+    with pytest.raises(plum.NotFoundLookupError) as e:
+        f([1.0])
+    assert len(e.value.methods) == 2
+
+
+def test_verify_cache_ordering_ignores_precedence(dispatch):
+    @dispatch(precedence=5)
+    def f(x: list):
+        return "list"
+
+    @dispatch
+    def f(x: list[int]):
+        return "list[int]"
+
+    # A fully comparable bucket is never ambiguous, so precedence never gets a say:
+    # specificity decides, exactly as in full resolution.
+    assert f([1]) == "list[int]"
+    assert f([1]) == "list[int]"
+    assert f._verify_cache[(list,)][2]
+
+
+def test_verify_cache_orders_equally_specific_methods_by_registration(dispatch):
+    @dispatch(precedence=1)
+    def f(x: list[int]):
+        return "first"
+
+    @dispatch
+    def f(x: list[int]):
+        return "second"
+
+    # The two signatures are below each other but not equal, since they differ in
+    # precedence. Full resolution keeps the last registered one, and so must the
+    # ordering, cold and warm.
+    assert f([1]) == "second"
+    assert f([1]) == "second"
+    assert f._verify_cache[(list,)][2]
+    assert f._resolver.resolve(([1],)).implementation([1]) == "second"
+
+
+def test_verify_cache_leaves_a_large_bucket_unordered(dispatch):
+    hints = [
+        list[int],
+        list[str],
+        list[bool],
+        list[float],
+        list[bytes],
+        list[complex],
+        list[frozenset],
+        list[tuple],
+        list[dict],
+        list[set],
+        list[object],
+    ]
+    f = None
+    for i, hint in enumerate(hints):
+
+        def impl(x, _i=i):
+            return _i
+
+        impl.__name__ = "big"
+        f = dispatch.multi(plum.Signature(hint))(impl)
+
+    # Ordering is quadratic in the size of the bucket, so a large one is left to the
+    # unique-match path, which resolves it exactly as full resolution does.
+    assert len(f.methods) > 10
+    assert f([1]) == 0
+    assert not f._verify_cache[(list,)][2]
+    assert f(["a"]) == 1
+
+
+def test_verify_cache_first_match_preserves_the_mro_fallback():
+    # `["a"]` lands in the same bucket as `[1]` but matches nothing in it, so the
+    # first-match path has to fall through to the walk up the MRO.
+    sub = _MroSub()
+    assert sub.f([1]) == "sub"
+    assert sub.f(["a"]) == "base"
+    assert sub.f(["a"]) == "base"
+
+
+# A differential fuzz test for the verify cache. Random method sets over uncacheable
+# hints are dispatched over a corpus of values, and every outcome is compared against
+# full resolution over all methods, cold and warm. Whatever a bucket does, it has to
+# agree with the resolver it stands in for.
+
+_FUZZ_HINTS = (
+    list[int],
+    list[str],
+    list[object],
+    list,
+    tuple[int, ...],
+    dict[str, int],
+    Iterable[int],
+    list[int] | int,
+    Literal[1],
+    int,
+    object,
+)
+
+# Beartype checks a container by sampling an element, so a heterogeneous container
+# would make `match` itself random and the comparison meaningless. Every container
+# here is homogeneous.
+_FUZZ_VALUES = (
+    [],
+    [1],
+    [1, 2],
+    ["a"],
+    [[1]],
+    (1, 2),
+    (),
+    {"a": 1},
+    {"a": "b"},
+    1,
+    2,
+    "a",
+    object(),
+)
+
+
+def _fuzz_function(rng):
+    """Build a function from a random set of methods over `_FUZZ_HINTS`.
+
+    Returns the function, a map from implementation to the index of the method that
+    implements it, and the arities the methods were built for.
+    """
+    impls = {}
+    f = None
+    for i in range(rng.randint(1, 4)):
+
+        def impl(*args, _i=i):
+            return _i
+
+        impl.__name__ = "fuzzed"
+        types = [rng.choice(_FUZZ_HINTS) for _ in range(rng.randint(1, 2))]
+        varargs = rng.choice(_FUZZ_HINTS) if rng.random() < 0.2 else plum.Missing
+        signature = plum.Signature(
+            *types, varargs=varargs, precedence=rng.choice((0, 0, 1))
+        )
+        if f is None:
+            f = plum.Function(impl)
+        f.register(impl, signature=signature, precedence=None)
+        impls[impl] = i
+    f._resolve_pending_registrations()
+    return f, impls
+
+
+def _resolved_index(f, args, impls):
+    """The index of the method full resolution selects, using no cache at all."""
+    return impls[f._resolver.resolve(args).implementation]
+
+
+def _outcome(call, impls):
+    """Run `call` and reduce whatever it does to a comparable value."""
+    try:
+        return ("value", call())
+    except plum.AmbiguousLookupError as e:
+        return ("ambiguous", tuple(sorted(impls[m.implementation] for m in e.methods)))
+    except plum.NotFoundLookupError as e:
+        return ("not found", tuple(sorted(impls[m.implementation] for m in e.methods)))
+
+
+def test_verify_cache_differential_fuzz():
+    rng = random.Random(20240611)
+    uncacheable = 0
+
+    for _ in range(300):
+        f, impls = _fuzz_function(rng)
+        uncacheable += not f._resolver.is_cacheable
+
+        for n in (1, 2, 3):
+            for args in itertools.product(_FUZZ_VALUES, repeat=n):
+                if n > 1 and rng.random() > 0.15:
+                    continue
+
+                # The reference: full resolution over every method, no cache at all.
+                reference = _outcome(partial(_resolved_index, f, args, impls), impls)
+
+                # Cold: every call rebuilds the bucket from scratch.
+                f.clear_cache(reregister=False)
+                cold = _outcome(partial(f, *args), impls)
+                # Warm: the bucket built by the call above is reused.
+                warm = _outcome(partial(f, *args), impls)
+
+                assert cold == reference, (args, f.methods)
+                assert warm == reference, (args, f.methods)
+
+    # The fast paths under test only run for an uncacheable resolver, so the corpus
+    # has to actually produce those.
+    assert uncacheable > 200
 
 
 def test_verify_bucket_is_not_poisoned_by_a_class_liar(dispatch):
@@ -764,3 +1042,64 @@ def test_verify_cache_is_not_allocated_for_cacheable_functions(dispatch):
     assert g._verify_cache is None  # Not until the first miss.
     g([1])
     assert g._verify_cache is not None
+
+
+def test_matchers_are_shared_across_verify_cache_buckets(dispatch):
+    # A matcher is fixed by the signature and the arity, but buckets are keyed on the
+    # runtime types, so without sharing every bucket binds its own copy per method.
+    @dispatch
+    def f(x: list[int], y: object):
+        return "li"
+
+    @dispatch
+    def f(x: list[str], y: object):
+        return "ls"
+
+    @dispatch
+    def f(x: object, y: object):
+        return "o"
+
+    class Mk:
+        pass
+
+    for i in range(40):
+        kind = type(f"T{i}", (Mk,), {})
+        f([1], kind())
+        f(["a"], kind())
+
+    buckets = list(f._verify_cache.values())
+    assert len(buckets) == 40
+    matchers = [entry[0] for (_methods, entries, _fw) in buckets for entry in entries]
+    assert len(matchers) == 120
+    # One per (signature, arity), not one per (bucket, method).
+    assert len({id(m) for m in matchers}) == 3
+
+
+def test_default_args_copy_does_not_inherit_a_stale_matcher(dispatch):
+    # `append_default_args` copies a signature and then drops its last type, so a
+    # matcher carried across the copy would answer for the original's arity.
+    from copy import copy as shallow_copy
+
+    from plum._signature import Signature, _matcher
+    from plum._util import Missing
+
+    s = Signature(list, int)
+    assert _matcher(s, 2)(([1], 2)) is True
+    assert s._matchers is not None  # Warmed.
+
+    c = shallow_copy(s)
+    assert c._matchers is None  # The copy starts cold.
+    c.varargs = Missing
+    c.types = c.types[:-1]  # Exactly what `append_default_args` does.
+    assert _matcher(c, 1)(([1],)) is True  # Answers for the copy's arity ...
+    assert _matcher(c, 2)(([1], 2)) is False  # ... and rejects the original's.
+
+    # And end to end, through the dispatcher that builds those copies.
+    @dispatch
+    def f(x: list[int], y: int = 0):
+        return ("li", y)
+
+    assert f([1], 5) == ("li", 5)
+    assert f([1]) == ("li", 0)
+    assert f([1], 5) == ("li", 5)  # Warm.
+    assert f([1]) == ("li", 0)
