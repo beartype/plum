@@ -702,12 +702,16 @@ still here. `test_arg_keys_agree_with_cache_key` holds them to `cache_key`."""
 def is_faithful(x: object, /) -> bool:
     """Check whether a type hint is faithful.
 
-    A type or type hint `t` is _faithful_ if, for all `x`::
+    A hint `t` is _faithful_ if, for all `x`, whether `x` matches `t` is decided by
+    `type(x)` alone -- two values of the same runtime type always match or fail
+    together. For a `t` that is an actual class, that is the same as saying::
 
         isinstance(x, t) == issubclass(type(x), t)
 
-    i.e. matching depends only on `type(x)`. Faithful types are cacheable with a plain
-    `type(x)` key. You can control faithfulness by setting `__faithful__`::
+    but the general form is the one that holds: many supported hints, `Any` and
+    `Literal[...]` and `Union[...]` among them, are not valid `issubclass` arguments
+    at all. Faithful hints are cacheable with a plain `type(x)` key. You can control
+    faithfulness by setting `__faithful__`::
 
         class UnfaithfulType:
             __faithful__ = False
