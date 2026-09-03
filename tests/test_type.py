@@ -324,7 +324,7 @@ def test_type_hint_eq_nested_any():
     """`Any` nested inside a parameterised hint must not collide either.
 
     `beartype>=0.23` collapses `list[Any]` onto `list[int]` exactly as it collapses
-    `Any` onto `int`, so the rewrite in `_substitute_nested_any` has to reach every
+    `Any` onto `int`, so the rewrite in `_substitute_any` has to reach every
     level, not just the root.
     """
     assert not _type_hint_eq(list[Any], list[int])

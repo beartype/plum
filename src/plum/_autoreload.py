@@ -8,7 +8,7 @@ from ._type import type_mapping
 
 def _update_instances(old: type, new: type) -> None:
     """First call the original implementation of Autoreload's :meth:`update_instances`,
-    and then use :obj:`.type._type_mapping` to map type `old` to the type `new`.
+    and then use :obj:`plum.type_mapping` to map type `old` to the type `new`.
 
     Args:
         old (type): Old type.
@@ -18,7 +18,7 @@ def _update_instances(old: type, new: type) -> None:
 
     type_mapping[old] = new
 
-    # There might be an existing value in `_type_mapping` that should be replaced by
+    # There might be an existing value in `type_mapping` that should be replaced by
     # `new`. Resolve these chains.
     for k, v in type_mapping.items():
         while v in type_mapping:
