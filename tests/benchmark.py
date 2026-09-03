@@ -99,3 +99,47 @@ factor = int(np.round(dur_plum / dur_native))
 print("# Class Attribute Calls")
 print(f"Native call: {dur_native:6.2f} us ({1:.1f} x)")
 print(f"Plum call:   {dur_plum:6.2f} us ({factor:.1f} x)")
+print()
+
+
+# Every benchmark above returns through an unannotated method, which plum
+# short-circuits. An annotated return goes through `convert` instead, so it is measured
+# separately here - and a union is the case that costs the most to check.
+# This script only reports; `tests/test_benchmark.py` asserts on the same ratio.
+
+
+class R1:
+    pass
+
+
+class R2:
+    pass
+
+
+def h_native(x):
+    return x
+
+
+@plum.dispatch
+def h(x: R1) -> R1:
+    return x
+
+
+@plum.dispatch
+def h_union(x: R1) -> R1 | R2:
+    return x
+
+
+r = R1()
+
+dur_native = benchmark(h_native, (r,), n=1000, burn=10)
+dur_plum = benchmark(h, (r,), n=1000, burn=10)
+dur_union = benchmark(h_union, (r,), n=1000, burn=10)
+
+factor = int(np.round(dur_plum / dur_native))
+factor_union = int(np.round(dur_union / dur_native))
+
+print("# Annotated Return Calls")
+print(f"Native call:      {dur_native:6.2f} us ({1:.1f} x)")
+print(f"Plum call:        {dur_plum:6.2f} us ({factor:.1f} x)")
+print(f"Plum call, union: {dur_union:6.2f} us ({factor_union:.1f} x)")
