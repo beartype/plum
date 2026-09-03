@@ -4,6 +4,7 @@
 the same call with no dispatch at all.
 """
 
+from collections.abc import Callable
 from typing import Literal
 
 import pytest
@@ -82,6 +83,52 @@ def union_arg(x: float):
     return x
 
 
+# The same uncacheable dispatch, but on a function that also carries methods a
+# `tuple` argument can never match. Full resolution costs one match test per
+# method, so this is the case where narrowing the candidates can pay; two methods
+# alone leave nothing to narrow and hide the effect entirely.
+
+
+@_dispatch
+def parametric_wide(x: tuple[int]):
+    return x
+
+
+@_dispatch
+def parametric_wide(x: tuple[str]):
+    return x
+
+
+@_dispatch
+def parametric_wide(x: list[int]):
+    return x
+
+
+@_dispatch
+def parametric_wide(x: list[str]):
+    return x
+
+
+@_dispatch
+def parametric_wide(x: dict[str, int]):
+    return x
+
+
+@_dispatch
+def parametric_wide(x: set[int]):
+    return x
+
+
+@_dispatch
+def parametric_wide(x: frozenset[str]):
+    return x
+
+
+@_dispatch
+def parametric_wide(x: Callable[[int], int]):
+    return x
+
+
 @pytest.mark.benchmark(group="call")
 @pytest.mark.parametrize(
     ("f", "args"),
@@ -94,6 +141,7 @@ def union_arg(x: float):
         pytest.param(on_literal, ("a",), id="Literal"),
         pytest.param(parametric, ((1,),), id="parametric"),
         pytest.param(union_arg, (1,), id="union-arg"),
+        pytest.param(parametric_wide, ((1,),), id="parametric-8-methods"),
     ],
 )
 def test_call(benchmark, f, args):

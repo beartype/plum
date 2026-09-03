@@ -363,17 +363,29 @@ class Resolver:
     def __len__(self) -> int:
         return len(self.methods)
 
-    def resolve(self, target: tuple[object, ...] | Signature) -> Method:
+    def resolve(
+        self,
+        target: tuple[object, ...] | Signature,
+        methods: list[Method] | None = None,
+    ) -> Method:
         """Find the most specific signature that satisfies a target.
 
         Args:
             target (:class:`.signature.Signature` or tuple[object]): Target to resolve.
                 Must be either a signature to be encompassed or a tuple of arguments.
+            methods (list[:class:`.method.Method`], optional): Consider only these
+                methods, in registration order. Must contain every method that can
+                match `target`, since only the methods that match contribute to the
+                selection; passing a narrowed superset therefore selects exactly the
+                same method as the default of all methods. Errors still report all
+                methods.
 
         Returns:
             :class:`.signature.Signature`: The most specific signature satisfying
                 `target`.
         """
+        if methods is None:
+            methods = self.methods
         if isinstance(target, tuple):
 
             def check(m: Method, /) -> bool:
@@ -387,7 +399,7 @@ class Resolver:
                 return bool(target <= m.signature)
 
         candidates: list[Method] = []
-        for method in [m for m in self.methods if check(m)]:
+        for method in [m for m in methods if check(m)]:
             # If none of the candidates are comparable, then add the method as
             # a new candidate and continue.
             if not any(c.signature.is_comparable(method.signature) for c in candidates):

@@ -26,6 +26,15 @@ to a `str` fallback would otherwise add an entry for every new string. Past the 
 arguments are resolved without caching. The cache of a function that dispatches only
 on `type[X]` is not limited, since a program defines only so many classes."""
 
+_VERIFY_CACHE_LIMIT = 4096
+"""Maximum number of tier-two buckets kept for one function.
+
+A bucket is keyed on the runtime types of the arguments, so the key space of an
+`n`-argument function is combinatorial in what its callers pass: twenty types across
+three arguments is eight thousand buckets, and a bucket costs several times what a
+method-cache entry does. Past the cap a call resolves over every method instead: the
+cap costs time, never correctness."""
+
 # Annotated (not left to inference as `None`) so a `mypyc`-compiled `_function` accepts
 # the external assignment `plum._function._promised_convert = convert` in `_promotion`.
 _promised_convert: Callable[..., Any] | None = None
@@ -163,6 +172,7 @@ class Function(NativeBase):
     # Instance attributes are declared so `Function` can be a `mypyc` native class.
     _f: Callable[..., Any]
     _cache: dict[tuple[TypeHint, ...], tuple[Callable[..., Any], TypeHint]]
+    _verify_cache: "dict[tuple[TypeHint, ...], MethodList] | None"
     _doc: str
     _owner_name: str | None
     _owner: type | None
@@ -189,6 +199,16 @@ class Function(NativeBase):
         # `__call__`, where each element is `self._resolver._arg_key(arg)`, or from
         # `invoke`, where each element is a `TypeHint`.
         self._cache = {}
+        # Verify cache, used only when the resolver is uncacheable. It maps the bare
+        # runtime types of the arguments to the methods that arguments with those
+        # types could possibly match, which is all a `type(x)` key can settle. The
+        # methods still have to be verified against the actual arguments, hence the
+        # name; see `_resolve_miss`.
+        #
+        # `None` until the first tier-two miss, rather than an empty dict: most
+        # functions are cacheable and so never read this at all, and an unused dict
+        # is 64 bytes each across every function a program defines.
+        self._verify_cache = None
 
         # Guards the lazy resolution of pending registrations, which mutates each
         # registered function's `__annotations__` in place (via beartype's
@@ -376,8 +396,9 @@ class Function(NativeBase):
         with self._lock:
             # Replace the dictionary rather than emptying it in place: a call that is
             # still resolving a method must not store its result in the live cache. See
-            # `_resolve_and_cache` for why.
+            # `_resolve_miss` for why.
             self._cache = {}
+            self._verify_cache = None
 
             if reregister:
                 # Add all resolved to pending.
@@ -454,12 +475,16 @@ class Function(NativeBase):
                 self.clear_cache(reregister=False)
 
     def resolve_method(
-        self, target: tuple[object, ...] | Signature
+        self,
+        target: tuple[object, ...] | Signature,
+        methods: MethodList | None = None,
     ) -> tuple[Callable[..., Any], TypeHint]:
         """Find the method and return type for arguments.
 
         Args:
             target (object): Target.
+            methods (:class:`.method.MethodList`, optional): Narrowed list of methods
+                to consider. See :meth:`.resolver.Resolver.resolve`.
 
         Returns:
             `tuple[function, type]`:
@@ -470,7 +495,7 @@ class Function(NativeBase):
 
         try:
             # Attempt to find the method using the resolver.
-            method = self._resolver.resolve(target)
+            method = self._resolver.resolve(target, methods)
             impl = method.implementation
             return_type = method.return_type
 
@@ -539,23 +564,6 @@ class Function(NativeBase):
             raise ex from None
         return method, return_type
 
-    def _resolve_and_cache(
-        self, args: tuple[object, ...] | Signature, key: tuple[object, ...]
-    ) -> tuple[Callable[..., Any], TypeHint]:
-        """Resolve `args` and cache the result under `key`, if cacheable."""
-        # Take the cache before resolving. The store below does not hold the lock, so if
-        # `clear_cache` runs during resolution, the outdated result goes into the old
-        # dictionary, which nothing reads any more.
-        cache = self._cache
-        method, return_type = self.resolve_method(args)
-        spec = self._resolver.cache_spec
-        # A resolver keyed on `Literal` values is capped; see `_VALUE_CACHE_LIMIT`.
-        if spec is not None and not (
-            KeyPart.VALUE in spec and len(cache) >= _VALUE_CACHE_LIMIT
-        ):
-            cache[key] = method, return_type
-        return method, return_type
-
     def __call__(self, *args: object, **kw: object) -> object:
         __tracebackhide__ = True
         # Resolve pending registrations before the lookup, since `register` leaves
@@ -568,7 +576,7 @@ class Function(NativeBase):
             method, return_type = self._cache[key]
         except KeyError:
             # Not `_resolve_method_with_cache`, which would look up `key` again.
-            method, return_type = self._resolve_and_cache(args, key)
+            method, return_type = self._resolve_miss(args, key)
         return _convert(method(*args, **kw), return_type)
 
     def _resolve_method_with_cache(
@@ -584,7 +592,60 @@ class Function(NativeBase):
         except KeyError:
             __tracebackhide__ = True
             signature = Signature(*(resolve_type_hint(t) for t in types))
-            return self._resolve_and_cache(signature, types)
+            return self._resolve_miss(signature, types)
+
+    def _resolve_miss(
+        self,
+        args: tuple[object, ...] | Signature,
+        key: tuple[TypeHint, ...],
+        /,
+    ) -> tuple[Callable[..., Any], TypeHint]:
+        """Resolve `args` after `key` missed the method cache.
+
+        If the resolver is uncacheable, the method cannot be cached. Instead, the
+        methods that arguments of these runtime types could match are cached under
+        `key`, and resolution considers only those. They include every method that
+        matches, so the result, or the error, is the same as when considering all
+        methods. A `Signature` from `invoke` has no runtime types to narrow on, so it is
+        resolved over all methods.
+
+        Args:
+            args (tuple or :class:`.signature.Signature`): Arguments, or a signature
+                from `invoke`.
+            key (tuple[:obj:`.TypeHint`, ...]): Key that missed the method cache.
+
+        Returns:
+            tuple[function, type]: Method and return type.
+        """
+        __tracebackhide__ = True
+        if isinstance(args, tuple) and not self._resolver.is_cacheable:
+            cache = self._verify_cache
+            if cache is None:
+                cache = self._verify_cache = {}
+            try:
+                methods = cache[key]
+            except KeyError:
+                if len(cache) >= _VERIFY_CACHE_LIMIT:
+                    # The narrowed methods could not be cached, so narrowing would
+                    # cost more than it saves.
+                    return self.resolve_method(args)
+                cache[key] = methods = MethodList(
+                    m for m in self._resolver.methods if m.signature.might_match(args)
+                )
+            return self.resolve_method(args, methods)
+
+        # Take the cache before resolving. The store below does not hold the lock, so if
+        # `clear_cache` runs during resolution, the outdated result goes into the old
+        # dictionary, which nothing reads any more.
+        method_cache = self._cache
+        method, return_type = self.resolve_method(args)
+        spec = self._resolver.cache_spec
+        # A resolver keyed on `Literal` values is capped; see `_VALUE_CACHE_LIMIT`.
+        if spec is not None and not (
+            KeyPart.VALUE in spec and len(method_cache) >= _VALUE_CACHE_LIMIT
+        ):
+            method_cache[key] = method, return_type
+        return method, return_type
 
     def invoke(self, *types: TypeHint) -> Callable[..., Any]:
         """Invoke a particular method.

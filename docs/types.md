@@ -88,7 +88,7 @@ system, which is *invariant*.
 For example, this means that `list[T1]` is a subtype of `list[T2]` whenever
 `T1` is a subtype of `T2`.
 
-## Performance and Faithful Types
+## Performance, Cacheable and Faithful Types
 
 Plum achieves performance by caching the dispatch process.
 Unfortunately, efficient caching is not always possible.
@@ -129,10 +129,19 @@ A function that dispatches on `type[X]` therefore keeps every class it is called
 A function that dispatches on `Literal` stops caching after 4096 entries, since `Literal["ready"]` next to a `str` fallback would otherwise add an entry for every new string.
 ```
 
-Methods which have signatures that depend only on cacheable types will
-be performant.
-On the other hand, methods which have one or more signatures with one or more
-uncacheable types cannot use caching and will therefore be less performant.
+Whether a function's types are cacheable decides which of two caches it uses.
+
+* **Trust.** If every method uses only cacheable types, then the cache key
+  determines which method matches, so the method is memoised under that key. A
+  repeated call is one dictionary lookup and no type checking at all.
+* **Verify.** If any method uses an uncacheable type, then no key determines the
+  method, and nothing may be trusted without checking. The runtime types of the
+  arguments do, however, determine which methods could *possibly* match, so those
+  are memoised instead, and every call verifies that narrowed list against the
+  actual arguments. This is much slower than a trusted hit, but the methods ruled
+  out by the argument types are never checked again.
+
+Both caches are cleared by `f.clear_cache()` and `clear_all_cache()`.
 
 Example:
 
