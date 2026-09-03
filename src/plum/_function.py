@@ -14,7 +14,7 @@ from ._method import Method, MethodList
 from ._mypyc import mypyc_attr
 from ._resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
 from ._signature import Signature, append_default_args
-from ._type import resolve_type_hint
+from ._type import KeyPart, resolve_type_hint
 from ._util import TypeHint
 
 _INVOKE_CACHE_LIMIT = 4096
@@ -27,6 +27,36 @@ process-global function such as `_promotion._convert` the key space is bounded o
 the caller's data. Past this many, `invoke` simply rebuilds its wrapper each time --
 exactly what it did before this cache existed, so no call can get a wrong answer."""
 
+_VALUE_CACHE_LIMIT = 4096
+"""Maximum number of entries cached for a function whose methods dispatch on a
+`Literal`.
+
+Such a function gets one entry per distinct *value* ever passed, and the key holds a
+strong reference to it, so `Literal["ready"]` beside a `str` fallback would otherwise
+grow with the caller's data forever. The limit is a memory ceiling only: once it is
+reached, further arguments simply resolve normally, exactly as they did before
+`Literal` became cacheable at all, so no call can get a wrong answer. 4096 entries is
+a few hundred kilobytes, and any genuine vocabulary of literals — states, flags, enum
+names — is orders of magnitude smaller, so a legitimate workload never reaches it.
+
+Why only `VALUE`, and not the other key parts: a literal vocabulary is caller *data*,
+and so unbounded by construction, while a type vocabulary is program *code*, and so
+bounded by what the program declares. The exception is code that creates classes at
+runtime — a model per request, a `namedtuple` per row — and there the method cache
+does grow without limit, and pins every class it has seen. That is not particular to
+`Literal` or to `type[X]`: a plainly *faithful* function keys on `type(x)` and pins
+exactly the same classes, and always has, so it is not something a cap here would
+address. Nor would a cap fix it: it would bound the growth while still retaining
+whatever it had reached, and past the bound every call falls back to full resolution,
+which is 15x a cache hit. Bounding the type-keyed caches is therefore deliberately
+*not* done; `f.clear_cache()` releases them.
+
+The fix that would work is eviction rather than a ceiling: a `weakref.finalize` on
+each cached class dropping the entries that mention it, which needs a reverse index
+from class to keys. Note that no version gate stands in the way — `weakref.finalize`
+accepts a static type such as `int` on every Python plum supports (checked on 3.10
+through 3.14), and simply never fires for one, so no fallback path is needed. It is
+the reverse index, not weak references, that makes it real work."""
 
 # Annotated (not left to inference as `None`) so a `mypyc`-compiled `_function` accepts
 # the external assignment `plum._function._promised_convert = convert` in `_promotion`.
@@ -620,7 +650,7 @@ class Function:
         # a `KeyError` raised by the method body must propagate rather than be
         # mistaken for a miss and silently re-dispatched. (User code does run inside
         # the `try` -- hashing the key calls a metaclass `__hash__` -- but a
-        # `KeyError` from there re-raises out of `_resolve_miss` anyway.)
+        # `KeyError` from there re-raises out of the miss path anyway.)
         if self._pending:
             self._resolve_pending_registrations()
         key = tuple(map(self._resolver._arg_key, args))
@@ -639,8 +669,7 @@ class Function:
             # answer back afterwards.
             generation = self._generation
             method, return_type = self.resolve_method(args)
-            if self._resolver.cache_spec is not None and generation == self._generation:
-                self._cache[key] = method, return_type
+            self._store(key, method, return_type, generation)
         return _convert(method(*args, **kw), return_type)
 
     def _resolve_method_with_cache(
@@ -681,14 +710,43 @@ class Function:
             # a registration landed in between and storing would pin a stale method.
             generation = self._generation
             method, return_type = self.resolve_method(args)
-            # Cache only when the resolver is cacheable; otherwise `cache_key` would
-            # not uniquely determine the matching method. And only if no `clear_cache`
-            # has run since the generation was read: this store is outside the lock, so
-            # without it a resolution begun before a registration could overwrite the
-            # cleared entry afterwards, and nothing would invalidate it again.
-            if self._resolver.cache_spec is not None and generation == self._generation:
-                self._cache[types] = method, return_type
+            self._store(types, method, return_type, generation)
             return method, return_type
+
+    def _store(
+        self,
+        key: tuple[TypeHint, ...],
+        method: Callable[..., Any],
+        return_type: TypeHint,
+        generation: int,
+        /,
+    ) -> None:
+        """Record a resolution under `key`, if this function may be cached at all.
+
+        Only when the resolver is cacheable; otherwise the key would not uniquely
+        determine the matching method. A `Literal`-dispatching resolver keys on
+        caller-supplied values, so its cache is additionally capped; see
+        `_VALUE_CACHE_LIMIT`. Both call sites are miss paths, so the key-part test
+        costs nothing that matters -- and sharing it keeps the two from drifting.
+
+        `generation` is what :attr:`_generation` read *before* the resolution began.
+        This store is outside the lock, so a resolution overtaken by a `clear_cache`
+        must not write its stale answer back afterwards; nothing would invalidate it
+        again, since `_pending` is empty by then.
+
+        Args:
+            key (tuple[:obj:`.TypeHint`, ...]): Key to store under.
+            method (Callable): Resolved method.
+            return_type (:obj:`.TypeHint`): Its return type.
+            generation (int): :attr:`_generation` as read before resolving.
+        """
+        if generation != self._generation:
+            return
+        spec = self._resolver.cache_spec
+        if spec is not None and not (
+            KeyPart.VALUE in spec and len(self._cache) >= _VALUE_CACHE_LIMIT
+        ):
+            self._cache[key] = method, return_type
 
     def invoke(self, *types: TypeHint) -> Callable[..., Any]:
         """Invoke a particular method.

@@ -415,15 +415,16 @@ class KeyPart(enum.Enum):
     A faithful type needs none of these: `type(x)` settles its match on its own.
     Each member names a further property of the argument that `cache_key` must
     encode for a category of non-faithful types to become cacheable at all.
-    `IDENTITY` is what makes `type[X]` cacheable. Members are append-only, so a new
-    category is an addition rather than a redesign.
+    `IDENTITY` is what makes `type[X]` cacheable, and `VALUE` `Literal[...]`. Members
+    are append-only, so a new category is an addition rather than a redesign.
     """
 
     IDENTITY = "identity"
+    VALUE = "value"
 
 
 CacheSpec = frozenset[KeyPart]
-"""What a type needs its cache key to carry: the set of :class:`KeyPart` members.
+r"""What a type needs its cache key to carry: the set of :class:`KeyPart`\ s.
 
 `frozenset()` is the faithful case -- `type(x)` alone suffices. `None`, wherever a
 `CacheSpec` is optional, means *uncacheable*: no key can determine the match.
@@ -431,6 +432,7 @@ CacheSpec = frozenset[KeyPart]
 
 _NO_PARTS: CacheSpec = frozenset()
 _IDENTITY: CacheSpec = frozenset({KeyPart.IDENTITY})
+_VALUE: CacheSpec = frozenset({KeyPart.VALUE})
 _ALL_PARTS: CacheSpec = frozenset(KeyPart)
 
 
@@ -444,13 +446,15 @@ def _has_dunder_faithful(x: type, /) -> TypeGuard[_SupportsDunderFaithful]:
 
 
 class _Identity:
-    """Identity cache-key wrapper for a class value.
+    """Identity cache-key wrapper for an object whose hash or equality cannot be
+    trusted.
 
     A class cannot be used as a cache key directly: its hash and equality come from
     its metaclass, so a metaclass with a custom `__eq__` would make distinct classes
     collide (silent wrong hit) and one whose classes are unhashable would make the
-    key raise `TypeError`. This wrapper keys on `id`, sidestepping the metaclass, and
-    holds a reference to `obj` so its `id` is not reused while the entry lives.
+    key raise `TypeError`. The same applies to an unhashable value. This wrapper keys
+    on `id`, sidestepping both, and holds a reference to `obj` so its `id` is not
+    reused while the entry lives.
     """
 
     __slots__ = ("obj",)
@@ -477,6 +481,52 @@ def _identity(x: object, /) -> object | None:
     return x if type(x) is type else _Identity(x)
 
 
+_LITERAL_TYPES: frozenset[type] = frozenset({bool, int, str, bytes, type(None)})
+"""The exact types PEP 586 allows a `Literal` to hold; a value of one of these is
+keyed by its own value. Instances of *subclasses* also match a `Literal`, and are
+keyed differently -- see `_value`."""
+
+_LITERAL_BASES: tuple[type, ...] = (int, str, bytes, enum.Enum)
+"""Bases whose instances can also match a `Literal`: an `int` subclass and an
+`Enum` member both do. `bool` and `NoneType` cannot be subclassed, so they need no
+entry here."""
+
+
+def _value(x: object, /) -> object | None:
+    """The value component of `cache_key` for `x`.
+
+    Beartype matches `x` against `Literal[v]` exactly when `isinstance(x, type(v))`
+    and `x == v`. The first half is settled by `type(x)`, which the key already
+    carries; this slot settles the second half.
+
+    An `x` that is not an instance of any legal `Literal` type can never match any
+    `Literal`, so `type(x)` alone determines the answer and the slot is `None` — this
+    is also what keeps unhashable arguments (a `list`, say) out of the key.
+
+    Only an `x` of one of those types *exactly* is keyed on its value. Such an `x`
+    has the built-in `__eq__` and `__hash__`, under which equal keys really do imply
+    equal `x == literal` for every literal. A *subclass* instance can also match
+    (`is_bearable(MyInt(1), Literal[1])` is `True`), but its `__eq__` and `__hash__`
+    are user code and may be non-transitive, so two arguments could share a key while
+    matching different literals. It is therefore keyed on its identity instead, which
+    is strictly finer than its value and so never collides. This is the same
+    precaution :class:`_Identity` already takes for classes.
+
+    Args:
+        x (object): Value.
+
+    Returns:
+        object or None: The value component of the cache key for `x`.
+    """
+    if type(x) in _LITERAL_TYPES:
+        return x
+    if isinstance(x, _LITERAL_BASES):
+        # Note: this caches per object rather than per value. `Enum` members are
+        # singletons, so for them the two coincide.
+        return _Identity(x)
+    return None
+
+
 def cache_key(x: object, /, spec: CacheSpec = _ALL_PARTS) -> tuple[object, ...]:
     """Cache key for a value `x`, carrying the key parts named by `spec`.
 
@@ -490,17 +540,43 @@ def cache_key(x: object, /, spec: CacheSpec = _ALL_PARTS) -> tuple[object, ...]:
     the default key. Only the contract is stable: equal keys imply the same match
     result.
 
-    Note that the identity slot keeps a strong reference to `x` -- necessarily, since
-    that is what makes `id`-based hashing safe. A function dispatching on `type[X]`
-    therefore accumulates one cache entry per distinct argument class, and pins that
-    class, for the function's lifetime; dynamically created classes are not
-    collected. Call `f.clear_cache()` (or :func:`plum.clear_all_cache`) to release
-    them.
+    Note that the identity and value slots keep a strong reference to `x` — necessarily,
+    since that is what makes `id`-based hashing safe. A function dispatching on
+    `type[X]` or `Literal` therefore accumulates one cache entry per distinct argument
+    class or value, and pins that class or value, for the function's lifetime;
+    dynamically created classes are not collected. Call `f.clear_cache()` (or
+    :func:`plum.clear_all_cache`) to release them. Because a `Literal` argument's value
+    is typically caller-supplied, a function dispatching on one stops caching once it
+    holds `plum._function._VALUE_CACHE_LIMIT` entries; further arguments resolve
+    normally.
+
+    Args:
+        x (object): Value to compute a cache key for.
+        spec (:obj:`CacheSpec`, optional): Key parts to capture. Defaults to all
+            of them.
+
+    Returns:
+        tuple: Cache key for `x`.
     """
     key: tuple[object, ...] = (type(x),)
     if KeyPart.IDENTITY in spec:
         key += (_identity(x),)
+    if KeyPart.VALUE in spec:
+        key += (_value(x),)
     return key
+
+
+_ARG_KEYS: "dict[CacheSpec, Callable[[object], object]]" = {
+    _NO_PARTS: type,
+    _IDENTITY: lambda x: (type(x), _identity(x)),
+    _VALUE: lambda x: (type(x), _value(x)),
+    _IDENTITY | _VALUE: lambda x: (type(x), _identity(x), _value(x)),
+}
+"""`cache_key` specialised to each combination of spec, for :class:`.Resolver` to
+bind on the hot path. Testing `KeyPart` membership per call costs ~80 ns per key part
+(hashing an `Enum` member is not cheap), which is the bulk of a cached dispatch; these
+do the same work with the spec already decided. One entry per subset of `KeyPart`;
+`test_arg_keys_agree_with_cache_key` holds them to `cache_key`."""
 
 
 def is_faithful(x: object, /) -> bool:
@@ -534,7 +610,8 @@ def is_cacheable(x: object, /) -> bool:
     `t` is _cacheable_ if, for all `x`, whether `x` matches `t` is a function of
     :func:`cache_key(x) <cache_key>` alone. Every faithful type is cacheable; in
     addition `type[X]` is cacheable but not faithful (its match `issubclass(x, X)`
-    depends on the class identity of `x`, which `cache_key` captures).
+    depends on the class identity of `x`, which `cache_key` captures), and so is
+    `Literal[...]` (its match depends on the value of `x`, likewise captured).
 
     Args:
         x (type or type hint): Type hint.
@@ -577,7 +654,8 @@ def _combine(items: "Iterable[object]", /) -> CacheSpec | None:
 def _cache_spec(x: object, /) -> CacheSpec | None:
     """Classify a **resolved** hint into the :obj:`CacheSpec` it needs, or `None`.
 
-    `frozenset()` = faithful (type-key suffices); `{IDENTITY}` = `type[X]`; a union is
+    `frozenset()` = faithful (type-key suffices); `{IDENTITY}` = `type[X]`;
+    `{VALUE}` = `Literal[...]`; a union is
     the union of its members (`None` if any member is uncacheable); everything else
     that is not a plainly faithful type is `None` (uncacheable). This is the single
     classifier `is_faithful` and `is_cacheable` derive from.
@@ -599,6 +677,9 @@ def _cache_spec(x: object, /) -> CacheSpec | None:
         if origin is type:
             # `type[X]`: cacheable via the identity component of the cache key.
             return _IDENTITY
+        if origin is Literal:
+            # `Literal[...]`: cacheable via the value component of the cache key.
+            return _VALUE
         if origin in UNION_TYPES:
             return _combine(args)
         return None
