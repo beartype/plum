@@ -5,7 +5,7 @@ import textwrap
 import threading
 from collections.abc import Callable
 from copy import copy
-from functools import partial, wraps
+from functools import partial
 from types import MethodType
 from typing import Any, ClassVar, Protocol, TypeVar, overload
 from typing_extensions import Self
@@ -16,6 +16,7 @@ from ._resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
 from ._signature import Signature, append_default_args
 from ._type import resolve_type_hint
 from ._util import TypeHint
+from ._wraps import _wraps
 
 # Annotated (not left to inference as `None`) so a `mypyc`-compiled `_function` accepts
 # the external assignment `plum._function._promised_convert = convert` in `_promotion`.
@@ -59,18 +60,18 @@ _owner_transfer: dict[type, type] = {}
 a function (see :meth:`Function.owner`), make the corresponding value the owner."""
 
 
-class _Wrappable(Protocol):
+class _NativeWrappable(Protocol):
     __name__: str
     __qualname__: str
     __wrapped__: Callable[..., Any]
 
 
-def _wraps(wrapper: _Wrappable, wrapped: Callable[..., Any], /) -> None:
-    """Copy `wrapped`'s metadata onto `wrapper`, like :func:`functools.wraps`.
+def _wraps_native(wrapper: _NativeWrappable, wrapped: Callable[..., Any], /) -> None:
+    """:func:`_wraps` for `Function` and `_BoundFunction`, which take less.
 
     Deliberately narrower: `functools.wraps` also copies `__doc__` and `__module__`,
     which `Function` serves through non-data descriptors that an instance attribute
-    would shadow.
+    would shadow. Use :func:`_wraps` for anything else.
     """
     wrapper.__name__ = wrapped.__name__
     wrapper.__qualname__ = _generate_qualname(wrapped)
@@ -82,7 +83,7 @@ class _InvokedMethod(NativeBase):
 
     Callable returned by :meth:`Function.invoke`. A class rather than a closure,
     which `mypyc` cannot compile (mypyc/mypyc#1205); `NativeBase` for the `__dict__`
-    :func:`functools.wraps` writes into.
+    :func:`_wraps` writes into.
     """
 
     def __init__(
@@ -90,7 +91,7 @@ class _InvokedMethod(NativeBase):
     ) -> None:
         self._method = method
         self._return_type = return_type
-        wraps(f)(self)
+        _wraps(self, f)
         self.__wrapped_by_plum__ = method
 
     def __call__(self, *args: Any, **kw: Any) -> Any:
@@ -205,7 +206,7 @@ class Function(NativeBase):
         self._lock = threading.RLock()
 
         # `__doc__` is the `_DocDescriptor`, so store the raw docstring in `self._doc`.
-        _wraps(self, f)
+        _wraps_native(self, f)
         self._doc = f.__doc__ if f.__doc__ else ""
 
         # `owner` is the name of the owner. We will later attempt to resolve to
@@ -703,7 +704,7 @@ class _BoundFunction(NativeBase):
 
     # Declared so `_BoundFunction` is a `mypyc` native class (like `Function`), which
     # speeds up bound (class-method) dispatch. `_f` holds a `Function` (typed as proto);
-    # the dunders are also what `_wraps` writes (see the `_Wrappable` protocol).
+    # the dunders are also what `_wraps_native` writes (see `_NativeWrappable`).
     _f: _BoundFunctionProto
     _instance: object
     __name__: str
@@ -715,7 +716,7 @@ class _BoundFunction(NativeBase):
         self._instance = instance
         # Wrap the underlying function `f._f`, like `Function`. `__doc__`/`__module__`
         # are served by the descriptors attached below.
-        _wraps(self, f._f)
+        _wraps_native(self, f._f)
 
     def _compute_doc(self) -> str | None:
         return self._f.__doc__
@@ -753,7 +754,7 @@ class _BoundInvokedMethod(NativeBase):
         self._types = types
         # `bound.__wrapped__` is the underlying function (`f._f`), set in
         # `_BoundFunction.__init__`.
-        wraps(bound.__wrapped__)(self)
+        _wraps(self, bound.__wrapped__)
 
     def __call__(self, *args: Any, **kw: Any) -> Any:
         # TODO: Can we do this without `type` here?
