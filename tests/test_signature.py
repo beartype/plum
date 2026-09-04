@@ -452,3 +452,11 @@ def test_append_default_args():
     # Test that `itemgetter` is supported.
     f = operator.itemgetter(0)
     assert len(plum.append_default_args(Sig.from_callable(f), f)) == 1
+
+
+def test_signature_carries_no_dict():
+    # `Signature` declares `__slots__`; the base must not undo it.
+    s = Sig(int, float)
+    assert not hasattr(s, "__dict__")
+    with pytest.raises(AttributeError):
+        s.extra = 1
