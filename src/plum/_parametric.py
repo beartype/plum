@@ -179,7 +179,7 @@ def parametric(original_class: type, /) -> type:
 
     When the constructor of this parametric type is called before the type parameter
     has been specified, the type parameter is inferred from the arguments of the
-    constructor by calling `__inter_type_parameter__`. The default implementation is
+    constructor by calling `__infer_type_parameter__`. The default implementation is
     shown here, but it is possible to override it::
 
         @classmethod
