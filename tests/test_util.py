@@ -95,3 +95,35 @@ def test_get_context():
     assert get_context(A().f) == "tests.test_util"
     assert get_context(f) == "tests.test_util"
     assert get_context(lambda _: None) == "tests.test_util.test_get_context.<locals>"
+
+
+def test_comparable_has_empty_slots():
+    # Without this, a subclass declaring `__slots__` still gets a `__dict__` and the
+    # declaration is silently a no-op.
+    assert Comparable.__slots__ == ()
+
+    class Slotted(Comparable):
+        __slots__ = ("v",)
+
+        def __init__(self, v):
+            self.v = v
+
+        def __le__(self, other):
+            return self.v <= other.v
+
+    s = Slotted(1)
+    assert not hasattr(s, "__dict__")
+    with pytest.raises(AttributeError):
+        s.extra = 2
+
+    # A subclass that declares no `__slots__` of its own is unaffected.
+    class Unslotted(Comparable):
+        def __init__(self, v):
+            self.v = v
+
+        def __le__(self, other):
+            return self.v <= other.v
+
+    u = Unslotted(1)
+    u.extra = 2
+    assert u.__dict__ == {"v": 1, "extra": 2}

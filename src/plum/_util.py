@@ -51,6 +51,14 @@ class Comparable(metaclass=abc.ABCMeta):
     Requires the subclass to just implement `__le__`.
     """
 
+    # A base class without `__slots__` gives every subclass a `__dict__`, even one
+    # that declares `__slots__` itself, silently undoing it. `Signature` does declare
+    # them, so without this its instances carry a dictionary it never uses. Empty
+    # `__slots__` on a mixin is what the `collections.abc` ABCs do for the same
+    # reason, and it costs a subclass nothing: one that declares no `__slots__` of
+    # its own still gets a `__dict__` exactly as before.
+    __slots__: tuple[str, ...] = ()
+
     def __eq__(self, other: object, /) -> bool:
         return self <= other <= self
 
