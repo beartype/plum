@@ -307,14 +307,6 @@ def _substitute_any(hint: object, /) -> object:
     Returns:
         object: `hint` with every `Any` replaced by `object`.
     """
-    # The same hints are compared over and over, so cache the rewrite. Not every hint
-    # is hashable, e.g. `Annotated[int, {"a": 1}]`, so only cache when possible.
-    if _hashable(hint):
-        return _substitute_any_cached(hint)
-    return _substitute_any_uncached(hint)
-
-
-def _substitute_any_uncached(hint: object, /) -> object:
     if hint is Any:
         return object
     if isinstance(hint, list):
@@ -337,7 +329,32 @@ def _substitute_any_uncached(hint: object, /) -> object:
         return hint
 
 
-_substitute_any_cached = lru_cache(maxsize=4096)(_substitute_any_uncached)
+def _wrap_type_hint_uncached(hint: object, /) -> TypeHintWrapper:
+    return TypeHintWrapper(_substitute_any(hint))
+
+
+_wrap_type_hint_cached = lru_cache(maxsize=4096)(_wrap_type_hint_uncached)
+
+
+def _wrap_type_hint(hint: object, /) -> TypeHintWrapper:
+    """Wrap `hint` for comparison, replacing every `Any` by `object`.
+
+    `Signature` comparison wraps the same fixed hints on every uncached dispatch, so
+    the rewrite and `beartype`'s own wrapper lookup would otherwise repeat per call.
+
+    Args:
+        hint (object): Already-resolved type hint.
+
+    Returns:
+        TypeHintWrapper: Wrapped hint.
+    """
+    # The same hints are compared over and over, so cache the wrapper. Not every hint
+    # is hashable, e.g. `Annotated[int, {"a": 1}]`, so only cache when possible.
+    try:
+        return _wrap_type_hint_cached(hint)
+    except TypeError:
+        # Cannot hash `hint`.
+        return _wrap_type_hint_uncached(hint)
 
 
 def _type_hint_le(x: object, y: object, /) -> bool:
@@ -362,9 +379,7 @@ def _type_hint_le(x: object, y: object, /) -> bool:
         return y is Any
     if y is Any:
         return True
-    return bool(
-        TypeHintWrapper(_substitute_any(x)) <= TypeHintWrapper(_substitute_any(y))
-    )
+    return bool(_wrap_type_hint(x) <= _wrap_type_hint(y))
 
 
 def _type_hint_eq(x: object, y: object, /) -> bool:
@@ -383,9 +398,7 @@ def _type_hint_eq(x: object, y: object, /) -> bool:
         return x is y
     # Do not derive this from `_type_hint_le`: `TypeHintWrapper.__eq__` already checks
     # both directions in one pass.
-    return bool(
-        TypeHintWrapper(_substitute_any(x)) == TypeHintWrapper(_substitute_any(y))
-    )
+    return bool(_wrap_type_hint(x) == _wrap_type_hint(y))
 
 
 def is_faithful(x: object, /) -> bool:
