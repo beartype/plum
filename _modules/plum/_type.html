@@ -673,14 +673,6 @@ document.write(`
 <span class="sd">    Returns:</span>
 <span class="sd">        object: `hint` with every `Any` replaced by `object`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># The same hints are compared over and over, so cache the rewrite. Not every hint</span>
-    <span class="c1"># is hashable, e.g. `Annotated[int, {&quot;a&quot;: 1}]`, so only cache when possible.</span>
-    <span class="k">if</span> <span class="n">_hashable</span><span class="p">(</span><span class="n">hint</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">_substitute_any_cached</span><span class="p">(</span><span class="n">hint</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">_substitute_any_uncached</span><span class="p">(</span><span class="n">hint</span><span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_substitute_any_uncached</span><span class="p">(</span><span class="n">hint</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
     <span class="k">if</span> <span class="n">hint</span> <span class="ow">is</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">object</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hint</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
@@ -703,7 +695,32 @@ document.write(`
         <span class="k">return</span> <span class="n">hint</span>
 
 
-<span class="n">_substitute_any_cached</span> <span class="o">=</span> <span class="n">lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">4096</span><span class="p">)(</span><span class="n">_substitute_any_uncached</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_wrap_type_hint_uncached</span><span class="p">(</span><span class="n">hint</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TypeHintWrapper</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">TypeHintWrapper</span><span class="p">(</span><span class="n">_substitute_any</span><span class="p">(</span><span class="n">hint</span><span class="p">))</span>
+
+
+<span class="n">_wrap_type_hint_cached</span> <span class="o">=</span> <span class="n">lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">4096</span><span class="p">)(</span><span class="n">_wrap_type_hint_uncached</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_wrap_type_hint</span><span class="p">(</span><span class="n">hint</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TypeHintWrapper</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrap `hint` for comparison, replacing every `Any` by `object`.</span>
+
+<span class="sd">    `Signature` comparison wraps the same fixed hints on every uncached dispatch, so</span>
+<span class="sd">    the rewrite and `beartype`&#39;s own wrapper lookup would otherwise repeat per call.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        hint (object): Already-resolved type hint.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        TypeHintWrapper: Wrapped hint.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># The same hints are compared over and over, so cache the wrapper. Not every hint</span>
+    <span class="c1"># is hashable, e.g. `Annotated[int, {&quot;a&quot;: 1}]`, so only cache when possible.</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_wrap_type_hint_cached</span><span class="p">(</span><span class="n">hint</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+        <span class="c1"># Cannot hash `hint`.</span>
+        <span class="k">return</span> <span class="n">_wrap_type_hint_uncached</span><span class="p">(</span><span class="n">hint</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_type_hint_le</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -728,9 +745,7 @@ document.write(`
         <span class="k">return</span> <span class="n">y</span> <span class="ow">is</span> <span class="n">Any</span>
     <span class="k">if</span> <span class="n">y</span> <span class="ow">is</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">True</span>
-    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span>
-        <span class="n">TypeHintWrapper</span><span class="p">(</span><span class="n">_substitute_any</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="o">&lt;=</span> <span class="n">TypeHintWrapper</span><span class="p">(</span><span class="n">_substitute_any</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
-    <span class="p">)</span>
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">_wrap_type_hint</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">_wrap_type_hint</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_type_hint_eq</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -749,9 +764,7 @@ document.write(`
         <span class="k">return</span> <span class="n">x</span> <span class="ow">is</span> <span class="n">y</span>
     <span class="c1"># Do not derive this from `_type_hint_le`: `TypeHintWrapper.__eq__` already checks</span>
     <span class="c1"># both directions in one pass.</span>
-    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span>
-        <span class="n">TypeHintWrapper</span><span class="p">(</span><span class="n">_substitute_any</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="o">==</span> <span class="n">TypeHintWrapper</span><span class="p">(</span><span class="n">_substitute_any</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
-    <span class="p">)</span>
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">_wrap_type_hint</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="n">_wrap_type_hint</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
 
 
 <div class="viewcode-block" id="is_faithful">
