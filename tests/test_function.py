@@ -699,3 +699,67 @@ def test_resolve_pending_registrations_is_thread_safe():
             assert f(1.0) == "float"
     finally:
         sys.setswitchinterval(old_interval)
+
+
+@pytest.mark.incompatible_with_mypyc
+def test_call_does_not_cache_a_result_a_clear_invalidated(dispatch: plum.Dispatcher):
+    """A registration landing mid-resolution must not leave a stale method cached.
+
+    `clear_cache` clears `_cache` under `_lock`, but `_resolve_method_with_cache`
+    resolves and stores outside it, so a method resolved before the clear can be
+    written after it. `_pending` is empty by then, so nothing would ever invalidate
+    it again and every later call would get the superseded method. See GitHub issue
+    #274.
+    """
+
+    @dispatch
+    def f(x: int):
+        return "v1"
+
+    f._resolve_pending_registrations()
+
+    resolved, invalidated = threading.Event(), threading.Event()
+    original = Function.resolve_method
+    target, park = f, [True]
+
+    def parked(self, *args, **kw_args):
+        out = original(self, *args, **kw_args)
+        # Scoped by identity: `Function` is a `mypyc` native class, so there is no
+        # instance `__dict__` to hang a flag on, and other functions resolve here too.
+        if self is target and park[0]:
+            resolved.set()
+            # Park between resolving and storing, which is where the clear lands.
+            invalidated.wait(5)
+        return out
+
+    # A bare `Thread` swallows whatever the target raises, and `join(timeout)` returns
+    # whether or not the thread finished, so both are checked explicitly below: without
+    # that this test would pass just as happily if the parked thread crashed or hung.
+    errors: list[BaseException] = []
+
+    def call_in_thread() -> None:
+        try:
+            f(1)
+        except BaseException as e:  # noqa: BLE001
+            errors.append(e)
+
+    Function.resolve_method = parked
+    try:
+        thread = threading.Thread(target=call_in_thread)
+        thread.start()
+        assert resolved.wait(5), "the parked thread never reached the park"
+
+        @dispatch
+        def f(x: int):  # noqa: F811
+            return "v2"
+
+        f._resolve_pending_registrations()
+        invalidated.set()
+        thread.join(5)
+    finally:
+        park[0] = False
+        Function.resolve_method = original
+
+    assert not thread.is_alive(), "the parked thread did not finish"
+    assert not errors, errors
+    assert f(1) == "v2"
