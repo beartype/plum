@@ -133,6 +133,7 @@ class Function:
     # Instance attributes are declared so `Function` can be a `mypyc` native class.
     _f: Callable[..., Any]
     _cache: dict[tuple[TypeHint, ...], tuple[Callable[..., Any], TypeHint]]
+    _generation: int
     _doc: str
     _owner_name: str | None
     _owner: type | None
@@ -158,6 +159,10 @@ class Function:
         # Cache maps type tuples to `(method, return_type)`. Keys can be either
         # actual types (from `__call__`) or `TypeHints` (from `invoke`).
         self._cache = {}
+        # Bumped by `clear_cache`, under the lock. A resolution that started before a
+        # concurrent clear compares this before storing, so it cannot write an answer
+        # the clear was meant to discard. See `_resolve_method_with_cache`.
+        self._generation = 0
 
         # Guards the lazy resolution of pending registrations, which mutates each
         # registered function's `__annotations__` in place (via beartype's
@@ -335,6 +340,7 @@ class Function:
         # `_pending`/`_resolved`/`_resolver` in multiple steps. See GitHub issue #274.
         with self._lock:
             self._cache.clear()
+            self._generation += 1
 
             if reregister:
                 # Add all resolved to pending.
@@ -534,11 +540,18 @@ class Function:
             if args is None:
                 args = Signature(*(resolve_type_hint(t) for t in types))
 
-            # Cache miss. Run the resolver based on the arguments.
+            # Cache miss. Read the generation before resolving: `clear_cache` bumps
+            # it under the lock, so if it has moved by the time the answer is ready,
+            # a registration landed in between and storing would pin a stale method.
+            generation = self._generation
             method, return_type = self.resolve_method(args)
             # If the resolver is faithful, then we can perform caching using the types
-            # of the arguments. If the resolver is not faithful, then we cannot.
-            if self._resolver.is_faithful:
+            # of the arguments. If the resolver is not faithful, then we cannot. And
+            # only if no `clear_cache` has run since the generation was read: this
+            # store is outside the lock, so without the check a resolution begun
+            # before a registration could overwrite the cleared entry afterwards, and
+            # nothing would ever invalidate it again.
+            if self._resolver.is_faithful and generation == self._generation:
                 self._cache[types] = method, return_type
             return method, return_type
 
