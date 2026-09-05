@@ -5,17 +5,82 @@ import textwrap
 import threading
 from collections.abc import Callable
 from copy import copy
-from functools import partial, wraps
+from functools import WRAPPER_ASSIGNMENTS, partial
 from types import MethodType
 from typing import Any, ClassVar, Protocol, TypeVar, overload
 from typing_extensions import Self
 
 from ._method import Method, MethodList
 from ._mypyc import mypyc_attr
-from ._resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
-from ._signature import Signature, append_default_args
-from ._type import resolve_type_hint
+from ._resolver import (
+    AmbiguousLookupError,
+    NotFoundLookupError,
+    Resolver,
+    resolution_order,
+)
+from ._signature import Signature, _matcher, append_default_args
+from ._type import KeyPart, resolve_type_hint
 from ._util import TypeHint
+
+_INVOKE_CACHE_LIMIT = 4096
+"""Maximum number of wrappers cached for one function.
+
+Unlike `_cache`, this is not gated on `is_faithful`, so it fills for functions whose
+method cache stays empty. The keys are whatever type hints callers pass, and
+`_BoundInvokedMethod` adds one per `(type(instance), *types)` combination, so for a
+process-global function such as `_promotion._convert` the key space is bounded only by
+the caller's data. Past this many, `invoke` simply rebuilds its wrapper each time --
+exactly what it did before this cache existed, so no call can get a wrong answer."""
+
+_VerifyEntry = tuple[Callable[[tuple[object, ...]], bool], Callable[..., Any], TypeHint]
+"""A method of a verify-cache bucket, prepared for verification: a matcher bound to
+the arity of the bucket, the implementation, and the return type."""
+
+_VerifyBucket = tuple[MethodList, tuple[_VerifyEntry, ...], bool]
+"""A verify-cache bucket: the narrowed methods in registration order, their entries,
+and whether the first entry that matches settles the call. See
+:meth:`Function._build_verify_bucket`."""
+
+_VALUE_CACHE_LIMIT = 4096
+"""Maximum number of entries cached for a function whose methods dispatch on a
+`Literal`.
+
+Such a function gets one entry per distinct *value* ever passed, and the key holds a
+strong reference to it, so `Literal["ready"]` beside a `str` fallback would otherwise
+grow with the caller's data forever. The limit is a memory ceiling only: once it is
+reached, further arguments simply resolve normally, exactly as they did before
+`Literal` became cacheable at all, so no call can get a wrong answer. 4096 entries is
+a few hundred kilobytes, and any genuine vocabulary of literals — states, flags, enum
+names — is orders of magnitude smaller, so a legitimate workload never reaches it.
+
+Why only `VALUE`, and not the other key parts: a literal vocabulary is caller *data*,
+and so unbounded by construction, while a type vocabulary is program *code*, and so
+bounded by what the program declares. The exception is code that creates classes at
+runtime — a model per request, a `namedtuple` per row — and there the method cache
+does grow without limit, and pins every class it has seen. That is not particular to
+`Literal` or to `type[X]`: a plainly *faithful* function keys on `type(x)` and pins
+exactly the same classes, and always has, so it is not something a cap here would
+address. Nor would a cap fix it: it would bound the growth while still retaining
+whatever it had reached, and past the bound every call falls back to full resolution,
+which is 15x a cache hit. Bounding the type-keyed caches is therefore deliberately
+*not* done; `f.clear_cache()` releases them.
+
+The fix that would work is eviction rather than a ceiling: a `weakref.finalize` on
+each cached class dropping the entries that mention it, which needs a reverse index
+from class to keys. Note that no version gate stands in the way — `weakref.finalize`
+accepts a static type such as `int` on every Python plum supports (checked on 3.10
+through 3.14), and simply never fires for one, so no fallback path is needed. It is
+the reverse index, not weak references, that makes it real work."""
+
+_VERIFY_CACHE_LIMIT = 4096
+"""Maximum number of tier-two buckets kept for one function.
+
+A bucket is keyed on the runtime types of the arguments, so the key space of an
+`n`-argument function is combinatorial in what its callers pass: twenty types across
+three arguments is eight thousand buckets, and an ordered bucket costs several times
+what a method-cache entry does. Past this many, a call builds its bucket, uses it and
+drops it -- the work tier two would have done anyway before it cached anything, so no
+call can get a wrong answer."""
 
 # Annotated (not left to inference as `None`) so a `mypyc`-compiled `_function` accepts
 # the external assignment `plum._function._promised_convert = convert` in `_promotion`.
@@ -23,6 +88,15 @@ _promised_convert: Callable[..., Any] | None = None
 """function or None: This will be set to :func:`.parametric.convert`."""
 
 SomeExceptionType = TypeVar("SomeExceptionType", bound=Exception)
+
+
+_identity_conversions: dict[tuple[type, TypeHint], bool] = {}
+"""dict[tuple[type, TypeHint], bool]: Whether conversion is the identity for a
+`(type(obj), target_type)` pair.
+
+Written by :func:`plum.convert`, which decides what is recordable; read here because
+this is the hot path. Missing means "not yet analysed". Same staleness contract as
+:attr:`Function._cache`: mutating a type's meaning in place needs `clear_all_cache`."""
 
 
 def _convert(obj: Any, target_type: TypeHint, /) -> Any:
@@ -37,9 +111,12 @@ def _convert(obj: Any, target_type: TypeHint, /) -> Any:
     """
     if target_type is Any:
         return obj
-    else:
-        assert _promised_convert is not None
-        return _promised_convert(obj, target_type)
+    # Skip `convert` entirely when it is known to be the identity for this pair. An
+    # unhashable `target_type` raises here instead of below, as it always has.
+    if _identity_conversions.get((type(obj), target_type)):
+        return obj
+    assert _promised_convert is not None
+    return _promised_convert(obj, target_type)
 
 
 _owner_transfer: dict[type, type] = {}
@@ -47,17 +124,96 @@ _owner_transfer: dict[type, type] = {}
 a function (see :meth:`Function.owner`), make the corresponding value the owner."""
 
 
-class _Wrappable(Protocol):
+_HAS_ANNOTATE = "__annotate__" in WRAPPER_ASSIGNMENTS
+"""Whether this interpreter carries annotations lazily on `__annotate__`.
+
+Python 3.14 replaced `__annotations__` with `__annotate__` in
+`functools.WRAPPER_ASSIGNMENTS`, so this reads the answer off `functools` itself
+rather than testing the version. :func:`_wraps` follows whichever this interpreter's
+`functools.wraps` uses, so a wrapper is observationally the same on every supported
+version -- and so that annotations are never forced to materialise, which on 3.14 can
+raise for a forward reference that is not resolvable yet."""
+
+
+def _wraps(wrapper: Any, wrapped: Callable[..., Any], /) -> None:
+    """Copy `wrapped`'s metadata onto `wrapper`, like :func:`functools.wraps`.
+
+    `functools.wraps` costs about 1.1 us, and almost all of it goes on work nothing
+    here needs: it walks `WRAPPER_ASSIGNMENTS` with a `try`/`except` per name,
+    copies `__annotate__` and `__type_params__`, and merges the wrapped function's
+    `__dict__`. What plum and :func:`inspect.signature` actually read is the four
+    names below plus `__wrapped__`, which straight-line assignment writes in about
+    0.43 us -- 2.5x less. Annotations and the `__dict__` merge are kept, so what a
+    caller can observe on the wrapper is unchanged. The one thing not copied is
+    `__type_params__`, which nothing here reads and which costs 0.09 us on its own.
+
+    This is the default. :func:`_wraps_native` is the cut-down version for a
+    `mypyc` native class, whose instances cannot take all of these.
+
+    Args:
+        wrapper (object): Object to copy metadata onto.
+        wrapped (Callable): Function to copy metadata from.
+    """
+    wrapper.__module__ = wrapped.__module__
+    wrapper.__name__ = wrapped.__name__
+    try:
+        # A callable object need not have `__qualname__`; `Function` only requires
+        # `__name__`. `try` rather than `getattr(..., default)`, whose default is
+        # evaluated on every call and costs more than the attribute it guards.
+        wrapper.__qualname__ = wrapped.__qualname__
+    except AttributeError:
+        wrapper.__qualname__ = wrapped.__name__
+    wrapper.__doc__ = wrapped.__doc__
+    try:
+        if _HAS_ANNOTATE:
+            # `unused-ignore` as well: `__annotate__` exists only from Python 3.14,
+            # so `mypy` flags the attribute below 3.14 and flags the ignore above it.
+            wrapper.__annotate__ = wrapped.__annotate__  # type: ignore[attr-defined, unused-ignore]
+        else:
+            wrapper.__annotations__ = wrapped.__annotations__
+    except AttributeError:
+        # A callable object need not carry annotations at all.
+        pass
+    # Last, and in this order, exactly as `functools.wraps` does it: a `__wrapped__`
+    # in `wrapped.__dict__` must not win over the one set here. It is the single most
+    # expensive line here -- 0.15 of the 0.43 us -- and the only one kept purely for
+    # parity.
+    #
+    # Only the *read* is guarded. `functools.wraps` tolerates a `wrapped` without a
+    # `__dict__`, such as a slotted callable, so this must too; it does not tolerate a
+    # `wrapper` without one, and neither should this. That second half is structural
+    # rather than observable: `__module__` cannot go in `__slots__`, so a wrapper with
+    # no `__dict__` already fails on the first assignment above and never reaches
+    # here. Guarding only the read is still the honest shape -- a wrapper-side
+    # `AttributeError` is a mistake and must not be swallowed.
+    try:
+        attrs = wrapped.__dict__
+    except AttributeError:
+        pass
+    else:
+        wrapper.__dict__.update(attrs)
+    wrapper.__wrapped__ = wrapped
+
+
+class _NativeWrappable(Protocol):
     __name__: str
     __qualname__: str
     __wrapped__: Callable[..., Any]
 
 
-def _wraps(wrapper: _Wrappable, wrapped: Callable[..., Any], /) -> None:
-    """Copy `wrapped`'s metadata onto `wrapper`, like :func:`functools.wraps`.
+def _wraps_native(wrapper: _NativeWrappable, wrapped: Callable[..., Any], /) -> None:
+    """:func:`_wraps` for a `mypyc` native class, which can take less.
 
-    `functools.wraps` cannot be used: it writes the read-only native `__module__` and
-    updates a `__dict__` that native instances lack.
+    A native instance has no `__dict__` and a read-only `__module__`, and serves
+    `__doc__` from a descriptor, so the three names below are both all that can be
+    written and all that is needed. It also takes the *generated* qualified name
+    rather than the wrapped function's own; see :func:`_generate_qualname`.
+
+    Use :func:`_wraps` for anything else.
+
+    Args:
+        wrapper (object): Native instance to copy metadata onto.
+        wrapped (Callable): Function to copy metadata from.
     """
     wrapper.__name__ = wrapped.__name__
     wrapper.__qualname__ = _generate_qualname(wrapped)
@@ -69,8 +225,8 @@ class _InvokedMethod:
     """Run the resolved `method` and convert the result.
 
     Callable returned by :meth:`Function.invoke`. A class rather than a closure,
-    which `mypyc` cannot compile (mypyc/mypyc#1205); non-native so
-    :func:`functools.wraps` can copy `__name__`/`__doc__` onto instances.
+    which `mypyc` cannot compile (mypyc/mypyc#1205); non-native so :func:`_wraps` can
+    copy `__name__`/`__doc__` onto instances.
     """
 
     def __init__(
@@ -78,7 +234,7 @@ class _InvokedMethod:
     ) -> None:
         self._method = method
         self._return_type = return_type
-        wraps(f)(self)
+        _wraps(self, f)
         self.__wrapped_by_plum__ = method
 
     def __call__(self, *args: Any, **kw: Any) -> Any:
@@ -133,6 +289,9 @@ class Function:
     # Instance attributes are declared so `Function` can be a `mypyc` native class.
     _f: Callable[..., Any]
     _cache: dict[tuple[TypeHint, ...], tuple[Callable[..., Any], TypeHint]]
+    _generation: int
+    _invoke_cache: dict[tuple[TypeHint, ...], "_InvokedMethod"]
+    _verify_cache: "dict[tuple[TypeHint, ...], _VerifyBucket] | None"
     _doc: str
     _owner_name: str | None
     _owner: type | None
@@ -155,9 +314,27 @@ class Function:
         Function._instances.append(self)
 
         self._f = f
-        # Cache maps type tuples to `(method, return_type)`. Keys can be either
-        # actual types (from `__call__`) or `TypeHints` (from `invoke`).
+        # Cache maps argument keys to `(method, return_type)`. Keys come either from
+        # `__call__`, where each element is `self._resolver._arg_key(arg)` (a plain
+        # `type`, or a `cache_key` tuple when the resolver needs spec), or from
+        # `invoke`, where each element is a `TypeHint`.
         self._cache = {}
+        # Bumped by `clear_cache`, under the lock. A resolution that started before a
+        # concurrent clear compares this before storing, so it cannot write an answer
+        # the clear was meant to discard. Guards both caches below.
+        self._generation = 0
+        # `invoke` returns the same wrapper for the same types, so it is built once.
+        self._invoke_cache = {}
+        # Verify cache, used only when the resolver is uncacheable. It maps the bare
+        # runtime types of the arguments to the methods that arguments with those
+        # types could possibly match, which is all a `type(x)` key can settle. The
+        # methods still have to be verified against the actual arguments, hence the
+        # name; see `_resolve_miss` and `_build_verify_bucket`.
+        #
+        # `None` until the first tier-two miss, rather than an empty dict: most
+        # functions are cacheable and so never read this at all, and an unused dict
+        # is 64 bytes each across every function a program defines.
+        self._verify_cache = None
 
         # Guards the lazy resolution of pending registrations, which mutates each
         # registered function's `__annotations__` in place (via beartype's
@@ -167,7 +344,7 @@ class Function:
         self._lock = threading.RLock()
 
         # `__doc__` is the `_DocDescriptor`, so store the raw docstring in `self._doc`.
-        _wraps(self, f)
+        _wraps_native(self, f)
         self._doc = f.__doc__ if f.__doc__ else ""
 
         # `owner` is the name of the owner. We will later attempt to resolve to
@@ -335,6 +512,9 @@ class Function:
         # `_pending`/`_resolved`/`_resolver` in multiple steps. See GitHub issue #274.
         with self._lock:
             self._cache.clear()
+            self._invoke_cache.clear()
+            self._generation += 1
+            self._verify_cache = None
 
             if reregister:
                 # Add all resolved to pending.
@@ -411,12 +591,16 @@ class Function:
                 self.clear_cache(reregister=False)
 
     def resolve_method(
-        self, target: tuple[object, ...] | Signature
+        self,
+        target: tuple[object, ...] | Signature,
+        methods: MethodList | None = None,
     ) -> tuple[Callable[..., Any], TypeHint]:
         """Find the method and return type for arguments.
 
         Args:
             target (object): Target.
+            methods (:class:`.method.MethodList`, optional): Narrowed list of methods
+                to consider. See :meth:`.resolver.Resolver.resolve`.
 
         Returns:
             `tuple[function, type]`:
@@ -427,7 +611,7 @@ class Function:
 
         try:
             # Attempt to find the method using the resolver.
-            method = self._resolver.resolve(target)
+            method = self._resolver.resolve(target, methods)
             impl = method.implementation
             return_type = method.return_type
 
@@ -498,7 +682,27 @@ class Function:
 
     def __call__(self, *args: object, **kw: object) -> object:
         __tracebackhide__ = True
-        method, return_type = self._resolve_method_with_cache(args=args)
+        # The cache hit is inlined here: on a hit, none of the argument juggling in
+        # `_resolve_method_with_cache` is needed, and the call itself costs more than
+        # the lookup. `self._pending` must be checked *before* the lookup, since
+        # `register` leaves stale entries until the registrations are resolved. Only
+        # the lookup is inside the `try`, and deliberately not the dispatched call:
+        # a `KeyError` raised by the method body must propagate rather than be
+        # mistaken for a miss and silently re-dispatched. (User code does run inside
+        # the `try` -- hashing the key calls a metaclass `__hash__` -- but a
+        # `KeyError` from there re-raises out of the miss path anyway.)
+        if self._pending:
+            self._resolve_pending_registrations()
+        key = tuple(map(self._resolver._arg_key, args))
+        try:
+            method, return_type = self._cache[key]
+        except KeyError:
+            # Resolve here rather than through `_resolve_method_with_cache`, which
+            # would rebuild the key and repeat the lookup that just missed. A function
+            # no cache can serve misses on every call, so it would pay both every
+            # time. `resolve_method` resolves pending registrations itself, so the
+            # key cannot have been built against a stale method set.
+            method, return_type = self._resolve_miss(args, key)
         return _convert(method(*args, **kw), return_type)
 
     def _resolve_method_with_cache(
@@ -517,15 +721,15 @@ class Function:
         if self._pending:
             self._resolve_pending_registrations()
 
-        # Compute cache key. When called from `__call__`, types will be actual
-        # runtime types from `map(type, args)`. When called from `invoke`, types
-        # may be `TypeHints` like `Union[int, str]`. Both are hashable and work
-        # as cache keys.
+        # Compute the cache key via the resolver's bound key callable (`type` for a
+        # faithful or uncacheable resolver, a `cache_key` specialised to the
+        # resolver's spec otherwise). When called from `invoke`, `types` is passed
+        # directly. Both are hashable and work as cache keys.
         if types is None:
             # Attempt to use the cache based on the types of the arguments.
             # At this point, `args` must be a tuple (not `Signature` or `None`).
             assert isinstance(args, tuple)
-            types = tuple(map(type, args))
+            types = tuple(map(self._resolver._arg_key, args))
         try:
             return self._cache[types]
         except KeyError:
@@ -535,15 +739,152 @@ class Function:
                 args = Signature(*(resolve_type_hint(t) for t in types))
 
             # Cache miss. Run the resolver based on the arguments.
-            method, return_type = self.resolve_method(args)
-            # If the resolver is faithful, then we can perform caching using the types
-            # of the arguments. If the resolver is not faithful, then we cannot.
-            if self._resolver.is_faithful:
-                self._cache[types] = method, return_type
-            return method, return_type
+            return self._resolve_miss(args, types)
+
+    def _resolve_miss(
+        self,
+        args: tuple[object, ...] | Signature,
+        key: tuple[TypeHint, ...],
+        /,
+    ) -> tuple[Callable[..., Any], TypeHint]:
+        """Resolve `args`, whose key just missed the method cache.
+
+        Both miss paths -- the one inlined into `__call__` and the one in
+        `_resolve_method_with_cache` -- come through here, so the tier decision is
+        made in exactly one place.
+
+        Tier two. An uncacheable resolver cannot memoise a *method*, because no
+        bounded key determines which one matches. What it can memoise is which methods
+        are worth *considering*: the ones that arguments with these bare runtime types
+        could possibly match, which is all a `type(x)` key can settle. Resolution then
+        runs over that list through the resolver's own selection logic. The list
+        contains every method that can match, so the sequence of matching methods the
+        selection loop sees is identical to the one it would see over all methods, and
+        it therefore selects the same method, breaks precedence ties the same way, and
+        raises the same errors. Errors still report all methods.
+
+        A `Signature` reaches here from `invoke`, which has no runtime arguments to
+        narrow on, so it takes the ordinary path.
+        """
+        __tracebackhide__ = True
+        if isinstance(args, tuple) and not self._resolver.is_cacheable:
+            cache = self._verify_cache
+            if cache is None:
+                cache = self._verify_cache = {}
+            try:
+                methods, entries, first_wins = cache[key]
+            except KeyError:
+                methods, entries, first_wins = self._build_verify_bucket(args, key)
+            if first_wins:
+                # The bucket is in resolution order, so the first method that matches
+                # is the one full resolution would select; see
+                # :func:`.resolver.resolution_order`.
+                for match, impl, return_type in entries:
+                    if match(args):
+                        return impl, return_type
+            else:
+                # No such order. The one thing matching settles on its own is a
+                # unique match: a single matching method is the only candidate
+                # `Resolver.resolve` can collect, whatever the other methods look
+                # like, so it is what full resolution returns. Zero matches or
+                # several fall through, and full resolution raises the right error
+                # or picks between the candidates.
+                hit = None
+                for entry in entries:
+                    if entry[0](args):
+                        if hit is not None:
+                            hit = None
+                            break
+                        hit = entry
+                if hit is not None:
+                    return hit[1], hit[2]
+            return self.resolve_method(args, methods)
+
+        # The generation is read before resolving and compared inside `_store`: the
+        # store is outside the lock, so a resolution overtaken by a `clear_cache` must
+        # not write its stale answer back afterwards.
+        generation = self._generation
+        method, return_type = self.resolve_method(args)
+        self._store(key, method, return_type, generation)
+        return method, return_type
+
+    def _store(
+        self,
+        key: tuple[TypeHint, ...],
+        method: Callable[..., Any],
+        return_type: TypeHint,
+        generation: int,
+        /,
+    ) -> None:
+        """Record a resolution under `key`, if this function may be cached at all.
+
+        Only when the resolver is cacheable; otherwise the key would not uniquely
+        determine the matching method. A `Literal`-dispatching resolver keys on
+        caller-supplied values, so its cache is additionally capped; see
+        `_VALUE_CACHE_LIMIT`. Both call sites are miss paths, so the key-part test
+        costs nothing that matters -- and sharing it keeps the two from drifting.
+
+        `generation` is what :attr:`_generation` read *before* the resolution began.
+        This store is outside the lock, so a resolution overtaken by a `clear_cache`
+        must not write its stale answer back afterwards; nothing would invalidate it
+        again, since `_pending` is empty by then.
+
+        Args:
+            key (tuple[:obj:`.TypeHint`, ...]): Key to store under.
+            method (Callable): Resolved method.
+            return_type (:obj:`.TypeHint`): Its return type.
+            generation (int): :attr:`_generation` as read before resolving.
+        """
+        if generation != self._generation:
+            return
+        spec = self._resolver.cache_spec
+        if spec is not None and not (
+            KeyPart.VALUE in spec and len(self._cache) >= _VALUE_CACHE_LIMIT
+        ):
+            self._cache[key] = method, return_type
+
+    def _build_verify_bucket(
+        self, args: tuple[object, ...], types: tuple[TypeHint, ...], /
+    ) -> _VerifyBucket:
+        """Build and store the verify-cache bucket for arguments of these types.
+
+        Args:
+            args (tuple[object, ...]): Arguments that missed the cache.
+            types (tuple[:obj:`.TypeHint`, ...]): Key to store the bucket under.
+
+        Returns:
+            :obj:`_VerifyBucket`: The bucket.
+        """
+        methods = MethodList(
+            m for m in self._resolver.methods if m.signature.might_match(args)
+        )
+        # Ordering the bucket costs a quadratic number of signature comparisons, but
+        # only here, once per bucket, and it saves the whole candidate selection of
+        # `Resolver.resolve` on every call that hits it.
+        order = resolution_order(methods)
+        n = len(args)
+        entries = tuple(
+            (_matcher(m.signature, n), m.implementation, m.return_type)
+            for m in (methods if order is None else order)
+        )
+        bucket: _VerifyBucket = (methods, entries, order is not None)
+        # Bounded for the same reason `_store` bounds the method cache, and more
+        # urgently: a bucket is keyed on the *runtime types* of the arguments, so an
+        # `n`-argument function has a key space combinatorial in what its callers
+        # pass, and an ordered bucket costs several times what a method-cache entry
+        # does. Past the limit a call rebuilds its bucket and resolves over it, which
+        # is what it did before this cache existed -- a memory ceiling, not a change
+        # of behaviour.
+        cache = self._verify_cache
+        if cache is not None and len(cache) < _VERIFY_CACHE_LIMIT:
+            cache[types] = bucket
+        return bucket
 
     def invoke(self, *types: TypeHint) -> Callable[..., Any]:
         """Invoke a particular method.
+
+        Repeated calls with the same `types` return the identical wrapper, until
+        :meth:`clear_cache`.
 
         Args:
             *types: Types to resolve.
@@ -551,8 +892,31 @@ class Function:
         Returns:
             function: Method.
         """
-        method, return_type = self._resolve_method_with_cache(types=types)
-        return _InvokedMethod(self._f, method, return_type)
+        # As in `_resolve_method_with_cache`, resolve pending registrations before
+        # consulting the cache, or a method registered since the last call is missed.
+        if self._pending:
+            self._resolve_pending_registrations()
+
+        try:
+            return self._invoke_cache[types]
+        except KeyError:
+            # Read the generation *before* resolving: `clear_cache` bumps it under the
+            # lock, so if it has moved by the time the wrapper is built, a registration
+            # landed in between and this result is already stale. Storing it anyway
+            # would pin it for good -- `_pending` is empty by then, so every later call
+            # would hit it and `invoke` would permanently disagree with `__call__`.
+            generation = self._generation
+            method, return_type = self._resolve_method_with_cache(types=types)
+            invoked = _InvokedMethod(self._f, method, return_type)
+            # Unlike `_cache`, this is not gated on `is_faithful`: `types` are explicit
+            # hints, so resolution does not depend on any runtime value. It is bounded
+            # instead; see `_INVOKE_CACHE_LIMIT`.
+            if (
+                generation == self._generation
+                and len(self._invoke_cache) < _INVOKE_CACHE_LIMIT
+            ):
+                self._invoke_cache[types] = invoked
+            return invoked
 
     @overload
     def __get__(self, instance: None, owner: type, /) -> "Function": ...
@@ -649,7 +1013,7 @@ class _BoundFunction:
 
     # Declared so `_BoundFunction` is a `mypyc` native class (like `Function`), which
     # speeds up bound (class-method) dispatch. `_f` holds a `Function` (typed as proto);
-    # the dunders are also what `_wraps` writes (see the `_Wrappable` protocol).
+    # the dunders are also what `_wraps_native` writes (see `_NativeWrappable`).
     _f: _BoundFunctionProto
     _instance: object
     __name__: str
@@ -661,7 +1025,7 @@ class _BoundFunction:
         self._instance = instance
         # Wrap the underlying function `f._f`, like `Function`. `__doc__`/`__module__`
         # are served by the descriptors attached below.
-        _wraps(self, f._f)
+        _wraps_native(self, f._f)
 
     def _compute_doc(self) -> str | None:
         return self._f.__doc__
@@ -700,7 +1064,7 @@ class _BoundInvokedMethod:
         self._types = types
         # `bound.__wrapped__` is the underlying function (`f._f`), set in
         # `_BoundFunction.__init__`.
-        wraps(bound.__wrapped__)(self)
+        _wraps(self, bound.__wrapped__)
 
     def __call__(self, *args: Any, **kw: Any) -> Any:
         # TODO: Can we do this without `type` here?

@@ -3,8 +3,8 @@ __all__ = ("AmbiguousLookupError", "NotFoundLookupError")
 import pydoc
 import sys
 import warnings
-from collections.abc import Callable, Iterable
-from functools import wraps
+from collections.abc import Callable, Iterable, Sequence
+from functools import cmp_to_key, wraps
 
 from rich.console import Console, ConsoleOptions
 from rich.padding import Padding
@@ -13,6 +13,7 @@ from rich.text import Text
 from ._util import argsort
 from plum._method import Method, MethodList
 from plum._signature import Signature
+from plum._type import _ARG_KEYS, CacheSpec, _canonical
 from plum.repr import repr_source_path, rich_repr
 
 
@@ -241,14 +242,16 @@ class Resolver:
 
     Attributes:
         methods (list[:class:`.method.Method`]): Registered methods.
-        is_faithful (bool): Whether all methods are faithful or not.
+        cache_spec (frozenset | None): Union of all methods' spec, or `None` if any
+            method is uncacheable. Drives caching. See :func:`plum.is_cacheable`.
         warn_redefinition (bool): Throw a warning whenever a method is redefined.
     """
 
     __slots__ = (
         "function_name",
         "methods",
-        "is_faithful",
+        "cache_spec",
+        "_arg_key",
         "warn_redefinition",
     )
 
@@ -264,8 +267,19 @@ class Resolver:
         """
         self.function_name = function_name
         self.methods: MethodList = MethodList()
-        self.is_faithful: bool = True
+        self.cache_spec: CacheSpec | None = frozenset()
+        self._arg_key: Callable[[object], object] = type
         self.warn_redefinition = warn_redefinition
+
+    @property
+    def is_faithful(self) -> bool:
+        """Whether all methods only use faithful types."""
+        return self.cache_spec == frozenset()
+
+    @property
+    def is_cacheable(self) -> bool:
+        """Whether dispatch on this resolver can be cached."""
+        return self.cache_spec is not None
 
     def doc(self, exclude: Callable[..., object] | None = None) -> str:
         """Concatenate the docstrings of all methods of this function. Remove duplicate
@@ -331,23 +345,49 @@ class Resolver:
         else:
             self.methods.append(method)
 
-        # Use a double negation for slightly better performance.
-        self.is_faithful = not any(not s.signature.is_faithful for s in self.methods)
+        # Union the methods' cache specs; `None` if any method is uncacheable. The
+        # argument-key callable is bound once here, so the hot path is a branchless
+        # map. Faithful (`∅`) or uncacheable (`None`) → plain `type`; a non-empty
+        # spec → `cache_key` specialised to exactly its key parts.
+        acc: CacheSpec = frozenset()
+        for m in self.methods:
+            sub = m.signature.cache_spec
+            if sub is None:
+                self.cache_spec = None
+                self._arg_key = type
+                return
+            if sub is not acc:
+                acc |= sub
+        # Interned, so all resolvers agreeing on a spec share one instance.
+        self.cache_spec = acc = _canonical(acc)
+        self._arg_key = _ARG_KEYS[acc]
 
     def __len__(self) -> int:
         return len(self.methods)
 
-    def resolve(self, target: tuple[object, ...] | Signature) -> Method:
+    def resolve(
+        self,
+        target: tuple[object, ...] | Signature,
+        methods: list[Method] | None = None,
+    ) -> Method:
         """Find the most specific signature that satisfies a target.
 
         Args:
             target (:class:`.signature.Signature` or tuple[object]): Target to resolve.
                 Must be either a signature to be encompassed or a tuple of arguments.
+            methods (list[:class:`.method.Method`], optional): Consider only these
+                methods, in registration order. Must contain every method that can
+                match `target`, since only the methods that match contribute to the
+                selection; passing a narrowed superset therefore selects exactly the
+                same method as the default of all methods. Errors still report all
+                methods.
 
         Returns:
             :class:`.signature.Signature`: The most specific signature satisfying
                 `target`.
         """
+        if methods is None:
+            methods = self.methods
         if isinstance(target, tuple):
 
             def check(m: Method, /) -> bool:
@@ -361,7 +401,7 @@ class Resolver:
                 return bool(target <= m.signature)
 
         candidates: list[Method] = []
-        for method in [m for m in self.methods if check(m)]:
+        for method in [m for m in methods if check(m)]:
             # If none of the candidates are comparable, then add the method as
             # a new candidate and continue.
             if not any(c.signature.is_comparable(method.signature) for c in candidates):
@@ -400,3 +440,100 @@ class Resolver:
                 raise AmbiguousLookupError(
                     self.function_name, target, MethodList(candidates)
                 )
+
+
+_MAX_ORDERED_METHODS = 10
+"""Largest number of methods :func:`resolution_order` will attempt to order.
+
+Ordering costs a quadratic number of signature comparisons, and a comparison is
+not cheap. Ten bounds the extra work at a few hundred microseconds, paid once when
+the bucket is built and recovered within a couple of calls that hit it. Without a
+bound, a function with dozens of methods of one arity would pay milliseconds on a
+first call that may never be repeated. Larger buckets are left unordered; the
+caller still has its unique-match path for them."""
+
+
+def resolution_order(methods: Sequence[Method], /) -> list[Method] | None:
+    """Order `methods` so that the first one that matches is the one that
+    :meth:`Resolver.resolve` selects, or return :obj:`None` if no such order exists.
+
+    Callers that have already narrowed the methods a call can possibly match — see
+    :meth:`.signature.Signature.might_match` — can then simply return the first
+    method that matches, instead of running the full candidate selection of
+    :meth:`Resolver.resolve` on every call.
+
+    Such an order exists exactly when the returned list `s` satisfies
+
+    1. `s[i].signature <= s[j].signature` for all `i < j`, and
+    2. `reg(s[i]) > reg(s[j])` whenever `i < j` and `s[i]`, `s[j]` are below each
+       other, where `reg` is the registration index.
+
+    Both are checked explicitly, so nothing is assumed about the algebra of
+    :meth:`.signature.Signature.__le__`: whenever the check fails — because two
+    signatures are incomparable, or because the relation is not transitive — this
+    returns :obj:`None` and the caller must fall back to :meth:`Resolver.resolve`.
+
+    That this is sound is a short induction on :meth:`Resolver.resolve`. Let `M` be
+    the methods that match, in registration order, and note that condition 1 makes
+    every pair comparable. Walk the `candidates` list of :meth:`Resolver.resolve`:
+
+    * The first method makes `candidates` a singleton.
+    * With `candidates == [c]` and a new matching `m`, the new method is comparable
+      with `c`, so exactly one of three things happens. If `m <= c` and not
+      `c <= m`, then `m < c`, `c` is filtered out and `candidates` becomes `[m]`.
+      If `c <= m` and not `m <= c`, then neither `m < c` nor `m <= c`, so
+      `candidates` stays `[c]`. If both hold, then `m != c` — a registered method
+      equal to an earlier one replaces it, so no two methods of a function are
+      equal — hence `m < c` and `candidates` becomes `[m]`.
+
+    So `candidates` is a singleton throughout: a fully comparable set of methods is
+    never ambiguous, and its precedences are never consulted. It remains to see
+    which method survives. By condition 1 the two comparable branches above pick the
+    one earlier in `s`, except for the third, "both below each other" case, which
+    picks the later-registered one. Condition 2 aligns the two: among methods that
+    are below each other, `s` puts the later-registered one first. Hence the survivor
+    is the first element of `s` that is in `M`, which is what the caller returns.
+
+    Args:
+        methods (sequence[:class:`.method.Method`]): Methods, in registration order.
+
+    Returns:
+        list[:class:`.method.Method`] or None: The methods in resolution order, or
+            :obj:`None` if returning the first match would not be sound.
+    """
+    n = len(methods)
+    if n > _MAX_ORDERED_METHODS:
+        return None
+    signatures = [m.signature for m in methods]
+    # `le[i][j]` is whether `signatures[i]` is at least as specific as
+    # `signatures[j]`. Computing it once keeps this to `n * (n - 1)` comparisons,
+    # which is the expensive part.
+    try:
+        le = [
+            [i == j or bool(s <= t) for j, t in enumerate(signatures)]
+            for i, s in enumerate(signatures)
+        ]
+    except Exception:
+        # Comparing two signatures can raise: beartype cannot always decide the
+        # subhint relation. :meth:`Resolver.resolve` only ever compares signatures
+        # that both match its target, so it may well never compare this pair. Give
+        # up on the ordering rather than turn that into an error for a call that
+        # would not otherwise have one.
+        return None
+
+    def compare(i: int, j: int, /) -> int:
+        if le[i][j]:
+            # Below each other: tie, and the stable sort keeps the order below.
+            return 0 if le[j][i] else -1
+        return 1
+
+    # Later registrations first, so that a tie leaves them in the order condition 2
+    # asks for.
+    order = sorted(range(n - 1, -1, -1), key=cmp_to_key(compare))
+
+    for position, i in enumerate(order):
+        for j in order[position + 1 :]:
+            if not le[i][j] or (le[j][i] and i < j):
+                return None
+
+    return [methods[i] for i in order]

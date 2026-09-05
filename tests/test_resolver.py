@@ -340,3 +340,52 @@ def test_redefinition_warning_unwrapping():
         match=r".*`.*test_resolver.py:[0-9]+`.*" * 2,
     ):
         f._resolve_pending_registrations()
+
+
+def test_resolver_cache_spec_and_arg_key():
+    def f(x):
+        return x
+
+    r = Resolver()
+    assert r.cache_spec == frozenset()  # empty resolver: faithful
+    assert r._arg_key is type
+
+    r.register(Method(f, plum.Signature(int)))
+    r.register(Method(f, plum.Signature(float)))
+    assert r.cache_spec == frozenset() and r.is_faithful and r.is_cacheable
+    assert r._arg_key is type
+
+    # type[X] method: cacheable, not faithful; arg key carries the identity part.
+    r2 = Resolver()
+    r2.register(Method(f, plum.Signature(type[int])))
+    assert r2.cache_spec and not r2.is_faithful and r2.is_cacheable
+    assert r2._arg_key is not type
+    # `(type(int), identity(int))`; `int` has a plain metaclass.
+    assert r2._arg_key(int) == (type, int)
+
+    # Uncacheable method: spec None, arg key falls back to type.
+    r3 = Resolver()
+    r3.register(Method(f, plum.Signature(list[int])))
+    assert r3.cache_spec is None and not r3.is_cacheable
+    assert r3._arg_key is type
+
+
+def test_resolver_cache_specs_are_interned():
+    # Only a handful of specs exist, so resolvers that agree on one must share the
+    # instance rather than each hold a private copy.
+    def f(x):
+        return x
+
+    r1, r2 = Resolver(), Resolver()
+    r1.register(Method(f, plum.Signature(type[int])))
+    r2.register(Method(f, plum.Signature(type[str])))
+    assert r1.cache_spec is r2.cache_spec
+
+    r3, r4 = Resolver(), Resolver()
+    r3.register(Method(f, plum.Signature(int)))
+    r4.register(Method(f, plum.Signature(float)))
+    assert r3.cache_spec == frozenset()
+    assert r3.cache_spec is r4.cache_spec
+    # And with the specs a signature computes.
+    assert r3.cache_spec is plum.Signature(str).cache_spec
+    assert r1.cache_spec is plum.Signature(type[bool]).cache_spec
