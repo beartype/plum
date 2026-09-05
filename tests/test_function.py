@@ -8,7 +8,13 @@ import typing
 import pytest
 
 import plum
-from plum._function import Function, _BoundFunction, _convert, _owner_transfer
+from plum._function import (
+    _INVOKE_CACHE_LIMIT,
+    Function,
+    _BoundFunction,
+    _convert,
+    _owner_transfer,
+)
 from plum._method import Method
 from plum._resolver import (
     AmbiguousLookupError,
@@ -587,6 +593,53 @@ def test_invoke_wrapping(dispatch: plum.Dispatcher):
     assert f.invoke(int).__doc__ == "Docs"
 
 
+def test_invoke_is_cached(dispatch: plum.Dispatcher):
+    """The same types give back the identical wrapper, rather than a fresh one."""
+
+    @dispatch
+    def f(x: int):
+        return "int"
+
+    @dispatch
+    def f(x: str):
+        return "str"
+
+    assert f.invoke(int) is f.invoke(int)
+    # Different types are cached separately.
+    assert f.invoke(int)(None) == "int"
+    assert f.invoke(str)(None) == "str"
+
+
+def test_invoke_cache_sees_later_methods(dispatch: plum.Dispatcher):
+    """A method registered after `invoke` must not be masked by the cached wrapper."""
+
+    @dispatch
+    def f(x: object):
+        return "object"
+
+    assert f.invoke(int)(None) == "object"
+
+    @dispatch
+    def f(x: int):
+        return "int"
+
+    # The pending registration is resolved before the cache is consulted.
+    assert f.invoke(int)(None) == "int"
+
+
+def test_invoke_cache_cleared_by_clear_cache(dispatch: plum.Dispatcher):
+    """`clear_cache` drops the wrappers along with the resolved methods."""
+
+    @dispatch
+    def f(x: int):
+        return "int"
+
+    first = f.invoke(int)
+    f.clear_cache()
+    assert f.invoke(int) is not first
+    assert f.invoke(int)(None) == "int"
+
+
 def test_invoke_implementation_unwrapping(dispatch: plum.Dispatcher):
     def f(x: int):
         return type(x)
@@ -699,3 +752,412 @@ def test_resolve_pending_registrations_is_thread_safe():
             assert f(1.0) == "float"
     finally:
         sys.setswitchinterval(old_interval)
+
+
+@pytest.mark.incompatible_with_mypyc
+def test_call_does_not_cache_a_result_a_clear_invalidated(dispatch: plum.Dispatcher):
+    """A registration landing mid-resolution must not leave a stale method cached.
+
+    `clear_cache` clears `_cache` under `_lock`, but `_resolve_method_with_cache`
+    resolves and stores outside it, so a method resolved before the clear can be
+    written after it. `_pending` is empty by then, so nothing would ever invalidate
+    it again and every later call would get the superseded method. See GitHub issue
+    #274.
+    """
+
+    @dispatch
+    def f(x: int):
+        return "v1"
+
+    f._resolve_pending_registrations()
+
+    resolved, invalidated = threading.Event(), threading.Event()
+    original = Function.resolve_method
+    target, park = f, [True]
+
+    def parked(self, *args, **kw_args):
+        out = original(self, *args, **kw_args)
+        # Scoped by identity: `Function` is a `mypyc` native class, so there is no
+        # instance `__dict__` to hang a flag on, and other functions resolve here too.
+        if self is target and park[0]:
+            resolved.set()
+            # Park between resolving and storing, which is where the clear lands.
+            invalidated.wait(5)
+        return out
+
+    # A bare `Thread` swallows whatever the target raises, and `join(timeout)` returns
+    # whether or not the thread finished, so both are checked explicitly below: without
+    # that this test would pass just as happily if the parked thread crashed or hung.
+    errors: list[BaseException] = []
+
+    def call_in_thread() -> None:
+        try:
+            f(1)
+        except BaseException as e:  # noqa: BLE001
+            errors.append(e)
+
+    Function.resolve_method = parked
+    try:
+        thread = threading.Thread(target=call_in_thread)
+        thread.start()
+        assert resolved.wait(5), "the parked thread never reached the park"
+
+        @dispatch
+        def f(x: int):  # noqa: F811
+            return "v2"
+
+        f._resolve_pending_registrations()
+        invalidated.set()
+        thread.join(5)
+    finally:
+        park[0] = False
+        Function.resolve_method = original
+
+    assert not thread.is_alive(), "the parked thread did not finish"
+    assert not errors, errors
+    assert f(1) == "v2"
+
+
+def test_wraps_matches_functools_wraps():
+    """The fast metadata copy must be observationally identical to `functools.wraps`.
+
+    Everything plum or `inspect` reads back off an invoke wrapper is compared here;
+    `__type_params__` is deliberately not copied, since nothing reads it.
+    """
+    import functools
+    import inspect
+
+    from plum._function import _wraps
+
+    def target(x: int) -> str:
+        """The docstring."""
+        return "s"
+
+    target.custom_attr = 42  # `functools.wraps` merges `__dict__`; so must we.
+
+    class W:
+        def __call__(self, *args, **kw_args):
+            return None
+
+    reference, fast = W(), W()
+    functools.wraps(target)(reference)
+    _wraps(fast, target)
+
+    for attr in ("__name__", "__qualname__", "__module__", "__doc__", "custom_attr"):
+        assert getattr(fast, attr) == getattr(reference, attr), attr
+    assert fast.__wrapped__ is target is reference.__wrapped__
+    assert inspect.signature(fast) == inspect.signature(reference)
+    assert inspect.unwrap(fast) is target
+
+    # Annotations, which `functools.wraps` carries on `__annotations__` before Python
+    # 3.14 and on the lazy `__annotate__` from 3.14. Whichever this interpreter uses,
+    # the two must agree; before 3.14 the copy is visible, so assert the value too.
+    sentinel = object()
+    for attr in ("__annotations__", "__annotate__"):
+        assert getattr(fast, attr, sentinel) == getattr(reference, attr, sentinel), attr
+    if "__annotate__" not in functools.WRAPPER_ASSIGNMENTS:
+        assert fast.__annotations__ == {"x": int, "return": str}
+
+
+def test_wraps_tolerates_a_wrapped_without_a_dict():
+    """`functools.wraps` merges `getattr(wrapped, "__dict__", {})`, so a slotted
+    callable must not make the copy raise."""
+    from plum._function import _wraps
+
+    class Slotted:
+        __slots__ = ()
+        __name__ = "slotted"
+        __qualname__ = "Slotted.slotted"
+        __module__ = "somewhere"
+        __doc__ = "doc"
+
+        def __call__(self):
+            return None
+
+    class W:
+        def __call__(self):
+            return None
+
+    wrapped, wrapper = Slotted(), W()
+    assert not hasattr(wrapped, "__dict__")
+    _wraps(wrapper, wrapped)  # Must not raise.
+    assert wrapper.__name__ == "slotted"
+    assert wrapper.__wrapped__ is wrapped
+
+
+def test_wraps_without_qualname():
+    """A callable object need not have `__qualname__`; the fallback is `__name__`."""
+    from plum._function import _wraps
+
+    class Callable:
+        __name__ = "no_qualname"
+        __doc__ = None
+        __module__ = "somewhere"
+
+        def __call__(self):
+            return None
+
+    class W:
+        def __call__(self):
+            return None
+
+    wrapped, wrapper = Callable(), W()
+    assert not hasattr(wrapped, "__qualname__")
+    _wraps(wrapper, wrapped)
+    assert wrapper.__name__ == wrapper.__qualname__ == "no_qualname"
+
+
+@pytest.mark.incompatible_with_mypyc
+def test_invoke_does_not_cache_a_result_a_clear_invalidated(dispatch: plum.Dispatcher):
+    """A registration landing mid-`invoke` must not leave a stale wrapper cached.
+
+    `clear_cache` clears `_invoke_cache` under `_lock`, but `invoke` resolves and
+    stores outside it, so without the generation check a wrapper resolved before the
+    clear can be written after it. `_pending` is empty by then, so nothing would ever
+    invalidate it again and `invoke` would disagree with `__call__` for good. The
+    resolver here is deliberately uncacheable -- `list[int]` matches on the elements,
+    not the type -- which is the case `_cache` sidesteps by refusing to store at all,
+    so a stale answer here can only have come from the wrapper cache. See GitHub
+    issue #274.
+    """
+
+    @dispatch
+    def f(x: list[int]):
+        return "list"
+
+    @dispatch
+    def f(x: int):  # noqa: F811
+        return "int-v1"
+
+    f._resolve_pending_registrations()
+    assert not f._resolver.is_faithful
+
+    resolved, invalidated = threading.Event(), threading.Event()
+    original = Function.resolve_method
+    target, park = f, [True]
+
+    def parked(self, *args, **kw_args):
+        out = original(self, *args, **kw_args)
+        # Scoped by identity, not by an attribute: `Function` is a `mypyc` native
+        # class, so its instances have no `__dict__` to hang a flag on. Other
+        # functions (`_convert`, say) resolve during this test and must not park.
+        if self is target and park[0]:
+            resolved.set()
+            # Park between resolving and storing, which is where the clear lands.
+            invalidated.wait(5)
+        return out
+
+    Function.resolve_method = parked
+    try:
+        thread = threading.Thread(target=lambda: f.invoke(int))
+        thread.start()
+        assert resolved.wait(5)
+
+        @dispatch
+        def f(x: int):  # noqa: F811
+            return "int-v2"
+
+        f._resolve_pending_registrations()
+        invalidated.set()
+        thread.join(5)
+    finally:
+        park[0] = False
+        Function.resolve_method = original
+
+    assert f(2) == "int-v2"
+    assert f.invoke(int)(2) == "int-v2"
+
+
+def test_invoke_cache_is_bounded(dispatch: plum.Dispatcher):
+    """`_invoke_cache` is not gated on `is_faithful`, so it must be bounded instead.
+
+    Its keys are whatever hints callers pass, and for a process-global function such
+    as `_promotion._convert` that is bounded only by the caller's data.
+    """
+
+    @dispatch
+    def f(x: typing.Literal[1]):
+        return "literal"
+
+    @dispatch
+    def f(x: object):  # noqa: F811
+        return "object"
+
+    f._resolve_pending_registrations()
+    assert not f._resolver.is_faithful
+    assert f._cache == {}  # `_cache` refuses to store at all here.
+
+    for i in range(_INVOKE_CACHE_LIMIT + 100):
+        f.invoke(type(f"T{i}", (object,), {}))
+    assert len(f._invoke_cache) == _INVOKE_CACHE_LIMIT
+
+    # Past the cap dispatch still resolves, it just stops being memoised.
+    class Late:
+        pass
+
+    assert f.invoke(Late)(Late()) == "object"
+    assert f.invoke(typing.Literal[1])(1) == "literal"
+
+
+def test_bound_invoke_sees_later_methods(dispatch: plum.Dispatcher):
+    """`_BoundInvokedMethod.__call__` re-enters `Function.invoke`, so the bound path
+    inherits the wrapper cache and must see later registrations too."""
+
+    class A:
+        @dispatch
+        def do(self, x: object):
+            return "object"
+
+    a = A()
+    assert a.do.invoke(int)(1) == "object"
+
+    @A.do.dispatch
+    def do(self, x: int):  # noqa: F811
+        return "int"
+
+    assert a.do.invoke(int)(1) == "int"
+
+
+def test_type_dispatch_correctness(dispatch):
+    class Base:
+        pass
+
+    class Sub(Base):
+        pass
+
+    @dispatch
+    def f(x: int):
+        return "inst-int"
+
+    @dispatch
+    def f(x: type[int]):
+        return "type[int]"
+
+    @dispatch
+    def f(x: type[Base]):
+        return "type[Base]"
+
+    @dispatch
+    def f(x: type[Sub]):
+        return "type[Sub]"
+
+    assert f(5) == "inst-int"  # instance vs class: no collision
+    assert f(int) == "type[int]"
+    assert f(Sub) == "type[Sub]"  # subclass beats base
+    assert f(Base) == "type[Base]"
+
+
+def test_type_dispatch_pathological_metaclass(dispatch):
+    # Unhashable class must dispatch, not raise TypeError.
+    class MetaUnhashable(type):
+        def __eq__(cls, other):
+            return cls is other
+
+    class C(metaclass=MetaUnhashable):
+        pass
+
+    @dispatch
+    def f(x: type[int]):
+        return "int"
+
+    @dispatch
+    def f(x: type[object]):
+        return "object"
+
+    assert f(C) == "object"
+
+    # Lying-eq metaclass must not mis-cache.
+    class MetaLie(type):
+        def __eq__(cls, other):
+            return True
+
+        def __hash__(cls):
+            return 7
+
+    class A(int, metaclass=MetaLie):
+        pass
+
+    class B(metaclass=MetaLie):
+        pass
+
+    assert f(A) == "int"
+    assert f(B) == "object"
+
+
+def test_type_match_implies_identity_slot_beartype_invariant():
+    # Pins the one external assumption behind cacheable `type[X]`: whenever `x`
+    # matches `type[X]`, the cache key's identity slot is non-`None`, so the key
+    # captures what the match depended on. If beartype ever matches an `x` that
+    # `_identity` maps to `None`, `cache_key` soundness breaks.
+    #
+    # Asserting instead that no non-class matches `type[T]` would be weaker (with
+    # `type[object]` beartype short-circuits to `isinstance(x, type)`, never reaching
+    # the `issubclass` half) and outright false for `LiesAboutClass` below.
+    from plum._bear import is_bearable
+    from plum._type import _identity
+
+    class SomeClass:
+        pass
+
+    class LiesAboutClass:
+        @property
+        def __class__(self):
+            return type
+
+    liar = LiesAboutClass()
+    corpus = [5, list[int], tuple[int], (lambda: 0), int | str, int, SomeClass, liar]
+    matched = []
+    for x in corpus:
+        for hint in (type[object], type[int], type[SomeClass]):
+            try:
+                match = is_bearable(x, hint)
+            except TypeError:
+                # `issubclass` rejects `x`. Not a match, so nothing to capture.
+                continue
+            if match:
+                matched.append((x, hint))
+                assert _identity(x) is not None
+
+    # `isinstance` consults `__class__`, so the liar really does match `type[object]`.
+    assert (liar, type[object]) in matched
+    # And the corpus must not have degenerated into vacuous truth.
+    assert (int, type[int]) in matched
+
+
+def test_keyerror_from_method_body_propagates(dispatch):
+    # `Function.__call__` inlines the cache hit in a `try`/`except KeyError`. The
+    # dispatched call must stay outside it, so a `KeyError` raised by user code
+    # propagates instead of being caught and re-dispatched.
+    calls = []
+
+    @dispatch
+    def f(x: int):
+        calls.append(x)
+        raise KeyError("from the method body")
+
+    for _ in range(2):  # once on a cache miss, once on a cache hit
+        with pytest.raises(KeyError, match="from the method body"):
+            f(1)
+    assert calls == [1, 1]
+
+
+class UncacheableBase:
+    def do_uncacheable(self, x):
+        return "base"
+
+
+class UncacheableChild(UncacheableBase):
+    @dispatch
+    def do_uncacheable(self, x: list[int]):
+        return "child"
+
+
+def test_call_mro_uncacheable():
+    # The tier-two verify cache narrows the methods that dispatch considers. It must
+    # not swallow the fallback to the next method in the MRO, warm or cold.
+    c = UncacheableChild()
+    assert c.do_uncacheable([1]) == "child"
+    assert UncacheableChild.do_uncacheable._verify_cache  # The bucket is warm.
+    assert c.do_uncacheable(["a"]) == "base"
+    assert c.do_uncacheable(["a"]) == "base"
+    assert c.do_uncacheable([1]) == "child"
