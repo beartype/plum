@@ -88,11 +88,28 @@ system, which is *invariant*.
 For example, this means that `list[T1]` is a subtype of `list[T2]` whenever
 `T1` is a subtype of `T2`.
 
-## Performance and Faithful Types
+## Performance, Cacheable and Faithful Types
 
 Plum achieves performance by caching the dispatch process.
 Unfortunately, efficient caching is not always possible.
-Efficient caching is possible for so-called _faithful_ types.
+Efficient caching is possible for so-called _cacheable_ types. The dispatch result for
+an argument `x` is cached under a key that captures `type(x)` and, only when some
+method needs it, the identity of `x` when `x` is itself a class, the value of `x`
+when `x` is something a `Literal` could match, and `x.__orig_class__` when `x` is
+an instance of a parametrised user generic. An instance of a *subclass* of a
+literal type is keyed on its identity rather than its value, since its `__eq__` is
+user code; identity is finer than the value, so that is always correct and only
+shares less. `cache_key(x)` returns that key, as a
+tuple whose slots are an implementation detail. A function whose methods are all
+faithful needs none of the extra slots and is keyed on `type(x)` directly.
+
+````{admonition} Definition: cacheable type
+A type `t` is _cacheable_ if, for all `x`, whether `x` matches `t` is a function of
+`cache_key(x)` alone.
+````
+
+The most important cacheable types are the _faithful_ ones, whose match depends only on
+`type(x)`:
 
 % skip: next "Definition"
 
@@ -103,13 +120,43 @@ isinstance(x, t) == issubclass(type(x), t)
 ```
 ````
 
-For example, `int` is faithful, since `type(1) == int`;
-but `Literal[1]` is not faithful, since `issubclass(int, Literal[1])` is false.
+Every faithful type is cacheable, and two important kinds are cacheable without being
+faithful:
 
-Methods which have signatures that depend only on faithful types will
-be performant.
-On the other hand, methods which have one or more signatures with one or more
-unfaithful types cannot use caching and will therefore be less performant.
+- `type[X]` (or `typing.Type[X]`): `issubclass(x, X)` depends on the identity of the
+  class `x`, which `cache_key` captures.
+- `Literal[...]`: the match depends on the *value* of `x`, likewise captured.
+
+For example, `int` is faithful, since `type(1) == int`; but `Literal[1]` is not
+faithful, since `issubclass(int, Literal[1])` is false. It is still cacheable, so
+dispatching on it is fast.
+
+```{admonition} Caching a `Literal` is bounded; caching `type[X]` is not
+:class: warning
+A key slot holds a strong reference to what it captures -- that is what makes
+identity-based keying sound. A function dispatching on `Literal` therefore gets one
+entry per distinct *value* ever passed, which for `Literal["ready"]` beside a `str`
+fallback would grow with the caller's data, so that cache stops growing at 4096
+entries; beyond it, arguments simply resolve as they did before `Literal` was cacheable
+at all. A function dispatching on `type[X]` gets one entry per distinct argument class
+and is *not* capped, since classes are bounded in practice -- but dynamically created
+classes stay alive for the function's lifetime. Call `f.clear_cache()` or
+`plum.clear_all_cache()` to release them.
+```
+
+Whether a function's types are cacheable decides which of two caches it uses.
+
+* **Trust.** If every method uses only cacheable types, then the cache key
+  determines which method matches, so the method is memoised under that key. A
+  repeated call is one dictionary lookup and no type checking at all.
+* **Verify.** If any method uses an uncacheable type, then no key determines the
+  method, and nothing may be trusted without checking. The runtime types of the
+  arguments do, however, determine which methods could *possibly* match, so those
+  are memoised instead, and every call verifies that narrowed list against the
+  actual arguments. This is much slower than a trusted hit, but the methods ruled
+  out by the argument types are never checked again.
+
+Both caches are cleared by `f.clear_cache()` and `clear_all_cache()`.
 
 Example:
 
@@ -125,15 +172,15 @@ def add_5_faithful(x: int):
 
 
 @dispatch
-def add_5_unfaithful(x: Literal[1]):
-    return x + 5
+def add_5_uncacheable(x: list[int]):
+    return x + [5]
 ```
 
 ```python
 >>> %timeit add_5_faithful(1)  # doctest:+SKIP
 585 ns ± 6.2 ns per loop (mean ± std. dev. of 7 runs, 1,000,000 loops each)
 
->>> %timeit add_5_unfaithful(1)  # doctest:+SKIP
+>>> %timeit add_5_uncacheable([1])  # doctest:+SKIP
 6.24 µs ± 68.9 ns per loop (mean ± std. dev. of 7 runs, 100,000 loops each)
 ```
 
@@ -141,12 +188,24 @@ Plum implements `is_faithful`, which is a function that attempts to establish wh
 a type is faithful or not:
 
 ```python
->>> from plum import is_faithful
+>>> from plum import is_faithful, is_cacheable
 
 >>> is_faithful(int)
 True
 
 >>> is_faithful(Literal[1])
+False
+
+>>> is_faithful(type[int])
+False
+
+>>> is_cacheable(type[int])
+True
+
+>>> is_cacheable(Literal[1])
+True
+
+>>> is_cacheable(list[int])
 False
 ```
 
@@ -163,6 +222,96 @@ class MyClass(metaclass=MyMeta):
     __faithful__ = True   # Yes, `MyClass` is faithful!
 
     ...
+```
+
+(generics)=
+## Dispatching on User-Defined Generics
+
+You can dispatch on a parametrised subclass of `typing.Generic`.
+At runtime, `Box[int](1)` and `Box[str]("a")` are both plain `Box` instances, so an
+instance check cannot tell them apart.
+Python does record the intent, though: instantiating a subscripted generic sets
+`__orig_class__` on the instance, and Plum dispatches on that.
+
+```python
+from typing import Generic, TypeVar
+
+from plum import dispatch
+
+T = TypeVar("T")
+
+
+class Box(Generic[T]):
+    def __init__(self, v):
+        self.v = v
+
+
+@dispatch
+def unbox(b: Box[int]):
+    return "an integer"
+
+
+@dispatch
+def unbox(b: Box[str]):
+    return "a string"
+
+
+@dispatch
+def unbox(b: Box):
+    return "unparametrised"
+```
+
+```python
+>>> unbox(Box[int](1))
+'an integer'
+
+>>> unbox(Box[str]("a"))
+'a string'
+```
+
+An instance created without a parameter records nothing, so it matches only the
+unparametrised method:
+
+```python
+>>> unbox(Box(1.0))
+'unparametrised'
+```
+
+A subclass of a parametrised generic records its parameter statically, in
+`__orig_bases__`, so it dispatches even though its instances carry no `__orig_class__`:
+
+```python
+>>> class IntBox(Box[int]):
+...     def __init__(self):
+...         super().__init__(1)
+
+>>> unbox(IntBox())
+'an integer'
+```
+
+Whether one parametrisation is a subtype of another — that is, how a `TypeVar`'s
+variance is interpreted — is Beartype's decision, not Plum's.
+
+A parametrised *user* generic is cacheable, though not faithful: whether an argument
+matches depends on its `__orig_class__`, and the pair `(type(x), x.__orig_class__)` is
+a bounded key, so dispatch on it is cached like any other. The unparametrised class
+stays faithful.
+
+Parametrised *builtins* are the ones that are not cacheable. Beartype decides
+`list[int]` by inspecting the elements, which no key derived from the argument can
+capture, so a function dispatching on one uses the **verify** cache described above.
+
+```python
+>>> from plum import is_cacheable
+
+>>> is_cacheable(Box[int])
+True
+
+>>> is_cacheable(Box)
+True
+
+>>> is_cacheable(list[int])
+False
 ```
 
 (moduletype)=
