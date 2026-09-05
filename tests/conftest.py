@@ -40,6 +40,9 @@ def convert():
     _convert._pending = []
     _convert._resolved = resolved
     _convert.clear_cache(reregister=True)
+    # Restoring the methods changes which conversions are the identity, so the
+    # recorded identity conversions have to go with them.
+    plum._function._identity_conversions.clear()
 
 
 @pytest.fixture

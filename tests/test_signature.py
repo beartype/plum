@@ -1,11 +1,15 @@
 import inspect
 import operator
+from collections.abc import Callable, Iterable
+from contextlib import contextmanager
 from numbers import Number as Num, Real as Re
-from typing import Any, Union
+from typing import Annotated, Any, Literal, Optional, Union
+from unittest.mock import patch
 
 import pytest
 
 from beartype.door import TypeHint
+from beartype.vale import Is
 
 import plum
 from plum import Signature as Sig
@@ -452,3 +456,164 @@ def test_append_default_args():
     # Test that `itemgetter` is supported.
     f = operator.itemgetter(0)
     assert len(plum.append_default_args(Sig.from_callable(f), f)) == 1
+
+
+def test_signature_cache_spec_and_derived_flags():
+    # Faithful signature: empty spec, is_faithful.
+    s = Sig(int, int)
+    assert s.cache_spec == frozenset()
+    assert s.is_faithful
+
+    # type[X] signature: non-empty spec, cacheable but not faithful.
+    s = Sig(type[int], int)
+    assert s.cache_spec and not s.is_faithful
+
+    # varargs participate.
+    assert Sig(int, varargs=type[int]).cache_spec
+    assert not Sig(int, varargs=type[int]).is_faithful
+
+    # Uncacheable: spec is None.
+    s = Sig(list[int])
+    assert s.cache_spec is None
+    assert not s.is_faithful
+
+
+# A grid of hints and values wide enough to exercise every branch of
+# `_might_match_hint`: faithful and unfaithful, subscripted and bare, unions,
+# `Literal`, `Annotated`, and hints without an origin.
+
+_MIGHT_MATCH_HINTS = [
+    Any,
+    int,
+    str,
+    object,
+    list,
+    list[int],
+    list[str],
+    tuple[int, ...],
+    dict[str, int],
+    Callable[[int], int],
+    Iterable[int],
+    type[int],
+    Literal[1],
+    Literal["a"],
+    int | list[int],
+    Optional[list[str]],  # noqa: UP007, UP045
+    Annotated[int, Is[lambda x: x > 0]],
+    Annotated[list[int], Is[lambda x: len(x) > 0]],
+]
+
+# Grouped by runtime type, since that is all `might_match` may depend on.
+_MIGHT_MATCH_VALUES = [
+    [1, 2, -1],
+    [1.0, 2.5],
+    ["a", "b"],
+    [True, False],
+    [None],
+    [[1], ["a"], [], [1, 2]],
+    [(1, 2), ()],
+    [{"a": 1}, {1: "a"}, {}],
+    [int, str],
+    [lambda x: x],
+    [object()],
+]
+
+
+@pytest.mark.parametrize("hint", _MIGHT_MATCH_HINTS)
+def test_might_match_is_implied_by_match(hint):
+    # Under-inclusion is a wrong answer: whatever matches must be kept.
+    s = Sig(hint)
+    for group in _MIGHT_MATCH_VALUES:
+        for v in group:
+            assert not s.match((v,)) or s.might_match((v,))
+
+
+@pytest.mark.parametrize("hint", _MIGHT_MATCH_HINTS)
+def test_might_match_depends_only_on_the_runtime_type(hint):
+    # The verify cache is keyed on `tuple(map(type, args))`, so `might_match` must
+    # not distinguish two values of the same type.
+    s = Sig(hint)
+    for group in _MIGHT_MATCH_VALUES:
+        assert len({s.might_match((v,)) for v in group}) == 1
+
+
+def test_might_match_arity_and_varargs():
+    s = Sig(int, varargs=list[int])
+    assert s.might_match((1,))
+    assert s.might_match((1, [1]))
+    assert s.might_match((1, [1], [2]))
+    assert not s.might_match(())
+    assert not s.might_match(("a",))
+    # The varargs must be checked too, not just the fixed types.
+    assert not s.might_match((1, "a"))
+
+    s = Sig(int, list[int])
+    assert not s.might_match((1,))
+    assert not s.might_match((1, [1], [2]))
+    assert s.might_match((1, [1]))
+    # A list of the wrong element type cannot be ruled out by the runtime type.
+    assert s.might_match((1, ["a"]))
+    assert not s.match((1, ["a"]))
+
+
+@contextmanager
+def count_comparisons():
+    """Count the hint comparisons :mod:`plum._signature` asks `_type` for."""
+    calls: list[tuple[str, object, object]] = []
+    real_eq, real_le = plum._signature._type_hint_eq, plum._signature._type_hint_le
+
+    def eq(x, y):
+        calls.append(("eq", x, y))
+        return real_eq(x, y)
+
+    def le(x, y):
+        calls.append(("le", x, y))
+        return real_le(x, y)
+
+    with (
+        patch.object(plum._signature, "_type_hint_eq", eq),
+        patch.object(plum._signature, "_type_hint_le", le),
+    ):
+        yield calls
+
+
+# These two assert on *how* the comparison is reached, by intercepting the calls it
+# makes. A `mypyc`-compiled `_signature` binds those references at compile time, so
+# the patches do not take effect and the assertions cannot mean anything there.
+@pytest.mark.incompatible_with_mypyc
+def test_eq_settles_the_scalars_before_comparing_types():
+    """A difference in arity, varargs or precedence must not wrap any type."""
+    for other in (
+        Sig(int, int),  # arity
+        Sig(int, varargs=int),  # varargs presence
+        Sig(int, precedence=1),  # precedence
+    ):
+        with count_comparisons() as calls:
+            assert Sig(int) != other
+        assert calls == [], calls
+
+    # A genuine type comparison still happens when the scalars all agree.
+    with count_comparisons() as calls:
+        assert Sig(int) == Sig(int)
+    assert calls != []
+
+
+@pytest.mark.incompatible_with_mypyc
+def test_is_comparable_does_not_detour_via_eq():
+    """`is_comparable` must decide with `__le__` alone.
+
+    The inherited implementation asks `self < other or self == other or self > other`,
+    which runs `Signature.__eq__` twice on top of the comparisons.
+    """
+    calls: list[object] = []
+    real = Sig.__eq__
+
+    def counting(self, other, /):
+        calls.append(other)
+        return real(self, other)
+
+    with patch.object(Sig, "__eq__", counting):
+        assert Sig(int).is_comparable(Sig(int))
+    assert calls == [], calls
+
+    assert not Sig(int).is_comparable(1)

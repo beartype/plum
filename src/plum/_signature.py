@@ -6,7 +6,7 @@ import inspect
 import operator
 from collections.abc import Callable, Iterable
 from copy import copy
-from typing import Any, ClassVar, get_type_hints
+from typing import Annotated, Any, ClassVar, get_args, get_origin, get_type_hints
 from typing_extensions import Self
 
 from rich.console import Console, ConsoleOptions
@@ -15,7 +15,15 @@ from rich.segment import Segment
 from beartype.peps import resolve_pep563 as beartype_resolve_pep563
 
 from ._bear import is_bearable
-from ._type import _type_hint_eq, _type_hint_le, is_faithful, resolve_type_hint
+from ._type import (
+    UNION_TYPES,
+    CacheSpec,
+    _combine,
+    _type_hint_eq,
+    _type_hint_le,
+    is_faithful,
+    resolve_type_hint,
+)
 from ._util import (
     Comparable,
     Missing,
@@ -24,6 +32,66 @@ from ._util import (
     wrap_lambda,
 )
 from .repr import repr_short, rich_repr
+
+
+def _class_is_honest(t: type, /) -> bool:
+    """Whether instances of `t` report `type(self)` as their `__class__`.
+
+    A class that overrides `__class__` -- with a property, say -- makes `isinstance`
+    depend on the *value* rather than on its type. Anything keyed on `type(v)` has to
+    treat such a type as unable to rule anything out. Only asked while a bucket is
+    being built, once per distinct tuple of runtime types, so a short walk is fine.
+    """
+    return all("__class__" not in vars(c) for c in t.__mro__ if c is not object)
+
+
+def _might_match_hint(v: object, t: TypeHint, /) -> bool:
+    """Check whether *any* object with the runtime type of `v` could match hint `t`.
+
+    Never `False` when `is_bearable(v, t)` is `True`, and never `False` for a `v` of
+    this type when it is `True` for another. See :meth:`Signature.might_match`.
+
+    Args:
+        v (object): Value.
+        t (:obj:`.TypeHint`): Type hint.
+
+    Returns:
+        bool: `False` only if no object with the runtime type of `v` matches `t`.
+    """
+    if is_faithful(t):
+        # A faithful hint is *defined* by `isinstance(x, t) == issubclass(type(x), t)`,
+        # so matching depends on nothing but `type(v)` and this is exact -- except for
+        # the values that break that very equality. An object overriding `__class__`
+        # is matched by `isinstance` while `issubclass(type(v), t)` says otherwise, so
+        # for such a type the hint is not faithful about *this* value and nothing can
+        # be ruled out. See `_class_is_honest`.
+        return not _class_is_honest(type(v)) or bool(is_bearable(v, t))
+
+    origin = get_origin(t)
+    if origin in UNION_TYPES:
+        # A union is matched precisely if one of its members is.
+        return any(_might_match_hint(v, arg) for arg in get_args(t))
+    if origin is Annotated:
+        # The metadata of an `Annotated` can only reject further, so whether the
+        # underlying hint could match decides.
+        return _might_match_hint(v, get_args(t)[0])
+
+    # Otherwise only the origin of the hint is settled by `type(v)`: whatever matches
+    # `list[int]` is at any rate a `list`. That is a necessary condition when the
+    # origin is a faithful class. Anything else (`Literal[...]`, an origin with a
+    # custom `__instancecheck__`, a hint without an origin) cannot be ruled out.
+    #
+    # `issubclass(type(v), origin)`, not `isinstance(v, origin)`: the latter consults
+    # `v.__class__`, so two values with the same runtime type can answer differently,
+    # and a bucket keyed on `type(v)` would then be built from one of them and reused
+    # for the other. Ruling a method out on that basis is a wrong dispatch, so a type
+    # whose instances can lie about `__class__` rules nothing out at all.
+    return (
+        not isinstance(origin, type)
+        or not is_faithful(origin)
+        or not _class_is_honest(type(v))
+        or issubclass(type(v), origin)
+    )
 
 
 @rich_repr
@@ -44,13 +112,21 @@ class Signature(Comparable):
             arguments.
         has_varargs (bool): Whether `varargs` is not :class:`.util.Missing`.
         precedence (int): Precedence.
-        is_faithful (bool): Whether this signature only uses faithful types.
+        cache_spec (frozenset | None): The cache spec this signature's types need, or
+            `None` if any type is uncacheable. See :func:`plum.is_cacheable`.
     """
 
     _default_varargs: ClassVar = Missing
     _default_precedence: ClassVar[int] = 0
 
-    __slots__: tuple[str, ...] = ("types", "varargs", "precedence", "is_faithful")
+    __slots__: tuple[str, ...] = (
+        "types",
+        "varargs",
+        "precedence",
+        "cache_spec",
+        "_check",
+        "_matchers",
+    )
 
     def __init__(
         self,
@@ -70,9 +146,15 @@ class Signature(Comparable):
         self.varargs = varargs
         self.precedence = precedence
 
-        types_are_faithful = all(is_faithful(t) for t in types)
-        varargs_are_faithful = self.varargs is Missing or is_faithful(self.varargs)
-        self.is_faithful = types_are_faithful and varargs_are_faithful
+        all_types = types if self.varargs is Missing else (*types, self.varargs)
+        self.cache_spec: CacheSpec | None = _combine(all_types)
+        # Bind the matcher once, at construction, rather than reaching for it on
+        # every candidate check. It is `is_bearable` for every signature; binding it
+        # here is what lets a signature select a different one.
+        self._check: Callable[[object, TypeHint], bool] = is_bearable
+        # Bound matchers, by arity; see `_matcher`. `None` until one is asked for,
+        # since only a signature reached through the tier-two path ever needs one.
+        self._matchers: dict[int, Callable[[tuple[object, ...]], bool]] | None = None
 
     @staticmethod
     def from_callable(f: Callable[..., Any], precedence: int = 0) -> "Signature":
@@ -96,12 +178,21 @@ class Signature(Comparable):
     def has_varargs(self) -> bool:
         return self.varargs is not Missing
 
+    @property
+    def is_faithful(self) -> bool:
+        """Whether every type is faithful (the cache can key on `type(x)` alone)."""
+        return self.cache_spec == frozenset()
+
     def __copy__(self) -> Self:
         cls = type(self)
         copy = cls.__new__(cls)
         for attr in self.__slots__:
             setattr(copy, attr, getattr(self, attr))
 
+        # `append_default_args` copies a signature and then rewrites `types` and
+        # `varargs` on the copy. A matcher is bound to the arity and types it was
+        # built from, so carrying one across that would answer for the original.
+        copy._matchers = None
         return copy
 
     def __rich_console__(
@@ -125,7 +216,13 @@ class Signature(Comparable):
         if not isinstance(other, Signature):
             return False
 
-        if len(self.types) != len(other.types):
+        # Settle the scalar properties first: any of them differing rules equality
+        # out, and wrapping the types is the expensive part.
+        if (
+            len(self.types) != len(other.types)
+            or (self.varargs is Missing) != (other.varargs is Missing)
+            or self.precedence != other.precedence
+        ):
             return False
 
         # We don't need to check faithfulness, because that is automatically
@@ -136,16 +233,12 @@ class Signature(Comparable):
         types_equal = all(
             _type_hint_eq(x, y) for x, y in zip(self.types, other.types, strict=True)
         )
-        if self.varargs is Missing:
-            # Both must be missing.
-            varargs_equal = other.varargs is Missing
-        elif other.varargs is Missing:
-            # Neither must be missing.
-            varargs_equal = False
-        else:
-            # And they must be equal.
-            varargs_equal = _type_hint_eq(self.varargs, other.varargs)
-        return types_equal and varargs_equal and self.precedence == other.precedence
+        # The guard above settled precedence, and that the two agree on *whether* they
+        # have varargs; all that is left is comparing them when both do.
+        varargs_equal = self.varargs is Missing or _type_hint_eq(
+            self.varargs, other.varargs
+        )
+        return types_equal and varargs_equal
 
     def __hash__(self) -> int:
         return hash((Signature, *self.types, self.varargs))
@@ -240,6 +333,22 @@ class Signature(Comparable):
         else:
             return False
 
+    def is_comparable(self, other: object, /) -> bool:
+        """Check whether this signature is comparable with another one.
+
+        Two signatures are comparable exactly when one is below the other, so one
+        `__le__` per direction settles it, and the first direction short-circuits.
+        The inherited implementation spells the same question as `self < other or
+        self == other or self > other`, which additionally runs :meth:`__eq__` twice.
+
+        Args:
+            other (object): Object to check comparability with.
+
+        Returns:
+            bool: Whether this signature is comparable with `other`.
+        """
+        return isinstance(other, Signature) and (self <= other or other <= self)
+
     def match(self, values: tuple[object, ...], /) -> bool:
         """Check whether values match the signature.
 
@@ -258,7 +367,36 @@ class Signature(Comparable):
             return False
         else:
             types = self.expand_varargs(len(values))
-            return all(is_bearable(v, t) for v, t in zip(values, types, strict=True))
+            check = self._check
+            return all(check(v, t) for v, t in zip(values, types, strict=True))
+
+    def might_match(self, values: tuple[object, ...], /) -> bool:
+        """Check whether *any* values with the runtime types of `values` could match.
+
+        This is :meth:`match` weakened to depend only on `tuple(map(type, values))`.
+        It may be `True` where :meth:`match` is `False`, but it is never `False`
+        where :meth:`match` is `True`. That is what makes it sound to bucket methods
+        by the bare runtime types of the arguments: a method left out of a bucket
+        cannot match any arguments with those types.
+
+        Args:
+            values (tuple): Values.
+
+        Returns:
+            bool: `False` only if no values with these runtime types can match this
+                signature.
+        """
+        # Arity is settled by the number of values alone, so this is exact.
+        if not (
+            len(self.types) == len(values)
+            or (len(self.types) < len(values) and self.has_varargs)
+        ):
+            return False
+
+        return all(
+            _might_match_hint(v, t)
+            for v, t in zip(values, self.expand_varargs(len(values)), strict=True)
+        )
 
     def compute_distance(self, values: tuple[object, ...], /) -> int:
         """For given values, computes the edit distance between these vales and this
@@ -278,8 +416,9 @@ class Signature(Comparable):
 
         # Additionally count one for every mismatching value above the
         # extra/missing arguments. There can be fewer types than values.
+        check = self._check
         for v, t in zip(values, types, strict=False):
-            if not is_bearable(v, t):
+            if not check(v, t):
                 distance += 1
 
         return distance
@@ -305,14 +444,77 @@ class Signature(Comparable):
         # there is an explicit mismatch.
         varargs_matched = True
 
+        check = self._check
         for i, (v, t) in enumerate(zip(values, types, strict=False)):
-            if not is_bearable(v, t):
+            if not check(v, t):
                 if i < n_types:
                     mismatches.add(i)
                 else:
                     varargs_matched = False
 
         return frozenset(mismatches), varargs_matched
+
+
+def _matcher(signature: Signature, n: int, /) -> Callable[[tuple[object, ...]], bool]:
+    """:func:`_bind_matcher`, memoised on the signature and the arity.
+
+    A matcher is fixed by the signature and the arity and by nothing else, but a
+    verify-cache bucket is keyed on the runtime *types* of the arguments, so without
+    this every bucket would bind its own copy of the same matcher for every method it
+    holds -- a 248-byte closure per method per bucket, against at most one per method
+    per arity. See :meth:`.function.Function._build_verify_bucket`.
+
+    Args:
+        signature (:class:`Signature`): Signature to bind a matcher for.
+        n (int): Number of values the matcher will be given.
+
+    Returns:
+        function: Callable that takes a tuple of `n` values and returns whether they
+            match `signature`.
+    """
+    cache = signature._matchers
+    if cache is None:
+        cache = signature._matchers = {}
+    bound = cache.get(n)
+    if bound is None:
+        bound = cache[n] = _bind_matcher(signature, n)
+    return bound
+
+
+def _bind_matcher(
+    signature: Signature, n: int, /
+) -> Callable[[tuple[object, ...]], bool]:
+    """Bind a matcher for tuples of exactly `n` values.
+
+    This is :meth:`Signature.match` with the arity check and the expansion of the
+    variable arguments done once, here, instead of on every call. It is only correct
+    for tuples of `n` values, so the caller must know the arity up front -- which a
+    cache keyed on the types of the arguments does.
+
+    A module-level function rather than a method, because `mypyc` crashes with an
+    internal `AssertionError` on a closure inside a method of a class carrying a
+    decorator it does not recognise, which :class:`Signature` does
+    (:func:`.repr.rich_repr`). Keeping the closures means the bound matcher stays
+    exactly the plain function call it was on the hot path.
+
+    Args:
+        signature (:class:`Signature`): Signature to bind a matcher for.
+        n (int): Number of values the matcher will be given.
+
+    Returns:
+        function: Callable that takes a tuple of `n` values and returns whether they
+            match `signature`.
+    """
+    types_ = signature.types
+    if not (len(types_) == n or (len(types_) < n and signature.has_varargs)):
+        return lambda values: False
+    types = signature.expand_varargs(n)
+    check = signature._check
+    if n == 1:
+        # By far the most common arity, and worth not paying a `zip` for.
+        (t,) = types
+        return lambda values: check(values[0], t)
+    return lambda values: all(check(v, t) for v, t in zip(values, types, strict=True))
 
 
 def inspect_signature(f: Callable[..., Any], /) -> inspect.Signature:
