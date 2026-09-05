@@ -4,13 +4,18 @@ __all__ = (
     "type_mapping",
     "resolve_type_hint",
     "is_faithful",
+    "is_cacheable",
+    "cache_key",
+    "KeyPart",
+    "CacheSpec",
 )
 
 import abc
+import enum
 import sys
 import typing
 import warnings
-from collections.abc import Callable, Hashable
+from collections.abc import Callable, Hashable, Iterable
 from functools import lru_cache, reduce
 from operator import or_
 from types import UnionType
@@ -401,30 +406,32 @@ def _type_hint_eq(x: object, y: object, /) -> bool:
     return bool(_wrap_type_hint(x) == _wrap_type_hint(y))
 
 
-def is_faithful(x: object, /) -> bool:
-    """Check whether a type hint is faithful.
-
-    A type or type hint `t` is defined _faithful_ if, for all `x`, the following holds
-    true::
-
-        isinstance(x, x) == issubclass(type(x), t)
-
-    You can control whether types are faithful or not by setting the attribute
-    `__faithful__`::
-
-        class UnfaithfulType:
-            __faithful__ = False
-
-    Args:
-        x (type or type hint): Type hint.
-
-    Returns:
-        bool: Whether `x` is faithful or not.
-    """
-    return _is_faithful(resolve_type_hint(x))
-
-
 UNION_TYPES = (typing.Union, UnionType, typing.Optional)
+
+
+class KeyPart(enum.Enum):
+    """One component a dispatch cache key may have to carry, beyond `type(x)`.
+
+    A faithful type needs none of these: `type(x)` settles its match on its own.
+    Each member names a further property of the argument that `cache_key` must
+    encode for a category of non-faithful types to become cacheable at all.
+    `IDENTITY` is what makes `type[X]` cacheable. Members are append-only, so a new
+    category is an addition rather than a redesign.
+    """
+
+    IDENTITY = "identity"
+
+
+CacheSpec = frozenset[KeyPart]
+"""What a type needs its cache key to carry: the set of :class:`KeyPart` members.
+
+`frozenset()` is the faithful case -- `type(x)` alone suffices. `None`, wherever a
+`CacheSpec` is optional, means *uncacheable*: no key can determine the match.
+"""
+
+_NO_PARTS: CacheSpec = frozenset()
+_IDENTITY: CacheSpec = frozenset({KeyPart.IDENTITY})
+_ALL_PARTS: CacheSpec = frozenset(KeyPart)
 
 
 class _SupportsDunderFaithful(typing.Protocol):
@@ -436,42 +443,188 @@ def _has_dunder_faithful(x: type, /) -> TypeGuard[_SupportsDunderFaithful]:
     return hasattr(x, "__faithful__")
 
 
-def _is_faithful(x: object, /) -> bool:
+class _Identity:
+    """Identity cache-key wrapper for a class value.
+
+    A class cannot be used as a cache key directly: its hash and equality come from
+    its metaclass, so a metaclass with a custom `__eq__` would make distinct classes
+    collide (silent wrong hit) and one whose classes are unhashable would make the
+    key raise `TypeError`. This wrapper keys on `id`, sidestepping the metaclass, and
+    holds a reference to `obj` so its `id` is not reused while the entry lives.
+    """
+
+    __slots__ = ("obj",)
+
+    def __init__(self, obj: object, /) -> None:
+        self.obj = obj
+
+    def __hash__(self) -> int:
+        return id(self.obj)
+
+    def __eq__(self, other: object, /) -> bool:
+        return type(other) is _Identity and self.obj is other.obj
+
+
+def _identity(x: object, /) -> object | None:
+    """The identity component of `cache_key` for `x`.
+
+    `None` for non-classes. For a class, the class itself when its metaclass is plain
+    `type` (whose hash is id-based and equality is identity — already safe and fast),
+    otherwise the metaclass-safe `_Identity` wrapper.
+    """
+    if not isinstance(x, type):
+        return None
+    return x if type(x) is type else _Identity(x)
+
+
+def cache_key(x: object, /, spec: CacheSpec = _ALL_PARTS) -> tuple[object, ...]:
+    """Cache key for a value `x`, carrying the key parts named by `spec`.
+
+    For any hint `t` with `is_cacheable(t)`, whether `x` matches `t` depends only on
+    `cache_key(x)`, so a dispatch result for `x` can be memoised under this key. A
+    resolver passes only the key parts its own types need, so it never captures
+    more than necessary.
+
+    The exact width of the returned tuple and the order of its slots are an
+    implementation detail: every member added to :class:`KeyPart` adds a slot to
+    the default key. Only the contract is stable: equal keys imply the same match
+    result.
+
+    Note that the identity slot keeps a strong reference to `x` -- necessarily, since
+    that is what makes `id`-based hashing safe. A function dispatching on `type[X]`
+    therefore accumulates one cache entry per distinct argument class, and pins that
+    class, for the function's lifetime; dynamically created classes are not
+    collected. Call `f.clear_cache()` (or :func:`plum.clear_all_cache`) to release
+    them.
+    """
+    key: tuple[object, ...] = (type(x),)
+    if KeyPart.IDENTITY in spec:
+        key += (_identity(x),)
+    return key
+
+
+def is_faithful(x: object, /) -> bool:
+    """Check whether a type hint is faithful.
+
+    A type or type hint `t` is _faithful_ if, for all `x`::
+
+        isinstance(x, t) == issubclass(type(x), t)
+
+    i.e. matching depends only on `type(x)`. Faithful types are cacheable with a plain
+    `type(x)` key. You can control faithfulness by setting `__faithful__`::
+
+        class UnfaithfulType:
+            __faithful__ = False
+
+    `type[X]` is *not* faithful (its match depends on class identity); see
+    :func:`is_cacheable`.
+
+    Args:
+        x (type or type hint): Type hint.
+
+    Returns:
+        bool: Whether `x` is faithful or not.
+    """
+    return _cache_spec(resolve_type_hint(x)) == _NO_PARTS
+
+
+def is_cacheable(x: object, /) -> bool:
+    """Check whether a type hint is cacheable.
+
+    `t` is _cacheable_ if, for all `x`, whether `x` matches `t` is a function of
+    :func:`cache_key(x) <cache_key>` alone. Every faithful type is cacheable; in
+    addition `type[X]` is cacheable but not faithful (its match `issubclass(x, X)`
+    depends on the class identity of `x`, which `cache_key` captures).
+
+    Args:
+        x (type or type hint): Type hint.
+
+    Returns:
+        bool: Whether `x` is cacheable or not.
+    """
+    return _cache_spec(resolve_type_hint(x)) is not None
+
+
+_CANONICAL_SPECS: "dict[CacheSpec, CacheSpec]" = {}
+"""One shared instance per distinct :obj:`CacheSpec`, populated on demand.
+
+A `frozenset` union always allocates, and `frozenset() | frozenset()` is not the
+empty singleton, so without this every signature and every resolver would hold a
+private 216-byte copy of one of only `2 ** len(KeyPart)` possible values. Interning
+them costs one dict lookup at registration, which is cold, and the table cannot grow
+past that many entries."""
+
+
+def _canonical(spec: CacheSpec, /) -> CacheSpec:
+    """The shared instance equal to `spec`, interning it if it is the first."""
+    return _CANONICAL_SPECS.setdefault(spec, spec)
+
+
+def _combine(items: "Iterable[object]", /) -> CacheSpec | None:
+    """Union the specs of `items` (each resolved); `None` if any is uncacheable."""
+    acc = _NO_PARTS
+    for item in items:
+        sub = _cache_spec(resolve_type_hint(item))
+        if sub is None:
+            return None
+        if sub is not acc:
+            # Almost every signature is uniform, so this skips the allocation that
+            # `|=` would make on every argument.
+            acc |= sub
+    return _canonical(acc)
+
+
+def _cache_spec(x: object, /) -> CacheSpec | None:
+    """Classify a **resolved** hint into the :obj:`CacheSpec` it needs, or `None`.
+
+    `frozenset()` = faithful (type-key suffices); `{IDENTITY}` = `type[X]`; a union is
+    the union of its members (`None` if any member is uncacheable); everything else
+    that is not a plainly faithful type is `None` (uncacheable). This is the single
+    classifier `is_faithful` and `is_cacheable` derive from.
+    """
     if _is_hint(x):
         origin = get_origin(x)
         args = get_args(x)
         if args == ():
-            # Unsubscripted type hints tend to be faithful. For example, `Any`,
-            # `List`, `Tuple`, `Dict`, `Callable`, and `Generator` are. When we
-            # come across a counter-example, we will refine this logic.
-            return True
-
+            if origin is tuple and hasattr(x, "__args__"):
+                # `tuple[()]` is the one hint that is subscripted yet reports no
+                # arguments: `get_args(tuple[()])` is `()` on Python >= 3.11. It
+                # matches on the *length* of the value, not its type, so it is
+                # neither faithful nor cacheable. Bare `typing.Tuple` shares the
+                # `tuple` origin but matches on type alone, and is told apart by
+                # having no `__args__` at all.
+                return None
+            # Unsubscripted hints tend to be faithful: `Any`, `List`, `Callable`, ...
+            return _NO_PARTS
+        if origin is type:
+            # `type[X]`: cacheable via the identity component of the cache key.
+            return _IDENTITY
         if origin in UNION_TYPES:
-            return all(is_faithful(arg) for arg in args)
+            return _combine(args)
+        return None
 
-        return False
-
-    elif x is None or x == Ellipsis:
-        return True
+    elif x is None or x is Ellipsis:
+        return _NO_PARTS
 
     elif isinstance(x, (tuple, list)):
-        return all(is_faithful(arg) for arg in x)
+        return _combine(x)
+
     elif isinstance(x, type):
         if _has_dunder_faithful(x):
-            return x.__faithful__
-        else:
-            # This is the fallback method. Check whether `__instancecheck__` is default
-            # or not. If it is, assume that it is faithful.
-            return type(x).__instancecheck__ in {
-                type.__instancecheck__,
-                abc.ABCMeta.__instancecheck__,
-            }
+            return _NO_PARTS if x.__faithful__ else None
+        # Fallback: default `__instancecheck__` ⇒ faithful.
+        faithful = type(x).__instancecheck__ in {
+            type.__instancecheck__,
+            abc.ABCMeta.__instancecheck__,
+        }
+        return _NO_PARTS if faithful else None
+
     else:
         warnings.warn(
-            f"Could not determine whether `{x}` is faithful or not. "
-            f"I have concluded that the type is not faithful, so your code might run "
+            f"Could not determine whether `{x}` is faithful or cacheable. "
+            f"I have concluded that it is neither, so your code might run "
             f"with subpar performance. "
             f"Please open an issue at https://github.com/beartype/plum.",
             stacklevel=2,
         )
-    return False
+    return None

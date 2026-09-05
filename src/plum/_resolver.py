@@ -4,7 +4,7 @@ import pydoc
 import sys
 import warnings
 from collections.abc import Callable, Iterable
-from functools import wraps
+from functools import partial, wraps
 
 from rich.console import Console, ConsoleOptions
 from rich.padding import Padding
@@ -13,6 +13,7 @@ from rich.text import Text
 from ._util import argsort
 from plum._method import Method, MethodList
 from plum._signature import Signature
+from plum._type import CacheSpec, _canonical, cache_key
 from plum.repr import repr_source_path, rich_repr
 
 
@@ -241,14 +242,16 @@ class Resolver:
 
     Attributes:
         methods (list[:class:`.method.Method`]): Registered methods.
-        is_faithful (bool): Whether all methods are faithful or not.
+        cache_spec (frozenset | None): Union of all methods' spec, or `None` if any
+            method is uncacheable. Drives caching. See :func:`plum.is_cacheable`.
         warn_redefinition (bool): Throw a warning whenever a method is redefined.
     """
 
     __slots__ = (
         "function_name",
         "methods",
-        "is_faithful",
+        "cache_spec",
+        "_arg_key",
         "warn_redefinition",
     )
 
@@ -264,8 +267,19 @@ class Resolver:
         """
         self.function_name = function_name
         self.methods: MethodList = MethodList()
-        self.is_faithful: bool = True
+        self.cache_spec: CacheSpec | None = frozenset()
+        self._arg_key: Callable[[object], object] = type
         self.warn_redefinition = warn_redefinition
+
+    @property
+    def is_faithful(self) -> bool:
+        """Whether all methods only use faithful types."""
+        return self.cache_spec == frozenset()
+
+    @property
+    def is_cacheable(self) -> bool:
+        """Whether dispatch on this resolver can be cached."""
+        return self.cache_spec is not None
 
     def doc(self, exclude: Callable[..., object] | None = None) -> str:
         """Concatenate the docstrings of all methods of this function. Remove duplicate
@@ -331,8 +345,22 @@ class Resolver:
         else:
             self.methods.append(method)
 
-        # Use a double negation for slightly better performance.
-        self.is_faithful = not any(not s.signature.is_faithful for s in self.methods)
+        # Union the methods' cache specs; `None` if any method is uncacheable. The
+        # argument-key callable is bound once here, so the hot path is a branchless
+        # map. Faithful (`∅`) or uncacheable (`None`) → plain `type`; a non-empty
+        # spec → `cache_key` specialised to exactly its key parts.
+        acc: CacheSpec = frozenset()
+        for m in self.methods:
+            sub = m.signature.cache_spec
+            if sub is None:
+                self.cache_spec = None
+                self._arg_key = type
+                return
+            if sub is not acc:
+                acc |= sub
+        # Interned, so all resolvers agreeing on a spec share one instance.
+        self.cache_spec = acc = _canonical(acc)
+        self._arg_key = type if not acc else partial(cache_key, spec=acc)
 
     def __len__(self) -> int:
         return len(self.methods)
