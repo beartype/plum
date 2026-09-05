@@ -68,5 +68,21 @@ def pytest(s: nox.Session, /) -> None:
 
 @session(uv_groups=["test_runtime"], reuse_venv=True)
 def benchmark(s: nox.Session, /) -> None:
-    """Run the benchmarks."""
-    s.run("python", "tests/benchmark.py", *s.posargs)
+    """Run the benchmarks.
+
+    Pass `--benchmark-save=NAME` to record a run and `--benchmark-compare=NAME` to
+    diff against a recorded one; see `tests/benchmarks/README.md`.
+    """
+    s.run(
+        "pytest",
+        "tests/benchmarks",
+        "--benchmark-enable",
+        # Calibrate against a longer round. At the default floor a sub-microsecond
+        # benchmark gets so few iterations per round that its median lands on a timer
+        # quantum, and comparing two branches can then show an entirely phantom
+        # double-digit change. See `README.md`.
+        "--benchmark-min-time=0.0005",
+        "--benchmark-columns=min,median,stddev,rounds",
+        "--benchmark-group-by=group",
+        *s.posargs,
+    )
