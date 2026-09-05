@@ -30,3 +30,6 @@ cover
 *.c
 *.so
 *.o
+
+# pytest-benchmark saved runs
+.benchmarks/

@@ -1,4 +1,5 @@
 import abc
+import enum
 import sys
 import typing
 from numbers import Number
@@ -6,16 +7,22 @@ from typing import Annotated, Any, Literal, Union
 
 import pytest
 
+from plum._bear import is_bearable
 from plum._type import (
+    _ARG_KEYS,
+    KeyPart,
     ModuleType,
     PromisedType,
     ResolvableType,
     TypeHintWrapper,
+    _cache_spec,
     _is_hint,
     _substitute_any,
     _type_hint_eq,
     _type_hint_le,
     _wrap_type_hint,
+    cache_key,
+    is_cacheable,
     is_faithful,
     resolve_type_hint,
     type_mapping,
@@ -236,7 +243,8 @@ def test_is_faithful():
 
     # Test warning.
     with pytest.warns(
-        Warning, match=r"(?i)could not determine whether `(.*)` is faithful or not"
+        Warning,
+        match=r"(?i)could not determine whether `(.*)` is faithful or cacheable",
     ):
         assert not is_faithful(1)
 
@@ -370,3 +378,246 @@ def test_wrap_type_hint_unhashable_hint():
     assert _wrap_type_hint(hint) == TypeHintWrapper(Annotated[list[object], {"a": 1}])
     # A hashable one is cached, which is the point of the helper.
     assert _wrap_type_hint(list[Any]) is _wrap_type_hint(list[Any])
+
+
+def test_is_cacheable_and_faithful_split():
+    class SomeClass:
+        pass
+
+    # Faithful ⇒ cacheable, and type-keyed.
+    assert is_faithful(int) and is_cacheable(int)
+    assert is_faithful(typing.Any) and is_cacheable(typing.Any)
+    assert is_faithful(type) and is_cacheable(type)  # bare, unsubscripted
+    assert is_faithful(typing.Union[int, str])  # noqa: UP007
+
+    # type[X]: cacheable but NOT faithful.
+    assert not is_faithful(type[int])
+    assert is_cacheable(type[int])
+    assert not is_faithful(type[SomeClass])
+    assert is_cacheable(type[SomeClass])
+    assert not is_faithful(typing.Type[int])  # noqa: UP006
+    assert is_cacheable(typing.Type[int])  # noqa: UP006
+    assert is_cacheable(typing.Union[type[int], str])  # noqa: UP007
+
+    # Literal: cacheable but NOT faithful.
+    assert not is_faithful(typing.Literal[1])
+    assert is_cacheable(typing.Literal[1])
+
+    # Genuinely uncacheable.
+    assert not is_cacheable(list[int])
+    assert not is_cacheable(list[type[int]])
+
+
+def test_empty_tuple_hint_is_not_faithful():
+    """`tuple[()]` matches on the *length* of the value, not its type.
+
+    `typing.get_args(tuple[()])` is `()`, which used to send it down the
+    "unsubscripted hints are faithful" fast path. `()` matches it and `(1,)` does
+    not, so the classification must be uncacheable.
+    """
+    assert is_bearable((), tuple[()])
+    assert not is_bearable((1,), tuple[()])
+
+    assert not is_faithful(tuple[()])
+    assert not is_cacheable(tuple[()])
+    assert not is_faithful(typing.Tuple[()])  # noqa: UP006
+    assert not is_cacheable(typing.Tuple[()])  # noqa: UP006
+    # Nested in a union, the whole hint goes with it.
+    assert not is_cacheable(typing.Union[tuple[()], int])  # noqa: UP007
+
+    # Other unsubscripted hints are unaffected. In particular bare `typing.Tuple`
+    # shares the `tuple` origin but means "any tuple", which depends only on the
+    # type, so it must stay faithful rather than be lumped in with `tuple[()]`.
+    assert is_faithful(typing.Tuple)  # noqa: UP006
+    assert is_cacheable(typing.Tuple)  # noqa: UP006
+    assert is_faithful(tuple)
+    assert is_faithful(typing.List)  # noqa: UP006
+    assert is_faithful(typing.Any)
+
+
+def test_cache_key_contract():
+    """Equal keys imply the same match result, so anything that dispatches
+    differently must get a distinct key. The width and order of the slots are an
+    implementation detail and deliberately not asserted here.
+    """
+
+    class SomeClass:
+        pass
+
+    # Non-classes keyed on their type and value.
+    assert cache_key(1) == (int, None, 1)
+    assert cache_key("x") == (str, None, "x")
+    # Classes keyed on identity; distinct from a same-type instance key.
+    assert cache_key(int) == cache_key(int)
+    assert cache_key(int) != cache_key(str)
+    assert cache_key(int) != cache_key(1)
+    assert cache_key(SomeClass) == cache_key(SomeClass)
+
+
+def test_cache_key_survives_pathological_metaclasses():
+    # Unhashable class (metaclass defines __eq__, nulls __hash__): key must not raise.
+    class MetaUnhashable(type):
+        def __eq__(cls, other):
+            return cls is other
+
+    class Unhashable(metaclass=MetaUnhashable):
+        pass
+
+    d = {cache_key(Unhashable): "ok"}
+    assert d[cache_key(Unhashable)] == "ok"
+
+    # Lying equality + colliding hash: distinct classes must not collide in the key.
+    class MetaLie(type):
+        def __eq__(cls, other):
+            return True
+
+        def __hash__(cls):
+            return 7
+
+    class A(int, metaclass=MetaLie):
+        pass
+
+    class B(metaclass=MetaLie):
+        pass
+
+    assert cache_key(A) != cache_key(B)
+    assert {cache_key(A): 1}.get(cache_key(B)) is None
+
+
+def test_public_api_exports():
+    import plum
+
+    assert plum.is_cacheable(int) is True
+    assert plum.is_cacheable(list[int]) is False
+    assert plum.cache_key(1)[0] is int
+    assert "is_cacheable" in plum.__all__
+    assert "cache_key" in plum.__all__
+
+
+def test_is_cacheable_literal():
+    """`Literal` is cacheable (via the value key part) but not faithful."""
+    assert not is_faithful(Literal[1])
+    assert is_cacheable(Literal[1])
+    assert is_cacheable(Literal[1, 2])
+    assert is_cacheable(Literal["a", None])
+    # Unions and containers combine as usual.
+    assert is_cacheable(typing.Union[Literal[1], str])  # noqa: UP007
+    assert is_cacheable(typing.Union[Literal[1], type[int]])  # noqa: UP007
+    assert not is_cacheable(list[Literal[1]])
+
+
+def test_cache_key_value_part_is_opt_in():
+    """Only a resolver that asks for `VALUE` pays for the value slot."""
+    identity_only = frozenset({KeyPart.IDENTITY})
+    value_only = frozenset({KeyPart.VALUE})
+
+    # A `type[X]`-only resolver's key is unchanged: `(type(x), identity(x))`.
+    assert cache_key(1, spec=identity_only) == (int, None)
+    assert len(cache_key(int, spec=identity_only)) == 2
+
+    # A `Literal`-only resolver captures the value and nothing else.
+    assert cache_key(1, spec=value_only) == (int, 1)
+    assert cache_key(2, spec=value_only) == (int, 2)
+    assert cache_key(1, spec=value_only) != cache_key(2, spec=value_only)
+    # `True` and `1` are equal but not interchangeable for `Literal`: the type slot
+    # keeps them apart.
+    assert cache_key(True, spec=value_only) != cache_key(1, spec=value_only)
+    # A value that can never match any `Literal` gets an empty slot.
+    assert cache_key(1.5, spec=value_only) == (float, None)
+    assert cache_key([1], spec=value_only) == (list, None)
+
+
+def test_cache_key_value_covers_literal_matching_subclasses():
+    """Subclass instances match `Literal`s, so their value must be captured."""
+    value_only = frozenset({KeyPart.VALUE})
+
+    class MyInt(int):
+        pass
+
+    assert is_bearable(MyInt(1), Literal[1])
+    assert not is_bearable(MyInt(2), Literal[1])
+    assert cache_key(MyInt(1), spec=value_only) != cache_key(MyInt(2), spec=value_only)
+
+    class MyEnum(enum.IntEnum):
+        A = 1
+        B = 2
+
+    assert is_bearable(MyEnum.A, Literal[1])
+    assert cache_key(MyEnum.A, spec=value_only) != cache_key(MyEnum.B, spec=value_only)
+
+
+def test_cache_key_value_survives_unhashable_values():
+    """An unhashable argument must not make the key raise."""
+    value_only = frozenset({KeyPart.VALUE})
+
+    class Unhashable(str):
+        def __eq__(self, other):
+            return str(self) == str(other)
+
+        __hash__ = None  # type: ignore[assignment]
+
+    a, b = Unhashable("a"), Unhashable("b")
+    assert is_bearable(a, Literal["a"])
+    assert not is_bearable(b, Literal["a"])
+
+    d = {cache_key(a, spec=value_only): 1, cache_key(b, spec=value_only): 2}
+    assert len(d) == 2
+    assert d[cache_key(a, spec=value_only)] == 1
+
+    # Plain unhashable values are fine too.
+    hash(cache_key([1], spec=value_only))
+
+
+def test_arg_keys_agree_with_cache_key():
+    """`_ARG_KEYS` is a hot-path specialisation of `cache_key`: keep them in sync."""
+    from itertools import chain, combinations
+
+    subsets = [
+        frozenset(s)
+        for s in chain.from_iterable(
+            combinations(KeyPart, r) for r in range(len(KeyPart) + 1)
+        )
+    ]
+    assert set(_ARG_KEYS) == set(subsets)
+
+    class SomeClass:
+        pass
+
+    values = [1, True, "x", b"x", None, 1.5, [1], SomeClass, int, SomeClass()]
+    for spec in subsets:
+        for x in values:
+            expected = cache_key(x, spec=spec)
+            actual = _ARG_KEYS[spec](x)
+            if spec:
+                assert actual == expected, (spec, x)
+            else:
+                # The faithful specialisation is plain `type`, not a 1-tuple.
+                assert (actual,) == expected, (spec, x)
+
+
+def test_cache_spec_of_an_array_like_hint():
+    """Classification must not evaluate a hint's truthiness.
+
+    `x == Ellipsis` on a `numpy` array returns an array, whose `bool()` raises, so
+    an array reaching the classifier used to blow up rather than be reported
+    uncacheable.
+    """
+    np = pytest.importorskip("numpy")
+
+    with pytest.warns(UserWarning, match="faithful or cacheable"):
+        assert _cache_spec(np.array([1, 2, 3])) is None
+
+    # The two values the branch actually exists for still classify as faithful.
+    assert _cache_spec(None) == frozenset()
+    assert _cache_spec(Ellipsis) == frozenset()
+
+
+def test_cache_specs_are_interned():
+    # Only `2 ** len(KeyPart)` specs exist, so every signature and resolver must
+    # share one instance rather than hold a private 216-byte copy.
+    from plum._type import _canonical, _combine
+
+    specs = [_combine((int, float)), _combine((str,)), _combine((type[int], int))]
+    assert specs[0] is specs[1] is _combine((bool,))
+    assert specs[2] is _combine((type[str],))
+    assert _canonical(frozenset(specs[2])) is specs[2]
