@@ -74,9 +74,9 @@ def _wraps(wrapper: Any, wrapped: Callable[..., Any], /) -> None:
     """Copy `wrapped`'s metadata onto `wrapper`, like :func:`functools.wraps`.
 
     `functools.wraps` costs about 1.1 us, most of it on a `try`/`except` per name in
-    `WRAPPER_ASSIGNMENTS` and on `__type_params__`, which nothing in plum or
-    :func:`inspect` reads back off a wrapper. Writing the same names straight-line
-    costs about 0.43 us -- 2.5x less.
+    `WRAPPER_ASSIGNMENTS` and on `__type_params__`, which neither plum nor
+    :func:`inspect.signature` reads back off a wrapper. Writing the same names
+    straight-line costs about 0.43 us -- 2.5x less.
 
     Annotations and the `__dict__` merge are kept, so what a caller can observe on
     the wrapper is unchanged. Which attribute carries the annotations is
