@@ -25,6 +25,15 @@ _promised_convert: Callable[..., Any] | None = None
 SomeExceptionType = TypeVar("SomeExceptionType", bound=Exception)
 
 
+_identity_conversions: dict[tuple[type, TypeHint], bool] = {}
+"""dict[tuple[type, TypeHint], bool]: Whether conversion is the identity for a
+`(type(obj), target_type)` pair.
+
+Written by :func:`plum.convert`, which decides what is recordable; read here because
+this is the hot path. Missing means "not yet analysed". Same staleness contract as
+:attr:`Function._cache`: mutating a type's meaning in place needs `clear_all_cache`."""
+
+
 def _convert(obj: Any, target_type: TypeHint, /) -> Any:
     """Convert an object to a particular type. Only converts if `target_type` is set.
 
@@ -37,9 +46,12 @@ def _convert(obj: Any, target_type: TypeHint, /) -> Any:
     """
     if target_type is Any:
         return obj
-    else:
-        assert _promised_convert is not None
-        return _promised_convert(obj, target_type)
+    # Skip `convert` entirely when it is known to be the identity for this pair. An
+    # unhashable `target_type` raises here instead of below, as it always has.
+    if _identity_conversions.get((type(obj), target_type)):
+        return obj
+    assert _promised_convert is not None
+    return _promised_convert(obj, target_type)
 
 
 _owner_transfer: dict[type, type] = {}
