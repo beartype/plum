@@ -1,8 +1,32 @@
+import sys
+
+import pytest
+
 import plum
 from .util import benchmark
 
 
+def _traced():
+    """Whether `coverage` or another tracer is attached, which skews hit/miss timing.
+
+    See the commit that added this for the numbers."""
+    # Both, because neither alone is enough. `sys.gettrace` catches a plain
+    # `settrace` tracer but not coverage from Python 3.12 on, which drives
+    # `sys.monitoring` instead and leaves `gettrace` empty; the coverage API catches
+    # that but knows nothing about other tracers.
+    if sys.gettrace() is not None:
+        return True
+    try:
+        import coverage
+    except ImportError:
+        return False
+    return coverage.Coverage.current() is not None
+
+
 def assert_cache_performance(f, f_native):
+    if _traced():
+        pytest.skip("a line tracer is attached; see `_traced`")
+
     # Time the performance of a native call.
     dur_native = benchmark(f_native, (1,), n=250, burn=10)
 
