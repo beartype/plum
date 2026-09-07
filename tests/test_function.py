@@ -767,6 +767,51 @@ def test_weakref_and_doc_assignment(wrap):
     assert g.__doc__ == "Replaced."
 
 
+@pytest.mark.incompatible_with_mypyc
+def test_type_x_resolution_overtaken_by_a_clear_is_not_cached(monkeypatch, dispatch):
+    """The `type[X]`-cached path (added by #305) must honour the same lost-update
+    guard as the faithful path: a registration landing mid-resolution must not leave
+    a stale method cached under `KeyPart.IDENTITY`-bearing keys either.
+    """
+
+    class Foo:
+        pass
+
+    @dispatch
+    def f(x: type[Foo]):
+        return "v1"
+
+    f._resolve_pending_registrations()
+
+    resolved, cleared = threading.Event(), threading.Event()
+    original, target = Function.resolve_method, f
+
+    def paused(self, *args, **kw_args):
+        out = original(self, *args, **kw_args)
+        # The patch applies to every `Function`, so pause only `f`.
+        if self is target:
+            resolved.set()
+            # Pause between resolving and writing to the cache, which is where the clear
+            # must happen.
+            assert cleared.wait(5), "The clear never happened."
+        return out
+
+    monkeypatch.setattr(Function, "resolve_method", paused)
+    with ThreadPoolExecutor(1) as pool:
+        call = pool.submit(f, Foo)
+        assert resolved.wait(5), "The call never reached the pause."
+
+        @dispatch
+        def f(x: type[Foo]):  # noqa: F811
+            return "v2"
+
+        f._resolve_pending_registrations()
+        cleared.set()
+        assert call.result(5) == "v1"
+
+    assert f(Foo) == "v2"
+
+
 def test_wraps_matches_functools_wraps():
     """The fast metadata copy must be observationally identical to `functools.wraps`.
 

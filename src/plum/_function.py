@@ -596,6 +596,23 @@ class Function(NativeBase):
             raise ex from None
         return method, return_type
 
+    def _resolve_and_cache(
+        self, args: tuple[object, ...] | Signature, key: tuple[object, ...]
+    ) -> tuple[Callable[..., Any], TypeHint]:
+        """Resolve `args` and cache the result under `key`, if cacheable.
+
+        Shared by `__call__` and `_resolve_method_with_cache`'s miss paths, which
+        would otherwise duplicate this exact sequence. The dict is captured
+        *before* resolving: this store happens outside the lock, so a resolution
+        overtaken by a concurrent `clear_cache` must land in the old dict rather
+        than write its stale answer back into the live one.
+        """
+        cache = self._cache
+        method, return_type = self.resolve_method(args)
+        if self._resolver.cache_spec is not None:
+            cache[key] = method, return_type
+        return method, return_type
+
     def __call__(self, *args: object, **kw: object) -> object:
         __tracebackhide__ = True
         # The cache hit is inlined here: on a hit, none of the argument juggling in
@@ -618,15 +635,7 @@ class Function(NativeBase):
             # no cache can serve misses on every call, so it would pay both every
             # time. `resolve_method` resolves pending registrations itself, so the
             # key cannot have been built against a stale method set.
-            #
-            # The dict is captured before resolving, as in
-            # `_resolve_method_with_cache`: this store is outside the lock, so a
-            # resolution overtaken by a `clear_cache` must land in the old dict rather
-            # than write its stale answer back into the live one.
-            cache = self._cache
-            method, return_type = self.resolve_method(args)
-            if self._resolver.cache_spec is not None:
-                cache[key] = method, return_type
+            method, return_type = self._resolve_and_cache(args, key)
         return _convert(method(*args, **kw), return_type)
 
     def _resolve_method_with_cache(
@@ -662,18 +671,7 @@ class Function(NativeBase):
             if args is None:
                 args = Signature(*(resolve_type_hint(t) for t in types))
 
-            # Cache miss. If `clear_cache` runs while the method is being resolved, the
-            # result may be outdated and must not end up in the cache. `clear_cache`
-            # replaces `self._cache` with a new dictionary, so take `self._cache` now:
-            # afterwards, `cache` is either still the live cache, or the old dictionary,
-            # which nothing reads any more, so storing into it is harmless.
-            cache = self._cache
-            method, return_type = self.resolve_method(args)
-            # Cache only when the resolver is cacheable; otherwise `cache_key` would
-            # not uniquely determine the matching method.
-            if self._resolver.cache_spec is not None:
-                cache[types] = method, return_type
-            return method, return_type
+            return self._resolve_and_cache(args, types)
 
     def invoke(self, *types: TypeHint) -> Callable[..., Any]:
         """Invoke a particular method.
