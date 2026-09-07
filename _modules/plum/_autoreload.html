@@ -359,7 +359,7 @@ document.write(`
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_update_instances</span><span class="p">(</span><span class="n">old</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">new</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;First call the original implementation of Autoreload&#39;s :meth:`update_instances`,</span>
-<span class="sd">    and then use :obj:`.type._type_mapping` to map type `old` to the type `new`.</span>
+<span class="sd">    and then use :obj:`plum.type_mapping` to map type `old` to the type `new`.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        old (type): Old type.</span>
@@ -369,7 +369,7 @@ document.write(`
 
     <span class="n">type_mapping</span><span class="p">[</span><span class="n">old</span><span class="p">]</span> <span class="o">=</span> <span class="n">new</span>
 
-    <span class="c1"># There might be an existing value in `_type_mapping` that should be replaced by</span>
+    <span class="c1"># There might be an existing value in `type_mapping` that should be replaced by</span>
     <span class="c1"># `new`. Resolve these chains.</span>
     <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">type_mapping</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">while</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">type_mapping</span><span class="p">:</span>
