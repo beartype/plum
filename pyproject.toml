@@ -128,8 +128,9 @@ test-requires = [
     "pytest>=8.4.2",
     "sybil[pytest]>=9.2.0",
 ]
-# Skip testing arm64 builds on Intel Macs
-test-skip = ["*-macosx_arm64", "*-macosx_universal2:arm64"]
+# arm64 wheels are built and tested natively on the macos-14 runner; cibuildwheel
+# already auto-skips tests for the cross-compiled x86_64 wheels built there.
+test-skip = ["*-macosx_universal2:arm64"]
 
 [tool.cibuildwheel.environment]
 HATCH_BUILD_HOOKS_ENABLE = "1"

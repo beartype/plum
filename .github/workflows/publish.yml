@@ -63,7 +63,7 @@ jobs:
               run: |
                   uvx cibuildwheel==3.4.0 --print-build-identifiers --platform linux \
                   | jq -nRc '{"only": inputs, "os": "ubuntu-latest"}' > /tmp/linux_builds.json
-                  uvx cibuildwheel==3.4.0 --print-build-identifiers --platform macos \
+                  uvx cibuildwheel==3.4.0 --print-build-identifiers --platform macos --archs x86_64,arm64 \
                   | jq -nRc '{"only": inputs, "os": "macos-14"}' > /tmp/macos_builds.json
                   uvx cibuildwheel==3.4.0 --print-build-identifiers --platform windows \
                   | jq -nRc '{"only": inputs, "os": "windows-latest"}' > /tmp/windows_builds.json
