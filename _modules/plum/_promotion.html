@@ -367,7 +367,7 @@ document.write(`
 <span class="kn">import</span><span class="w"> </span><span class="nn">plum._function</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._bear</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_bearable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._dispatcher</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dispatcher</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">._type</span><span class="w"> </span><span class="kn">import</span> <span class="n">_type_hint_eq</span><span class="p">,</span> <span class="n">resolve_type_hint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._type</span><span class="w"> </span><span class="kn">import</span> <span class="n">_type_hint_eq</span><span class="p">,</span> <span class="n">is_faithful</span><span class="p">,</span> <span class="n">resolve_type_hint</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.repr</span><span class="w"> </span><span class="kn">import</span> <span class="n">repr_short</span>
 
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
@@ -381,6 +381,12 @@ document.write(`
     <span class="n">typeTypeTo</span> <span class="o">=</span> <span class="n">Any</span>
 
 <span class="n">_dispatch</span> <span class="o">=</span> <span class="n">Dispatcher</span><span class="p">()</span>
+
+<span class="n">_IDENTITY_CONVERSION_LIMIT</span> <span class="o">=</span> <span class="mi">4096</span>
+<span class="sd">&quot;&quot;&quot;int: Maximum number of entries in :obj:`plum._function._identity_conversions`.</span>
+
+<span class="sd">Entries come from annotations and argument types, not from data, so this is a ceiling</span>
+<span class="sd">for the pathological case only: past it, pairs just take the full conversion path.&quot;&quot;&quot;</span>
 
 
 <div class="viewcode-block" id="convert">
@@ -396,9 +402,42 @@ document.write(`
 <span class="sd">    Returns:</span>
 <span class="sd">        object: `obj` converted to type `type_to`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">type_to</span> <span class="o">=</span> <span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">type_to</span><span class="p">)</span>
+    <span class="c1"># The fallback conversion method only checks that `obj` is an instance of `type_to`</span>
+    <span class="c1"># and returns `obj` unchanged. Every call of a function with a return annotation</span>
+    <span class="c1"># goes through here, so this is worth optimising. If `type_to` is faithful, the</span>
+    <span class="c1"># instance check depends only on `type(obj)`, so whether the conversion is the</span>
+    <span class="c1"># identity can be cached by `(type(obj), type_to)`. That is what is implemented</span>
+    <span class="c1"># below.</span>
+
     <span class="c1"># TODO: Can we implement this without using `type`?!</span>
-    <span class="k">return</span> <span class="n">_convert</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">),</span> <span class="n">type_to</span><span class="p">)(</span><span class="n">obj</span><span class="p">,</span> <span class="n">type_to</span><span class="p">)</span></div>
+    <span class="n">type_from</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+    <span class="n">cache</span> <span class="o">=</span> <span class="n">plum</span><span class="o">.</span><span class="n">_function</span><span class="o">.</span><span class="n">_identity_conversions</span>
+    <span class="c1"># Keyed on `type_to` as received, so that a cache hit avoids `resolve_type_hint`.</span>
+    <span class="n">known</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">cache</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">type_from</span><span class="p">,</span> <span class="n">type_to</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">known</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">obj</span>
+
+    <span class="n">type_to_resolved</span> <span class="o">=</span> <span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">type_to</span><span class="p">)</span>
+    <span class="c1"># Resolve and call the method directly. `_convert.invoke` would read better, but</span>
+    <span class="c1"># it builds a `functools.wraps` wrapper per call, ~1.35 us on top of the 0.14 us</span>
+    <span class="c1"># the resolution itself costs, on every call that does not hit the cache above.</span>
+    <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span> <span class="o">=</span> <span class="n">_convert</span><span class="o">.</span><span class="n">_resolve_method_with_cache</span><span class="p">(</span>
+        <span class="n">types</span><span class="o">=</span><span class="p">(</span><span class="n">type_from</span><span class="p">,</span> <span class="n">type_to_resolved</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="c1"># As `invoke` does, convert the result per the method&#39;s own return annotation.</span>
+    <span class="c1"># That annotation is `Any` for every conversion method, so this is free.</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">plum</span><span class="o">.</span><span class="n">_function</span><span class="o">.</span><span class="n">_convert</span><span class="p">(</span><span class="n">method</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">type_to_resolved</span><span class="p">),</span> <span class="n">return_type</span><span class="p">)</span>
+
+    <span class="c1"># Record whether the conversion is the identity: the fallback applied, and</span>
+    <span class="c1"># `type_to` is faithful so that its instance check depends only on `type_from`.</span>
+    <span class="c1"># Negatives are recorded too, because `is_faithful` is not cached and would</span>
+    <span class="c1"># otherwise run on every call.</span>
+    <span class="k">if</span> <span class="n">known</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">cache</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">_IDENTITY_CONVERSION_LIMIT</span><span class="p">:</span>
+        <span class="c1"># `_convert._f` is the fallback that `_convert` wraps.</span>
+        <span class="n">no_method_applied</span> <span class="o">=</span> <span class="n">method</span> <span class="ow">is</span> <span class="n">_convert</span><span class="o">.</span><span class="n">_f</span>
+        <span class="n">cache</span><span class="p">[</span><span class="n">type_from</span><span class="p">,</span> <span class="n">type_to</span><span class="p">]</span> <span class="o">=</span> <span class="n">no_method_applied</span> <span class="ow">and</span> <span class="n">is_faithful</span><span class="p">(</span><span class="n">type_to_resolved</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">result</span></div>
 
 
 
@@ -408,6 +447,11 @@ document.write(`
 
 <span class="nd">@_dispatch</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_convert</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">type_to</span><span class="p">):</span>  <span class="c1"># type: ignore[no-untyped-def]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fallback conversion: check the type and return `obj` unchanged.</span>
+
+<span class="sd">    :func:`convert` recognises this fallback via `_convert._f` to conclude that no</span>
+<span class="sd">    conversion method applied.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">is_bearable</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">type_to</span><span class="p">)):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot convert `</span><span class="si">{</span><span class="n">obj</span><span class="si">}</span><span class="s2">` to `</span><span class="si">{</span><span class="n">repr_short</span><span class="p">(</span><span class="n">type_to</span><span class="p">)</span><span class="si">}</span><span class="s2">`.&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">obj</span>
@@ -435,7 +479,11 @@ document.write(`
 
     <span class="nd">@_convert</span><span class="o">.</span><span class="n">dispatch</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">perform_conversion</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">type_from</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">type_to</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+    <span class="c1"># This method may now claim a pair recorded as an identity: `type_from` can be a</span>
+    <span class="c1"># subclass of `type_to`. Dropping the whole cache is cheap; registration is rare.</span>
+    <span class="n">plum</span><span class="o">.</span><span class="n">_function</span><span class="o">.</span><span class="n">_identity_conversions</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
 
 
 

@@ -376,6 +376,15 @@ document.write(`
 <span class="n">SomeExceptionType</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;SomeExceptionType&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="ne">Exception</span><span class="p">)</span>
 
 
+<span class="n">_identity_conversions</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">,</span> <span class="n">TypeHint</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="sd">&quot;&quot;&quot;dict[tuple[type, TypeHint], bool]: Whether conversion is the identity for a</span>
+<span class="sd">`(type(obj), target_type)` pair.</span>
+
+<span class="sd">Written by :func:`plum.convert`, which decides what is recordable; read here because</span>
+<span class="sd">this is the hot path. Missing means &quot;not yet analysed&quot;. Same staleness contract as</span>
+<span class="sd">:attr:`Function._cache`: mutating a type&#39;s meaning in place needs `clear_all_cache`.&quot;&quot;&quot;</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_convert</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">target_type</span><span class="p">:</span> <span class="n">TypeHint</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert an object to a particular type. Only converts if `target_type` is set.</span>
 
@@ -388,9 +397,12 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">target_type</span> <span class="ow">is</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">obj</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="n">_promised_convert</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-        <span class="k">return</span> <span class="n">_promised_convert</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">target_type</span><span class="p">)</span>
+    <span class="c1"># Skip `convert` entirely when it is known to be the identity for this pair. An</span>
+    <span class="c1"># unhashable `target_type` raises here instead of below, as it always has.</span>
+    <span class="k">if</span> <span class="n">_identity_conversions</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">),</span> <span class="n">target_type</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="n">obj</span>
+    <span class="k">assert</span> <span class="n">_promised_convert</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">_promised_convert</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">target_type</span><span class="p">)</span>
 
 
 <span class="n">_owner_transfer</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">type</span><span class="p">,</span> <span class="nb">type</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
