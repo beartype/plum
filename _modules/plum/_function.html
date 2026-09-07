@@ -362,7 +362,7 @@ document.write(`
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">._method</span><span class="w"> </span><span class="kn">import</span> <span class="n">Method</span><span class="p">,</span> <span class="n">MethodList</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">._mypyc</span><span class="w"> </span><span class="kn">import</span> <span class="n">mypyc_attr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._mypyc</span><span class="w"> </span><span class="kn">import</span> <span class="n">NativeBase</span><span class="p">,</span> <span class="n">mypyc_attr</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._resolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">AmbiguousLookupError</span><span class="p">,</span> <span class="n">NotFoundLookupError</span><span class="p">,</span> <span class="n">Resolver</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._signature</span><span class="w"> </span><span class="kn">import</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">append_default_args</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._type</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_type_hint</span>
@@ -407,21 +407,21 @@ document.write(`
 <span class="k">def</span><span class="w"> </span><span class="nf">_wraps</span><span class="p">(</span><span class="n">wrapper</span><span class="p">:</span> <span class="n">_Wrappable</span><span class="p">,</span> <span class="n">wrapped</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Copy `wrapped`&#39;s metadata onto `wrapper`, like :func:`functools.wraps`.</span>
 
-<span class="sd">    `functools.wraps` cannot be used: it writes the read-only native `__module__` and</span>
-<span class="sd">    updates a `__dict__` that native instances lack.</span>
+<span class="sd">    Deliberately narrower: `functools.wraps` also copies `__doc__` and `__module__`,</span>
+<span class="sd">    which `Function` serves through non-data descriptors that an instance attribute</span>
+<span class="sd">    would shadow.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">wrapper</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">=</span> <span class="n">wrapped</span><span class="o">.</span><span class="vm">__name__</span>
     <span class="n">wrapper</span><span class="o">.</span><span class="vm">__qualname__</span> <span class="o">=</span> <span class="n">_generate_qualname</span><span class="p">(</span><span class="n">wrapped</span><span class="p">)</span>
     <span class="n">wrapper</span><span class="o">.</span><span class="n">__wrapped__</span> <span class="o">=</span> <span class="n">wrapped</span>
 
 
-<span class="nd">@mypyc_attr</span><span class="p">(</span><span class="n">native_class</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">_InvokedMethod</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_InvokedMethod</span><span class="p">(</span><span class="n">NativeBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the resolved `method` and convert the result.</span>
 
 <span class="sd">    Callable returned by :meth:`Function.invoke`. A class rather than a closure,</span>
-<span class="sd">    which `mypyc` cannot compile (mypyc/mypyc#1205); non-native so</span>
-<span class="sd">    :func:`functools.wraps` can copy `__name__`/`__doc__` onto instances.</span>
+<span class="sd">    which `mypyc` cannot compile (mypyc/mypyc#1205); `NativeBase` for the `__dict__`</span>
+<span class="sd">    :func:`functools.wraps` writes into.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -470,7 +470,7 @@ document.write(`
 
 <div class="viewcode-block" id="Function">
 <a class="viewcode-back" href="../../api.html#plum._function.Function">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">Function</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Function</span><span class="p">(</span><span class="n">NativeBase</span><span class="p">):</span>
     <span class="c1">#: The class-level docstring, served as `Function.__doc__` by `_DocDescriptor`.</span>
     <span class="n">_class_doc</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;A function.</span>
 
@@ -947,9 +947,8 @@ document.write(`
 
 
 <span class="c1"># Attach `__doc__`/`__module__` here, not in the class body: `mypyc` replaces a class</span>
-<span class="c1"># `__doc__` with a filler, and `__module__` is read-only on a native instance. These</span>
-<span class="c1"># descriptors serve instance access (`f.__doc__`, `f.__module__`). `setattr` also stops</span>
-<span class="c1"># `mypy` treating these as class variables.</span>
+<span class="c1"># `__doc__` with a filler. These descriptors serve instance access (`f.__doc__`,</span>
+<span class="c1"># `f.__module__`). `setattr` also stops `mypy` treating these as class variables.</span>
 <span class="nb">setattr</span><span class="p">(</span><span class="n">Function</span><span class="p">,</span> <span class="s2">&quot;__doc__&quot;</span><span class="p">,</span> <span class="n">_DocDescriptor</span><span class="p">())</span>  <span class="c1"># noqa: B010</span>
 <span class="nb">setattr</span><span class="p">(</span><span class="n">Function</span><span class="p">,</span> <span class="s2">&quot;__module__&quot;</span><span class="p">,</span> <span class="n">_ModuleDescriptor</span><span class="p">(</span><span class="vm">__name__</span><span class="p">))</span>  <span class="c1"># noqa: B010</span>
 
@@ -1009,7 +1008,7 @@ document.write(`
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span> <span class="o">...</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">_BoundFunction</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_BoundFunction</span><span class="p">(</span><span class="n">NativeBase</span><span class="p">):</span>
     <span class="c1">#: The class-level docstring, served as `_BoundFunction.__doc__` by</span>
     <span class="c1">#: `_DocDescriptor`.</span>
     <span class="n">_class_doc</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;A bound instance of `.function.Function`.</span>
@@ -1063,8 +1062,7 @@ document.write(`
 <span class="nb">setattr</span><span class="p">(</span><span class="n">_BoundFunction</span><span class="p">,</span> <span class="s2">&quot;__module__&quot;</span><span class="p">,</span> <span class="n">_ModuleDescriptor</span><span class="p">(</span><span class="vm">__name__</span><span class="p">))</span>  <span class="c1"># noqa: B010</span>
 
 
-<span class="nd">@mypyc_attr</span><span class="p">(</span><span class="n">native_class</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">_BoundInvokedMethod</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_BoundInvokedMethod</span><span class="p">(</span><span class="n">NativeBase</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Callable returned by :meth:`_BoundFunction.invoke` (see there).&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bound</span><span class="p">:</span> <span class="s2">&quot;_BoundFunction&quot;</span><span class="p">,</span> <span class="n">types</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TypeHint</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
