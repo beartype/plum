@@ -56,21 +56,21 @@ class _Wrappable(Protocol):
 def _wraps(wrapper: _Wrappable, wrapped: Callable[..., Any], /) -> None:
     """Copy `wrapped`'s metadata onto `wrapper`, like :func:`functools.wraps`.
 
-    `functools.wraps` cannot be used: it writes the read-only native `__module__` and
-    updates a `__dict__` that native instances lack.
+    Deliberately narrower: `functools.wraps` also copies `__doc__` and `__module__`,
+    which `Function` serves through non-data descriptors that an instance attribute
+    would shadow.
     """
     wrapper.__name__ = wrapped.__name__
     wrapper.__qualname__ = _generate_qualname(wrapped)
     wrapper.__wrapped__ = wrapped
 
 
-@mypyc_attr(native_class=False)
-class _InvokedMethod:
+class _InvokedMethod(NativeBase):
     """Run the resolved `method` and convert the result.
 
     Callable returned by :meth:`Function.invoke`. A class rather than a closure,
-    which `mypyc` cannot compile (mypyc/mypyc#1205); non-native so
-    :func:`functools.wraps` can copy `__name__`/`__doc__` onto instances.
+    which `mypyc` cannot compile (mypyc/mypyc#1205); `NativeBase` for the `__dict__`
+    :func:`functools.wraps` writes into.
     """
 
     def __init__(
@@ -690,8 +690,7 @@ setattr(_BoundFunction, "__doc__", _DocDescriptor())  # noqa: B010
 setattr(_BoundFunction, "__module__", _ModuleDescriptor(__name__))  # noqa: B010
 
 
-@mypyc_attr(native_class=False)
-class _BoundInvokedMethod:
+class _BoundInvokedMethod(NativeBase):
     """Callable returned by :meth:`_BoundFunction.invoke` (see there)."""
 
     def __init__(self, bound: "_BoundFunction", types: tuple[TypeHint, ...]) -> None:
