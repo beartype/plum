@@ -87,6 +87,7 @@ enable-by-default = false
 dependencies = ["hatch-mypyc>=0.16.0", "mypy>=1.18.2"]
 require-runtime-dependencies = true
 include = [ # TODO: include more files
+    # Never add `_mypyc.py`; it must stay interpreted. See `NativeBase` there.
     "src/plum/_bear.py",
     "src/plum/_dispatcher.py",
     "src/plum/_method.py",

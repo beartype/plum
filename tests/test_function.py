@@ -4,6 +4,7 @@ import sys
 import textwrap
 import threading
 import typing
+import weakref
 
 import pytest
 
@@ -699,3 +700,18 @@ def test_resolve_pending_registrations_is_thread_safe():
             assert f(1.0) == "float"
     finally:
         sys.setswitchinterval(old_interval)
+
+
+@pytest.mark.parametrize(
+    "wrap", [Function, lambda f: _BoundFunction(Function(f), None)]
+)
+def test_weakref_and_doc_assignment(wrap):
+    """Both must be weak-referenceable (#318) and accept `__doc__` assignment (#317)."""
+
+    def f(x):
+        """Original."""
+
+    g = wrap(f)
+    assert weakref.ref(g)() is g
+    g.__doc__ = "Replaced."
+    assert g.__doc__ == "Replaced."

@@ -11,7 +11,7 @@ from typing import Any, ClassVar, Protocol, TypeVar, overload
 from typing_extensions import Self
 
 from ._method import Method, MethodList
-from ._mypyc import mypyc_attr
+from ._mypyc import NativeBase, mypyc_attr
 from ._resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
 from ._signature import Signature, append_default_args
 from ._type import resolve_type_hint
@@ -117,7 +117,7 @@ class _ModuleDescriptor(str):
         return module
 
 
-class Function:
+class Function(NativeBase):
     #: The class-level docstring, served as `Function.__doc__` by `_DocDescriptor`.
     _class_doc: ClassVar[str] = """A function.
 
@@ -575,9 +575,8 @@ class Function:
 
 
 # Attach `__doc__`/`__module__` here, not in the class body: `mypyc` replaces a class
-# `__doc__` with a filler, and `__module__` is read-only on a native instance. These
-# descriptors serve instance access (`f.__doc__`, `f.__module__`). `setattr` also stops
-# `mypy` treating these as class variables.
+# `__doc__` with a filler. These descriptors serve instance access (`f.__doc__`,
+# `f.__module__`). `setattr` also stops `mypy` treating these as class variables.
 setattr(Function, "__doc__", _DocDescriptor())  # noqa: B010
 setattr(Function, "__module__", _ModuleDescriptor(__name__))  # noqa: B010
 
@@ -637,7 +636,7 @@ class _BoundFunctionProto(Protocol):
     ) -> Any: ...
 
 
-class _BoundFunction:
+class _BoundFunction(NativeBase):
     #: The class-level docstring, served as `_BoundFunction.__doc__` by
     #: `_DocDescriptor`.
     _class_doc: ClassVar[str] = """A bound instance of `.function.Function`.
