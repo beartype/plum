@@ -19,7 +19,7 @@ import warnings
 from collections.abc import Callable, Hashable, Iterable
 from functools import lru_cache, reduce
 from operator import or_
-from types import UnionType
+from types import GenericAlias, UnionType
 from typing import (
     Any,
     Literal,
@@ -197,9 +197,15 @@ def _is_hint(x: object) -> bool:
         bool: `True` if `x` is a type hint and `False` otherwise.
     """
     try:
-        if x.__module__ == "builtins":
-            # Check if `x` is a subscripted built-in. We do this by checking the module
-            # of the type of `x`.
+        if x.__module__ == "builtins" and type(x) is GenericAlias:
+            # `x` is a subscripted built-in (e.g. `list[int]`, `type[int]`): its own
+            # `__module__` mirrors its origin's (`builtins`), so check the module of
+            # its actual type instead. Gated on `type(x) is GenericAlias` rather than
+            # firing for any `__module__ == "builtins"` object: a plain class whose
+            # *metaclass* happens to live in `typing` (e.g. a `Protocol` declared in
+            # an `exec`'d namespace, which reports `__module__ == "builtins"` like a
+            # doctest does) is not a subscripted hint, and must not be misclassified
+            # as one just because `type(x).__module__` is `"typing"`.
             x = type(x)
         return x.__module__ in {
             "types",  # E.g., `tuple[int]`

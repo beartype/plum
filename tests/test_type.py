@@ -139,6 +139,36 @@ def test_is_hint():
     assert _is_hint(Callable)
 
 
+def test_is_hint_agrees_regardless_of_declaration_site():
+    # A class declared inside an `exec`'d namespace (as a doctest does) reports
+    # `__module__ == "builtins"`, same as a subscripted builtin generic alias like
+    # `list[int]`. `_is_hint` must not let that coincidence make its classification
+    # depend on *where* a class was written rather than *what* it is.
+    class NormalProto(typing.Protocol):
+        def foo(self) -> int: ...
+
+    ns = {}
+    exec(
+        "import typing\n"
+        "class Proto(typing.Protocol):\n"
+        "    def foo(self) -> int: ...\n",
+        ns,
+    )
+    ExecProto = ns["Proto"]
+
+    assert NormalProto.__module__ != "builtins"
+    assert ExecProto.__module__ == "builtins"
+    assert not _is_hint(NormalProto)
+    assert not _is_hint(ExecProto)
+    assert _cache_spec(resolve_type_hint(NormalProto)) is None
+    assert _cache_spec(resolve_type_hint(ExecProto)) is None
+
+    # Builtin generic aliases must still be recognised as hints.
+    assert _is_hint(list[int])
+    assert _is_hint(type[int])
+    assert not _is_hint(list)
+
+
 @skip_if_less_than_py310
 def test_is_hint_new_union():
     assert int | float
