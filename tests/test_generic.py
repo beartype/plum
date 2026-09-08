@@ -491,6 +491,37 @@ def test_generic_with_an_unhashable_parametrisation_dispatches() -> None:
     assert f(Box[str]("a")) == "object"
 
 
+def test_generic_dispatch_cache_is_bounded_for_unhashable_parametrisations() -> None:
+    """A generic parametrised with unhashable arguments is not interned by `typing`,
+    so `_generic`'s `_Identity` fallback keys on a fresh object every call -- the
+    same caller-data growth shape `_VALUE_CACHE_LIMIT` bounds for `Literal`. Must
+    not grow the cache without bound. Dispatch stays correct past the limit; only
+    the memoisation stops.
+    """
+    from plum._function import _VALUE_CACHE_LIMIT
+
+    dispatch = Dispatcher()
+
+    @dispatch
+    def f(x: Box[int]) -> str:
+        return "box"
+
+    @dispatch
+    def f(x: object) -> str:
+        return "object"
+
+    for i in range(_VALUE_CACHE_LIMIT + 100):
+        instance = Box[Annotated[int, {"a": i}]](i)
+        assert hash_fails(instance.__orig_class__)
+        assert f(instance) == "box"
+
+    assert len(f._cache) == _VALUE_CACHE_LIMIT
+
+    instance = Box[Annotated[int, {"a": "last"}]]("last")
+    assert f(instance) == "box"
+    assert len(f._cache) == _VALUE_CACHE_LIMIT
+
+
 def hash_fails(value: object) -> bool:
     """Whether `hash(value)` raises, i.e. the value is unhashable."""
     try:
