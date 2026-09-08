@@ -614,10 +614,11 @@ class Function(NativeBase):
 
         If the resolver is uncacheable, the method cannot be cached. Instead, the
         methods that arguments of these runtime types could match are cached under
-        `key`, and resolution considers only those. They include every method that
-        matches, so the result, or the error, is the same as when considering all
-        methods. A `Signature` from `invoke` has no runtime types to narrow on, so it is
-        resolved over all methods.
+        `key`. If they are in resolution order, the first that matches is selected.
+        Otherwise, a unique match is selected. In any other case, `target` is resolved
+        over all methods, which also takes into account registrations made since the
+        methods were cached. A `Signature` from `invoke` has no runtime types to narrow
+        on, so it is resolved over all methods.
 
         Args:
             target (tuple or :class:`.signature.Signature`): Arguments, or a signature
@@ -666,7 +667,8 @@ class Function(NativeBase):
                         hit = entry
                 if hit is not None:
                     return hit[1], hit[2]
-            return self.resolve_method(target, methods)
+            # Not over `methods`, which may predate a registration.
+            return self.resolve_method(target)
 
         # If `clear_cache` runs while the method is being resolved, the result may be
         # outdated and must not end up in the cache. Holding `self._lock` during
