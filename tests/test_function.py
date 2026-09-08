@@ -1,4 +1,5 @@
 import abc
+import gc
 import os
 import sys
 import textwrap
@@ -51,6 +52,31 @@ def test_function():
 
     # Check global tracking of functions.
     assert g in Function._instances
+
+
+def test_function_is_collected_once_out_of_scope():
+    """`Function._instances` must not pin a function for the life of the process
+    once nothing else references it -- the actual claim `_LiveFunctions` makes,
+    not just that its API still works.
+    """
+
+    def f(x):
+        pass
+
+    # Normalise first: an earlier test's function may already be unreferenced but
+    # not yet swept, since a `WeakSet` entry is dropped by its callback, not on a
+    # schedule.
+    gc.collect()
+    before = len(Function._instances)
+    g = Function(f)
+    assert len(Function._instances) == before + 1
+
+    ref = weakref.ref(g)
+    del g
+    gc.collect()
+
+    assert ref() is None
+    assert len(Function._instances) == before
 
 
 def test_repr(dispatch: plum.Dispatcher):

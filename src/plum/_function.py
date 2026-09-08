@@ -310,6 +310,9 @@ class _LiveFunctions:
         self._handles.add(f._handle)
 
     def discard(self, f: "Function", /) -> None:
+        # ponytail: the only call site today is test cleanup, never concurrent with
+        # `__iter__`'s own `list(...)` snapshot. A production call site sharing that
+        # exposure would need the same lock `clear_cache` uses around it.
         self._handles.discard(f._handle)
 
     def __iter__(self) -> "Iterator[Function]":
