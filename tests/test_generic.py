@@ -488,6 +488,36 @@ def test_generic_with_an_unhashable_parametrisation_dispatches() -> None:
     assert f(Box[str]("a")) == "object"
 
 
+def test_generic_dispatch_cache_is_bounded_for_unhashable_parametrisations() -> None:
+    """Test that the cache stops growing for unhashable parametrisations.
+
+    `typing` does not intern a parametrisation with unhashable arguments, so it is
+    keyed by identity and would add an entry on every call.
+    """
+    from plum._function import _LITERAL_CACHE_LIMIT
+
+    dispatch = Dispatcher()
+
+    @dispatch
+    def f(x: Box[int]) -> str:
+        return "box"
+
+    @dispatch
+    def f(x: object) -> str:
+        return "object"
+
+    for i in range(_LITERAL_CACHE_LIMIT + 100):
+        instance = Box[Annotated[int, {"a": i}]](i)
+        assert hash_fails(instance.__orig_class__)
+        assert f(instance) == "box"
+
+    assert len(f._cache) == _LITERAL_CACHE_LIMIT
+
+    instance = Box[Annotated[int, {"a": "last"}]]("last")
+    assert f(instance) == "box"
+    assert len(f._cache) == _LITERAL_CACHE_LIMIT
+
+
 def hash_fails(value: object) -> bool:
     """Whether `hash(value)` raises, i.e. the value is unhashable."""
     try:
