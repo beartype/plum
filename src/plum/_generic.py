@@ -3,6 +3,7 @@
 __all__ = ["generic"]
 
 import functools
+import typing
 import warnings
 from typing import Any, TypeVar
 
@@ -95,6 +96,18 @@ def generic(cls: type[T], /) -> type[T]:
         >>> Box(1).__orig_class__ == Box[int]
         True
     """
+    if not issubclass(cls, typing.Generic):
+        # Without this, a class that happens to define `__infer_type_parameter__`
+        # but is not itself a `Generic` subclass would pass the check below, only
+        # to fail on every construction: `actual[parameter]` raises `TypeError`
+        # because `cls` cannot be subscripted, and that only ever surfaced as a
+        # `RuntimeWarning` from the `except` in `__init__`, not a clear error here
+        # at decoration time.
+        raise TypeError(
+            f"`@generic` requires `{cls.__name__}` to be a `typing.Generic` "
+            f"subclass, since it works by subscripting `type(self)`."
+        )
+
     if not callable(getattr(cls, "__infer_type_parameter__", None)):
         raise TypeError(
             f"`@generic` requires `{cls.__name__}` to define "

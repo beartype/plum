@@ -106,6 +106,23 @@ def test_missing_infer_type_parameter_raises_at_decoration() -> None:
                 self.value = value
 
 
+def test_non_generic_class_raises_at_decoration() -> None:
+    """A class that is not a `typing.Generic` subclass must be rejected eagerly,
+    at decoration time -- not left to fail confusingly on every construction, as a
+    `RuntimeWarning` from the `except` around `actual[parameter]` in `__init__`.
+    """
+    with pytest.raises(TypeError, match=r"NotGeneric.*typing\.Generic"):
+
+        @generic
+        class NotGeneric:
+            def __init__(self, value: Any) -> None:
+                self.value = value
+
+            @classmethod
+            def __infer_type_parameter__(cls, instance: Any) -> type:
+                return type(instance.value)
+
+
 def test_slots_without_orig_class_warns_at_decoration() -> None:
     with pytest.warns(RuntimeWarning, match=r"__slots__.*__orig_class__"):
 
