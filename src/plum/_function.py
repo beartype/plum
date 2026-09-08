@@ -761,7 +761,9 @@ class Function(NativeBase):
                     # ordering `_build_verify_bucket` adds on top. So resolve over
                     # every method, which is what this did before the cache existed.
                     return self.resolve_method(args)
-                methods, entries, first_wins = self._build_verify_bucket(args, key)
+                methods, entries, first_wins = self._build_verify_bucket(
+                    args, key, cache
+                )
             if first_wins:
                 # The bucket is in resolution order, so the first method that matches
                 # is the one full resolution would select; see
@@ -830,13 +832,24 @@ class Function(NativeBase):
             cache[key] = method, return_type
 
     def _build_verify_bucket(
-        self, args: tuple[object, ...], types: tuple[TypeHint, ...], /
+        self,
+        args: tuple[object, ...],
+        types: tuple[TypeHint, ...],
+        cache: dict[tuple[TypeHint, ...], _VerifyBucket],
+        /,
     ) -> _VerifyBucket:
         """Build and store the verify-cache bucket for arguments of these types.
 
         Args:
             args (tuple[object, ...]): Arguments that missed the cache.
             types (tuple[:obj:`.TypeHint`, ...]): Key to store the bucket under.
+            cache (dict): :attr:`_verify_cache` as captured by `_resolve_miss`
+                *before* resolving, and passed through rather than re-read here: a
+                `clear_cache` racing this build swaps in a new `_verify_cache`, and
+                the store must land in the dict that call captured -- the one the
+                clear discarded -- not in the live one, or a bucket built from a
+                method set a concurrent registration just superseded would overwrite
+                a key in the fresh cache and be served long after the clear.
 
         Returns:
             :obj:`_VerifyBucket`: The bucket.
@@ -856,8 +869,7 @@ class Function(NativeBase):
         bucket: _VerifyBucket = (methods, entries, order is not None)
         # Bounded like the method cache, and more urgently; see
         # `_VERIFY_CACHE_LIMIT`.
-        cache = self._verify_cache
-        if cache is not None and len(cache) < _VERIFY_CACHE_LIMIT:
+        if len(cache) < _VERIFY_CACHE_LIMIT:
             cache[types] = bucket
         return bucket
 

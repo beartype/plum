@@ -1,7 +1,9 @@
 import itertools
 import random
 import sys
+import threading
 from collections.abc import Iterable
+from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from typing import Literal
 
@@ -9,6 +11,7 @@ import pytest
 
 import plum
 from .util import benchmark
+from plum import _function as _function_module
 from plum._resolver import resolution_order
 
 
@@ -565,6 +568,69 @@ def test_verify_cache_is_invalidated_by_registration(dispatch):
     # The new method must make it into the bucket for `list`.
     assert f(["a"]) == "list[str]"
     assert f([1]) == "list[int]"
+
+
+@pytest.mark.incompatible_with_mypyc
+def test_verify_bucket_overtaken_by_a_clear_is_not_cached(monkeypatch, dispatch):
+    """A verify-cache bucket build overtaken by a `clear_cache` must not poison a
+    *new* `_verify_cache` dict with a bucket narrowed from the superseded method
+    set. `_build_verify_bucket` must store into the `cache` dict `_resolve_miss`
+    captured before resolving, not into whatever `self._verify_cache` happens to
+    be by the time the build finishes. See GitHub issue #274 for the analogous
+    method-cache race this mirrors.
+    """
+
+    @dispatch
+    def f(x: list[int]):
+        return "v1"
+
+    f._resolve_pending_registrations()
+
+    building, invalidated, parked_once = (
+        threading.Event(),
+        threading.Event(),
+        threading.Event(),
+    )
+    original = _function_module.resolution_order
+
+    def parked(methods):
+        # Narrowing (`might_match`) already ran against the pre-registration
+        # method set before this is called; park here, before the store, which
+        # is where the clear lands. Only the first call parks -- later calls in
+        # this test (warming the new bucket) must run straight through.
+        out = original(methods)
+        if not parked_once.is_set():
+            parked_once.set()
+            building.set()
+            assert invalidated.wait(5), "the clear never landed"
+        return out
+
+    monkeypatch.setattr(_function_module, "resolution_order", parked)
+    with ThreadPoolExecutor(1) as pool:
+        # `[1]` and `["a"]` below share a runtime type (`list`), so both key the
+        # verify cache under the same bucket, `(list,)`.
+        call = pool.submit(f, [1])
+        assert building.wait(5), "the parked thread never reached the park"
+
+        @dispatch
+        def f(x: list[str]):  # noqa: F811
+            return "v2"
+
+        f._resolve_pending_registrations()
+        assert f._verify_cache is None  # Cleared by the registration.
+
+        # Warm a *new* `(list,)` bucket, correctly narrowed to both methods now
+        # that the registration has landed.
+        assert f(["a"]) == "v2"
+        assert len(f._verify_cache[(list,)][0]) == 2
+
+        invalidated.set()
+        call.result(5)
+
+    # The parked build, narrowed to only the superseded `list[int]` method, must
+    # not have overwritten the freshly warmed two-method bucket.
+    assert len(f._verify_cache[(list,)][0]) == 2
+    assert f(["a"]) == "v2"
 
 
 def test_verify_cache_clearing(dispatch: plum.Dispatcher):
