@@ -721,6 +721,15 @@ class Function(NativeBase):
 
         A `Signature` reaches here from `invoke`, which has no runtime arguments to
         narrow on, so it takes the ordinary path.
+
+        The "contains every method that can match" precondition holds only as of
+        when the bucket was built or last read from the cache: a registration that
+        lands (and so invalidates `_verify_cache`) in the narrow window between
+        that and the `resolve_method` call below is invisible to `methods`, which
+        `Resolver.resolve` then trusts exclusively. Closed properly once the
+        fast/no-full-resolution split lands later in this series, which stops
+        threading a possibly-stale `methods` into a full resolve; left as a known,
+        narrow gap here.
         """
         __tracebackhide__ = True
         if isinstance(args, tuple) and not self._resolver.is_cacheable:
