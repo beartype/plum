@@ -726,24 +726,29 @@ class Function(NativeBase):
         Tier two. An uncacheable resolver cannot memoise a *method*, because no
         bounded key determines which one matches. What it can memoise is which methods
         are worth *considering*: the ones that arguments with these bare runtime types
-        could possibly match, which is all a `type(x)` key can settle. Resolution then
-        runs over that list through the resolver's own selection logic. The list
-        contains every method that can match, so the sequence of matching methods the
-        selection loop sees is identical to the one it would see over all methods, and
-        it therefore selects the same method, breaks precedence ties the same way, and
-        raises the same errors. Errors still report all methods.
+        could possibly match, which is all a `type(x)` key can settle.
+
+        Most calls settle without a full resolve at all: `entries` is checked
+        directly, in resolution order (`first_wins`) or for a unique match, and the
+        result returned straight from there. Only a call that neither settles -- no
+        match, or several with no order between them -- falls through to a full
+        `resolve_method(args)`, deliberately with **no** narrowed list.
+
+        That matters specifically for this call, not the checks above it: this is
+        the one place `resolve_method` internally flushes pending registrations
+        (`_resolve_pending_registrations`) and *then* would hand a narrowed
+        `methods` to `Resolver.resolve`, which trusts it exclusively -- flushing to
+        the latest state and then consulting a possibly older snapshot in the same
+        breath. Threading `entries` through the checks above carries no such
+        contradiction, since neither reads `self._resolver.methods` again
+        mid-check; the narrower risk there is the same one every other read of
+        `_verify_cache` already carries (a registration's `clear_cache` landing
+        between this bucket being fetched and used, invisible until the next
+        lookup notices the cache was reset) -- a thread-switch-scale window, not
+        the flush-then-ignore contradiction below.
 
         A `Signature` reaches here from `invoke`, which has no runtime arguments to
         narrow on, so it takes the ordinary path.
-
-        The "contains every method that can match" precondition holds only as of
-        when the bucket was built or last read from the cache: a registration that
-        lands (and so invalidates `_verify_cache`) in the narrow window between
-        that and the `resolve_method` call below is invisible to `methods`, which
-        `Resolver.resolve` then trusts exclusively. Closed properly once the
-        fast/no-full-resolution split lands later in this series, which stops
-        threading a possibly-stale `methods` into a full resolve; left as a known,
-        narrow gap here.
         """
         __tracebackhide__ = True
         if isinstance(args, tuple) and not self._resolver.is_cacheable:
@@ -787,7 +792,10 @@ class Function(NativeBase):
                         hit = entry
                 if hit is not None:
                     return hit[1], hit[2]
-            return self.resolve_method(args, methods)
+            # No narrowed list: see the docstring above for why this call, unlike
+            # the checks that fell through to it, must not trust a possibly-stale
+            # `methods` against the state `resolve_method` is about to flush to.
+            return self.resolve_method(args)
 
         # The dict is captured before resolving: the store is outside the lock, so a
         # resolution a `clear_cache` overtook lands in the dict that clear discarded

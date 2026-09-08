@@ -12,6 +12,7 @@ import pytest
 import plum
 from .util import benchmark
 from plum import _function as _function_module
+from plum._function import Function
 from plum._resolver import resolution_order
 
 
@@ -817,6 +818,61 @@ def test_verify_cache_settles_an_unordered_bucket_on_a_unique_match(dispatch):
     with pytest.raises(plum.NotFoundLookupError) as e:
         f([1.0])
     assert len(e.value.methods) == 2
+
+
+@pytest.mark.incompatible_with_mypyc
+def test_verify_cache_fallback_resolves_against_the_current_methods(
+    monkeypatch, dispatch
+):
+    """A call that falls all the way through the verify-cache's fast paths (no
+    match, or several with no order between them) must resolve against the
+    CURRENT method set, not the narrowed candidate list from when the bucket was
+    last (re)built. `resolve_method` flushes a concurrent registration to the
+    resolver internally; a stale narrowed list threaded into it regardless would
+    have `Resolver.resolve` see only the old candidates, missing exactly the
+    method the flush just added, and raise `NotFoundLookupError` even though the
+    call is now resolvable.
+    """
+
+    @dispatch
+    def f(x: list[int]):
+        return "list[int]"
+
+    @dispatch
+    def f(x: list[str]):
+        return "list[str]"
+
+    # Warm an incomparable, two-method bucket for `list` arguments.
+    assert f([1]) == "list[int]"
+    assert f(["a"]) == "list[str]"
+    assert not f._verify_cache[(list,)][2]
+
+    reached_fallback, registered = threading.Event(), threading.Event()
+    original, target = Function.resolve_method, f
+
+    def parked(self, *args, **kw_args):
+        if self is target:
+            reached_fallback.set()
+            # Park right before the fallback call, before the registration below
+            # has landed -- exactly the window the bug lived in.
+            assert registered.wait(5), "the registration never landed"
+        return original(self, *args, **kw_args)
+
+    monkeypatch.setattr(Function, "resolve_method", parked)
+    with ThreadPoolExecutor(1) as pool:
+        # A list of floats matches neither registered method: falls through to
+        # the fallback, past both fast paths.
+        call = pool.submit(f, [1.0])
+        assert reached_fallback.wait(5), "the parked thread never reached the fallback"
+
+        @dispatch
+        def f(x: list[float]):  # noqa: F811
+            return "list[float]"
+
+        f._resolve_pending_registrations()
+        registered.set()
+
+        assert call.result(5) == "list[float]"
 
 
 def test_verify_cache_ordering_ignores_precedence(dispatch):
