@@ -33,12 +33,15 @@ _VerifyBucket = tuple[tuple[_VerifyEntry, ...], bool]
 entry that matches settles the call. See :meth:`Function._build_verify_bucket`."""
 
 _VALUE_CACHE_LIMIT = 4096
-"""int: Maximum number of cache entries of a function that dispatches on `Literal`.
+"""int: Maximum number of cache entries of a function that dispatches on `Literal` or
+on a parametrised user generic.
 
-Such a function has an entry per distinct argument value, so `Literal["ready"]` next
-to a `str` fallback would otherwise add an entry for every new string. Past the limit,
-arguments are resolved without caching. The cache of a function that dispatches only
-on `type[X]` is not limited, since a program defines only so many classes."""
+Such a function has an entry per distinct argument value or parametrisation, so
+`Literal["ready"]` next to a `str` fallback would otherwise add an entry for every new
+string. A parametrisation with unhashable arguments, such as
+`Box[Annotated[int, {"a": 1}]]`, adds an entry on every call. Past the limit, arguments
+are resolved without caching. The cache of a function that dispatches only on `type[X]`
+is not limited, since a program defines only so many classes."""
 
 _VERIFY_CACHE_LIMIT = 4096
 """Maximum number of entries in the verify cache of a function.
@@ -706,9 +709,10 @@ class Function(NativeBase):
         method_cache = self._cache
         method, return_type = self.resolve_method(args)
         spec = self._resolver.cache_spec
-        # A resolver keyed on `Literal` values is capped; see `_VALUE_CACHE_LIMIT`.
+        # A resolver keyed on caller data is capped; see `_VALUE_CACHE_LIMIT`.
         if spec is not None and not (
-            KeyPart.VALUE in spec and len(method_cache) >= _VALUE_CACHE_LIMIT
+            (KeyPart.VALUE in spec or KeyPart.GENERIC in spec)
+            and len(method_cache) >= _VALUE_CACHE_LIMIT
         ):
             method_cache[key] = method, return_type
         return method, return_type
