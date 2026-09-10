@@ -129,6 +129,20 @@ class _ModuleDescriptor(str):
         return module
 
 
+def _reconstruct_function(
+    f: Callable[..., Any], state: dict[str, Any], /
+) -> "Function":
+    """Recreate a :class:`Function` after pickling, excluding the reentrant lock."""
+    function = object.__new__(Function)
+    function.__dict__.update(state)
+    function._f = f
+    function._lock = threading.RLock()
+    with Function._instances_lock:
+        if function not in Function._instances:
+            Function._instances.append(function)
+    return function
+
+
 class Function(NativeBase):
     #: The class-level docstring, served as `Function.__doc__` by `_DocDescriptor`.
     _class_doc: ClassVar[str] = """A function.
@@ -141,6 +155,7 @@ class Function(NativeBase):
     """
 
     _instances: ClassVar[list["Function"]] = []
+    _instances_lock: ClassVar[threading.RLock] = threading.RLock()
 
     # Instance attributes are declared so `Function` can be a `mypyc` native class.
     _f: Callable[..., Any]
@@ -164,7 +179,8 @@ class Function(NativeBase):
         owner: str | None = None,
         warn_redefinition: bool = False,
     ) -> None:
-        Function._instances.append(self)
+        with Function._instances_lock:
+            Function._instances.append(self)
 
         self._f = f
         # Cache maps type tuples to `(method, return_type)`. Keys can be either
@@ -196,6 +212,15 @@ class Function(NativeBase):
             warn_redefinition=self._warn_redefinition,
         )
         self._resolved = []
+
+    def __reduce__(self) -> tuple[Callable[..., Any], tuple[Callable[..., Any], dict[str, Any]]]:
+        return _reconstruct_function, (self._f, self.__getstate__())
+
+    def __getstate__(self) -> dict[str, Any]:
+        state = self.__dict__.copy()
+        state.pop("_lock", None)
+        state.pop("_f", None)
+        return state
 
     @property
     def owner(self) -> type | None:

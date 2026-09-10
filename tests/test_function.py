@@ -1,5 +1,7 @@
 import abc
+import operator
 import os
+import pickle
 import sys
 import textwrap
 import threading
@@ -50,6 +52,18 @@ def test_function():
 
     # Check global tracking of functions.
     assert Function._instances[-1] == g
+
+
+def test_function_pickle_roundtrip():
+    f = Function(operator.neg)
+    f.dispatch(operator.neg)
+
+    roundtripped = pickle.loads(pickle.dumps(f))
+
+    assert roundtripped.__wrapped__ is operator.neg
+    assert roundtripped._f is operator.neg
+    assert roundtripped._lock is not f._lock
+    assert roundtripped(-1) == 1
 
 
 def test_repr(dispatch: plum.Dispatcher):
