@@ -57,6 +57,7 @@ def test_function():
 def test_function_pickle_roundtrip():
     f = Function(operator.neg)
     f.dispatch(operator.neg)
+    f.dispatch_multi(Signature(float))(operator.abs)
 
     roundtripped = pickle.loads(pickle.dumps(f))
 
@@ -64,6 +65,7 @@ def test_function_pickle_roundtrip():
     assert roundtripped._f is operator.neg
     assert roundtripped._lock is not f._lock
     assert roundtripped(-1) == 1
+    assert roundtripped(-1.5) == 1.5
     assert roundtripped in Function._instances
 
 

@@ -130,7 +130,6 @@ class _ModuleDescriptor(str):
 
 
 _FUNCTION_STATE_ATTRS: tuple[str, ...] = (
-    "_cache",
     "_doc",
     "_owner_name",
     "_owner",
@@ -152,6 +151,7 @@ def _reconstruct_function(
     for key, value in state.items():
         setattr(function, key, value)
     function._f = f
+    function._cache = {}
     function._lock = threading.RLock()
     with Function._instances_lock:
         if function not in Function._instances:
