@@ -146,16 +146,15 @@ _FUNCTION_STATE_ATTRS: tuple[str, ...] = (
 def _reconstruct_function(
     f: Callable[..., Any], state: dict[str, Any], /
 ) -> "Function":
-    """Recreate a :class:`Function` after pickling, excluding the reentrant lock."""
-    function = Function.__new__(Function)
+    """Recreate a :class:`Function` after pickling, excluding the reentrant lock.
+
+    Goes through the real constructor (rather than `Function.__new__(Function)`)
+    because a `mypyc`-compiled `Function` is a native class: unlike pure Python,
+    native classes require `__init__` to run to initialise their attributes.
+    """
+    function = Function(f)
     for key, value in state.items():
         setattr(function, key, value)
-    function._f = f
-    function._cache = {}
-    function._lock = threading.RLock()
-    with Function._instances_lock:
-        if function not in Function._instances:
-            Function._instances.append(function)
     return function
 
 
@@ -171,7 +170,6 @@ class Function(NativeBase):
     """
 
     _instances: ClassVar[list["Function"]] = []
-    _instances_lock: ClassVar[threading.RLock] = threading.RLock()
 
     # Instance attributes are declared so `Function` can be a `mypyc` native class.
     _f: Callable[..., Any]
@@ -195,8 +193,7 @@ class Function(NativeBase):
         owner: str | None = None,
         warn_redefinition: bool = False,
     ) -> None:
-        with Function._instances_lock:
-            Function._instances.append(self)
+        Function._instances.append(self)
 
         self._f = f
         # Cache maps type tuples to `(method, return_type)`. Keys can be either
@@ -229,11 +226,17 @@ class Function(NativeBase):
         )
         self._resolved = []
 
-    def __reduce__(self) -> tuple[Callable[..., Any], tuple[Callable[..., Any], dict[str, Any]]]:
+    def __reduce__(
+        self,
+    ) -> tuple[Callable[..., Any], tuple[Callable[..., Any], dict[str, Any]]]:
         return _reconstruct_function, (self._f, self.__getstate__())
 
     def __getstate__(self) -> dict[str, Any]:
-        return {attr: getattr(self, attr) for attr in _FUNCTION_STATE_ATTRS if hasattr(self, attr)}
+        return {
+            attr: getattr(self, attr)
+            for attr in _FUNCTION_STATE_ATTRS
+            if hasattr(self, attr)
+        }
 
     @property
     def owner(self) -> type | None:
