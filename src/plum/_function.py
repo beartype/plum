@@ -232,11 +232,15 @@ class Function(NativeBase):
         return _reconstruct_function, (self._f, self.__getstate__())
 
     def __getstate__(self) -> dict[str, Any]:
-        return {
-            attr: getattr(self, attr)
-            for attr in _FUNCTION_STATE_ATTRS
-            if hasattr(self, attr)
-        }
+        # `_pending`/`_resolved`/`_resolver` are mutated under `self._lock` (see
+        # `_resolve_pending_registrations`, `clear_cache`), so snapshot under the same
+        # lock to avoid capturing a torn state concurrently with registration.
+        with self._lock:
+            return {
+                attr: getattr(self, attr)
+                for attr in _FUNCTION_STATE_ATTRS
+                if hasattr(self, attr)
+            }
 
     @property
     def owner(self) -> type | None:
