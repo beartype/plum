@@ -129,12 +129,28 @@ class _ModuleDescriptor(str):
         return module
 
 
+_FUNCTION_STATE_ATTRS: tuple[str, ...] = (
+    "_cache",
+    "_doc",
+    "_owner_name",
+    "_owner",
+    "_warn_redefinition",
+    "_pending",
+    "_resolved",
+    "_resolver",
+    "__name__",
+    "__qualname__",
+    "__wrapped__",
+)
+
+
 def _reconstruct_function(
     f: Callable[..., Any], state: dict[str, Any], /
 ) -> "Function":
     """Recreate a :class:`Function` after pickling, excluding the reentrant lock."""
-    function = object.__new__(Function)
-    function.__dict__.update(state)
+    function = Function.__new__(Function)
+    for key, value in state.items():
+        setattr(function, key, value)
     function._f = f
     function._lock = threading.RLock()
     with Function._instances_lock:
@@ -217,10 +233,7 @@ class Function(NativeBase):
         return _reconstruct_function, (self._f, self.__getstate__())
 
     def __getstate__(self) -> dict[str, Any]:
-        state = self.__dict__.copy()
-        state.pop("_lock", None)
-        state.pop("_f", None)
-        return state
+        return {attr: getattr(self, attr) for attr in _FUNCTION_STATE_ATTRS if hasattr(self, attr)}
 
     @property
     def owner(self) -> type | None:

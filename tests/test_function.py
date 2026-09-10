@@ -64,6 +64,7 @@ def test_function_pickle_roundtrip():
     assert roundtripped._f is operator.neg
     assert roundtripped._lock is not f._lock
     assert roundtripped(-1) == 1
+    assert roundtripped in Function._instances
 
 
 def test_repr(dispatch: plum.Dispatcher):
