@@ -1,4 +1,5 @@
 import abc
+import gc
 import os
 import sys
 import textwrap
@@ -50,7 +51,32 @@ def test_function():
     assert g.__doc__ == "Doc"
 
     # Check global tracking of functions.
-    assert Function._instances[-1] == g
+    assert g in Function._instances
+
+
+def test_function_is_collected_once_out_of_scope():
+    """`Function._instances` must not pin a function for the life of the process
+    once nothing else references it -- the actual claim `_LiveFunctions` makes,
+    not just that its API still works.
+    """
+
+    def f(x):
+        pass
+
+    # Normalise first: an earlier test's function may already be unreferenced but
+    # not yet swept, since a `WeakSet` entry is dropped by its callback, not on a
+    # schedule.
+    gc.collect()
+    before = len(Function._instances)
+    g = Function(f)
+    assert len(Function._instances) == before + 1
+
+    ref = weakref.ref(g)
+    del g
+    gc.collect()
+
+    assert ref() is None
+    assert len(Function._instances) == before
 
 
 def test_repr(dispatch: plum.Dispatcher):
@@ -765,3 +791,137 @@ def test_weakref_and_doc_assignment(wrap):
     assert weakref.ref(g)() is g
     g.__doc__ = "Replaced."
     assert g.__doc__ == "Replaced."
+
+
+@pytest.mark.incompatible_with_mypyc
+def test_type_x_resolution_overtaken_by_a_clear_is_not_cached(monkeypatch, dispatch):
+    """The `type[X]`-cached path (added by #305) must honour the same lost-update
+    guard as the faithful path: a registration landing mid-resolution must not leave
+    a stale method cached under `KeyPart.IDENTITY`-bearing keys either.
+    """
+
+    class Foo:
+        pass
+
+    @dispatch
+    def f(x: type[Foo]):
+        return "v1"
+
+    f._resolve_pending_registrations()
+
+    resolved, cleared = threading.Event(), threading.Event()
+    original, target = Function.resolve_method, f
+
+    def paused(self, *args, **kw_args):
+        out = original(self, *args, **kw_args)
+        # The patch applies to every `Function`, so pause only `f`.
+        if self is target:
+            resolved.set()
+            # Pause between resolving and writing to the cache, which is where the clear
+            # must happen.
+            assert cleared.wait(5), "The clear never happened."
+        return out
+
+    monkeypatch.setattr(Function, "resolve_method", paused)
+    with ThreadPoolExecutor(1) as pool:
+        call = pool.submit(f, Foo)
+        assert resolved.wait(5), "The call never reached the pause."
+
+        @dispatch
+        def f(x: type[Foo]):  # noqa: F811
+            return "v2"
+
+        f._resolve_pending_registrations()
+        cleared.set()
+        assert call.result(5) == "v1"
+
+    assert f(Foo) == "v2"
+
+
+def test_wraps_matches_functools_wraps():
+    """The fast metadata copy must be observationally identical to `functools.wraps`.
+
+    Everything plum or `inspect` reads back off an invoke wrapper is compared here;
+    `__type_params__` is deliberately not copied, since nothing reads it.
+    """
+    import functools
+    import inspect
+
+    from plum._function import _wraps
+
+    def target(x: int) -> str:
+        """The docstring."""
+        return "s"
+
+    target.custom_attr = 42  # `functools.wraps` merges `__dict__`; so must we.
+
+    class W:
+        def __call__(self, *args, **kw_args):
+            return None
+
+    reference, fast = W(), W()
+    functools.wraps(target)(reference)
+    _wraps(fast, target)
+
+    for attr in ("__name__", "__qualname__", "__module__", "__doc__", "custom_attr"):
+        assert getattr(fast, attr) == getattr(reference, attr), attr
+    assert fast.__wrapped__ is target is reference.__wrapped__
+    assert inspect.signature(fast) == inspect.signature(reference)
+    assert inspect.unwrap(fast) is target
+
+    # Annotations, which `functools.wraps` carries on `__annotations__` before Python
+    # 3.14 and on the lazy `__annotate__` from 3.14. Whichever this interpreter uses,
+    # the two must agree; before 3.14 the copy is visible, so assert the value too.
+    sentinel = object()
+    for attr in ("__annotations__", "__annotate__"):
+        assert getattr(fast, attr, sentinel) == getattr(reference, attr, sentinel), attr
+    if "__annotate__" not in functools.WRAPPER_ASSIGNMENTS:
+        assert fast.__annotations__ == {"x": int, "return": str}
+
+
+def test_wraps_tolerates_a_wrapped_without_a_dict():
+    """`functools.wraps` merges `getattr(wrapped, "__dict__", {})`, so a slotted
+    callable must not make the copy raise."""
+    from plum._function import _wraps
+
+    class Slotted:
+        __slots__ = ()
+        __name__ = "slotted"
+        __qualname__ = "Slotted.slotted"
+        __module__ = "somewhere"
+        __doc__ = "doc"
+
+        def __call__(self):
+            return None
+
+    class W:
+        def __call__(self):
+            return None
+
+    wrapped, wrapper = Slotted(), W()
+    assert not hasattr(wrapped, "__dict__")
+    _wraps(wrapper, wrapped)  # Must not raise.
+    assert wrapper.__name__ == "slotted"
+    assert wrapper.__wrapped__ is wrapped
+
+
+def test_wraps_without_qualname():
+    """A callable object need not have `__qualname__`; the fallback is `__name__`."""
+    from plum._function import _wraps
+
+    class Callable:
+        __name__ = "no_qualname"
+        __doc__ = None
+        __module__ = "somewhere"
+
+        def __call__(self):
+            return None
+
+    class W:
+        def __call__(self):
+            return None
+
+    wrapped, wrapper = Callable(), W()
+    assert not hasattr(wrapped, "__qualname__")
+    _wraps(wrapper, wrapped)
+    assert wrapper.__name__ == wrapper.__qualname__ == "no_qualname"

@@ -66,8 +66,9 @@ def convert(obj: object, type_to: typeTypeTo) -> TypeTo:
 
     type_to_resolved = resolve_type_hint(type_to)
     # Resolve and call the method directly. `_convert.invoke` would read better, but
-    # it builds a `functools.wraps` wrapper per call, ~1.35 us on top of the 0.14 us
-    # the resolution itself costs, on every call that does not hit the cache above.
+    # it builds an `_InvokedMethod` wrapper per call that is used once and dropped:
+    # 586 ns against 157 ns for the resolution alone, on every call that misses the
+    # cache above. (That gap was ~1.35 us before `_wraps` replaced `functools.wraps`.)
     method, return_type = _convert._resolve_method_with_cache(
         types=(type_from, type_to_resolved)
     )
