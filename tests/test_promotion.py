@@ -389,3 +389,29 @@ def test_unhashable_target_still_raises():
 
     with pytest.raises(TypeError, match="unhashable type"):
         plum.convert(Thing(), [int])
+
+
+@pytest.mark.incompatible_with_mypyc
+def test_convert_does_not_build_an_invoke_wrapper(monkeypatch):
+    """`convert` resolves and calls the method itself, not through `invoke`.
+
+    `Function.__call__` routes every method with a non-`Any` return annotation
+    through `convert`, so a wrapper built here is built on the main dispatch path
+    and thrown away unread.
+    """
+    from plum._function import Function
+
+    def no_invoke(self, *types):
+        raise AssertionError("`convert` must not go through `invoke`")
+
+    monkeypatch.setattr(Function, "invoke", no_invoke)
+
+    assert plum.convert(1, int) == 1
+
+    dispatch = plum.Dispatcher()
+
+    @dispatch
+    def f(x: int) -> object:
+        return x
+
+    assert f(1) == 1
