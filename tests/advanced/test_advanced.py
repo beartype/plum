@@ -56,9 +56,9 @@ def test_defaults(dispatch: plum.Dispatcher):
 
         f_wrong_default._resolve_pending_registrations()
 
-    # Remove this function from global tracking. Otherwise, it might interfere with
-    # other tests.
-    plum.Function._instances.pop(-1)
+    # Drop this function from global tracking. Its registration always raises, so
+    # anything that walks every function (`clear_all_cache`, say) would trip over it.
+    plum.Function._instances.discard(f_wrong_default)
 
     # Try multiple arguments.
 
