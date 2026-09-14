@@ -703,6 +703,55 @@ def test_resolve_pending_registrations_is_thread_safe():
         sys.setswitchinterval(old_interval)
 
 
+@pytest.mark.incompatible_with_mypyc
+def test_method_replaced_during_resolution_is_not_cached(monkeypatch, dispatch):
+    """Test that a method replaced while a call is resolving it is not cached.
+
+    `_resolve_method_with_cache` resolves and then writes to the cache without holding
+    the lock. If a method is registered in between, the cache is cleared before the
+    write, so the old method would be written into the cleared cache and, since nothing
+    is pending any more, be returned by every later call. See PR #316.
+    """
+
+    @dispatch
+    def f(x: int):
+        return "v1"
+
+    f._resolve_pending_registrations()
+
+    resolved, cleared = threading.Event(), threading.Event()
+    original, target = Function.resolve_method, f
+
+    def paused(self, *args, **kw_args):
+        out = original(self, *args, **kw_args)
+        # The patch applies to every `Function`, so pause only `f`.
+        if self is target:
+            resolved.set()
+            # Pause between resolving and writing to the cache, which is where the clear
+            # must happen. Assert rather than only wait: if the wait timed out, the
+            # write would happen before the clear, and the test would pass without
+            # testing the race.
+            assert cleared.wait(5), "The clear never happened."
+        return out
+
+    monkeypatch.setattr(Function, "resolve_method", paused)
+    # Use a `ThreadPoolExecutor` so that `call.result` propagates any error raised in
+    # the call and times out if the call hangs.
+    with ThreadPoolExecutor(1) as pool:
+        call = pool.submit(f, 1)
+        assert resolved.wait(5), "The call never reached the pause."
+
+        @dispatch
+        def f(x: int):  # noqa: F811
+            return "v2"
+
+        f._resolve_pending_registrations()
+        cleared.set()
+        assert call.result(5) == "v1"
+
+    assert f(1) == "v2"
+
+
 @pytest.mark.parametrize(
     "wrap", [Function, lambda f: _BoundFunction(Function(f), None)]
 )
@@ -716,51 +765,3 @@ def test_weakref_and_doc_assignment(wrap):
     assert weakref.ref(g)() is g
     g.__doc__ = "Replaced."
     assert g.__doc__ == "Replaced."
-
-
-@pytest.mark.incompatible_with_mypyc
-def test_resolution_overtaken_by_a_clear_is_not_cached(monkeypatch, dispatch):
-    """A registration landing mid-resolution must not leave a stale method cached.
-
-    `_resolve_method_with_cache` resolves and stores outside `_lock`, so a method
-    resolved before a `clear_cache` could be written after it. `_pending` is empty by
-    then, so every later call would get the superseded method. See issue #274.
-    """
-
-    @dispatch
-    def f(x: int):
-        return "v1"
-
-    f._resolve_pending_registrations()
-
-    resolved, invalidated = threading.Event(), threading.Event()
-    original, target = Function.resolve_method, f
-
-    def parked(self, *args, **kw_args):
-        out = original(self, *args, **kw_args)
-        # Scoped by identity: `Function` is a `mypyc` native class, so there is no
-        # instance `__dict__` to hang a flag on, and other functions resolve here too.
-        if self is target:
-            resolved.set()
-            # Park between resolving and storing, which is where the clear lands.
-            # Asserted: on a timeout the park would end early and the store would no
-            # longer race the clear, so the test would pass without exercising it.
-            assert invalidated.wait(5), "the clear never landed"
-        return out
-
-    monkeypatch.setattr(Function, "resolve_method", parked)
-    # The call runs on a future so `result` re-raises whatever it raised and times
-    # out if it never finishes; neither would surface from a bare `Thread`.
-    with ThreadPoolExecutor(1) as pool:
-        call = pool.submit(f, 1)
-        assert resolved.wait(5), "the parked thread never reached the park"
-
-        @dispatch
-        def f(x: int):  # noqa: F811
-            return "v2"
-
-        f._resolve_pending_registrations()
-        invalidated.set()
-        call.result(5)
-
-    assert f(1) == "v2"

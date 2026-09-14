@@ -346,8 +346,9 @@ class Function(NativeBase):
         # Serialise against concurrent resolution: the `reregister` branch swaps
         # `_pending`/`_resolved`/`_resolver` in multiple steps. See GitHub issue #274.
         with self._lock:
-            # A fresh dict, not `.clear()`: a resolution already in flight holds the
-            # old one and stores into that. See `_resolve_method_with_cache`.
+            # Replace the dictionary rather than emptying it in place: a call that is
+            # still resolving a method must not store its result in the live cache. See
+            # `_resolve_method_with_cache` for why.
             self._cache = {}
 
             if reregister:
@@ -548,8 +549,11 @@ class Function(NativeBase):
             if args is None:
                 args = Signature(*(resolve_type_hint(t) for t in types))
 
-            # Cache miss. Capture the dict *before* resolving: a `clear_cache` that
-            # overtakes us swaps in a new one, leaving this store unreachable.
+            # Cache miss. If `clear_cache` runs while the method is being resolved, the
+            # result may be outdated and must not end up in the cache. `clear_cache`
+            # replaces `self._cache` with a new dictionary, so take `self._cache` now:
+            # afterwards, `cache` is either still the live cache, or the old dictionary,
+            # which nothing reads any more, so storing into it is harmless.
             cache = self._cache
             method, return_type = self.resolve_method(args)
             # If the resolver is faithful, then we can perform caching using the types
