@@ -129,6 +129,32 @@ class _ModuleDescriptor(str):
         return module
 
 
+def _reconstruct_function(
+    f: Callable[..., Any],
+    owner: str | None,
+    warn_redefinition: bool,
+    registrations: list[tuple[Callable[..., Any], Signature | None, int | None]],
+    /,
+) -> "Function":
+    """Rebuild a :class:`Function` from its pickled state.
+
+    Args:
+        f (function): Function that is wrapped.
+        owner (str or None): Name of the class that owns the function.
+        warn_redefinition (bool): Throw a warning whenever a method is redefined.
+        registrations (list[tuple]): Registered methods as `(f, signature,
+            precedence)` triples.
+
+    Returns:
+        :class:`Function`: Rebuilt function.
+    """
+    # Go through the constructor: a `mypyc`-compiled `Function` is a native class,
+    # whose attributes must be initialised by `__init__`.
+    function = Function(f, owner=owner, warn_redefinition=warn_redefinition)
+    function._pending = registrations
+    return function
+
+
 class Function(NativeBase):
     #: The class-level docstring, served as `Function.__doc__` by `_DocDescriptor`.
     _class_doc: ClassVar[str] = """A function.
@@ -196,6 +222,15 @@ class Function(NativeBase):
             warn_redefinition=self._warn_redefinition,
         )
         self._resolved = []
+
+    def __reduce__(self) -> tuple[Callable[..., Any], tuple[Any, ...]]:
+        # `_pending` and `_resolved` are swapped in several steps under `self._lock`
+        # (see `clear_cache`), so snapshot them under it too. The lock and the cache are
+        # not pickled: the constructor makes fresh ones.
+        with self._lock:
+            registrations = self._resolved + self._pending
+        args = (self._f, self._owner_name, self._warn_redefinition, registrations)
+        return _reconstruct_function, args
 
     @property
     def owner(self) -> type | None:

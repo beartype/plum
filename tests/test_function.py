@@ -1,5 +1,7 @@
 import abc
+import operator
 import os
+import pickle
 import sys
 import textwrap
 import threading
@@ -50,6 +52,25 @@ def test_function():
 
     # Check global tracking of functions.
     assert Function._instances[-1] == g
+
+
+@pytest.mark.parametrize("resolved", [False, True])
+def test_pickle(resolved):
+    """`Function` must be picklable (#322), both before and after resolution."""
+    # Wrap `operator.neg` rather than a `@dispatch`-decorated function: `pickle` stores
+    # the wrapped function by name, so it must still be reachable under its own name.
+    f = Function(operator.neg)
+    f.dispatch(operator.neg)
+    f.dispatch_multi(Signature(float))(operator.abs)
+    if resolved:
+        assert f(-1) == 1
+
+    g = pickle.loads(pickle.dumps(f))
+
+    assert g.__wrapped__ is operator.neg
+    assert g.methods == f.methods
+    assert g(-1.5) == 1.5
+    assert g in Function._instances
 
 
 def test_repr(dispatch: plum.Dispatcher):
