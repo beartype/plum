@@ -5,6 +5,7 @@ import textwrap
 import threading
 import typing
 import weakref
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
@@ -700,6 +701,55 @@ def test_resolve_pending_registrations_is_thread_safe():
             assert f(1.0) == "float"
     finally:
         sys.setswitchinterval(old_interval)
+
+
+@pytest.mark.incompatible_with_mypyc
+def test_method_replaced_during_resolution_is_not_cached(monkeypatch, dispatch):
+    """Test that a method replaced while a call is resolving it is not cached.
+
+    `_resolve_method_with_cache` resolves and then writes to the cache without holding
+    the lock. If a method is registered in between, the cache is cleared before the
+    write, so the old method would be written into the cleared cache and, since nothing
+    is pending any more, be returned by every later call. See PR #316.
+    """
+
+    @dispatch
+    def f(x: int):
+        return "v1"
+
+    f._resolve_pending_registrations()
+
+    resolved, cleared = threading.Event(), threading.Event()
+    original, target = Function.resolve_method, f
+
+    def paused(self, *args, **kw_args):
+        out = original(self, *args, **kw_args)
+        # The patch applies to every `Function`, so pause only `f`.
+        if self is target:
+            resolved.set()
+            # Pause between resolving and writing to the cache, which is where the clear
+            # must happen. Assert rather than only wait: if the wait timed out, the
+            # write would happen before the clear, and the test would pass without
+            # testing the race.
+            assert cleared.wait(5), "The clear never happened."
+        return out
+
+    monkeypatch.setattr(Function, "resolve_method", paused)
+    # Use a `ThreadPoolExecutor` so that `call.result` propagates any error raised in
+    # the call and times out if the call hangs.
+    with ThreadPoolExecutor(1) as pool:
+        call = pool.submit(f, 1)
+        assert resolved.wait(5), "The call never reached the pause."
+
+        @dispatch
+        def f(x: int):  # noqa: F811
+            return "v2"
+
+        f._resolve_pending_registrations()
+        cleared.set()
+        assert call.result(5) == "v1"
+
+    assert f(1) == "v2"
 
 
 @pytest.mark.parametrize(
