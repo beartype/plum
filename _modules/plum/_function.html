@@ -707,7 +707,10 @@ document.write(`
         <span class="c1"># Serialise against concurrent resolution: the `reregister` branch swaps</span>
         <span class="c1"># `_pending`/`_resolved`/`_resolver` in multiple steps. See GitHub issue #274.</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="c1"># Replace the dictionary rather than emptying it in place: a call that is</span>
+            <span class="c1"># still resolving a method must not store its result in the live cache. See</span>
+            <span class="c1"># `_resolve_method_with_cache` for why.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span> <span class="o">=</span> <span class="p">{}</span>
 
             <span class="k">if</span> <span class="n">reregister</span><span class="p">:</span>
                 <span class="c1"># Add all resolved to pending.</span>
@@ -914,12 +917,17 @@ document.write(`
             <span class="k">if</span> <span class="n">args</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">args</span> <span class="o">=</span> <span class="n">Signature</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">types</span><span class="p">))</span>
 
-            <span class="c1"># Cache miss. Run the resolver based on the arguments.</span>
+            <span class="c1"># Cache miss. If `clear_cache` runs while the method is being resolved, the</span>
+            <span class="c1"># result may be outdated and must not end up in the cache. `clear_cache`</span>
+            <span class="c1"># replaces `self._cache` with a new dictionary, so take `self._cache` now:</span>
+            <span class="c1"># afterwards, `cache` is either still the live cache, or the old dictionary,</span>
+            <span class="c1"># which nothing reads any more, so storing into it is harmless.</span>
+            <span class="n">cache</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span>
             <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve_method</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
             <span class="c1"># If the resolver is faithful, then we can perform caching using the types</span>
             <span class="c1"># of the arguments. If the resolver is not faithful, then we cannot.</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="o">.</span><span class="n">is_faithful</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">types</span><span class="p">]</span> <span class="o">=</span> <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span>
+                <span class="n">cache</span><span class="p">[</span><span class="n">types</span><span class="p">]</span> <span class="o">=</span> <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span>
             <span class="k">return</span> <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span>
 
 <div class="viewcode-block" id="Function.invoke">
