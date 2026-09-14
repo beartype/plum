@@ -342,10 +342,14 @@ class _OpaqueHint:
     def __eq__(self, other: object, /) -> bool:
         return isinstance(other, _OpaqueHint) and self._hint == other._hint
 
+    def __le__(self, other: object, /) -> bool:
+        return self == other
+
     # `beartype.door.TypeHint.__le__` returns `NotImplemented` for a non-`TypeHint`
     # operand rather than raising, so `TypeHintWrapper(...) <= _OpaqueHint(...)` falls
-    # back to `__ge__` here; without it, Python raises `TypeError`.
-    __le__ = __ge__ = __eq__
+    # back to this reflected method; without it, Python raises `TypeError`.
+    def __ge__(self, other: object, /) -> bool:
+        return self == other
 
 
 def _wrap_type_hint_uncached(hint: object, /) -> TypeHintWrapper | _OpaqueHint:
