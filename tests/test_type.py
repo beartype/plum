@@ -12,6 +12,7 @@ from plum._type import (
     ResolvableType,
     TypeHintWrapper,
     _is_hint,
+    _OpaqueHint,
     _substitute_any,
     _type_hint_eq,
     _type_hint_le,
@@ -370,3 +371,32 @@ def test_wrap_type_hint_unhashable_hint():
     assert _wrap_type_hint(hint) == TypeHintWrapper(Annotated[list[object], {"a": 1}])
     # A hashable one is cached, which is the point of the helper.
     assert _wrap_type_hint(list[Any]) is _wrap_type_hint(list[Any])
+
+
+def test_wrap_type_hint_unwrappable_hint():
+    """Regression test for https://github.com/beartype/plum/discussions/298.
+
+    A hint that `beartype.door.TypeHint` refuses to parse at all - such as a Sphinx
+    `autodoc_mock_imports` placeholder, which fakes just enough of a class to be used
+    as an annotation - must not raise. It is wrapped as opaque instead, comparing
+    equal only to an identical opaque hint.
+    """
+
+    class _MockHint:
+        """Stands in for a Sphinx autodoc mock object: looks class-like, but its
+        bogus `__parameters__` makes `beartype.door.TypeHint` reject it."""
+
+        def __getattr__(self, name):
+            return _MockHint()
+
+    mock_a = _MockHint()
+    mock_b = _MockHint()
+
+    assert _wrap_type_hint(mock_a) == _OpaqueHint(mock_a)
+    assert _wrap_type_hint(mock_a) != _OpaqueHint(mock_b)
+
+    # Comparisons against an ordinary, wrappable hint must not raise either,
+    # regardless of which side is unwrappable.
+    assert not _type_hint_eq(mock_a, int)
+    assert not _type_hint_le(mock_a, int)
+    assert not _type_hint_le(int, mock_a)
