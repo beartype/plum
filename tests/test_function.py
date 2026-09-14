@@ -54,19 +54,23 @@ def test_function():
     assert Function._instances[-1] == g
 
 
-def test_function_pickle_roundtrip():
+@pytest.mark.parametrize("resolved", [False, True])
+def test_pickle(resolved):
+    """`Function` must be picklable (#322), both before and after resolution."""
+    # Wrap `operator.neg` rather than a `@dispatch`-decorated function: `pickle` stores
+    # the wrapped function by name, so it must still be reachable under its own name.
     f = Function(operator.neg)
     f.dispatch(operator.neg)
     f.dispatch_multi(Signature(float))(operator.abs)
+    if resolved:
+        assert f(-1) == 1
 
-    roundtripped = pickle.loads(pickle.dumps(f))
+    g = pickle.loads(pickle.dumps(f))
 
-    assert roundtripped.__wrapped__ is operator.neg
-    assert roundtripped._f is operator.neg
-    assert roundtripped._lock is not f._lock
-    assert roundtripped(-1) == 1
-    assert roundtripped(-1.5) == 1.5
-    assert roundtripped in Function._instances
+    assert g.__wrapped__ is operator.neg
+    assert g.methods == f.methods
+    assert g(-1.5) == 1.5
+    assert g in Function._instances
 
 
 def test_repr(dispatch: plum.Dispatcher):

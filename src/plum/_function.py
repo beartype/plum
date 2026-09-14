@@ -129,32 +129,29 @@ class _ModuleDescriptor(str):
         return module
 
 
-_FUNCTION_STATE_ATTRS: tuple[str, ...] = (
-    "_doc",
-    "_owner_name",
-    "_owner",
-    "_warn_redefinition",
-    "_pending",
-    "_resolved",
-    "_resolver",
-    "__name__",
-    "__qualname__",
-    "__wrapped__",
-)
-
-
 def _reconstruct_function(
-    f: Callable[..., Any], state: dict[str, Any], /
+    f: Callable[..., Any],
+    owner: str | None,
+    warn_redefinition: bool,
+    registrations: list[tuple[Callable[..., Any], Signature | None, int | None]],
+    /,
 ) -> "Function":
-    """Recreate a :class:`Function` after pickling, excluding the reentrant lock.
+    """Rebuild a :class:`Function` from its pickled state.
 
-    Goes through the real constructor (rather than `Function.__new__(Function)`)
-    because a `mypyc`-compiled `Function` is a native class: unlike pure Python,
-    native classes require `__init__` to run to initialise their attributes.
+    Args:
+        f (function): Function that is wrapped.
+        owner (str or None): Name of the class that owns the function.
+        warn_redefinition (bool): Throw a warning whenever a method is redefined.
+        registrations (list[tuple]): Registered methods as `(f, signature,
+            precedence)` triples.
+
+    Returns:
+        :class:`Function`: Rebuilt function.
     """
-    function = Function(f)
-    for key, value in state.items():
-        setattr(function, key, value)
+    # Go through the constructor: a `mypyc`-compiled `Function` is a native class,
+    # whose attributes must be initialised by `__init__`.
+    function = Function(f, owner=owner, warn_redefinition=warn_redefinition)
+    function._pending = registrations
     return function
 
 
@@ -226,21 +223,14 @@ class Function(NativeBase):
         )
         self._resolved = []
 
-    def __reduce__(
-        self,
-    ) -> tuple[Callable[..., Any], tuple[Callable[..., Any], dict[str, Any]]]:
-        return _reconstruct_function, (self._f, self.__getstate__())
-
-    def __getstate__(self) -> dict[str, Any]:
-        # `_pending`/`_resolved`/`_resolver` are mutated under `self._lock` (see
-        # `_resolve_pending_registrations`, `clear_cache`), so snapshot under the same
-        # lock to avoid capturing a torn state concurrently with registration.
+    def __reduce__(self) -> tuple[Callable[..., Any], tuple[Any, ...]]:
+        # `_pending` and `_resolved` are swapped in several steps under `self._lock`
+        # (see `clear_cache`), so snapshot them under it too. The lock and the cache are
+        # not pickled: the constructor makes fresh ones.
         with self._lock:
-            return {
-                attr: getattr(self, attr)
-                for attr in _FUNCTION_STATE_ATTRS
-                if hasattr(self, attr)
-            }
+            registrations = self._resolved + self._pending
+        args = (self._f, self._owner_name, self._warn_redefinition, registrations)
+        return _reconstruct_function, args
 
     @property
     def owner(self) -> type | None:
