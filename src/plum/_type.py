@@ -360,13 +360,17 @@ def _wrap_type_hint(hint: object, /) -> TypeHintWrapper:
 def _type_hint_le(x: object, y: object, /) -> bool:
     """Check whether `x` is a subhint of `y`, where `Any` is only a subhint of itself.
 
-    Since `beartype` 0.23, `is_subhint(Any, T)` is `True` for every `T`, which would
-    make an unannotated (`Any`-typed) parameter compare equal to, and as specific as,
-    any concrete type. See https://github.com/beartype/plum/issues/295. For Plum's
+    Since `beartype` 0.23, `is_subhint(Any, T)` is `True` for every `T`, at every
+    nesting depth, which would make an unannotated (`Any`-typed) parameter as specific
+    as any concrete type. See https://github.com/beartype/plum/issues/295. For Plum's
     signature bookkeeping, `Any` must instead be the unique least specific type. This
     check therefore differs from `beartype.door.TypeHint(x) <= TypeHint(y)` in exactly
     one respect: a root `Any` is only a subhint of `Any`, and a nested `Any` is
     rewritten to `object` by `_substitute_any`, which reproduces `beartype<0.23`.
+
+    Permanent, not a workaround for a bug: `beartype` intends `Any` to be both top and
+    bottom (beartype/beartype#682), Plum needs it purely top. Without the rewrite
+    neither `list[int]` nor `list[Any]` is more specific, so registration order wins.
 
     Args:
         x (object): First, already-resolved type hint.
@@ -385,7 +389,9 @@ def _type_hint_le(x: object, y: object, /) -> bool:
 def _type_hint_eq(x: object, y: object, /) -> bool:
     """Check whether `x` and `y` are the same hint, where `Any` equals only itself.
 
-    See `_type_hint_le`.
+    The root-`Any` guard defends against Plum's own rewrite, not against `beartype`,
+    which compares a root `Any` correctly since beartype/beartype#687: `_substitute_any`
+    maps it to `object`, which would otherwise make the two equal.
 
     Args:
         x (object): First, already-resolved type hint.

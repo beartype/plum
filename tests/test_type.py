@@ -325,14 +325,19 @@ def test_type_hint_le():
 def test_type_hint_eq_nested_any():
     """`Any` nested inside a parameterised hint must not collide either.
 
-    `beartype>=0.23` collapses `list[Any]` onto `list[int]` exactly as it collapses
-    `Any` onto `int`, so the rewrite in `_substitute_any` has to reach every
-    level, not just the root.
+    `beartype` compares a nested `Any` correctly since beartype/beartype#687, except
+    inside a `Union`, where `Union[int, Any]` still collapses onto every concrete type.
+    The `Union` cases below and every `_type_hint_le` case are what fail without
+    `_substitute_any`.
     """
     assert not _type_hint_eq(list[Any], list[int])
     assert not _type_hint_eq(dict[str, Any], dict[str, int])
     assert not _type_hint_eq(list[list[Any]], list[list[int]])
     assert not _type_hint_eq(tuple[int, Any], tuple[int, str])
+
+    # `Any` inside a `Union` must not collapse the `Union` onto a concrete type.
+    assert not _type_hint_eq(int, Union[int, Any])  # noqa: UP007
+    assert not _type_hint_eq(int, int | Any)
 
     # A nested `Any` stays the least specific argument, as at the root.
     assert _type_hint_le(list[int], list[Any])
