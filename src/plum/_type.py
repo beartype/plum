@@ -431,14 +431,7 @@ UNION_TYPES = (typing.Union, UnionType, typing.Optional)
 # 3.12/3.13 it is a *different* class from `typing_extensions.TypeAliasType`, so
 # neither alone matches both. Check every variant that exists.
 _TYPE_ALIAS_TYPES: tuple[type, ...] = tuple(
-    dict.fromkeys(
-        t
-        for t in (
-            getattr(typing, "TypeAliasType", None),
-            getattr(typing_extensions, "TypeAliasType", None),
-        )
-        if t is not None
-    )
+    {typing_extensions.TypeAliasType, getattr(typing, "TypeAliasType", None)} - {None}
 )
 
 
@@ -451,29 +444,9 @@ def _is_type_alias(x: object, /) -> bool:
     Returns:
         bool: `True` if `x` is `type X = ...` or `X[int]` for such an `X`.
     """
-    if not _TYPE_ALIAS_TYPES:  # pragma: no cover
-        return False
     return isinstance(x, _TYPE_ALIAS_TYPES) or isinstance(
         getattr(x, "__origin__", None), _TYPE_ALIAS_TYPES
     )
-
-
-def _unwrap_type_alias(x: object, /) -> object:
-    """Resolve a PEP 695 type alias to the type hint it aliases.
-
-    For a subscripted alias, the type parameters of the aliased hint are replaced by
-    the child hints subscripting the alias, which Python itself performs.
-
-    Args:
-        x (object): A PEP 695 type alias, or a subscription of one.
-
-    Returns:
-        object: The type hint aliased by `x`.
-    """
-    origin = getattr(x, "__origin__", None)
-    if isinstance(origin, _TYPE_ALIAS_TYPES):
-        return origin.__value__[x.__args__]  # type: ignore[attr-defined]
-    return x.__value__  # type: ignore[attr-defined]
 
 
 class _SupportsDunderFaithful(typing.Protocol):
@@ -490,7 +463,12 @@ def _is_faithful(x: object, /) -> bool:
     # alias itself. Without this, every alias is conservatively unfaithful, which
     # forces the whole dispatch function onto the slow path.
     if _is_type_alias(x):
-        return is_faithful(_unwrap_type_alias(x))
+        # For a subscripted alias, Python itself substitutes the type parameters
+        # of the aliased hint with the child hints subscripting the alias.
+        origin = getattr(x, "__origin__", None)
+        if isinstance(origin, _TYPE_ALIAS_TYPES):
+            return is_faithful(origin.__value__[x.__args__])
+        return is_faithful(x.__value__)  # type: ignore[attr-defined]
 
     if _is_hint(x):
         origin = get_origin(x)

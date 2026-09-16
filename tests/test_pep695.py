@@ -28,51 +28,41 @@ def _alias(name, value, **kw):
     return typing.TypeAliasType(name, value, **kw)
 
 
-def test_resolve_type_hint_preserves_alias() -> None:
+@pytest.mark.parametrize(
+    "hint",
+    [
+        _alias("X", int),
+        _alias("Boxy", list[T], type_params=(T,))[int],
+    ],
+    ids=["unsubscripted", "subscripted"],
+)
+def test_resolve_type_hint_preserves_alias(hint) -> None:
     """`resolve_type_hint` returns an alias unchanged, without warning.
 
     The alias is deliberately not unwrapped: plum prints `Signature`s from the hints
     it stores, so unwrapping would replace the name the user wrote with its
     expansion.
     """
-    X = _alias("X", int)
-
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        assert resolve_type_hint(X) is X
-
-
-def test_resolve_type_hint_preserves_subscripted_alias() -> None:
-    """`resolve_type_hint` returns a subscripted alias unchanged."""
-    Boxy = _alias("Boxy", list[T], type_params=(T,))
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        assert resolve_type_hint(Boxy[int]) is not None
+        assert resolve_type_hint(hint) is hint
 
 
 @pytest.mark.parametrize(
-    ("value", "expected"),
+    ("hint", "expected"),
     [
-        (int, True),  # A faithful target makes the alias faithful.
-        (int | float, True),
-        (list[int], False),  # An unfaithful target makes the alias unfaithful.
+        (_alias("X", int), True),  # A faithful target makes the alias faithful.
+        (_alias("X", int | float), True),
+        (_alias("X", list[int]), False),  # An unfaithful target, an unfaithful alias.
+        (_alias("Boxy", list[T], type_params=(T,))[int], False),
     ],
+    ids=["type", "union", "generic", "subscripted"],
 )
-def test_is_faithful_unwraps_alias(value, expected) -> None:
+def test_is_faithful_unwraps_alias(hint, expected) -> None:
     """Faithfulness is a property of the aliased hint, not of the alias."""
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        assert is_faithful(_alias("X", value)) is expected
-
-
-def test_is_faithful_unwraps_subscripted_alias() -> None:
-    """Faithfulness looks through a subscripted alias to the substituted hint."""
-    Boxy = _alias("Boxy", list[T], type_params=(T,))
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        assert is_faithful(Boxy[int]) is False
+        assert is_faithful(hint) is expected
 
 
 def test_dispatch_on_aliases() -> None:
