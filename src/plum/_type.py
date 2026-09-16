@@ -9,6 +9,7 @@ __all__ = (
 import abc
 import sys
 import typing
+import typing_extensions
 import warnings
 from collections.abc import Callable, Hashable
 from functools import lru_cache, reduce
@@ -279,7 +280,7 @@ def resolve_type_hint(x: object, /) -> object:
 
     # For example, `Is[lambda x: x > 0]` is an example of a `BeartypeValidator`.
     # We shouldn't resolve those.
-    elif isinstance(x, BeartypeValidator):
+    elif isinstance(x, BeartypeValidator) or _is_type_alias(x):
         return x
 
     else:
@@ -426,6 +427,54 @@ def is_faithful(x: object, /) -> bool:
 
 UNION_TYPES = (typing.Union, UnionType, typing.Optional)
 
+# PEP 695 type aliases. `typing.TypeAliasType` exists only on Python 3.12+, and on
+# 3.12/3.13 it is a *different* class from `typing_extensions.TypeAliasType`, so
+# neither alone matches both. Check every variant that exists.
+_TYPE_ALIAS_TYPES: tuple[type, ...] = tuple(
+    dict.fromkeys(
+        t
+        for t in (
+            getattr(typing, "TypeAliasType", None),
+            getattr(typing_extensions, "TypeAliasType", None),
+        )
+        if t is not None
+    )
+)
+
+
+def _is_type_alias(x: object, /) -> bool:
+    """Check whether `x` is a PEP 695 type alias, or a subscription of one.
+
+    Args:
+        x (object): Object.
+
+    Returns:
+        bool: `True` if `x` is `type X = ...` or `X[int]` for such an `X`.
+    """
+    if not _TYPE_ALIAS_TYPES:  # pragma: no cover
+        return False
+    return isinstance(x, _TYPE_ALIAS_TYPES) or isinstance(
+        getattr(x, "__origin__", None), _TYPE_ALIAS_TYPES
+    )
+
+
+def _unwrap_type_alias(x: object, /) -> object:
+    """Resolve a PEP 695 type alias to the type hint it aliases.
+
+    For a subscripted alias, the type parameters of the aliased hint are replaced by
+    the child hints subscripting the alias, which Python itself performs.
+
+    Args:
+        x (object): A PEP 695 type alias, or a subscription of one.
+
+    Returns:
+        object: The type hint aliased by `x`.
+    """
+    origin = getattr(x, "__origin__", None)
+    if isinstance(origin, _TYPE_ALIAS_TYPES):
+        return origin.__value__[x.__args__]  # type: ignore[attr-defined]
+    return x.__value__  # type: ignore[attr-defined]
+
 
 class _SupportsDunderFaithful(typing.Protocol):
     __faithful__: bool
@@ -437,6 +486,12 @@ def _has_dunder_faithful(x: type, /) -> TypeGuard[_SupportsDunderFaithful]:
 
 
 def _is_faithful(x: object, /) -> bool:
+    # Faithfulness is a property of the hint a PEP 695 alias aliases, not of the
+    # alias itself. Without this, every alias is conservatively unfaithful, which
+    # forces the whole dispatch function onto the slow path.
+    if _is_type_alias(x):
+        return is_faithful(_unwrap_type_alias(x))
+
     if _is_hint(x):
         origin = get_origin(x)
         args = get_args(x)
