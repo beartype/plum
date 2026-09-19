@@ -332,7 +332,7 @@ def _substitute_any(hint: object, /) -> object:
 class _OpaqueHint:
     """Fallback for a hint `beartype.door.TypeHint` refuses to wrap, e.g. a Sphinx
     `autodoc_mock_imports` placeholder. Compares equal only to another opaque
-    wrapper around an equal hint, and is a subhint of nothing else. See GitHub
+    wrapper around the same hint object, and is a subhint of nothing else. See GitHub
     discussion #298.
     """
 
