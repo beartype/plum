@@ -360,9 +360,9 @@ def _wrap_type_hint(hint: object, /) -> TypeHintWrapper:
 def _type_hint_le(x: object, y: object, /) -> bool:
     """Check whether `x` is a subhint of `y`, where `Any` is only a subhint of itself.
 
-    Since `beartype` 0.23, `is_subhint(Any, T)` is `True` for every `T`, at every
-    nesting depth, which would make an unannotated (`Any`-typed) parameter as specific
-    as any concrete type. See https://github.com/beartype/plum/issues/295. For Plum's
+    Since `beartype` 0.23, `is_subhint(Any, T)` is `True` for every `T`, which would make
+    an unannotated (`Any`-typed) parameter as specific as any concrete type. See
+    https://github.com/beartype/plum/issues/295. For Plum's
     signature bookkeeping, `Any` must instead be the unique least specific type. This
     check therefore differs from `beartype.door.TypeHint(x) <= TypeHint(y)` in exactly
     one respect: a root `Any` is only a subhint of `Any`, and a nested `Any` is
