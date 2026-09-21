@@ -1,8 +1,50 @@
+import sys
+
+import pytest
+
 import plum
 from .util import benchmark
 
 
+def _traced():
+    """Whether a line tracer, i.e. `coverage`, is instrumenting this process.
+
+    Tracing inflates a cache *hit* far more than a cache *miss*. A hit is a dozen
+    traced Python lines doing almost no work, whereas a miss spends most of its time
+    inside `beartype` and C, which the tracer never sees. One full suite run on
+    CPython 3.13, in microseconds:
+
+                    hit    miss    ratio
+        plain      1.005  27.596    27.4
+        --cov      5.160  94.165    18.3
+
+    CI runs every version job under `--cov`, on runners slower than that, where the
+    hit inflates further still and the ratio lands just either side of the 4 asserted
+    below. The numbers then say more about the tracer than about plum: they fail when
+    a change makes a *miss* faster, which is the wrong way round. `Test mypyc wheel`
+    runs the suite without `--cov`, as does a plain local `pytest`, so the assertions
+    still run somewhere real.
+    """
+    # Both, because neither alone is enough. `sys.gettrace` catches a plain
+    # `settrace` tracer but not coverage from Python 3.12 on, which drives
+    # `sys.monitoring` instead and leaves `gettrace` empty; the coverage API catches
+    # that but knows nothing about other tracers.
+    if sys.gettrace() is not None:
+        return True
+    try:
+        import coverage
+    except ImportError:
+        return False
+    return coverage.Coverage.current() is not None
+
+
 def assert_cache_performance(f, f_native):
+    if _traced():
+        # `skip`, not a bare `return`: the coverage jobs run the whole suite under
+        # `--cov`, so this would otherwise stop asserting anything there and report
+        # nothing about it. A skip says so in the run.
+        pytest.skip("a line tracer is attached; see `_traced`")
+
     # Time the performance of a native call.
     dur_native = benchmark(f_native, (1,), n=250, burn=10)
 
@@ -171,3 +213,80 @@ def test_cache_unfaithful(dispatch: plum.Dispatcher):
     assert f(1) == 1
     assert f([1]) == 2
     assert len(f._cache) == 0
+
+
+def test_type_dispatch_is_cached(dispatch):
+    @dispatch
+    def g(x: type[int]):
+        return "type[int]"
+
+    @dispatch
+    def g(x: type[str]):
+        return "type[str]"
+
+    g._resolve_pending_registrations()
+    assert g._resolver.is_cacheable and not g._resolver.is_faithful
+    assert len(g._cache) == 0
+    assert g(int) == "type[int]"
+    assert g(str) == "type[str]"
+    assert len(g._cache) == 2  # keyed by identity, one entry per class
+
+
+def test_faithful_class_args_share_one_entry(dispatch):
+    @dispatch
+    def h(x: object):
+        return "object"
+
+    h._resolve_pending_registrations()
+    assert h._resolver.is_faithful
+    for cls in (int, str, float, list, dict):
+        assert h(cls) == "object"
+    assert len(h._cache) == 1  # faithful ⇒ keyed on type(x)=type, one bucket
+
+
+def test_late_type_registration_invalidates_plain_type_keys(dispatch):
+    # The one path that could mix key shapes in a single dict: entries accumulated
+    # while the function was faithful are keyed on `type(x)`, but registering a
+    # `type[X]` method rebinds the key callable to the identity-aware one.
+    @dispatch
+    def f(x: object):
+        return "object"
+
+    f._resolve_pending_registrations()
+    assert f(int) == "object"
+    assert f(str) == "object"
+    # Faithful: both class arguments land in the same `(type,)` bucket.
+    assert set(f._cache) == {(type,)}
+
+    @dispatch
+    def f(x: type[int]):
+        return "type[int]"
+
+    # Registration is lazy, so resolving it is what invalidates the cache.
+    f._resolve_pending_registrations()
+    assert f._cache == {}
+
+    assert f(int) == "type[int]"
+    assert f(str) == "object"
+    # No stale `(type,)` key survives: every key is now `((type(x), identity),)`.
+    assert len(f._cache) == 2
+    assert all(len(k) == 1 and len(k[0]) == 2 for k in f._cache)
+
+
+def test_spec_survives_clear_cache_with_reregister(dispatch):
+    """`clear_cache(reregister=True)` installs a fresh, faithful resolver whose
+    methods are only pending. The key callable used for the next call must be the
+    one that resolver ends up with, not a stale faithful `type`."""
+
+    @dispatch
+    def f(x: type[int]):
+        return "type[int]"
+
+    @dispatch
+    def f(x: object):
+        return "object"
+
+    assert f(int) == "type[int]"
+    f.clear_cache(reregister=True)
+    assert f(str) == "object"
+    assert f(int) == "type[int]"
