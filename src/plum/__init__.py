@@ -12,6 +12,8 @@ __all__ = (
     "clear_all_cache",
     # Functions
     "Function",
+    # Generic
+    "generic",
     # Method
     "Method",
     "extract_return_type",
@@ -45,6 +47,10 @@ __all__ = (
     "type_mapping",
     "resolve_type_hint",
     "is_faithful",
+    "is_cacheable",
+    "cache_key",
+    "KeyPart",
+    "CacheSpec",
     # util
     "Callable",  # TODO: deprecate
     "TypeHint",
@@ -69,6 +75,7 @@ from ._autoreload import activate_autoreload, deactivate_autoreload
 from ._bear import is_bearable as _is_bearable
 from ._dispatcher import Dispatcher, clear_all_cache, dispatch
 from ._function import Function
+from ._generic import generic
 from ._method import Method, extract_return_type
 from ._overload import get_overloads, overload
 from ._parametric import (
@@ -90,8 +97,12 @@ from ._promotion import (
 from ._resolver import AmbiguousLookupError, NotFoundLookupError
 from ._signature import Signature, append_default_args, inspect_signature
 from ._type import (
+    CacheSpec,
+    KeyPart,
     ModuleType,
     PromisedType,
+    cache_key,
+    is_cacheable,
     is_faithful,
     resolve_type_hint,
     type_mapping,
