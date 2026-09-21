@@ -72,6 +72,7 @@ test_runtime = [
     "ipython>=8.18.1",
     "numpy>=2.0.2",
     "pytest>=8.4.2",
+    "pytest-benchmark>=5.1.0",
     "pytest-cov>=7.0.0",
     "sybil[pytest]>=9.2.0",
 ]
@@ -130,6 +131,8 @@ test-requires = [
     "ipython>=8.18.1",
     "numpy>=2.0.2",
     "pytest>=8.4.2",
+    # `tests/benchmarks` needs the plugin; the rest of the suite does not.
+    "pytest-benchmark>=5.1.0",
     "sybil[pytest]>=9.2.0",
 ]
 # arm64 wheels are built and tested natively on the macos-14 runner; cibuildwheel
@@ -183,11 +186,17 @@ addopts = [
     "-ra",
     "-p",
     "no:doctest",
+    # The benchmark options are set in `tests/conftest.py` rather than here, so that
+    # `pytest-benchmark` is required only to run `tests/benchmarks`, and not by every
+    # `pytest` invocation.
 ]
 minversion = "6.0"
 markers = [
     "incompatible_with_mypyc: marks tests as incompatible with mypyc-compiled code",
-    "benchmark: marks tests that assert on timings; deselect with `-m 'not benchmark'`",
+    # `pytest-benchmark` reads this marker for per-benchmark configuration (`group`,
+    # and so on); `tests/test_benchmark.py` also uses it, bare, to tag a test that
+    # asserts on a timing ratio. Either way `-m 'not benchmark'` deselects them.
+    "benchmark: configures a `pytest-benchmark` benchmark, or tags a timing assertion",
 ]
 
 
