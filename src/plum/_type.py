@@ -329,14 +329,50 @@ def _substitute_any(hint: object, /) -> object:
         return hint
 
 
-def _wrap_type_hint_uncached(hint: object, /) -> TypeHintWrapper:
-    return TypeHintWrapper(_substitute_any(hint))
+class _OpaqueHint:
+    """Fallback for a hint `beartype.door.TypeHint` refuses to wrap, e.g. a Sphinx
+    `autodoc_mock_imports` placeholder. Compares equal only to another opaque
+    wrapper around an equal hint, and is a subhint of nothing else. See GitHub
+    discussion #298.
+
+    Args:
+        hint (object): Hint that `beartype.door.TypeHint` cannot wrap.
+    """
+
+    def __init__(self, hint: object, /) -> None:
+        self._hint = hint
+
+    def __eq__(self, other: object, /) -> bool:
+        return isinstance(other, _OpaqueHint) and self._hint == other._hint
+
+    def __le__(self, other: object, /) -> bool:
+        return self == other
+
+    # `beartype.door.TypeHint.__le__` returns `NotImplemented` for a non-`TypeHint`
+    # operand rather than raising, so `TypeHintWrapper(...) <= _OpaqueHint(...)` falls
+    # back to this reflected method; without it, Python raises `TypeError`.
+    def __ge__(self, other: object, /) -> bool:
+        return self == other
+
+
+def _wrap_type_hint_uncached(hint: object, /) -> TypeHintWrapper | _OpaqueHint:
+    try:
+        return TypeHintWrapper(_substitute_any(hint))
+    except Exception:
+        warnings.warn(
+            f"Could not wrap the type hint `{hint}` for comparison. "
+            f"I have fallen back to comparing it for equality only, so methods with "
+            f"this type hint might not be ordered correctly. "
+            f"Please open an issue at https://github.com/beartype/plum.",
+            stacklevel=2,
+        )
+        return _OpaqueHint(hint)
 
 
 _wrap_type_hint_cached = lru_cache(maxsize=4096)(_wrap_type_hint_uncached)
 
 
-def _wrap_type_hint(hint: object, /) -> TypeHintWrapper:
+def _wrap_type_hint(hint: object, /) -> TypeHintWrapper | _OpaqueHint:
     """Wrap `hint` for comparison, replacing every `Any` by `object`.
 
     `Signature` comparison wraps the same fixed hints on every uncached dispatch, so
@@ -346,7 +382,8 @@ def _wrap_type_hint(hint: object, /) -> TypeHintWrapper:
         hint (object): Already-resolved type hint.
 
     Returns:
-        TypeHintWrapper: Wrapped hint.
+        TypeHintWrapper | _OpaqueHint: Wrapped hint, or an `_OpaqueHint` if `beartype`
+            cannot wrap `hint`.
     """
     # The same hints are compared over and over, so cache the wrapper. Not every hint
     # is hashable, e.g. `Annotated[int, {"a": 1}]`, so only cache when possible.
