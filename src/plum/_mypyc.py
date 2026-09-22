@@ -34,12 +34,10 @@ class NativeBase:
     weakly referenced, which `jax.jit` needs (#318), and accept undeclared attributes,
     such as `__doc__` (#317) and those :func:`functools.wraps` copies.
 
-    Such a weak reference can be *taken*, but not relied on to notify: the compiled
-    deallocator omits `PyObject_ClearWeakRefs()`, so its callback never runs and a
-    `weakref.WeakSet` or `weakref.WeakValueDictionary` keeps a stale entry that can
-    segfault the interpreter at shutdown. See mypyc/mypyc#1102;
-    python/mypy#19056 is the fix.
+    Weak references work, but their callbacks never run: a native class frees its
+    instances without calling `PyObject_ClearWeakRefs()`. A `weakref.WeakSet` or
+    `weakref.WeakValueDictionary` therefore keeps a stale entry, which can crash the
+    interpreter at shutdown. See mypyc/mypyc#1102; python/mypy#19056 is the fix.
 
-    `jax.jit` is unaffected: it holds the reference itself rather than asking to be
-    told when the referent dies.
+    `jax.jit` is unaffected: it does not rely on the callback.
     """
