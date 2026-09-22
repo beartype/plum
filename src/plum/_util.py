@@ -51,16 +51,9 @@ class Comparable(metaclass=abc.ABCMeta):
     Requires the subclass to just implement `__le__`.
     """
 
-    # A base class without `__slots__` gives every subclass a `__dict__`, even one
-    # that declares `__slots__` itself, silently undoing it. `Signature` does declare
-    # them, so without this its instances carry a dictionary it never uses. Declaring
-    # `__slots__` on a mixin is what the `collections.abc` ABCs do for the same
-    # reason, and it costs a subclass nothing: one that declares no `__slots__` of
-    # its own still gets a `__dict__` exactly as before.
-    #
-    # `__weakref__` is listed because dropping the `__dict__` would otherwise drop it
-    # too: a non-slotted class owns `__weakref__`, so every `Comparable` subclass has
-    # been weakly referenceable until now, and `Signature` must stay so (cf. #318).
+    # Without `__slots__` here, every subclass gets a `__dict__`, even one that declares
+    # `__slots__` itself, like `Signature`. `__weakref__` keeps subclasses weakly
+    # referenceable, which an empty `__slots__` would take away.
     __slots__: tuple[str, ...] = ("__weakref__",)
 
     def __eq__(self, other: object, /) -> bool:

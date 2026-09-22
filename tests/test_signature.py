@@ -43,6 +43,16 @@ def test_instantiation_copy():
     assert not Sig(int, int, varargs=tuple[int]).is_faithful
 
 
+def test_signature_carries_no_dict():
+    # `Signature` declares `__slots__`; the base must not undo it.
+    s = Sig(int, float)
+    assert not hasattr(s, "__dict__")
+    with pytest.raises(AttributeError):
+        s.extra = 1
+    # Dropping the `__dict__` must not also drop weak referenceability.
+    assert weakref.ref(s)() is s
+
+
 def _impl(x, y, *z):
     return str(x)
 
@@ -453,13 +463,3 @@ def test_append_default_args():
     # Test that `itemgetter` is supported.
     f = operator.itemgetter(0)
     assert len(plum.append_default_args(Sig.from_callable(f), f)) == 1
-
-
-def test_signature_carries_no_dict():
-    # `Signature` declares `__slots__`; the base must not undo it.
-    s = Sig(int, float)
-    assert not hasattr(s, "__dict__")
-    with pytest.raises(AttributeError):
-        s.extra = 1
-    # `jax.jit` weakly references what it wraps; cf. #318.
-    assert weakref.ref(s)() is s
