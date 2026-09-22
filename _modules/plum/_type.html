@@ -764,12 +764,15 @@ document.write(`
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Check whether `x` is a subhint of `y`, where `Any` is only a subhint of itself.</span>
 
 <span class="sd">    Since `beartype` 0.23, `is_subhint(Any, T)` is `True` for every `T`, which would</span>
-<span class="sd">    make an unannotated (`Any`-typed) parameter compare equal to, and as specific as,</span>
-<span class="sd">    any concrete type. See https://github.com/beartype/plum/issues/295. For Plum&#39;s</span>
-<span class="sd">    signature bookkeeping, `Any` must instead be the unique least specific type. This</span>
-<span class="sd">    check therefore differs from `beartype.door.TypeHint(x) &lt;= TypeHint(y)` in exactly</span>
-<span class="sd">    one respect: a root `Any` is only a subhint of `Any`, and a nested `Any` is</span>
-<span class="sd">    rewritten to `object` by `_substitute_any`, which reproduces `beartype&lt;0.23`.</span>
+<span class="sd">    make an unannotated (`Any`-typed) parameter as specific as any concrete type. See</span>
+<span class="sd">    https://github.com/beartype/plum/issues/295. For Plum&#39;s signature bookkeeping, `Any`</span>
+<span class="sd">    must instead be the unique least specific type. This check therefore differs from</span>
+<span class="sd">    `beartype.door.TypeHint(x) &lt;= TypeHint(y)` in exactly one respect: a root `Any` is</span>
+<span class="sd">    only a subhint of `Any`, and a nested `Any` is rewritten to `object` by</span>
+<span class="sd">    `_substitute_any`, which reproduces `beartype&lt;0.23`.</span>
+
+<span class="sd">    The difference is permanent: `beartype` made `Any` a subhint of everything by</span>
+<span class="sd">    design, see https://github.com/beartype/beartype/pull/616.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        x (object): First, already-resolved type hint.</span>
@@ -797,6 +800,7 @@ document.write(`
 <span class="sd">    Returns:</span>
 <span class="sd">        bool: Whether `x` and `y` denote the same type.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># `_substitute_any` maps a root `Any` to `object`, so `Any` must be compared here.</span>
     <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="n">Any</span> <span class="ow">or</span> <span class="n">y</span> <span class="ow">is</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">x</span> <span class="ow">is</span> <span class="n">y</span>
     <span class="c1"># Do not derive this from `_type_hint_le`: `TypeHintWrapper.__eq__` already checks</span>
