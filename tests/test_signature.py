@@ -1,5 +1,6 @@
 import inspect
 import operator
+import weakref
 from numbers import Number as Num, Real as Re
 from typing import Any, Union
 
@@ -40,6 +41,16 @@ def test_instantiation_copy():
     assert not Sig(tuple[int], int, varargs=int).is_faithful
     assert not Sig(int, tuple[int], varargs=int).is_faithful
     assert not Sig(int, int, varargs=tuple[int]).is_faithful
+
+
+def test_signature_carries_no_dict():
+    # `Signature` declares `__slots__`; the base must not undo it.
+    s = Sig(int, float)
+    assert not hasattr(s, "__dict__")
+    with pytest.raises(AttributeError):
+        s.extra = 1
+    # Dropping the `__dict__` must not also drop weak referenceability.
+    assert weakref.ref(s)() is s
 
 
 def _impl(x, y, *z):

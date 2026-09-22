@@ -51,6 +51,11 @@ class Comparable(metaclass=abc.ABCMeta):
     Requires the subclass to just implement `__le__`.
     """
 
+    # Without `__slots__` here, every subclass gets a `__dict__`, even one that declares
+    # `__slots__` itself, like `Signature`. `__weakref__` keeps subclasses weakly
+    # referenceable, which an empty `__slots__` would take away.
+    __slots__: tuple[str, ...] = ("__weakref__",)
+
     def __eq__(self, other: object, /) -> bool:
         return self <= other <= self
 
