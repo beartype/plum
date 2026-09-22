@@ -33,4 +33,11 @@ class NativeBase:
     class outside the compile set gains both and stays native. Its instances can then be
     weakly referenced, which `jax.jit` needs (#318), and accept undeclared attributes,
     such as `__doc__` (#317) and those :func:`functools.wraps` copies.
+
+    Weak references work, but their callbacks never run: a native class frees its
+    instances without calling `PyObject_ClearWeakRefs()`. A `weakref.WeakSet` or
+    `weakref.WeakValueDictionary` therefore keeps a stale entry, which can crash the
+    interpreter at shutdown. See mypyc/mypyc#1102; python/mypy#19056 is the fix.
+
+    `jax.jit` is unaffected: it does not rely on the callback.
     """
