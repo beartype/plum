@@ -480,6 +480,32 @@ document.write(`
         <span class="k">return</span> <span class="n">module</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_reconstruct_function</span><span class="p">(</span>
+    <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">owner</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">warn_redefinition</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">registrations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Signature</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]],</span>
+    <span class="o">/</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Function&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Rebuild a :class:`Function` from its pickled state.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        f (function): Function that is wrapped.</span>
+<span class="sd">        owner (str or None): Name of the class that owns the function.</span>
+<span class="sd">        warn_redefinition (bool): Throw a warning whenever a method is redefined.</span>
+<span class="sd">        registrations (list[tuple]): Registered methods as `(f, signature,</span>
+<span class="sd">            precedence)` triples.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        :class:`Function`: Rebuilt function.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Go through the constructor: a `mypyc`-compiled `Function` is a native class,</span>
+    <span class="c1"># whose attributes must be initialised by `__init__`.</span>
+    <span class="n">function</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">owner</span><span class="o">=</span><span class="n">owner</span><span class="p">,</span> <span class="n">warn_redefinition</span><span class="o">=</span><span class="n">warn_redefinition</span><span class="p">)</span>
+    <span class="n">function</span><span class="o">.</span><span class="n">_pending</span> <span class="o">=</span> <span class="n">registrations</span>
+    <span class="k">return</span> <span class="n">function</span>
+
+
 <div class="viewcode-block" id="Function">
 <a class="viewcode-back" href="../../api.html#plum._function.Function">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Function</span><span class="p">(</span><span class="n">NativeBase</span><span class="p">):</span>
@@ -549,6 +575,15 @@ document.write(`
             <span class="n">warn_redefinition</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_warn_redefinition</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_resolved</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__reduce__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
+        <span class="c1"># `_pending` and `_resolved` are swapped in several steps under `self._lock`</span>
+        <span class="c1"># (see `clear_cache`), so snapshot them under it too. The lock and the cache are</span>
+        <span class="c1"># not pickled: the constructor makes fresh ones.</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="n">registrations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolved</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pending</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_f</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_owner_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_warn_redefinition</span><span class="p">,</span> <span class="n">registrations</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_reconstruct_function</span><span class="p">,</span> <span class="n">args</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">owner</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
