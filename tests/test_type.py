@@ -379,24 +379,18 @@ def test_wrap_type_hint_unwrappable_hint():
     A hint that `beartype.door.TypeHint` refuses to parse at all - such as a Sphinx
     `autodoc_mock_imports` placeholder, which fakes just enough of a class to be used
     as an annotation - must not raise. It is wrapped as opaque instead, comparing
-    equal only to an identical opaque hint.
+    equal only to an opaque wrapper around an equal hint.
     """
+    hint_a = object()
+    hint_b = object()
 
-    class _MockHint:
-        """Stands in for a Sphinx autodoc mock object: looks class-like, but its
-        bogus `__parameters__` makes `beartype.door.TypeHint` reject it."""
-
-        def __getattr__(self, name):
-            return _MockHint()
-
-    mock_a = _MockHint()
-    mock_b = _MockHint()
-
-    assert _wrap_type_hint(mock_a) == _OpaqueHint(mock_a)
-    assert _wrap_type_hint(mock_a) != _OpaqueHint(mock_b)
+    with pytest.warns(Warning, match=r"(?i)could not wrap the type hint"):
+        assert _wrap_type_hint(hint_a) == _OpaqueHint(hint_a)
+    assert _wrap_type_hint(hint_a) != _OpaqueHint(hint_b)
+    assert _type_hint_le(hint_a, hint_a)
 
     # Comparisons against an ordinary, wrappable hint must not raise either,
     # regardless of which side is unwrappable.
-    assert not _type_hint_eq(mock_a, int)
-    assert not _type_hint_le(mock_a, int)
-    assert not _type_hint_le(int, mock_a)
+    assert not _type_hint_eq(hint_a, int)
+    assert not _type_hint_le(hint_a, int)
+    assert not _type_hint_le(int, hint_a)

@@ -332,8 +332,11 @@ def _substitute_any(hint: object, /) -> object:
 class _OpaqueHint:
     """Fallback for a hint `beartype.door.TypeHint` refuses to wrap, e.g. a Sphinx
     `autodoc_mock_imports` placeholder. Compares equal only to another opaque
-    wrapper around the same hint object, and is a subhint of nothing else. See GitHub
+    wrapper around an equal hint, and is a subhint of nothing else. See GitHub
     discussion #298.
+
+    Args:
+        hint (object): Hint that `beartype.door.TypeHint` cannot wrap.
     """
 
     def __init__(self, hint: object, /) -> None:
@@ -353,11 +356,16 @@ class _OpaqueHint:
 
 
 def _wrap_type_hint_uncached(hint: object, /) -> TypeHintWrapper | _OpaqueHint:
-    # `Signature.__init__` already runs `is_faithful` on every type and warns there
-    # if `hint` can't be classified, so no second warning is needed here.
     try:
         return TypeHintWrapper(_substitute_any(hint))
     except Exception:
+        warnings.warn(
+            f"Could not wrap the type hint `{hint}` for comparison. "
+            f"I have fallen back to comparing it for equality only, so methods with "
+            f"this type hint might not be ordered correctly. "
+            f"Please open an issue at https://github.com/beartype/plum.",
+            stacklevel=2,
+        )
         return _OpaqueHint(hint)
 
 
@@ -369,15 +377,13 @@ def _wrap_type_hint(hint: object, /) -> TypeHintWrapper | _OpaqueHint:
 
     `Signature` comparison wraps the same fixed hints on every uncached dispatch, so
     the rewrite and `beartype`'s own wrapper lookup would otherwise repeat per call.
-    A hint `beartype` cannot parse as a type hint at all, e.g. a Sphinx autodoc mock
-    object, is wrapped as an :class:`_OpaqueHint` instead of raising, since it is
-    still a hint that must be able to sit in a `Signature`.
 
     Args:
         hint (object): Already-resolved type hint.
 
     Returns:
-        TypeHintWrapper | _OpaqueHint: Wrapped hint.
+        TypeHintWrapper | _OpaqueHint: Wrapped hint, or an `_OpaqueHint` if `beartype`
+            cannot wrap `hint`.
     """
     # The same hints are compared over and over, so cache the wrapper. Not every hint
     # is hashable, e.g. `Annotated[int, {"a": 1}]`, so only cache when possible.
