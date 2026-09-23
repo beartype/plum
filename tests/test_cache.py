@@ -1,8 +1,50 @@
+import sys
+
+import pytest
+
 import plum
 from .util import benchmark
 
 
+def _traced():
+    """Whether a line tracer, i.e. `coverage`, is instrumenting this process.
+
+    Tracing inflates a cache *hit* far more than a cache *miss*. A hit is a dozen
+    traced Python lines doing almost no work, whereas a miss spends most of its time
+    inside `beartype` and C, which the tracer never sees. One full suite run on
+    CPython 3.13, in microseconds:
+
+                    hit    miss    ratio
+        plain      1.005  27.596    27.4
+        --cov      5.160  94.165    18.3
+
+    CI runs every version job under `--cov`, on runners slower than that, where the
+    hit inflates further still and the ratio lands just either side of the 4 asserted
+    below. The numbers then say more about the tracer than about plum: they fail when
+    a change makes a *miss* faster, which is the wrong way round. `Test mypyc wheel`
+    runs the suite without `--cov`, as does a plain local `pytest`, so the assertions
+    still run somewhere real.
+    """
+    # Both, because neither alone is enough. `sys.gettrace` catches a plain
+    # `settrace` tracer but not coverage from Python 3.12 on, which drives
+    # `sys.monitoring` instead and leaves `gettrace` empty; the coverage API catches
+    # that but knows nothing about other tracers.
+    if sys.gettrace() is not None:
+        return True
+    try:
+        import coverage
+    except ImportError:
+        return False
+    return coverage.Coverage.current() is not None
+
+
 def assert_cache_performance(f, f_native):
+    if _traced():
+        # `skip`, not a bare `return`: the coverage jobs run the whole suite under
+        # `--cov`, so this would otherwise stop asserting anything there and report
+        # nothing about it. A skip says so in the run.
+        pytest.skip("a line tracer is attached; see `_traced`")
+
     # Time the performance of a native call.
     dur_native = benchmark(f_native, (1,), n=250, burn=10)
 
