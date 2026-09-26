@@ -194,14 +194,14 @@ def _document(f: Callable[..., object], f_name: str | None = None, /) -> str:
     # Separate out the function definition and the lines corresponding to the body.
     title = parts[0]
     body = parts[1:]
-    # Python 3.13+ wraps long signatures. Only the closing signature line is
-    # unindented; parentheses or arrows inside parameter defaults are not delimiters.
+
+    # Python 3.13+ wraps long signatures over multiple lines: the parameters are
+    # indented and the closing parenthesis starts the first unindented line. Join
+    # these lines back into the title.
     if title.endswith("("):
-        for i, line in enumerate(body):
-            if line.startswith(")"):
-                title += " ".join(part.strip() for part in body[:i]) + line
-                body = body[i + 1 :]
-                break
+        end = next(i for i, line in enumerate(body) if line.startswith(")"))
+        title += " ".join(line.strip() for line in body[:end]) + body[end]
+        body = body[end + 1 :]
 
     # Remove indentation from every line of the body. This indentation defaults to
     # four spaces.
