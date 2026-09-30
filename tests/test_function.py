@@ -12,6 +12,7 @@ from concurrent.futures import ThreadPoolExecutor
 import pytest
 
 import plum
+from .util import wrap_function
 from plum._function import Function, _BoundFunction, _convert, _owner_transfer
 from plum._method import Method
 from plum._resolver import (
@@ -126,6 +127,52 @@ def test_owner():
         pass
 
     assert Function(f).owner is None
+    assert Function(f, owner="A").owner is A
+
+
+class WrappedOwnerBase:
+    def describe(self, x):
+        return ("base", x)
+
+
+class WrappedOwner(WrappedOwnerBase):
+    @staticmethod
+    @plum.dispatch
+    @wrap_function
+    def make(x: int):
+        return x
+
+    @plum.dispatch
+    @wrap_function
+    def describe(self, x: int):
+        return ("int", x)
+
+
+def test_wrapped_owner():
+    assert "WrappedOwner" not in WrappedOwner.make._f.__globals__
+    assert WrappedOwner.make.owner is WrappedOwner
+    assert WrappedOwner.make(1) == 1
+    with pytest.raises(NotFoundLookupError, match="could not be resolved"):
+        WrappedOwner.make("not an integer")
+
+
+def test_wrapped_owner_mro_fallback():
+    assert WrappedOwner().describe(1) == ("int", 1)
+    assert WrappedOwner().describe("hello") == ("base", "hello")
+
+
+def test_owner_missing():
+    def f(x):
+        pass
+
+    assert Function(f, owner="MissingOwner").owner is None
+
+
+def test_owner_missing_module():
+    def f(x):
+        pass
+
+    f.__module__ = "_plum_missing_module"
     assert Function(f, owner="A").owner is A
 
 
