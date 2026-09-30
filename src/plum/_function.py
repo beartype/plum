@@ -1,6 +1,7 @@
 __all__ = ("Function",)
 
 import os
+import sys
 import textwrap
 import threading
 from collections.abc import Callable
@@ -237,7 +238,12 @@ class Function(NativeBase):
         """object or None: Owner of the function. If `None`, then there is no owner."""
         if self._owner is None and self._owner_name is not None:
             name = self._owner_name.split(".")[-1]
-            self._owner = self._f.__globals__[name]
+            # A decorator can preserve `__module__` while its `__globals__` still
+            # belongs to a different module. Resolve the owner in the module named
+            # by the wrapped function first, then fall back to its globals.
+            module = sys.modules.get(self._f.__module__)
+            namespace = vars(module) if module is not None else {}
+            self._owner = namespace.get(name, self._f.__globals__.get(name))
             # Check if the ownership needs to be transferred to another class. This
             # can be very important for preventing infinite loops.
             while self._owner in _owner_transfer:
