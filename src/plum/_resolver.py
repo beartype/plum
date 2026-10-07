@@ -214,11 +214,11 @@ def _document(f: Callable[..., object], f_name: str | None = None, /) -> str:
 def _unwrap_invoked_methods(f: Callable[..., object], /) -> Callable[..., object]:
     """Undo wrapping of :meth:`Function.invoke`d methods.
 
-    :meth:`Function.invoke` uses :func:`functools.wraps` to wrap the function and
-    convert the output to the right return type. This wrapping obscures where the
-    method was originally defined, meaning that :func:`plum.repr.repr_source_path`
-    gives erroneous results. This function undoes that wrapping and makes
-    :func:`plum.repr.repr_source_path` work correctly.
+    :meth:`Function.invoke` wraps the function to convert the output to the right
+    return type. This wrapping obscures where the method was originally defined,
+    meaning that :func:`plum.repr.repr_source_path` gives erroneous results. This
+    function undoes that wrapping and makes :func:`plum.repr.repr_source_path` work
+    correctly.
 
     Args:
         f (function): Function, possibly wrapped.

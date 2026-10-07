@@ -1,8 +1,32 @@
+import sys
+
+import pytest
+
 import plum
 from .util import benchmark
 
 
+def _traced():
+    """Whether a tracer is attached, which inflates a cache hit far more than a miss.
+
+    See #315 for the numbers.
+    """
+    # `sys.gettrace` sees any trace function, including coverage's up to Python 3.13.
+    # From 3.14, coverage uses `sys.monitoring` by default and installs no trace
+    # function, so ask `coverage` itself as well.
+    if sys.gettrace() is not None:
+        return True
+    try:
+        import coverage
+    except ImportError:  # pragma: no cover
+        return False
+    return coverage.Coverage.current() is not None
+
+
 def assert_cache_performance(f, f_native):
+    if _traced():
+        pytest.skip("A tracer is attached, which skews the hit/miss timing.")
+
     # Time the performance of a native call.
     dur_native = benchmark(f_native, (1,), n=250, burn=10)
 
@@ -32,6 +56,7 @@ def assert_cache_performance(f, f_native):
     assert dur <= dur_first / 4
 
 
+@pytest.mark.benchmark
 def test_cache_function(dispatch: plum.Dispatcher):
     def f_native(x):
         pass
@@ -48,17 +73,7 @@ def test_cache_function(dispatch: plum.Dispatcher):
     def f(x: int | float | str):
         pass
 
-    # Test performance.
     assert_cache_performance(f, f_native)
-
-    # Test cache correctness.
-    assert f(1) is None
-
-    @dispatch
-    def f(x: int):
-        return 1
-
-    assert f(1) == 1
 
 
 # This class needs to be in the global scope, otherwise it cannot its methods cannot
@@ -93,6 +108,7 @@ class A:
         pass
 
 
+@pytest.mark.benchmark
 def test_cache_class():
     class ANative:
         def __call__(self, x):

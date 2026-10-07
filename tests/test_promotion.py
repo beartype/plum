@@ -7,6 +7,7 @@ import pytest
 
 import plum
 from plum import add_conversion_method, add_promotion_rule, conversion_method
+from plum._function import Function
 from plum._promotion import _promotion_rule
 
 
@@ -389,3 +390,14 @@ def test_unhashable_target_still_raises():
 
     with pytest.raises(TypeError, match="unhashable type"):
         plum.convert(Thing(), [int])
+
+
+@pytest.mark.incompatible_with_mypyc
+def test_convert_does_not_build_an_invoke_wrapper(identity_conversions, monkeypatch):
+    """`convert` must not go through `invoke`, which builds a wrapper per call."""
+
+    def no_invoke(self, *types):
+        raise AssertionError("`convert` must not go through `invoke`.")
+
+    monkeypatch.setattr(Function, "invoke", no_invoke)
+    assert plum.convert(1, int) == 1
