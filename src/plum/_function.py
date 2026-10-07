@@ -16,7 +16,7 @@ from ._resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
 from ._signature import Signature, append_default_args
 from ._type import resolve_type_hint
 from ._util import TypeHint
-from ._wraps import _wraps
+from ._wraps import update_wrapper, update_wrapper_names
 
 # Annotated (not left to inference as `None`) so a `mypyc`-compiled `_function` accepts
 # the external assignment `plum._function._promised_convert = convert` in `_promotion`.
@@ -60,30 +60,12 @@ _owner_transfer: dict[type, type] = {}
 a function (see :meth:`Function.owner`), make the corresponding value the owner."""
 
 
-class _NativeWrappable(Protocol):
-    __name__: str
-    __qualname__: str
-    __wrapped__: Callable[..., Any]
-
-
-def _wraps_native(wrapper: _NativeWrappable, wrapped: Callable[..., Any], /) -> None:
-    """:func:`_wraps` for `Function` and `_BoundFunction`, which take less.
-
-    Deliberately narrower: `functools.wraps` also copies `__doc__` and `__module__`,
-    which `Function` serves through non-data descriptors that an instance attribute
-    would shadow. Use :func:`_wraps` for anything else.
-    """
-    wrapper.__name__ = wrapped.__name__
-    wrapper.__qualname__ = _generate_qualname(wrapped)
-    wrapper.__wrapped__ = wrapped
-
-
 class _InvokedMethod(NativeBase):
     """Run the resolved `method` and convert the result.
 
     Callable returned by :meth:`Function.invoke`. A class rather than a closure,
     which `mypyc` cannot compile (mypyc/mypyc#1205); `NativeBase` for the `__dict__`
-    :func:`_wraps` writes into.
+    :func:`update_wrapper` writes into.
     """
 
     def __init__(
@@ -91,7 +73,7 @@ class _InvokedMethod(NativeBase):
     ) -> None:
         self._method = method
         self._return_type = return_type
-        _wraps(self, f)
+        update_wrapper(self, f)
         self.__wrapped_by_plum__ = method
 
     def __call__(self, *args: Any, **kw: Any) -> Any:
@@ -206,7 +188,7 @@ class Function(NativeBase):
         self._lock = threading.RLock()
 
         # `__doc__` is the `_DocDescriptor`, so store the raw docstring in `self._doc`.
-        _wraps_native(self, f)
+        update_wrapper_names(self, f)
         self._doc = f.__doc__ if f.__doc__ else ""
 
         # `owner` is the name of the owner. We will later attempt to resolve to
@@ -637,29 +619,6 @@ setattr(Function, "__doc__", _DocDescriptor())  # noqa: B010
 setattr(Function, "__module__", _ModuleDescriptor(__name__))  # noqa: B010
 
 
-def _generate_qualname(f: Callable[..., Any], /) -> str:
-    """Generate a qualified name for a function.
-
-    This function can be interpreted as an improved version of `f.__qualname__`
-    and can be run regardless of whether `f.__qualname__` exists.
-
-    Args:
-        f (Callable): Function.
-
-    Returns:
-        str: Qualified name.
-    """
-    qualname = getattr(f, "__qualname__", f.__name__)
-
-    # TODO: If we ever want to scope functions, we can uncomment this.
-    # if hasattr(f, "__module__"):
-    #     qualname = f"{f.__module__}.{qualname}"
-    # `__main__` would be part of `f.__name__` in e.g. the REPL.
-    # qualname = qualname.replace("__main__.", """)
-
-    return qualname
-
-
 class _DispatchFunction(Protocol):
     """Protocol for the `dispatch` method of a function."""
 
@@ -704,7 +663,7 @@ class _BoundFunction(NativeBase):
 
     # Declared so `_BoundFunction` is a `mypyc` native class (like `Function`), which
     # speeds up bound (class-method) dispatch. `_f` holds a `Function` (typed as proto);
-    # the dunders are also what `_wraps_native` writes (see `_NativeWrappable`).
+    # the dunders are also what `update_wrapper_names` writes.
     _f: _BoundFunctionProto
     _instance: object
     __name__: str
@@ -716,7 +675,7 @@ class _BoundFunction(NativeBase):
         self._instance = instance
         # Wrap the underlying function `f._f`, like `Function`. `__doc__`/`__module__`
         # are served by the descriptors attached below.
-        _wraps_native(self, f._f)
+        update_wrapper_names(self, f._f)
 
     def _compute_doc(self) -> str | None:
         return self._f.__doc__
@@ -754,7 +713,7 @@ class _BoundInvokedMethod(NativeBase):
         self._types = types
         # `bound.__wrapped__` is the underlying function (`f._f`), set in
         # `_BoundFunction.__init__`.
-        _wraps(self, bound.__wrapped__)
+        update_wrapper(self, bound.__wrapped__)
 
     def __call__(self, *args: Any, **kw: Any) -> Any:
         # TODO: Can we do this without `type` here?

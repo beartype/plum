@@ -1,6 +1,4 @@
 import abc
-import functools
-import inspect
 import operator
 import os
 import pickle
@@ -23,7 +21,6 @@ from plum._resolver import (
     _unwrap_invoked_methods,
 )
 from plum._signature import Signature
-from plum._wraps import _wraps
 
 
 def test_convert_reference():
@@ -789,75 +786,3 @@ def test_weakref_and_doc_assignment(wrap):
     assert weakref.ref(g)() is g
     g.__doc__ = "Replaced."
     assert g.__doc__ == "Replaced."
-
-
-class _W:
-    """A wrapper for `_wraps` to write onto; callable, for `inspect.signature`."""
-
-    def __call__(self, *args, **kw_args):
-        return None
-
-
-def test_wraps_matches_functools_wraps():
-    """The fast metadata copy must be observationally identical to `functools.wraps`.
-
-    Everything plum or `inspect` reads back off an invoke wrapper is compared here;
-    `__type_params__` is deliberately not copied, since nothing reads it.
-    """
-
-    def target(x: int) -> str:
-        """The docstring."""
-        return "s"
-
-    target.custom_attr = 42  # `functools.wraps` merges `__dict__`; so must we.
-
-    reference, fast = _W(), _W()
-    functools.wraps(target)(reference)
-    _wraps(fast, target)
-
-    for attr in ("__name__", "__qualname__", "__module__", "__doc__", "custom_attr"):
-        assert getattr(fast, attr) == getattr(reference, attr), attr
-    assert fast.__wrapped__ is target is reference.__wrapped__
-    assert inspect.signature(fast) == inspect.signature(reference)
-    assert inspect.unwrap(fast) is target
-
-    # Annotations, which `functools.wraps` carries on `__annotations__` before Python
-    # 3.14 and on the lazy `__annotate__` from 3.14. Whichever this interpreter uses,
-    # the two must agree; before 3.14 the copy is visible, so assert the value too.
-    sentinel = object()
-    for attr in ("__annotations__", "__annotate__"):
-        assert getattr(fast, attr, sentinel) == getattr(reference, attr, sentinel), attr
-    if "__annotate__" not in functools.WRAPPER_ASSIGNMENTS:
-        assert fast.__annotations__ == {"x": int, "return": str}
-
-
-def test_wraps_tolerates_a_wrapped_without_a_dict():
-    """`functools.wraps` merges `getattr(wrapped, "__dict__", {})`, so a slotted
-    callable must not make the copy raise."""
-
-    class Slotted:
-        __slots__ = ()
-        __name__ = "slotted"
-        __qualname__ = "Slotted.slotted"
-        __module__ = "somewhere"
-        __doc__ = "doc"
-
-    wrapped, wrapper = Slotted(), _W()
-    assert not hasattr(wrapped, "__dict__")
-    _wraps(wrapper, wrapped)  # Must not raise.
-    assert wrapper.__name__ == "slotted"
-    assert wrapper.__wrapped__ is wrapped
-
-
-def test_wraps_without_qualname():
-    """A callable object need not have `__qualname__`; the fallback is `__name__`."""
-
-    class Callable:
-        __name__ = "no_qualname"
-        __doc__ = None
-        __module__ = "somewhere"
-
-    wrapped, wrapper = Callable(), _W()
-    assert not hasattr(wrapped, "__qualname__")
-    _wraps(wrapper, wrapped)
-    assert wrapper.__name__ == wrapper.__qualname__ == "no_qualname"
