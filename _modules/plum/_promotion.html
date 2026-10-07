@@ -419,8 +419,8 @@ document.write(`
 
     <span class="n">type_to_resolved</span> <span class="o">=</span> <span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">type_to</span><span class="p">)</span>
     <span class="c1"># Resolve and call the method directly. `_convert.invoke` would read better, but</span>
-    <span class="c1"># it builds a `functools.wraps` wrapper per call, ~1.35 us on top of the 0.14 us</span>
-    <span class="c1"># the resolution itself costs, on every call that does not hit the cache above.</span>
+    <span class="c1"># it builds an `_InvokedMethod` per call that is used once and dropped, which costs</span>
+    <span class="c1"># more than the resolution itself, on every call that misses the cache above.</span>
     <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span> <span class="o">=</span> <span class="n">_convert</span><span class="o">.</span><span class="n">_resolve_method_with_cache</span><span class="p">(</span>
         <span class="n">types</span><span class="o">=</span><span class="p">(</span><span class="n">type_from</span><span class="p">,</span> <span class="n">type_to_resolved</span><span class="p">)</span>
     <span class="p">)</span>
