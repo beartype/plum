@@ -8,14 +8,6 @@ Importing this pulls in `plum` only, so `test_benchmark.py` stays free of
 `pytest-benchmark`.
 """
 
-__all__ = [
-    "R1",
-    "R2",
-    "annotated_return",
-    "annotated_union_return",
-    "unannotated_return",
-]
-
 import plum
 
 _dispatch = plum.Dispatcher()

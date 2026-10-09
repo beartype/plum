@@ -155,7 +155,6 @@ def _method_on(t):
     return many
 
 
-many = None
 for _t in _many_types:
     many = _many_dispatch(_method_on(_t))
 
@@ -304,14 +303,8 @@ def test_convert(benchmark):
 def _register_and_resolve(hints):
     """Register one method per hint on a fresh function, then resolve them."""
     dispatch = plum.Dispatcher()
-    f = None
     for hint in hints:
-
-        def method(x):
-            return x
-
-        method.__annotations__ = {"x": hint}
-        f = dispatch(method)
+        f = dispatch(_method_on(hint))
     f._resolve_pending_registrations()
     return f
 

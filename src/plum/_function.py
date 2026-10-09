@@ -28,11 +28,8 @@ SomeExceptionType = TypeVar("SomeExceptionType", bound=Exception)
 
 _identity_conversions: dict[tuple[type, TypeHint], bool] = {}
 """dict[tuple[type, TypeHint], bool]: Whether :func:`convert` can be skipped for a
-`(type(obj), target_type)` pair, because the conversion is the identity.
-
-`False` is weaker than "not the identity": it means the pair cannot be settled by
-type, e.g. an unfaithful target or an applying conversion method, even where the
-conversion happens to be the identity for some value. Missing means "not yet analysed".
+`(type(obj), target_type)` pair. `False` means undecidable by type, not "not the
+identity"; missing means "not yet analysed".
 
 Written by :func:`plum.convert`, which decides what is recordable; read here because
 this is the hot path. Same staleness contract as

@@ -187,16 +187,10 @@ addopts = [
     "-ra",
     "-p",
     "no:doctest",
-    # The benchmark options are set in `tests/conftest.py` rather than here, so that
-    # `pytest-benchmark` is required only to run `tests/benchmarks`, and not by every
-    # `pytest` invocation.
 ]
 minversion = "6.0"
 markers = [
     "incompatible_with_mypyc: marks tests as incompatible with mypyc-compiled code",
-    # `pytest-benchmark` reads this marker for per-benchmark configuration (`group`,
-    # and so on); `tests/test_benchmark.py` also uses it, bare, to tag a test that
-    # asserts on a timing ratio. Either way `-m 'not benchmark'` deselects them.
     "benchmark: configures a `pytest-benchmark` benchmark, or tags a timing assertion",
 ]
 
