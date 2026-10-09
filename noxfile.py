@@ -68,5 +68,18 @@ def pytest(s: nox.Session, /) -> None:
 
 @session(uv_groups=["test_runtime"], reuse_venv=True)
 def benchmark(s: nox.Session, /) -> None:
-    """Run the benchmarks."""
-    s.run("python", "tests/benchmark.py", *s.posargs)
+    """Run the benchmarks.
+
+    Pass `--benchmark-save=NAME` to record a run and `--benchmark-compare=NAME` to
+    diff against a recorded one; see `tests/benchmarks/README.md`.
+    """
+    s.run(
+        "pytest",
+        "tests/benchmarks",
+        "--benchmark-enable",
+        # The calibration floor is set in `tests/conftest.py`, so that it applies to
+        # a plain `pytest` invocation too.
+        "--benchmark-columns=min,median,stddev,rounds",
+        "--benchmark-group-by=group",
+        *s.posargs,
+    )
