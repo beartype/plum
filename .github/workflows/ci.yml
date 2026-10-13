@@ -9,11 +9,18 @@ on:
     branches:
       - master
 
+  # Weekly run so that breakage from new upstream releases is caught even when
+  # there is no activity in this repository.
+  schedule:
+    - cron: "0 6 * * 1"  # Mondays, 06:00 UTC
+
 permissions:
   contents: read
 
 jobs:
   test:
+    # The scheduled run only exercises the bleeding-edge job.
+    if: ${{ github.event_name != 'schedule' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -65,9 +72,42 @@ jobs:
           parallel: true
           file: coverage.lcov
 
+  # Test against the newest available dependencies, ignoring `uv.lock`, and
+  # against the newest `beartype` including release candidates. This is expected
+  # to break from time to time, so it is allowed to fail.
+  test-bleeding-edge:
+    name: Test bleeding edge ${{ matrix.python-version }}
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867 # v7.1.6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # `--upgrade` re-resolves rather than using the pinned `uv.lock`, and
+      # `--prerelease=allow` lets pre-releases into that resolution.
+      - name: Install newest dependencies
+        run: |
+          uv sync --no-default-groups --group test_runtime --upgrade --prerelease=allow
+          uv pip install --upgrade --prerelease=allow beartype
+
+      - name: Report resolved versions
+        run: uv pip list
+
+      - name: Run tests
+        run: uv run --no-sync pytest -v
+
   # Test that `mypyc`-compiled wheels work.
   test-mypyc:
     name: Test mypyc wheel
+    if: ${{ github.event_name != 'schedule' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -99,7 +139,7 @@ jobs:
   finish:
     name: Finish coverage
     needs: test
-    if: ${{ always() }}
+    if: ${{ always() && github.event_name != 'schedule' }}
     runs-on: ubuntu-latest
     steps:
       - name: Coveralls finished
