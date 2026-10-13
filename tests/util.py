@@ -1,3 +1,4 @@
+from functools import wraps
 from time import time
 
 import rich
@@ -46,3 +47,13 @@ def rich_render(x: object) -> str:
     with console.capture() as capture:
         console.print(x)
     return capture.get()
+
+
+def wrap_function(f):
+    """Wrap a function in a different module while preserving its metadata."""
+
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        return f(*args, **kwargs)
+
+    return wrapper
