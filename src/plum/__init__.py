@@ -45,6 +45,10 @@ __all__ = (
     "type_mapping",
     "resolve_type_hint",
     "is_faithful",
+    "is_cacheable",
+    "cache_key",
+    "KeyPart",
+    "CacheSpec",
     # util
     "Callable",  # TODO: deprecate
     "TypeHint",
@@ -90,8 +94,12 @@ from ._promotion import (
 from ._resolver import AmbiguousLookupError, NotFoundLookupError
 from ._signature import Signature, append_default_args, inspect_signature
 from ._type import (
+    CacheSpec,
+    KeyPart,
     ModuleType,
     PromisedType,
+    cache_key,
+    is_cacheable,
     is_faithful,
     resolve_type_hint,
     type_mapping,
