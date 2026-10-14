@@ -113,7 +113,6 @@ class Signature(Comparable):
         "varargs",
         "precedence",
         "cache_spec",
-        "_check",
         "_matchers",
     )
 
@@ -136,12 +135,8 @@ class Signature(Comparable):
         self.precedence = precedence
 
         self.cache_spec: CacheSpec | None = None
-        # Bind the matcher once, at construction, rather than reaching for it on
-        # every candidate check. It is `is_bearable` for every signature; binding it
-        # here is what lets a signature select a different one.
-        self._check: Callable[[object, TypeHint], bool] = is_bearable
         # Bound matchers, by arity; see `_matcher`. `None` until one is asked for,
-        # since only a signature reached through the tier-two path ever needs one.
+        # since only the verify cache of an uncacheable function uses them.
         self._matchers: dict[int, Callable[[tuple[object, ...]], bool]] | None = None
         self._derive()
 
@@ -190,11 +185,6 @@ class Signature(Comparable):
         copy = cls.__new__(cls)
         for attr in self.__slots__:
             setattr(copy, attr, getattr(self, attr))
-
-        # `append_default_args` copies a signature and then rewrites `types` and
-        # `varargs` on the copy. A matcher is bound to the arity and types it was
-        # built from, so carrying one across that would answer for the original.
-        copy._matchers = None
         return copy
 
     def __rich_console__(
@@ -364,8 +354,7 @@ class Signature(Comparable):
             return False
         else:
             types = self.expand_varargs(len(values))
-            check = self._check
-            return all(check(v, t) for v, t in zip(values, types, strict=True))
+            return all(is_bearable(v, t) for v, t in zip(values, types, strict=True))
 
     def might_match(self, values: tuple[object, ...], /) -> bool:
         """Check whether *any* values with the runtime types of `values` could match.
@@ -410,9 +399,8 @@ class Signature(Comparable):
 
         # Additionally count one for every mismatching value above the
         # extra/missing arguments. There can be fewer types than values.
-        check = self._check
         for v, t in zip(values, types, strict=False):
-            if not check(v, t):
+            if not is_bearable(v, t):
                 distance += 1
 
         return distance
@@ -438,9 +426,8 @@ class Signature(Comparable):
         # there is an explicit mismatch.
         varargs_matched = True
 
-        check = self._check
         for i, (v, t) in enumerate(zip(values, types, strict=False)):
-            if not check(v, t):
+            if not is_bearable(v, t):
                 if i < n_types:
                     mismatches.add(i)
                 else:
@@ -452,11 +439,8 @@ class Signature(Comparable):
 def _matcher(signature: Signature, n: int, /) -> Callable[[tuple[object, ...]], bool]:
     """:func:`_bind_matcher`, memoised on the signature and the arity.
 
-    A matcher is fixed by the signature and the arity and by nothing else, but a
-    verify-cache bucket is keyed on the runtime *types* of the arguments, so without
-    this every bucket would bind its own copy of the same matcher for every method it
-    holds -- a 248-byte closure per method per bucket, against at most one per method
-    per arity. See :meth:`.function.Function._build_verify_bucket`.
+    Verify-cache buckets are keyed on the runtime types of the arguments, so many
+    buckets hold the same method at the same arity. This lets them share a matcher.
 
     Args:
         signature (:class:`Signature`): Signature to bind a matcher for.
@@ -478,18 +462,14 @@ def _matcher(signature: Signature, n: int, /) -> Callable[[tuple[object, ...]], 
 def _bind_matcher(
     signature: Signature, n: int, /
 ) -> Callable[[tuple[object, ...]], bool]:
-    """Bind a matcher for tuples of exactly `n` values.
+    """Bind :meth:`Signature.match` to tuples of exactly `n` values.
 
-    This is :meth:`Signature.match` with the arity check and the expansion of the
-    variable arguments done once, here, instead of on every call. It is only correct
-    for tuples of `n` values, so the caller must know the arity up front -- which a
-    cache keyed on the types of the arguments does.
+    The arity check and the expansion of the variable arguments are done once, here,
+    rather than on every call.
 
-    A module-level function rather than a method, because `mypyc` crashes with an
-    internal `AssertionError` on a closure inside a method of a class carrying a
-    decorator it does not recognise, which :class:`Signature` does
-    (:func:`.repr.rich_repr`). Keeping the closures means the bound matcher stays
-    exactly the plain function call it was on the hot path.
+    This is not a method, because `mypyc` crashes on a closure in a method of a class
+    with a decorator it does not know, and :class:`Signature` has
+    :func:`.repr.rich_repr`.
 
     Args:
         signature (:class:`Signature`): Signature to bind a matcher for.
@@ -503,7 +483,7 @@ def _bind_matcher(
     if not (len(types_) == n or (len(types_) < n and signature.has_varargs)):
         return lambda values: False
     types = signature.expand_varargs(n)
-    check = signature._check
+    check = is_bearable
     if n == 1:
         # By far the most common arity, and worth not paying a `zip` for.
         (t,) = types

@@ -27,10 +27,9 @@ _VerifyEntry = tuple[Callable[[tuple[object, ...]], bool], Callable[..., Any], T
 """A method of a verify-cache bucket, prepared for verification: a matcher bound to
 the arity of the bucket, the implementation, and the return type."""
 
-_VerifyBucket = tuple[MethodList, tuple[_VerifyEntry, ...], bool]
-"""A verify-cache bucket: the narrowed methods in registration order, their entries,
-and whether the first entry that matches settles the call. See
-:meth:`Function._build_verify_bucket`."""
+_VerifyBucket = tuple[tuple[_VerifyEntry, ...], bool]
+"""A verify-cache bucket: the entries of the narrowed methods, and whether the first
+entry that matches settles the call. See :meth:`Function._build_verify_bucket`."""
 
 _VALUE_CACHE_LIMIT = 4096
 """int: Maximum number of cache entries of a function that dispatches on `Literal`.
@@ -630,39 +629,25 @@ class Function(NativeBase):
             if cache is None:
                 cache = self._verify_cache = {}
             try:
-                methods, entries, first_wins = cache[key]
+                entries, first_wins = cache[key]
             except KeyError:
                 if len(cache) >= _VERIFY_CACHE_LIMIT:
                     # The narrowed methods could not be cached, so narrowing would
                     # cost more than it saves.
                     return self.resolve_method(args)
-                methods, entries, first_wins = self._build_verify_bucket(
-                    args, key, cache
-                )
+                entries, first_wins = self._build_verify_bucket(args, key, cache)
             if first_wins:
-                # The bucket is in resolution order, so the first method that matches
-                # is the one full resolution would select; see
-                # :func:`.resolver.resolution_order`.
+                # The first method that matches is the one full resolution selects;
+                # see `resolution_order`.
                 for match, impl, return_type in entries:
                     if match(args):
                         return impl, return_type
             else:
-                # No such order. The one thing matching settles on its own is a
-                # unique match: a single matching method is the only candidate
-                # `Resolver.resolve` can collect, whatever the other methods look
-                # like, so it is what full resolution returns. Zero matches or
-                # several fall through, and full resolution raises the right error
-                # or picks between the candidates.
-                hit = None
-                for entry in entries:
-                    if entry[0](args):
-                        if hit is not None:
-                            hit = None
-                            break
-                        hit = entry
-                if hit is not None:
-                    return hit[1], hit[2]
-            # Not over `methods`, which may predate a registration.
+                # A method that matches alone is the only candidate `Resolver.resolve`
+                # can collect, so it is what full resolution selects.
+                hits = [entry for entry in entries if entry[0](args)]
+                if len(hits) == 1:
+                    return hits[0][1], hits[0][2]
             return self.resolve_method(args)
 
         # Take the cache before resolving. The store below does not hold the lock, so if
@@ -685,39 +670,26 @@ class Function(NativeBase):
         cache: dict[tuple[TypeHint, ...], _VerifyBucket],
         /,
     ) -> _VerifyBucket:
-        """Build and store the verify-cache bucket for arguments of these types.
+        """Build the verify-cache bucket for `args` and store it under `types`.
 
         Args:
             args (tuple[object, ...]): Arguments that missed the cache.
             types (tuple[:obj:`.TypeHint`, ...]): Key to store the bucket under.
-            cache (dict): :attr:`_verify_cache` as captured by `_resolve_miss`
-                *before* resolving, and passed through rather than re-read here: a
-                `clear_cache` racing this build swaps in a new `_verify_cache`, and
-                the store must land in the dict that call captured -- the one the
-                clear discarded -- not in the live one, or a bucket built from a
-                method set a concurrent registration just superseded would overwrite
-                a key in the fresh cache and be served long after the clear.
+            cache (dict): :attr:`_verify_cache` as captured before resolving, for the
+                reason given in `_store`.
 
         Returns:
             :obj:`_VerifyBucket`: The bucket.
         """
-        methods = MethodList(
-            m for m in self._resolver.methods if m.signature.might_match(args)
-        )
-        # Ordering the bucket costs a quadratic number of signature comparisons, but
-        # only here, once per bucket, and it saves the whole candidate selection of
-        # `Resolver.resolve` on every call that hits it.
+        methods = [m for m in self._resolver.methods if m.signature.might_match(args)]
         order = resolution_order(methods)
         n = len(args)
         entries = tuple(
             (_matcher(m.signature, n), m.implementation, m.return_type)
             for m in (methods if order is None else order)
         )
-        bucket: _VerifyBucket = (methods, entries, order is not None)
-        # Bounded like the method cache, and more urgently; see
-        # `_VERIFY_CACHE_LIMIT`.
-        if len(cache) < _VERIFY_CACHE_LIMIT:
-            cache[types] = bucket
+        bucket: _VerifyBucket = (entries, order is not None)
+        cache[types] = bucket
         return bucket
 
     def invoke(self, *types: TypeHint) -> Callable[..., Any]:

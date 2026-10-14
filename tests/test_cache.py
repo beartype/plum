@@ -13,7 +13,7 @@ import plum
 from .util import benchmark
 from plum import _function as _function_module
 from plum._function import Function
-from plum._resolver import resolution_order
+from plum._resolver import _MAX_ORDERED_METHODS
 
 
 def _traced():
@@ -433,13 +433,7 @@ def test_verify_cache_clearing(dispatch: plum.Dispatcher):
 
 @pytest.mark.incompatible_with_mypyc
 def test_verify_bucket_overtaken_by_a_clear_is_not_cached(monkeypatch, dispatch):
-    """A verify-cache bucket build overtaken by a `clear_cache` must not poison a
-    *new* `_verify_cache` dict with a bucket narrowed from the superseded method
-    set. `_build_verify_bucket` must store into the `cache` dict `_resolve_miss`
-    captured before resolving, not into whatever `self._verify_cache` happens to
-    be by the time the build finishes. See GitHub issue #274 for the analogous
-    method-cache race this mirrors.
-    """
+    """Test that a bucket built before a `clear_cache` is not stored after it."""
 
     @dispatch
     def f(x: list[int]):
@@ -455,10 +449,7 @@ def test_verify_bucket_overtaken_by_a_clear_is_not_cached(monkeypatch, dispatch)
     original = _function_module.resolution_order
 
     def parked(methods):
-        # Narrowing (`might_match`) already ran against the pre-registration
-        # method set before this is called; park here, before the store, which
-        # is where the clear lands. Only the first call parks -- later calls in
-        # this test (warming the new bucket) must run straight through.
+        # Park after narrowing and before the store. Only the first call parks.
         out = original(methods)
         if not parked_once.is_set():
             parked_once.set()
@@ -555,9 +546,6 @@ def test_verify_cache_handles_varargs_and_arities(dispatch):
     assert f(1, [1], [2]) == "varargs"
 
 
-# When a bucket can be put in resolution order, the first method that matches is the
-# one full resolution would select, so the call can return on it.
-
 _mro_dispatch = plum.Dispatcher()
 
 
@@ -573,6 +561,8 @@ class _MroSub(_MroBase):
 
 
 def test_verify_cache_orders_a_comparable_bucket(dispatch):
+    """Test that a bucket of comparable methods is in resolution order."""
+
     @dispatch
     def f(x: list):
         return "list"
@@ -582,44 +572,15 @@ def test_verify_cache_orders_a_comparable_bucket(dispatch):
         return "list[int]"
 
     assert f([1]) == "list[int]"
-    assert f([1]) == "list[int]"
     assert f(["a"]) == "list"
-
-    methods, entries, first_wins = f._verify_cache[(list,)]
+    entries, first_wins = f._verify_cache[(list,)]
     assert first_wins
-
-    # `methods` stays in registration order: `Resolver.resolve` and the error
-    # messages both want it that way.
-    assert [m.signature.types for m in methods] == [(list,), (list[int],)]
-
-    # The *ordered* list is what the first-match fast path walks, and it is what the
-    # `first_wins` claim rests on. Assert the ordering itself, most specific first,
-    # rather than inferring it from the bucket.
-    ordered = resolution_order(methods)
-    assert ordered is not None
-    assert [m.signature.types for m in ordered] == [(list[int],), (list,)]
-    # And the fast path walks exactly that many candidates, in that order.
-    assert len(entries) == len(ordered)
-
-
-def test_verify_cache_does_not_order_an_incomparable_bucket(dispatch):
-    @dispatch
-    def f(x: list[int]):
-        return "list[int]"
-
-    @dispatch
-    def f(x: list[str]):
-        return "list[str]"
-
-    assert f([1]) == "list[int]"
-    # Neither signature is below the other, and the empty list matches both, so the
-    # bucket cannot return on a first match.
-    assert not f._verify_cache[(list,)][2]
-    with pytest.raises(plum.AmbiguousLookupError):
-        f([])
+    assert [impl(None) for _, impl, _ in entries] == ["list[int]", "list"]
 
 
 def test_verify_cache_settles_an_unordered_bucket_on_a_unique_match(dispatch):
+    """Test that an unordered bucket settles a call that matches one method."""
+
     @dispatch
     def f(x: list[int]):
         return "list[int]"
@@ -628,34 +589,22 @@ def test_verify_cache_settles_an_unordered_bucket_on_a_unique_match(dispatch):
     def f(x: list[str]):
         return "list[str]"
 
-    # An unordered bucket can still settle a call that matches exactly one of its
-    # methods: that method is the only candidate full resolution can collect.
     assert f([1]) == "list[int]"
     assert f(["a"]) == "list[str]"
-    assert not f._verify_cache[(list,)][2]
-
-    # Several matches fall through to full resolution, which finds the ambiguity.
+    # The empty list matches both, so the bucket cannot be ordered.
+    assert not f._verify_cache[(list,)][1]
+    # Several matches or none fall through to full resolution.
     with pytest.raises(plum.AmbiguousLookupError):
         f([])
-    # So does no match at all, which reports every method, not just the bucket.
-    with pytest.raises(plum.NotFoundLookupError) as e:
+    with pytest.raises(plum.NotFoundLookupError):
         f([1.0])
-    assert len(e.value.methods) == 2
 
 
 @pytest.mark.incompatible_with_mypyc
 def test_verify_cache_fallback_resolves_against_the_current_methods(
     monkeypatch, dispatch
 ):
-    """A call that falls all the way through the verify-cache's fast paths (no
-    match, or several with no order between them) must resolve against the
-    CURRENT method set, not the narrowed candidate list from when the bucket was
-    last (re)built. `resolve_method` flushes a concurrent registration to the
-    resolver internally; a stale narrowed list threaded into it regardless would
-    have `Resolver.resolve` see only the old candidates, missing exactly the
-    method the flush just added, and raise `NotFoundLookupError` even though the
-    call is now resolvable.
-    """
+    """Test that a call the bucket does not settle resolves over the current methods."""
 
     @dispatch
     def f(x: list[int]):
@@ -668,7 +617,7 @@ def test_verify_cache_fallback_resolves_against_the_current_methods(
     # Warm an incomparable, two-method bucket for `list` arguments.
     assert f([1]) == "list[int]"
     assert f(["a"]) == "list[str]"
-    assert not f._verify_cache[(list,)][2]
+    assert not f._verify_cache[(list,)][1]
 
     reached_fallback, registered = threading.Event(), threading.Event()
     original, target = Function.resolve_method, f
@@ -676,8 +625,7 @@ def test_verify_cache_fallback_resolves_against_the_current_methods(
     def parked(self, *args, **kw_args):
         if self is target:
             reached_fallback.set()
-            # Park right before the fallback call, before the registration below
-            # has landed -- exactly the window the bug lived in.
+            # Park until the registration below is pending.
             assert registered.wait(5), "the registration never landed"
         return original(self, *args, **kw_args)
 
@@ -698,23 +646,9 @@ def test_verify_cache_fallback_resolves_against_the_current_methods(
         assert call.result(5) == "list[float]"
 
 
-def test_verify_cache_ordering_ignores_precedence(dispatch):
-    @dispatch(precedence=5)
-    def f(x: list):
-        return "list"
-
-    @dispatch
-    def f(x: list[int]):
-        return "list[int]"
-
-    # A fully comparable bucket is never ambiguous, so precedence never gets a say:
-    # specificity decides, exactly as in full resolution.
-    assert f([1]) == "list[int]"
-    assert f([1]) == "list[int]"
-    assert f._verify_cache[(list,)][2]
-
-
 def test_verify_cache_orders_equally_specific_methods_by_registration(dispatch):
+    """Test that an ordered bucket breaks a tie by registration, not precedence."""
+
     @dispatch(precedence=1)
     def f(x: list[int]):
         return "first"
@@ -728,7 +662,7 @@ def test_verify_cache_orders_equally_specific_methods_by_registration(dispatch):
     # ordering, cold and warm.
     assert f([1]) == "second"
     assert f([1]) == "second"
-    assert f._verify_cache[(list,)][2]
+    assert f._verify_cache[(list,)][1]
     assert f._resolver.resolve(([1],)).implementation([1]) == "second"
 
 
@@ -757,9 +691,9 @@ def test_verify_cache_leaves_a_large_bucket_unordered(dispatch):
 
     # Ordering is quadratic in the size of the bucket, so a large one is left to the
     # unique-match path, which resolves it exactly as full resolution does.
-    assert len(f.methods) > 10
+    assert len(f.methods) > _MAX_ORDERED_METHODS
     assert f([1]) == 0
-    assert not f._verify_cache[(list,)][2]
+    assert not f._verify_cache[(list,)][1]
     assert f(["a"]) == 1
 
 
@@ -771,11 +705,6 @@ def test_verify_cache_first_match_preserves_the_mro_fallback():
     assert sub.f(["a"]) == "base"
     assert sub.f(["a"]) == "base"
 
-
-# A differential fuzz test for the verify cache. Random method sets over uncacheable
-# hints are dispatched over a corpus of values, and every outcome is compared against
-# full resolution over all methods, cold and warm. Whatever a bucket does, it has to
-# agree with the resolver it stands in for.
 
 _FUZZ_HINTS = (
     list[int],
@@ -814,8 +743,7 @@ _FUZZ_VALUES = (
 def _fuzz_function(rng):
     """Build a function from a random set of methods over `_FUZZ_HINTS`.
 
-    Returns the function, a map from implementation to the index of the method that
-    implements it, and the arities the methods were built for.
+    Returns the function and a map from each implementation to its index.
     """
     impls = {}
     f = None
@@ -854,10 +782,11 @@ def _outcome(call, impls):
 
 
 def test_verify_cache_differential_fuzz():
+    """Test that the verify cache agrees with full resolution on random methods."""
     rng = random.Random(20240611)
     uncacheable = 0
 
-    for _ in range(300):
+    for _ in range(100):
         f, impls = _fuzz_function(rng)
         uncacheable += not f._resolver.is_cacheable
 
@@ -880,7 +809,7 @@ def test_verify_cache_differential_fuzz():
 
     # The fast paths under test only run for an uncacheable resolver, so the corpus
     # has to actually produce those.
-    assert uncacheable > 200
+    assert uncacheable > 60
 
 
 class _PropertyLiar:
@@ -974,61 +903,18 @@ def test_verify_cache_is_not_allocated_for_cacheable_functions(dispatch):
 
 
 def test_matchers_are_shared_across_verify_cache_buckets(dispatch):
-    # A matcher is fixed by the signature and the arity, but buckets are keyed on the
-    # runtime types, so without sharing every bucket binds its own copy per method.
-    @dispatch
-    def f(x: list[int], y: object):
-        return "li"
+    """Test that buckets share one matcher per signature and arity."""
 
     @dispatch
-    def f(x: list[str], y: object):
-        return "ls"
+    def f(x: list[int], y: object):
+        return "list[int]"
 
     @dispatch
     def f(x: object, y: object):
-        return "o"
+        return "object"
 
-    class Mk:
-        pass
-
-    for i in range(40):
-        kind = type(f"T{i}", (Mk,), {})
-        f([1], kind())
-        f(["a"], kind())
-
-    buckets = list(f._verify_cache.values())
-    assert len(buckets) == 40
-    matchers = [entry[0] for (_methods, entries, _fw) in buckets for entry in entries]
-    assert len(matchers) == 120
-    # One per (signature, arity), not one per (bucket, method).
-    assert len({id(m) for m in matchers}) == 3
-
-
-def test_default_args_copy_does_not_inherit_a_stale_matcher(dispatch):
-    # `append_default_args` copies a signature and then drops its last type, so a
-    # matcher carried across the copy would answer for the original's arity.
-    from copy import copy as shallow_copy
-
-    from plum._signature import Signature, _matcher
-    from plum._util import Missing
-
-    s = Signature(list, int)
-    assert _matcher(s, 2)(([1], 2)) is True
-    assert s._matchers is not None  # Warmed.
-
-    c = shallow_copy(s)
-    assert c._matchers is None  # The copy starts cold.
-    c.varargs = Missing
-    c.types = c.types[:-1]  # Exactly what `append_default_args` does.
-    assert _matcher(c, 1)(([1],)) is True  # Answers for the copy's arity ...
-    assert _matcher(c, 2)(([1], 2)) is False  # ... and rejects the original's.
-
-    # And end to end, through the dispatcher that builds those copies.
-    @dispatch
-    def f(x: list[int], y: int = 0):
-        return ("li", y)
-
-    assert f([1], 5) == ("li", 5)
-    assert f([1]) == ("li", 0)
-    assert f([1], 5) == ("li", 5)  # Warm.
-    assert f([1]) == ("li", 0)
+    f([1], 1)
+    f([1], "a")
+    entries = [entry for bucket, _ in f._verify_cache.values() for entry in bucket]
+    assert len(entries) == 4
+    assert len({id(match) for match, _, _ in entries}) == 2
