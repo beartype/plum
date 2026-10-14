@@ -70,15 +70,14 @@ def pytest(s: nox.Session, /) -> None:
 def benchmark(s: nox.Session, /) -> None:
     """Run the benchmarks.
 
-    Pass `--benchmark-save=NAME` to record a run and `--benchmark-compare=NAME` to
-    diff against a recorded one; see `tests/benchmarks/README.md`.
+    Pass `--benchmark-save=NAME` to record a run and `--benchmark-compare=NUM` to
+    compare against run `NUM`, or against the last recorded one when `NUM` is omitted;
+    see `tests/benchmarks/README.md`.
     """
     s.run(
         "pytest",
         "tests/benchmarks",
         "--benchmark-enable",
-        # The calibration floor is set in `tests/conftest.py`, so that it applies to
-        # a plain `pytest` invocation too.
         "--benchmark-columns=min,median,stddev,rounds",
         "--benchmark-group-by=group",
         *s.posargs,

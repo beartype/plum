@@ -28,12 +28,12 @@ SomeExceptionType = TypeVar("SomeExceptionType", bound=Exception)
 
 _identity_conversions: dict[tuple[type, TypeHint], bool] = {}
 """dict[tuple[type, TypeHint], bool]: Whether :func:`convert` can be skipped for a
-`(type(obj), target_type)` pair. `False` means undecidable by type, not "not the
-identity"; missing means "not yet analysed".
+`(type(obj), target_type)` pair. `False` means that this cannot be decided from the
+types alone, and a missing entry means that the pair has not been analysed yet.
 
 Written by :func:`plum.convert`, which decides what is recordable; read here because
-this is the hot path. Same staleness contract as
-:attr:`Function._cache`: mutating a type's meaning in place needs `clear_all_cache`."""
+this is the hot path. Same staleness contract as :attr:`Function._cache`: mutating a
+type's meaning in place needs `clear_all_cache`."""
 
 
 def _convert(obj: Any, target_type: TypeHint, /) -> Any:

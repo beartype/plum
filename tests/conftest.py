@@ -9,18 +9,19 @@ from plum._promotion import _convert, _promotion_rule
 
 
 def pytest_configure(config: pytest.Config) -> None:
-    """Calibrate the benchmarks, and time them only when asked to.
+    """Time the benchmarks only when asked to, and set their minimum time per round.
 
-    This is the root `conftest.py`, not `tests/benchmarks/conftest.py`, which loads
-    during collection: too late, so the benchmarks would run timed in an ordinary run.
+    This has to live in the root `conftest.py`. A `tests/benchmarks/conftest.py` is
+    loaded during collection, after `pytest-benchmark` has read its options.
     """
     if not hasattr(config.option, "benchmark_enable"):  # plugin not installed
         return
 
-    # Below this, a sub-microsecond benchmark gets too few iterations per round for the
-    # timer to resolve and its median snaps to a quantum. See `benchmarks/README.md`.
-    config.option.benchmark_min_time = 0.0005
-    # An ordinary run still executes every benchmark body once, so they cannot rot.
+    # A sub-microsecond benchmark needs at least this much time per round for the timer
+    # to resolve it; see `benchmarks/README.md`. A higher `--benchmark-min-time` wins.
+    min_time = max(float(config.option.benchmark_min_time), 0.0005)
+    config.option.benchmark_min_time = str(min_time)
+    # An ordinary run still executes every benchmark once, so a broken one is caught.
     if not config.option.benchmark_enable:
         config.option.benchmark_disable = True
 
