@@ -178,8 +178,7 @@ class Function(NativeBase):
 
         self._f = f
         # Cache maps argument keys to `(method, return_type)`. Keys come either from
-        # `__call__`, where each element is `self._resolver._arg_key(arg)` (a plain
-        # `type`, or a `cache_key` tuple when the resolver needs spec), or from
+        # `__call__`, where each element is `self._resolver._arg_key(arg)`, or from
         # `invoke`, where each element is a `TypeHint`.
         self._cache = {}
 
@@ -369,7 +368,7 @@ class Function(NativeBase):
         with self._lock:
             # Replace the dictionary rather than emptying it in place: a call that is
             # still resolving a method must not store its result in the live cache. See
-            # `_resolve_method_with_cache` for why.
+            # `_resolve_and_cache` for why.
             self._cache = {}
 
             if reregister:
@@ -535,14 +534,10 @@ class Function(NativeBase):
     def _resolve_and_cache(
         self, args: tuple[object, ...] | Signature, key: tuple[object, ...]
     ) -> tuple[Callable[..., Any], TypeHint]:
-        """Resolve `args` and cache the result under `key`, if cacheable.
-
-        Shared by `__call__` and `_resolve_method_with_cache`'s miss paths, which
-        would otherwise duplicate this exact sequence. The dict is captured
-        *before* resolving: this store happens outside the lock, so a resolution
-        overtaken by a concurrent `clear_cache` must land in the old dict rather
-        than write its stale answer back into the live one.
-        """
+        """Resolve `args` and cache the result under `key`, if cacheable."""
+        # Take the cache before resolving. The store below does not hold the lock, so if
+        # `clear_cache` runs during resolution, the outdated result goes into the old
+        # dictionary, which nothing reads any more.
         cache = self._cache
         method, return_type = self.resolve_method(args)
         if self._resolver.cache_spec is not None:
@@ -551,63 +546,33 @@ class Function(NativeBase):
 
     def __call__(self, *args: object, **kw: object) -> object:
         __tracebackhide__ = True
-        # The cache hit is inlined here: on a hit, none of the argument juggling in
-        # `_resolve_method_with_cache` is needed, and the call itself costs more than
-        # the lookup. `self._pending` must be checked *before* the lookup, since
-        # `register` leaves stale entries until the registrations are resolved. Only
-        # the lookup is inside the `try`, and deliberately not the dispatched call:
-        # a `KeyError` raised by the method body must propagate rather than be
-        # mistaken for a miss and silently re-dispatched. (User code does run inside
-        # the `try` -- hashing the key calls a metaclass `__hash__` -- but a
-        # `KeyError` from there re-raises out of `_resolve_miss` anyway.)
+        # Resolve pending registrations before the lookup, since `register` leaves
+        # outdated entries in the cache until then.
         if self._pending:
             self._resolve_pending_registrations()
         key = tuple(map(self._resolver._arg_key, args))
+        # Only the lookup is in the `try`: a `KeyError` from the method must propagate.
         try:
             method, return_type = self._cache[key]
         except KeyError:
-            # Resolve here rather than through `_resolve_method_with_cache`, which
-            # would rebuild the key and repeat the lookup that just missed. A function
-            # no cache can serve misses on every call, so it would pay both every
-            # time. `resolve_method` resolves pending registrations itself, so the
-            # key cannot have been built against a stale method set.
+            # Not `_resolve_method_with_cache`, which would look up `key` again.
             method, return_type = self._resolve_and_cache(args, key)
         return _convert(method(*args, **kw), return_type)
 
     def _resolve_method_with_cache(
-        self,
-        args: tuple[object, ...] | Signature | None = None,
-        types: tuple[TypeHint, ...] | None = None,
+        self, types: tuple[TypeHint, ...]
     ) -> tuple[Callable[..., Any], TypeHint]:
-        if args is None and types is None:
-            raise ValueError(
-                "Arguments `args` and `types` cannot both be `None`. "
-                "This should never happen!"
-            )
-
         # Before attempting to use the cache, resolve any unresolved registrations. Use
         # an `if`-statement to speed up the common case.
         if self._pending:
             self._resolve_pending_registrations()
 
-        # Compute the cache key via the resolver's bound key callable (`type` for a
-        # faithful or uncacheable resolver, a `cache_key` specialised to the
-        # resolver's spec otherwise). When called from `invoke`, `types` is passed
-        # directly. Both are hashable and work as cache keys.
-        if types is None:
-            # Attempt to use the cache based on the types of the arguments.
-            # At this point, `args` must be a tuple (not `Signature` or `None`).
-            assert isinstance(args, tuple)
-            types = tuple(map(self._resolver._arg_key, args))
         try:
             return self._cache[types]
         except KeyError:
             __tracebackhide__ = True
-
-            if args is None:
-                args = Signature(*(resolve_type_hint(t) for t in types))
-
-            return self._resolve_and_cache(args, types)
+            signature = Signature(*(resolve_type_hint(t) for t in types))
+            return self._resolve_and_cache(signature, types)
 
     def invoke(self, *types: TypeHint) -> Callable[..., Any]:
         """Invoke a particular method.

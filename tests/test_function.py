@@ -129,14 +129,6 @@ def test_owner():
     assert Function(f, owner="A").owner is A
 
 
-def test_resolve_method_with_cache_no_arguments():
-    def f(x):
-        pass
-
-    with pytest.raises(ValueError, match="`args` and `types` cannot both be `None`"):
-        Function(f)._resolve_method_with_cache()
-
-
 @pytest.fixture()
 def owner_transfer():
     # Save and clear.
@@ -728,10 +720,10 @@ def test_resolve_pending_registrations_is_thread_safe():
 def test_method_replaced_during_resolution_is_not_cached(monkeypatch, dispatch):
     """Test that a method replaced while a call is resolving it is not cached.
 
-    `_resolve_method_with_cache` resolves and then writes to the cache without holding
-    the lock. If a method is registered in between, the cache is cleared before the
-    write, so the old method would be written into the cleared cache and, since nothing
-    is pending any more, be returned by every later call. See PR #316.
+    `_resolve_and_cache` resolves and then writes to the cache without holding the lock.
+    If a method is registered in between, the cache is cleared before the write, so the
+    old method would be written into the cleared cache and, since nothing is pending any
+    more, be returned by every later call. See PR #316.
     """
 
     @dispatch
@@ -786,49 +778,3 @@ def test_weakref_and_doc_assignment(wrap):
     assert weakref.ref(g)() is g
     g.__doc__ = "Replaced."
     assert g.__doc__ == "Replaced."
-
-
-@pytest.mark.incompatible_with_mypyc
-def test_type_x_resolution_overtaken_by_a_clear_is_not_cached(monkeypatch, dispatch):
-    """The `type[X]`-cached path (added by #305) must honour the same lost-update
-    guard as the faithful path: a registration landing mid-resolution must not leave
-    a stale method cached under `KeyPart.IDENTITY`-bearing keys either.
-    """
-
-    class Foo:
-        pass
-
-    @dispatch
-    def f(x: type[Foo]):
-        return "v1"
-
-    f._resolve_pending_registrations()
-
-    resolved, cleared = threading.Event(), threading.Event()
-    original, target = Function.resolve_method, f
-
-    def paused(self, *args, **kw_args):
-        out = original(self, *args, **kw_args)
-        # The patch applies to every `Function`, so pause only `f`.
-        if self is target:
-            resolved.set()
-            # Pause between resolving and writing to the cache, which is where the clear
-            # must happen.
-            assert cleared.wait(5), "The clear never happened."
-        return out
-
-    monkeypatch.setattr(Function, "resolve_method", paused)
-    with ThreadPoolExecutor(1) as pool:
-        call = pool.submit(f, Foo)
-        assert resolved.wait(5), "The call never reached the pause."
-
-        @dispatch
-        def f(x: type[Foo]):  # noqa: F811
-            return "v2"
-
-        f._resolve_pending_registrations()
-        cleared.set()
-        assert call.result(5) == "v1"
-
-    assert f(Foo) == "v2"
-
