@@ -491,14 +491,22 @@ def test_signature_cache_spec(sig, spec):
 
 
 def test_append_default_args_cache_spec():
-    """Test that `append_default_args` recomputes `cache_spec` after truncating."""
+    """Test that `append_default_args` recomputes `cache_spec` and `_check`."""
+    from plum._bear import is_bearable
 
-    def f(x: int, y: type[int] = int):
+    T = typing.TypeVar("T")
+
+    class G(typing.Generic[T]):
         pass
 
-    full, truncated = plum.append_default_args(Sig(int, type[int]), f)
-    assert full.cache_spec == frozenset({plum.KeyPart.IDENTITY})
+    def f(x: int, y: G[int] = None):
+        pass
+
+    full, truncated = plum.append_default_args(Sig(int, G[int]), f)
+    assert full.cache_spec == frozenset({plum.KeyPart.GENERIC})
+    assert full._check is not is_bearable
     assert truncated.cache_spec == frozenset()
+    assert truncated._check is is_bearable
 
 
 # A grid of hints and values wide enough to exercise every branch of
@@ -604,27 +612,3 @@ def test_is_comparable_does_not_call_eq(monkeypatch):
 
     monkeypatch.setattr(Sig, "__eq__", fail)
     assert Sig(int).is_comparable(Sig(int))
-
-
-def test_default_args_signatures_recompute_the_bound_check():
-    """A truncated copy must not inherit the generic-aware check it no longer needs.
-
-    `_check` is `is_bearable_with_orig` only when some type is a user generic. Drop
-    that argument and plain `is_bearable` suffices; carrying the slower one is
-    correct but pays for a lookup no remaining type needs.
-    """
-    from plum._bear import is_bearable
-    from plum._signature import append_default_args
-
-    T = typing.TypeVar("T")
-
-    class G(typing.Generic[T]):
-        pass
-
-    def f(x: int, y: G[int] = None):
-        pass
-
-    full, truncated = append_default_args(Sig(int, G[int]), f)
-    assert full._check is not is_bearable
-    assert truncated.types == (int,)
-    assert truncated._check is is_bearable

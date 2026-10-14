@@ -131,8 +131,7 @@ _T = TypeVar("_T")
 
 
 class Box(Generic[_T]):
-    """A user-defined generic. Matching consults `__orig_class__`, which the
-    `GENERIC` key part captures, so dispatch on it is cacheable."""
+    """A user-defined generic."""
 
     def __init__(self, value):
         self.value = value
