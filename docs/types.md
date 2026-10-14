@@ -293,10 +293,9 @@ False
 
 ### Inferring the Parameter for Bare Instantiations
 
-Since only a subscripted instantiation sets `__orig_class__`, `Box(1)` can never reach
-a `Box[int]` method — even though the value it wraps says plainly what the parameter
-ought to be. If your class can work the parameter out from a finished instance, decorate
-it with `plum.generic` and give it an `__infer_type_parameter__` classmethod:
+To let a bare instantiation dispatch like a subscripted one, decorate the class with
+`plum.generic` and give it an `__infer_type_parameter__` classmethod, which returns the
+parameter for a constructed instance:
 
 ```python
 from typing import Generic, TypeVar
@@ -356,11 +355,8 @@ the parametrisation is built from `type(instance)`, so a generic subclass infers
 True
 ```
 
-The decorator moves work into the constructor: every instantiation runs the inference
-and then builds `Crate[...]`, which is the expensive half. On CPython 3.14 that takes a
-bare `Crate(1)` from about 90 ns to about 1 µs. Dispatch on the result is not affected —
-it is cacheable exactly as a subscripted instantiation is — so this is a cost paid per
-object, not per call.
+Every instantiation of a decorated class runs `__infer_type_parameter__` and builds
+`Crate[...]`, so construction is slower. Dispatch on the result is not affected.
 
 (moduletype)=
 ## `ModuleType`

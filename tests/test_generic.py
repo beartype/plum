@@ -1,8 +1,10 @@
 """Dispatch on user-defined :class:`typing.Generic` subclasses."""
 
 import re
+import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from contextlib import AbstractContextManager
+from dataclasses import dataclass
 from typing import (
     Annotated,
     Any,
@@ -17,7 +19,8 @@ import pytest
 
 from beartype.vale import Is
 
-from plum import Dispatcher, NotFoundLookupError
+import plum
+from plum import Dispatcher, NotFoundLookupError, generic
 from plum._signature import Signature
 from plum._type import (
     KeyPart,
@@ -354,3 +357,222 @@ def test_parametrised_protocol_is_matched_by_structure():
         return "object"
 
     assert f(-1) == "abs"
+
+
+@generic
+class InferredBox(Generic[T]):
+    def __init__(self, value: Any) -> None:
+        self.value = value
+
+    @classmethod
+    def __infer_type_parameter__(cls, instance: "InferredBox[Any]") -> type:
+        return type(instance.value)
+
+
+@generic
+class InferredPair(Generic[T, U]):
+    def __init__(self, a: Any, b: Any) -> None:
+        self.a = a
+        self.b = b
+
+    @classmethod
+    def __infer_type_parameter__(
+        cls, instance: "InferredPair[Any, Any]"
+    ) -> tuple[type, type]:
+        return type(instance.a), type(instance.b)
+
+
+class InferredSubBox(InferredBox[T]):
+    """A generic subclass: it must infer *its own* parametrisation."""
+
+
+def test_bare_instantiation_dispatches() -> None:
+    """Test that a bare instantiation dispatches like a subscripted one."""
+    dispatch = Dispatcher()
+
+    @dispatch
+    def f(x: InferredBox[int]) -> str:
+        return "InferredBox[int]"
+
+    @dispatch
+    def f(x: InferredBox[str]) -> str:
+        return "InferredBox[str]"
+
+    @dispatch
+    def f(x: InferredPair[int, str]) -> str:
+        return "InferredPair[int, str]"
+
+    @dispatch
+    def f(x: InferredPair[str, int]) -> str:
+        return "InferredPair[str, int]"
+
+    assert f(InferredBox(1)) == "InferredBox[int]"
+    assert f(InferredBox("a")) == "InferredBox[str]"
+    assert f(InferredPair(1, "a")) == "InferredPair[int, str]"
+    assert f(InferredPair("a", 1)) == "InferredPair[str, int]"
+
+
+def test_explicit_subscript_overrides_inference() -> None:
+    """Test that an explicit subscript wins over the inferred parameter."""
+    assert InferredBox[str](1).__orig_class__ == InferredBox[str]
+
+
+def test_unusable_class_raises_at_decoration() -> None:
+    """Test that `@generic` rejects a class that it cannot parametrise."""
+
+    class NoHook(Generic[T]):
+        pass
+
+    class NonCallableHook(Generic[T]):
+        __infer_type_parameter__ = 42
+
+    class NotGeneric:
+        @classmethod
+        def __infer_type_parameter__(cls, instance: Any) -> type:
+            return int
+
+    with pytest.raises(TypeError, match=r"NoHook.*__infer_type_parameter__"):
+        generic(NoHook)
+    with pytest.raises(TypeError, match=r"NonCallableHook.*__infer_type_parameter__"):
+        generic(NonCallableHook)
+    with pytest.raises(TypeError, match=r"NotGeneric.*typing\.Generic"):
+        generic(NotGeneric)
+
+
+def test_slots_without_orig_class_warn() -> None:
+    """Test that a class that cannot carry `__orig_class__` warns, but constructs."""
+    with pytest.warns(RuntimeWarning, match=r"__slots__.*__orig_class__"):
+
+        @generic
+        class Slotted(Generic[T]):
+            __slots__ = ("value",)
+
+            def __init__(self, value: Any) -> None:
+                self.value = value
+
+            @classmethod
+            def __infer_type_parameter__(cls, instance: Any) -> type:
+                return type(instance.value)
+
+    with pytest.warns(RuntimeWarning, match="could not set"):
+        instance = Slotted(1)
+    assert instance.value == 1
+    assert not hasattr(instance, "__orig_class__")
+
+
+def test_concrete_subclass_does_not_warn() -> None:
+    """Test that a subclass with no parameters left constructs without a warning."""
+
+    class IntBox(InferredBox[int]):
+        pass
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        instance = IntBox(1)
+    assert not hasattr(instance, "__orig_class__")
+
+
+def test_frozen_dataclass() -> None:
+    """Test that `__orig_class__` is set on a frozen dataclass."""
+
+    @generic
+    @dataclass(frozen=True)
+    class Frozen(Generic[T]):
+        value: Any
+
+        @classmethod
+        def __infer_type_parameter__(cls, instance: Any) -> type:
+            return type(instance.value)
+
+    instance = Frozen(1)
+    assert instance.value == 1
+    assert instance.__orig_class__ == Frozen[int]
+
+
+def test_inheritance_infers_the_subclass() -> None:
+    """Test that a generic subclass infers its own parametrisation."""
+    assert InferredSubBox(1).__orig_class__ == InferredSubBox[int]
+
+    dispatch = Dispatcher()
+
+    @dispatch
+    def f(b: InferredBox[int]) -> str:
+        return "InferredBox"
+
+    @dispatch
+    def f(b: InferredSubBox[int]) -> str:
+        return "InferredSubBox"
+
+    assert f(InferredSubBox(1)) == "InferredSubBox"
+    assert f(InferredBox(1)) == "InferredBox"
+
+
+def test_init_metadata_is_preserved() -> None:
+    """Test that the wrapped `__init__` keeps its name and docstring."""
+
+    @generic
+    class Documented(Generic[T]):
+        def __init__(self, value: Any) -> None:
+            """Wrap a value."""
+            self.value = value
+
+        @classmethod
+        def __infer_type_parameter__(cls, instance: Any) -> type:
+            return type(instance.value)
+
+    assert Documented.__init__.__doc__ == "Wrap a value."
+    assert Documented.__init__.__name__ == "__init__"
+    assert Documented.__init__.__qualname__.endswith("Documented.__init__")
+
+
+def test_generic_is_exported() -> None:
+    assert plum.generic is generic
+    assert "generic" in plum.__all__
+
+
+@pytest.mark.parametrize(
+    ("slots", "inherit"),
+    [
+        pytest.param(("__orig_class__",), False, id="own-slot"),
+        pytest.param("__orig_class__", False, id="string-slots"),
+        pytest.param(("__dict__",), False, id="dict-slot"),
+        pytest.param((), True, id="inherited-slot"),
+    ],
+)
+def test_slots_that_can_carry_orig_class(slots: Any, inherit: bool) -> None:
+    """Test that a slotted class that can carry `__orig_class__` does not warn."""
+
+    class Base:
+        __slots__ = ("__orig_class__",)
+
+    bases = (Base, Generic[T]) if inherit else (Generic[T],)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        @generic
+        class C(*bases):
+            __slots__ = slots
+
+            @classmethod
+            def __infer_type_parameter__(cls, instance: Any) -> type:
+                return int
+
+        assert C().__orig_class__ == C[int]
+
+
+def test_init_returning_a_value_raises() -> None:
+    """Test that `@generic` does not hide an `__init__` that returns a value."""
+
+    @generic
+    class C(Generic[T]):
+        def __init__(self):
+            return 1  # noqa: PLE0101
+
+        @classmethod
+        def __infer_type_parameter__(cls, instance: Any) -> type:
+            return int
+
+    # The message differs when `_generic` is compiled.
+    with pytest.raises(TypeError):
+        C()

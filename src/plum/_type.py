@@ -698,9 +698,7 @@ members, would be most of the cost of a cache hit."""
 def is_faithful(x: object, /) -> bool:
     """Check whether a type hint is faithful.
 
-    A hint `t` is _faithful_ if, for all `x`, whether `x` matches `t` is decided by
-    `type(x)` alone -- two values of the same runtime type always match or fail
-    together. For a `t` that is an actual class, that is the same as saying::
+    A type or type hint `t` is _faithful_ if, for all `x`::
 
         isinstance(x, t) == issubclass(type(x), t)
 
