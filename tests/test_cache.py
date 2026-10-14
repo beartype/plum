@@ -183,7 +183,30 @@ def test_cache_unfaithful(dispatch: plum.Dispatcher):
     def f(x: list[int]):
         return 2
 
-    # Since `f` is not faithful, no cache should be accumulated.
+    # Since `f` is not cacheable, no cache should be accumulated.
     assert f(1) == 1
     assert f([1]) == 2
     assert len(f._cache) == 0
+
+
+def test_cache_type_x(dispatch: plum.Dispatcher):
+    """Test that dispatch on `type[X]` is cached per class, also when added later."""
+
+    @dispatch
+    def f(x: object):
+        return "object"
+
+    assert f(int) == "object"
+    assert f(str) == "object"
+    # `f` is faithful, so both calls share the entry for `type`.
+    assert set(f._cache) == {(type,)}
+
+    @dispatch
+    def f(x: type[int]):
+        return "type[int]"
+
+    assert f(int) == "type[int]"
+    assert f(str) == "object"
+    # One entry per class, and the entry for `type` is gone.
+    assert len(f._cache) == 2
+    assert (type,) not in f._cache

@@ -27,12 +27,13 @@ SomeExceptionType = TypeVar("SomeExceptionType", bound=Exception)
 
 
 _identity_conversions: dict[tuple[type, TypeHint], bool] = {}
-"""dict[tuple[type, TypeHint], bool]: Whether conversion is the identity for a
-`(type(obj), target_type)` pair.
+"""dict[tuple[type, TypeHint], bool]: Whether :func:`convert` can be skipped for a
+`(type(obj), target_type)` pair. `False` means that this cannot be decided from the
+types alone, and a missing entry means that the pair has not been analysed yet.
 
 Written by :func:`plum.convert`, which decides what is recordable; read here because
-this is the hot path. Missing means "not yet analysed". Same staleness contract as
-:attr:`Function._cache`: mutating a type's meaning in place needs `clear_all_cache`."""
+this is the hot path. Same staleness contract as :attr:`Function._cache`: mutating a
+type's meaning in place needs `clear_all_cache`."""
 
 
 def _convert(obj: Any, target_type: TypeHint, /) -> Any:
@@ -176,8 +177,9 @@ class Function(NativeBase):
         Function._instances.append(self)
 
         self._f = f
-        # Cache maps type tuples to `(method, return_type)`. Keys can be either
-        # actual types (from `__call__`) or `TypeHints` (from `invoke`).
+        # Cache maps argument keys to `(method, return_type)`. Keys come either from
+        # `__call__`, where each element is `self._resolver._arg_key(arg)`, or from
+        # `invoke`, where each element is a `TypeHint`.
         self._cache = {}
 
         # Guards the lazy resolution of pending registrations, which mutates each
@@ -366,7 +368,7 @@ class Function(NativeBase):
         with self._lock:
             # Replace the dictionary rather than emptying it in place: a call that is
             # still resolving a method must not store its result in the live cache. See
-            # `_resolve_method_with_cache` for why.
+            # `_resolve_and_cache` for why.
             self._cache = {}
 
             if reregister:
@@ -529,56 +531,48 @@ class Function(NativeBase):
             raise ex from None
         return method, return_type
 
+    def _resolve_and_cache(
+        self, args: tuple[object, ...] | Signature, key: tuple[object, ...]
+    ) -> tuple[Callable[..., Any], TypeHint]:
+        """Resolve `args` and cache the result under `key`, if cacheable."""
+        # Take the cache before resolving. The store below does not hold the lock, so if
+        # `clear_cache` runs during resolution, the outdated result goes into the old
+        # dictionary, which nothing reads any more.
+        cache = self._cache
+        method, return_type = self.resolve_method(args)
+        if self._resolver.cache_spec is not None:
+            cache[key] = method, return_type
+        return method, return_type
+
     def __call__(self, *args: object, **kw: object) -> object:
         __tracebackhide__ = True
-        method, return_type = self._resolve_method_with_cache(args=args)
+        # Resolve pending registrations before the lookup, since `register` leaves
+        # outdated entries in the cache until then.
+        if self._pending:
+            self._resolve_pending_registrations()
+        key = tuple(map(self._resolver._arg_key, args))
+        # Only the lookup is in the `try`: a `KeyError` from the method must propagate.
+        try:
+            method, return_type = self._cache[key]
+        except KeyError:
+            # Not `_resolve_method_with_cache`, which would look up `key` again.
+            method, return_type = self._resolve_and_cache(args, key)
         return _convert(method(*args, **kw), return_type)
 
     def _resolve_method_with_cache(
-        self,
-        args: tuple[object, ...] | Signature | None = None,
-        types: tuple[TypeHint, ...] | None = None,
+        self, types: tuple[TypeHint, ...]
     ) -> tuple[Callable[..., Any], TypeHint]:
-        if args is None and types is None:
-            raise ValueError(
-                "Arguments `args` and `types` cannot both be `None`. "
-                "This should never happen!"
-            )
-
         # Before attempting to use the cache, resolve any unresolved registrations. Use
         # an `if`-statement to speed up the common case.
         if self._pending:
             self._resolve_pending_registrations()
 
-        # Compute cache key. When called from `__call__`, types will be actual
-        # runtime types from `map(type, args)`. When called from `invoke`, types
-        # may be `TypeHints` like `Union[int, str]`. Both are hashable and work
-        # as cache keys.
-        if types is None:
-            # Attempt to use the cache based on the types of the arguments.
-            # At this point, `args` must be a tuple (not `Signature` or `None`).
-            assert isinstance(args, tuple)
-            types = tuple(map(type, args))
         try:
             return self._cache[types]
         except KeyError:
             __tracebackhide__ = True
-
-            if args is None:
-                args = Signature(*(resolve_type_hint(t) for t in types))
-
-            # Cache miss. If `clear_cache` runs while the method is being resolved, the
-            # result may be outdated and must not end up in the cache. `clear_cache`
-            # replaces `self._cache` with a new dictionary, so take `self._cache` now:
-            # afterwards, `cache` is either still the live cache, or the old dictionary,
-            # which nothing reads any more, so storing into it is harmless.
-            cache = self._cache
-            method, return_type = self.resolve_method(args)
-            # If the resolver is faithful, then we can perform caching using the types
-            # of the arguments. If the resolver is not faithful, then we cannot.
-            if self._resolver.is_faithful:
-                cache[types] = method, return_type
-            return method, return_type
+            signature = Signature(*(resolve_type_hint(t) for t in types))
+            return self._resolve_and_cache(signature, types)
 
     def invoke(self, *types: TypeHint) -> Callable[..., Any]:
         """Invoke a particular method.
