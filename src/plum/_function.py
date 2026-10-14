@@ -170,15 +170,7 @@ def _reconstruct_function(
 
 @mypyc_attr(native_class=False)
 class _Handle:
-    """A weak-referenceable stand-in for a :class:`Function`. See
-    :class:`_LiveFunctions` for why the indirection exists; non-native so that its
-    deallocator is CPython's own and weak-reference callbacks actually fire.
-
-    Slotted because there is one of these per live function and its whole purpose is
-    to not waste memory: an instance is 56 bytes against 344 with a `__dict__`.
-    `__weakref__` has to be listed explicitly -- a slotted class without it cannot be
-    the target of a weak reference, which is the one thing this class exists for.
-    """
+    """Interpreted holder of a :class:`Function`. See :class:`_LiveFunctions`."""
 
     __slots__ = ("__weakref__", "function")
 
@@ -187,59 +179,41 @@ class _Handle:
 
 
 class _LiveFunctions:
-    """The set of live :class:`Function`s, held without pinning any of them.
+    """Set of live :class:`Function`s that keeps none of them alive.
 
-    A plain `WeakSet` of functions is not available here, and the reason is narrower
-    than "a native class cannot be weakly referenced": since `NativeBase` it can, and
-    `weakref.ref(f)` even reads as cleared once `f` dies. What the compiled
-    deallocator omits is the `PyObject_ClearWeakRefs()` call, so the weak reference's
-    callback never runs. A `WeakSet` is built on that callback, so its entry is never
-    removed: it goes stale rather than disappearing, `len` keeps counting it while
-    iteration yields nothing, and the dangling reference segfaults the interpreter at
-    shutdown. That is mypyc/mypyc#1102 -- specifically the second of the two problems
-    Jukka separates there, "native subclasses of non-native classes can trigger
-    segfaults when using weakrefs"; python/mypy#19056 is the open fix. Measured on a
-    `mypyc` wheel built from this branch, with `_Handle` removed::
-
-        ref() is None   : True     <- looks fine
-        callback fired  : False    <- but nothing is notified
-        len(WeakSet)    : 1        <- so the entry is never dropped
-        list(WeakSet)   : []
-        exit status     : 139      <- and teardown crashes
-
-    Each function is therefore reached through a plain-Python handle, whose
-    deallocator is CPython's own: this set holds the handle weakly, the handle holds
-    the function, and the function holds the handle back. That cycle keeps the entry
-    alive for exactly as long as the function is reachable from anywhere else, and
-    the cyclic garbage collector drops the pair once it is not, which is all
-    :func:`plum.clear_all_cache` needs and leaves nothing pinned for the lifetime of
-    the process.
+    A `weakref.WeakSet` of functions would keep stale entries on the compiled wheels;
+    see :class:`plum._mypyc.NativeBase`. Instead, this weakly holds an interpreted
+    :class:`_Handle` per function. The handle and the function reference each other,
+    so the garbage collector frees both once nothing else references the function, and
+    the handle's entry then drops out.
     """
 
     _handles: "weakref.WeakSet[_Handle]"
+    _lock: threading.Lock
 
     def __init__(self) -> None:
         self._handles = weakref.WeakSet()
+        # A `WeakSet` must not change size while it is iterated, and functions can be
+        # created in other threads.
+        self._lock = threading.Lock()
 
     def add(self, f: "Function", /) -> None:
         f._handle = _Handle(f)
-        self._handles.add(f._handle)
+        with self._lock:
+            self._handles.add(f._handle)
 
     def discard(self, f: "Function", /) -> None:
-        # ponytail: the only call site today is test cleanup, never concurrent with
-        # `__iter__`'s own `list(...)` snapshot. A production call site sharing that
-        # exposure would need the same lock `clear_cache` uses around it.
-        self._handles.discard(f._handle)
+        with self._lock:
+            self._handles.discard(f._handle)
 
     def __iter__(self) -> "Iterator[Function]":
-        # The `list` snapshots the `WeakSet`, which must not be mutated while it is
-        # iterated -- resolving a registration can create or drop functions. Every
-        # `Function` is still strongly reachable through `h.function` for the length
-        # of the loop; the weak set is about not pinning them *between* loops.
-        return (h.function for h in list(self._handles))
+        # Iterate over a snapshot, so the loop body can create or drop functions.
+        with self._lock:
+            handles = list(self._handles)
+        return (h.function for h in handles)
 
     def __contains__(self, f: object) -> bool:
-        return any(h.function is f for h in self._handles)
+        return getattr(f, "_handle", None) in self._handles
 
     def __len__(self) -> int:
         return len(self._handles)
@@ -257,9 +231,7 @@ class Function(NativeBase):
     """
 
     _instances: ClassVar[_LiveFunctions] = _LiveFunctions()
-    """Every live :class:`Function`, for :func:`plum.clear_all_cache`. Weak, so
-    that a function that has gone out of scope is collected rather than pinned
-    here for the lifetime of the process."""
+    """_LiveFunctions: Every live function, for :func:`plum.clear_all_cache`."""
 
     # Instance attributes are declared so `Function` can be a `mypyc` native class.
     _f: Callable[..., Any]
@@ -285,8 +257,6 @@ class Function(NativeBase):
         owner: str | None = None,
         warn_redefinition: bool = False,
     ) -> None:
-        Function._instances.add(self)
-
         self._f = f
         # Cache maps argument keys to `(method, return_type)`. Keys come either from
         # `__call__`, where each element is `self._resolver._arg_key(arg)`, or from
@@ -322,6 +292,8 @@ class Function(NativeBase):
             warn_redefinition=self._warn_redefinition,
         )
         self._resolved = []
+
+        Function._instances.add(self)
 
     def __reduce__(self) -> tuple[Callable[..., Any], tuple[Any, ...]]:
         # `_pending` and `_resolved` are swapped in several steps under `self._lock`
