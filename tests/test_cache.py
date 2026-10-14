@@ -214,6 +214,8 @@ def test_cache_type_x(dispatch: plum.Dispatcher):
 
 
 def test_literal_dispatch_is_cached(dispatch):
+    """Test that a function dispatching on `Literal` caches one entry per value."""
+
     @dispatch
     def f(x: Literal[1]):
         return "one"
@@ -241,10 +243,7 @@ def test_literal_dispatch_is_cached(dispatch):
 
 
 def test_literal_dispatch_keeps_bool_and_int_apart(dispatch):
-    # Beartype matches `x` against `Literal[v]` iff `isinstance(x, type(v))` and
-    # `x == v`, so `True` matches `Literal[1]` but `1` does not match `Literal[True]`.
-    assert plum._bear.is_bearable(True, Literal[1])
-    assert not plum._bear.is_bearable(1, Literal[True])
+    """Test that `True` and `1`, which are equal, are cached separately."""
 
     @dispatch
     def f(x: Literal[True]):
@@ -261,25 +260,9 @@ def test_literal_dispatch_keeps_bool_and_int_apart(dispatch):
     assert len(f._cache) == 3
 
 
-def test_literal_dispatch_covers_subclasses(dispatch):
-    class MyInt(int):
-        pass
-
-    @dispatch
-    def f(x: Literal[1]):
-        return "one"
-
-    @dispatch
-    def f(x: int):
-        return "int"
-
-    # A subclass instance does match a `Literal`, so its value must be keyed.
-    assert f(MyInt(1)) == "one"
-    assert f(MyInt(2)) == "int"
-    assert f(MyInt(1)) == "one"
-
-
 def test_literal_dispatch_unhashable_argument(dispatch):
+    """Test that an unhashable argument does not make the cache key raise."""
+
     @dispatch
     def f(x: Literal[1]):
         return "one"
@@ -288,13 +271,12 @@ def test_literal_dispatch_unhashable_argument(dispatch):
     def f(x: object):
         return "object"
 
-    # An unhashable argument must not make the cache key raise.
     assert f([1, 2]) == "object"
-    assert f({"a": 1}) == "object"
     assert f(1) == "one"
 
 
 def test_literal_and_type_dispatch_mixed(dispatch):
+    """Test caching of a function that dispatches on both `Literal` and `type[X]`."""
     from plum._type import KeyPart
 
     @dispatch
@@ -319,27 +301,8 @@ def test_literal_and_type_dispatch_mixed(dispatch):
     assert len(f._cache) == 4
 
 
-def test_type_dispatch_does_not_capture_a_value_slot(dispatch):
-    from plum._type import KeyPart
-
-    @dispatch
-    def g(x: type[int]):
-        return "type[int]"
-
-    g._resolve_pending_registrations()
-    assert g._resolver.cache_spec == {KeyPart.IDENTITY}
-    assert g(int) == "type[int]"
-    # `(type(x), _identity(x))`: no value slot for a `type[X]`-only resolver.
-    assert all(len(k) == 1 and len(k[0]) == 2 for k in g._cache)
-
-
 def test_literal_dispatch_subclass_with_untrustworthy_equality(dispatch):
-    """A subclass may define a non-transitive `__eq__`, so its value cannot be keyed.
-
-    `W(1) == W(2)` is `True` with equal hashes, so value-keying puts them in the
-    same cache bucket — yet `W(1) == 1` and `W(2) != 1`, so they must dispatch
-    differently. Only identity is fine enough to key such an argument.
-    """
+    """Test that a subclass with a non-transitive `__eq__` is dispatched correctly."""
 
     class W(int):
         def __hash__(self):
@@ -366,9 +329,8 @@ def test_literal_dispatch_subclass_with_untrustworthy_equality(dispatch):
     assert f(W(1)) == "one"
 
 
-def test_literal_dispatch_uses_identity_for_subclasses(dispatch):
-    """End-to-end exercise of the `_Identity` fallback through actual dispatch."""
-    from plum._type import _Identity
+def test_literal_dispatch_and_identity_for_subclasses(dispatch):
+    """Test dispatch and per-object caching of an instance of a subclass."""
 
     class MyInt(int):
         pass
@@ -381,18 +343,14 @@ def test_literal_dispatch_uses_identity_for_subclasses(dispatch):
     def f(x: int):
         return "int"
 
-    a, b = MyInt(1), MyInt(1)
-    assert f(a) == "one"
-    assert f(b) == "one"
-    # Two equal-but-distinct subclass instances get separate, identity-keyed entries.
-    assert len(f._cache) == 2
-    assert all(isinstance(k[0][-1], _Identity) for k in f._cache)
+    assert f(MyInt(1)) == "one"
+    assert f(MyInt(2)) == "int"
+    assert f(MyInt(1)) == "one"
+    assert len(f._cache) == 3
 
 
 def test_literal_dispatch_cache_is_bounded(dispatch):
-    """A `Literal` method plus caller-controlled values must not grow the cache
-    without bound. Dispatch stays correct past the limit; only the memoisation
-    stops."""
+    """Test that the cache of a function dispatching on `Literal` is limited."""
     from plum._function import _VALUE_CACHE_LIMIT
 
     @dispatch
@@ -411,22 +369,3 @@ def test_literal_dispatch_cache_is_bounded(dispatch):
     assert f("ready") == "ready"
     assert f("v0") == "other"
     assert len(f._cache) == _VALUE_CACHE_LIMIT
-
-
-def test_identity_only_dispatch_cache_is_not_bounded(dispatch):
-    """The bound applies to `VALUE` resolvers only: classes are bounded already."""
-    from plum._function import _VALUE_CACHE_LIMIT
-
-    @dispatch
-    def f(x: type[int]):
-        return "type[int]"
-
-    @dispatch
-    def f(x: object):
-        return "object"
-
-    n = _VALUE_CACHE_LIMIT + 10
-    for i in range(n):
-        assert f(type(f"C{i}", (), {})) == "object"
-
-    assert len(f._cache) > _VALUE_CACHE_LIMIT

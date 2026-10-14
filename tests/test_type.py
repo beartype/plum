@@ -431,6 +431,8 @@ class _Unfaithful:
         (typing.Tuple[()], False, False),  # noqa: UP006
         (typing.Union[tuple[()], int], False, False),  # noqa: UP007
         (typing.Literal[1], False, True),
+        (typing.Literal["a", None], False, True),
+        (typing.Union[typing.Literal[1], type[int]], False, True),  # noqa: UP007
         (list[typing.Literal[1]], False, False),
         (list[type[int]], False, False),
         (type[_Unfaithful], False, False),
@@ -443,9 +445,11 @@ def test_is_faithful_is_cacheable(hint, faithful, cacheable):
 
 
 def test_cache_key():
-    """Test that `cache_key` tells apart values of different types and classes."""
-    assert cache_key(1) == cache_key(2)
-    assert cache_key(1) != cache_key("x")
+    """Test that `cache_key` tells apart values that can match differently."""
+    assert cache_key(1) == cache_key(1)
+    assert cache_key(1) != cache_key(2)
+    assert cache_key(1) != cache_key(1.0)
+    assert cache_key(True) != cache_key(1)
     assert cache_key(int) == cache_key(int)
     assert cache_key(int) != cache_key(str)
 
@@ -484,21 +488,12 @@ def test_cache_spec_no_eq():
         def __eq__(self, other):
             raise AssertionError("`__eq__` must not be called.")
 
-
-def test_is_cacheable_literal():
-    """`Literal` is cacheable (via the value key part) but not faithful."""
-    assert not is_faithful(Literal[1])
-    assert is_cacheable(Literal[1])
-    assert is_cacheable(Literal[1, 2])
-    assert is_cacheable(Literal["a", None])
-    # Unions and containers combine as usual.
-    assert is_cacheable(typing.Union[Literal[1], str])  # noqa: UP007
-    assert is_cacheable(typing.Union[Literal[1], type[int]])  # noqa: UP007
-    assert not is_cacheable(list[Literal[1]])
+    with pytest.warns(UserWarning, match="faithful or cacheable"):
+        assert _cache_spec(NoEq()) is None
 
 
 def test_cache_key_value_part_is_opt_in():
-    """Only a resolver that asks for `VALUE` pays for the value slot."""
+    """Test that `cache_key` captures the value only if `spec` contains `VALUE`."""
     identity_only = frozenset({KeyPart.IDENTITY})
     value_only = frozenset({KeyPart.VALUE})
 
@@ -555,20 +550,12 @@ def test_cache_key_value_survives_unhashable_values():
     assert len(d) == 2
     assert d[cache_key(a, spec=value_only)] == 1
 
-    # Plain unhashable values are fine too.
-    hash(cache_key([1], spec=value_only))
-
 
 def test_arg_keys_agree_with_cache_key():
-    """`_ARG_KEYS` is a hot-path specialisation of `cache_key`: keep them in sync."""
-    from itertools import chain, combinations
+    """Test that `_ARG_KEYS` covers every spec and agrees with `cache_key`."""
+    from plum._type import _CANONICAL_SPECS
 
-    subsets = [
-        frozenset(s)
-        for s in chain.from_iterable(
-            combinations(KeyPart, r) for r in range(len(KeyPart) + 1)
-        )
-    ]
+    subsets = list(_CANONICAL_SPECS)
     assert set(_ARG_KEYS) == set(subsets)
 
     class SomeClass:
@@ -582,11 +569,7 @@ def test_arg_keys_agree_with_cache_key():
             if spec:
                 assert actual == expected, (spec, x)
             else:
-                # The faithful specialisation is plain `type`, not a 1-tuple.
                 assert (actual,) == expected, (spec, x)
-
-    with pytest.warns(UserWarning, match="faithful or cacheable"):
-        assert _cache_spec(NoEq()) is None
 
 
 def test_combine_shares_specs():

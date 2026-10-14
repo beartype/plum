@@ -19,20 +19,12 @@ from ._util import TypeHint
 from ._wraps import update_wrapper, update_wrapper_names
 
 _VALUE_CACHE_LIMIT = 4096
-"""Maximum number of entries cached for a function whose methods dispatch on a
-`Literal`.
+"""int: Maximum number of cache entries of a function that dispatches on `Literal`.
 
-Such a function gets one entry per distinct *value* ever passed, and the key holds a
-strong reference to it, so `Literal["ready"]` beside a `str` fallback would otherwise
-grow with the caller's data forever. Past the cap, arguments resolve normally: the cap
-costs time, never correctness. 4096 entries is a few hundred kilobytes, and a genuine
-vocabulary of literals -- states, flags, enum names -- is far smaller.
-
-Only `VALUE` is capped: a literal vocabulary is caller *data*, unbounded by
-construction, whereas a type vocabulary is program *code*, bounded by what the program
-declares. `f.clear_cache()` releases the type-keyed entries; evicting them one at a
-time would want a `weakref.finalize` per cached class and a reverse index from class
-to keys."""
+Such a function has an entry per distinct argument value, so `Literal["ready"]` next
+to a `str` fallback would otherwise add an entry for every new string. Past the limit,
+arguments are resolved without caching. The cache of a function that dispatches only
+on `type[X]` is not limited, since a program defines only so many classes."""
 
 # Annotated (not left to inference as `None`) so a `mypyc`-compiled `_function` accepts
 # the external assignment `plum._function._promised_convert = convert` in `_promotion`.
