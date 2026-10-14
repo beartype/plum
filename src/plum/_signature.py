@@ -148,14 +148,10 @@ class Signature(Comparable):
         types = self.types
         all_types = types if self.varargs is Missing else (*types, self.varargs)
         self.cache_spec = _combine(all_types)
-        # Bind the matcher once, rather than testing a flag on every match: a
-        # signature with no user generic anywhere gets plain `is_bearable`, exactly
-        # the function it always used.
+        # Only a user generic needs `is_bearable_with_orig`.
         check: Callable[[object, TypeHint], bool] = is_bearable
         for t in all_types:
-            # A plain class can never be a *parametrised* generic, and is what almost
-            # every annotation is, so it is ruled out inline: a generator expression
-            # here costs more than the whole rest of the test.
+            # Most annotations are classes, so skip the call for those.
             if not isinstance(t, type) and _has_generic_hint(t):
                 check = is_bearable_with_orig
                 break

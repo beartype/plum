@@ -213,22 +213,15 @@ def _is_hint(x: object) -> bool:
 
 
 def _is_generic_hint(x: object, /) -> bool:
-    """Check if an object is a parametrised :class:`typing.Generic` subclass.
+    """Check if an object is a parametrised user generic, like `Box[int]`.
 
-    The test is that the origin is a class inheriting :class:`typing.Generic`, which
-    is exactly the population whose parameter cannot be recovered from the value: such
-    an instance records it in `__orig_class__` instead. Everything else is excluded by
-    that same test rather than by name — the parametrised builtins (`list[int]`), the
-    abstract base classes (`Sequence[int]`), `re.Pattern[str]` and
-    `AbstractContextManager[int]` are not `Generic` subclasses and beartype checks
-    them structurally, while `Annotated`, `Union`, `Optional`, `Literal` and
-    `type[X]` have origins that are not classes at all. Plum's own parametric types
-    have no origin.
+    Such a hint is matched by `__orig_class__`; see
+    :func:`._bear.is_bearable_with_orig`. Parametrised builtins, ABCs and protocols,
+    like `list[int]`, `Sequence[int]` and `SupportsAbs[int]`, are matched by structure
+    instead, so they are excluded, as are special forms like `Union` and `Literal`.
 
-    Deliberately *not* keyed on `__module__` (as :func:`_is_hint` is): a generic
-    declared in an `exec`'d namespace, a doctest among them, reports its module as
-    `builtins`, and its subscript is a `typing._GenericAlias`, so a module test
-    mistakes it for a `typing` special form.
+    This does not look at `__module__`, as :func:`_is_hint` does: a class declared by
+    `exec`, as in a doctest, reports its module as `builtins`.
 
     Args:
         x (object): Object.
@@ -240,16 +233,17 @@ def _is_generic_hint(x: object, /) -> bool:
     return (
         isinstance(origin, type)
         and issubclass(origin, typing.Generic)
+        and not getattr(origin, "_is_protocol", False)
         and get_args(x) != ()
     )
 
 
 def _has_generic_hint(x: object, /) -> bool:
-    """Check whether a parametrised user generic occurs anywhere in the hint `x`.
+    """Check whether :func:`._bear.is_bearable_with_orig` treats the hint `x`
+    differently from :func:`._bear.is_bearable`.
 
-    This walks the arguments, so it also finds generics nested inside a union, an
-    `Annotated`, or a parametrised builtin. It is computed once per signature, at
-    registration, to keep the check off the matching path.
+    That is, whether `x` is a parametrised user generic, or a union or `Annotated` of
+    one.
 
     Args:
         x (object): Type hint.
@@ -258,11 +252,14 @@ def _has_generic_hint(x: object, /) -> bool:
         bool: `True` if `x` contains a parametrised user generic.
     """
     if isinstance(x, type):
-        # A parametrised generic is a `_GenericAlias`, never a class, and a class has
-        # no arguments to recurse into. This is the common case at registration --
-        # every plain annotation lands here -- and it skips two `typing` lookups.
+        # A class is not parametrised and has no arguments.
         return False
-    return _is_generic_hint(x) or any(_has_generic_hint(a) for a in get_args(x))
+    if _is_generic_hint(x):
+        return True
+    origin = get_origin(x)
+    if origin in UNION_TYPES or origin is typing.Annotated:
+        return any(_has_generic_hint(a) for a in get_args(x))
+    return False
 
 
 def _hashable(x: object | type) -> TypeGuard[Hashable]:
@@ -337,14 +334,9 @@ def resolve_type_hint(x: object, /) -> object:
 
         return resolve_type_hint(x.resolve())
 
-    # This sits below the plain-`type` case on purpose. `resolve_type_hint` runs twice
-    # per call for any method with a return annotation (via `convert`), and a plain
-    # type such as `int` is by far the commonest argument. Testing it here means such
-    # a type returns above without ever paying for the origin lookup; a parametrised
-    # user generic is not a `type`, so it still reaches this branch.
+    # Below the `type` case, so a plain type does not pay for `get_origin`.
     elif _is_generic_hint(x):
-        # A parametrised user generic, e.g. `Box[int]`. Rebuild it from its origin so
-        # that a `ResolvableType` nested in its arguments is resolved too.
+        # Rebuild `Box[int]` so that a `ResolvableType` in its arguments is resolved.
         origin = get_origin(x)
         assert origin is not None
         resolved_args = tuple(resolve_type_hint(arg) for arg in get_args(x))
@@ -640,24 +632,11 @@ def _value(x: object, /) -> object | None:
 
 
 def _generic(x: object, /) -> object | None:
-    """The generic component of `cache_key` for `x`.
+    """The generic component of `cache_key` for `x`: its `__orig_class__`, or `None`.
 
-    A parametrised user generic is matched by :func:`._bear.is_bearable_with_orig`,
-    which decides on `__orig_class__` — the parametrisation Python records on the
-    instance — and falls back to `type(x)` when there is none. This slot is exactly
-    that record, so the pair `(type(x), __orig_class__)` settles the match: two
-    values sharing it are decided identically.
-
-    `None` for a value that records no parametrisation, which is also the fallback
-    the matcher itself uses. As elsewhere in plum, `__orig_class__` is trusted to be
-    the type it claims: Python sets it, and so do :func:`plum.parametric` and
-    :func:`plum.generic`.
-
-    A parametrisation can itself be unhashable -- `Box[Annotated[int, {"a": 1}]]` is
-    a legal thing to write -- and putting it in the key verbatim would make the key
-    unhashable, so the dict lookup in `Function.__call__` would raise rather than
-    dispatch. Fall back to keying on its identity, which is finer than the value and
-    so never collides; the same precaution :func:`_value` takes.
+    Together with `type(x)`, this settles a match by
+    :func:`._bear.is_bearable_with_orig`. Like :func:`_value`, an unhashable
+    parametrisation, e.g. `Box[Annotated[int, {"a": 1}]]`, is keyed on its identity.
 
     Args:
         x (object): Value.
@@ -780,7 +759,11 @@ def _cache_spec(x: object, /) -> CacheSpec | None:
     Returns:
         CacheSpec or None: Parts of the cache key, or `None` if `x` is not cacheable.
     """
-    if _is_hint(x):
+    if _is_generic_hint(x):
+        # Matched by `__orig_class__`, see `is_bearable_with_orig`.
+        return _GENERIC
+
+    elif _is_hint(x):
         origin = get_origin(x)
         args = get_args(x)
         if args == ():
@@ -798,14 +781,6 @@ def _cache_spec(x: object, /) -> CacheSpec | None:
             return _VALUE
         if origin in UNION_TYPES:
             return _combine(args)
-        if _is_generic_hint(x):
-            # A parametrised user generic can land here rather than in the branch
-            # below: `_is_hint` decides on `__module__`, and a generic declared in an
-            # `exec`'d namespace -- a doctest among them -- reports `builtins`, the
-            # same module as `list[int]`. Classify it on what it is, not where it was
-            # written; `_is_generic_hint` tests for inheritance from `typing.Generic`,
-            # which no parametrised builtin and no `typing` special form satisfies.
-            return _GENERIC
         return None
 
     elif x is None or x is Ellipsis:
@@ -824,21 +799,6 @@ def _cache_spec(x: object, /) -> CacheSpec | None:
             abc.ABCMeta.__instancecheck__,
         }
         return _NO_PARTS if faithful else None
-
-    elif _is_generic_hint(x):
-        # A parametrised user generic, e.g. `Box[int]`. Whether a value matches
-        # depends on its `__orig_class__` and on nothing else — see
-        # `is_bearable_with_orig`, which falls back to `type(x)` when there is no
-        # such record — and the generic component of the cache key is precisely
-        # that. Ordered below the plain-`type` case for the same reason as in
-        # `resolve_type_hint`.
-        #
-        # Note how narrow this is: it holds only for hints that go through
-        # `__orig_class__`. A parametrised builtin such as `list[int]` is matched by
-        # inspecting the elements, which no key derived from the value's type can
-        # predict, and `_is_generic_hint` excludes it. That exclusion is what keeps
-        # this sound, so do not widen it.
-        return _GENERIC
 
     else:
         warnings.warn(
