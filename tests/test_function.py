@@ -75,18 +75,14 @@ def test_pickle(resolved):
     assert g in Function._instances
 
 
-def test_function_is_collected_once_out_of_scope():
-    """`Function._instances` must not pin a function for the life of the process
-    once nothing else references it -- the actual claim `_LiveFunctions` makes,
-    not just that its API still works.
-    """
+def test_instances_does_not_keep_functions_alive():
+    """`Function._instances` must release a function nothing else references."""
 
     def f(x):
         pass
 
-    # Normalise first: an earlier test's function may already be unreferenced but
-    # not yet swept, since a `WeakSet` entry is dropped by its callback, not on a
-    # schedule.
+    # A function and its handle form a cycle, so functions from earlier tests may
+    # still await collection.
     gc.collect()
     before = len(Function._instances)
     g = Function(f)
@@ -98,6 +94,25 @@ def test_function_is_collected_once_out_of_scope():
 
     assert ref() is None
     assert len(Function._instances) == before
+
+
+def test_clear_all_cache_while_functions_are_created():
+    """`clear_all_cache` must not fail while another thread creates functions."""
+    _keep = [Function(operator.neg) for _ in range(1000)]
+    stop = threading.Event()
+
+    def create():
+        while not stop.is_set():
+            Function(operator.neg)
+
+    thread = threading.Thread(target=create)
+    thread.start()
+    try:
+        for _ in range(200):
+            plum.clear_all_cache()
+    finally:
+        stop.set()
+        thread.join()
 
 
 def test_repr(dispatch: plum.Dispatcher):
