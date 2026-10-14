@@ -1,4 +1,5 @@
 import abc
+import gc
 import operator
 import os
 import pickle
@@ -52,7 +53,7 @@ def test_function():
     assert g.__doc__ == "Doc"
 
     # Check global tracking of functions.
-    assert Function._instances[-1] == g
+    assert g in Function._instances
 
 
 @pytest.mark.parametrize("resolved", [False, True])
@@ -72,6 +73,46 @@ def test_pickle(resolved):
     assert g.methods == f.methods
     assert g(-1.5) == 1.5
     assert g in Function._instances
+
+
+def test_instances_does_not_keep_functions_alive():
+    """`Function._instances` must release a function nothing else references."""
+
+    def f(x):
+        pass
+
+    # A function and its handle form a cycle, so functions from earlier tests may
+    # still await collection.
+    gc.collect()
+    before = len(Function._instances)
+    g = Function(f)
+    assert len(Function._instances) == before + 1
+
+    ref = weakref.ref(g)
+    del g
+    gc.collect()
+
+    assert ref() is None
+    assert len(Function._instances) == before
+
+
+def test_clear_all_cache_while_functions_are_created():
+    """`clear_all_cache` must not fail while another thread creates functions."""
+    _keep = [Function(operator.neg) for _ in range(1000)]
+    stop = threading.Event()
+
+    def create():
+        while not stop.is_set():
+            Function(operator.neg)
+
+    thread = threading.Thread(target=create)
+    thread.start()
+    try:
+        for _ in range(200):
+            plum.clear_all_cache()
+    finally:
+        stop.set()
+        thread.join()
 
 
 def test_repr(dispatch: plum.Dispatcher):
@@ -127,14 +168,6 @@ def test_owner():
 
     assert Function(f).owner is None
     assert Function(f, owner="A").owner is A
-
-
-def test_resolve_method_with_cache_no_arguments():
-    def f(x):
-        pass
-
-    with pytest.raises(ValueError, match="`args` and `types` cannot both be `None`"):
-        Function(f)._resolve_method_with_cache()
 
 
 @pytest.fixture()
@@ -728,10 +761,10 @@ def test_resolve_pending_registrations_is_thread_safe():
 def test_method_replaced_during_resolution_is_not_cached(monkeypatch, dispatch):
     """Test that a method replaced while a call is resolving it is not cached.
 
-    `_resolve_method_with_cache` resolves and then writes to the cache without holding
-    the lock. If a method is registered in between, the cache is cleared before the
-    write, so the old method would be written into the cleared cache and, since nothing
-    is pending any more, be returned by every later call. See PR #316.
+    `_resolve_and_cache` resolves and then writes to the cache without holding the lock.
+    If a method is registered in between, the cache is cleared before the write, so the
+    old method would be written into the cleared cache and, since nothing is pending any
+    more, be returned by every later call. See PR #316.
     """
 
     @dispatch

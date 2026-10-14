@@ -4,16 +4,22 @@ __all__ = (
     "type_mapping",
     "resolve_type_hint",
     "is_faithful",
+    "is_cacheable",
+    "cache_key",
+    "KeyPart",
+    "CacheSpec",
 )
 
 import abc
+import enum
+import itertools
 import sys
 import typing
 import warnings
-from collections.abc import Callable, Hashable
+from collections.abc import Callable, Hashable, Iterable
 from functools import lru_cache, reduce
 from operator import or_
-from types import UnionType
+from types import GenericAlias, UnionType
 from typing import (
     Any,
     Literal,
@@ -191,9 +197,10 @@ def _is_hint(x: object) -> bool:
         bool: `True` if `x` is a type hint and `False` otherwise.
     """
     try:
-        if x.__module__ == "builtins":
-            # Check if `x` is a subscripted built-in. We do this by checking the module
-            # of the type of `x`.
+        if x.__module__ == "builtins" and type(x) is GenericAlias:
+            # `x` is a subscripted built-in, e.g. `list[int]`, so check the module of
+            # its type instead. A class declared with `exec`, e.g. in a doctest, also
+            # has `__module__ == "builtins"`, hence the check on `type(x)`.
             x = type(x)
         return x.__module__ in {
             "types",  # E.g., `tuple[int]`
@@ -203,6 +210,56 @@ def _is_hint(x: object) -> bool:
         }
     except AttributeError:
         return False
+
+
+def _is_generic_hint(x: object, /) -> bool:
+    """Check if an object is a parametrised user generic, like `Box[int]`.
+
+    Such a hint is matched by `__orig_class__`; see
+    :func:`._bear.is_bearable_with_orig`. Parametrised builtins, ABCs and protocols,
+    like `list[int]`, `Sequence[int]` and `SupportsAbs[int]`, are matched by structure
+    instead, so they are excluded, as are special forms like `Union` and `Literal`.
+
+    This does not look at `__module__`, as :func:`_is_hint` does: a class declared by
+    `exec`, as in a doctest, reports its module as `builtins`.
+
+    Args:
+        x (object): Object.
+
+    Returns:
+        bool: `True` if `x` is a parametrised user generic and `False` otherwise.
+    """
+    origin = get_origin(x)
+    return (
+        isinstance(origin, type)
+        and issubclass(origin, typing.Generic)
+        and not getattr(origin, "_is_protocol", False)
+        and get_args(x) != ()
+    )
+
+
+def _has_generic_hint(x: object, /) -> bool:
+    """Check whether :func:`._bear.is_bearable_with_orig` treats the hint `x`
+    differently from :func:`._bear.is_bearable`.
+
+    That is, whether `x` is a parametrised user generic, or a union or `Annotated` of
+    one.
+
+    Args:
+        x (object): Type hint.
+
+    Returns:
+        bool: `True` if `x` contains a parametrised user generic.
+    """
+    if isinstance(x, type):
+        # A class is not parametrised and has no arguments.
+        return False
+    if _is_generic_hint(x):
+        return True
+    origin = get_origin(x)
+    if origin in UNION_TYPES or origin is typing.Annotated:
+        return any(_has_generic_hint(a) for a in get_args(x))
+    return False
 
 
 def _hashable(x: object | type) -> TypeGuard[Hashable]:
@@ -276,6 +333,14 @@ def resolve_type_hint(x: object, /) -> object:
             return x
 
         return resolve_type_hint(x.resolve())
+
+    # Below the `type` case, so a plain type does not pay for `get_origin`.
+    elif _is_generic_hint(x):
+        # Rebuild `Box[int]` so that a `ResolvableType` in its arguments is resolved.
+        origin = get_origin(x)
+        assert origin is not None
+        resolved_args = tuple(resolve_type_hint(arg) for arg in get_args(x))
+        return origin[resolved_args]
 
     # For example, `Is[lambda x: x > 0]` is an example of a `BeartypeValidator`.
     # We shouldn't resolve those.
@@ -442,30 +507,45 @@ def _type_hint_eq(x: object, y: object, /) -> bool:
     return bool(_wrap_type_hint(x) == _wrap_type_hint(y))
 
 
-def is_faithful(x: object, /) -> bool:
-    """Check whether a type hint is faithful.
-
-    A type or type hint `t` is defined _faithful_ if, for all `x`, the following holds
-    true::
-
-        isinstance(x, x) == issubclass(type(x), t)
-
-    You can control whether types are faithful or not by setting the attribute
-    `__faithful__`::
-
-        class UnfaithfulType:
-            __faithful__ = False
-
-    Args:
-        x (type or type hint): Type hint.
-
-    Returns:
-        bool: Whether `x` is faithful or not.
-    """
-    return _is_faithful(resolve_type_hint(x))
-
-
 UNION_TYPES = (typing.Union, UnionType, typing.Optional)
+
+
+class KeyPart(enum.Enum):
+    """Part of a cache key beyond `type(x)` that a non-faithful type may need.
+
+    `IDENTITY` is the class `x` itself, which `type[X]` needs. `VALUE` is the value of
+    `x`, which `Literal[...]` needs.
+    `GENERIC` is the parametrisation of `x`, which a parametrised user generic such
+    as `Box[int]` needs.
+    """
+
+    IDENTITY = "identity"
+    VALUE = "value"
+    GENERIC = "generic"
+
+
+CacheSpec = frozenset[KeyPart]
+"""type: Parts of the cache key that a type needs, beyond `type(x)`.
+
+The empty set means that the type is faithful. Where a `CacheSpec` is optional, `None`
+means that the type is not cacheable.
+"""
+
+_CANONICAL_SPECS: dict[CacheSpec, CacheSpec] = {
+    frozenset(parts): frozenset(parts)
+    for r in range(len(KeyPart) + 1)
+    for parts in itertools.combinations(KeyPart, r)
+}
+"""dict: Every possible `CacheSpec`, mapped to one shared instance of it.
+
+A union of `frozenset`s always allocates a new one, so `_combine` looks the result up
+here. Equal specs are then the same object and can be compared with `is`."""
+
+_NO_PARTS: CacheSpec = _CANONICAL_SPECS[frozenset()]
+_IDENTITY: CacheSpec = _CANONICAL_SPECS[frozenset({KeyPart.IDENTITY})]
+_VALUE: CacheSpec = _CANONICAL_SPECS[frozenset({KeyPart.VALUE})]
+_GENERIC: CacheSpec = _CANONICAL_SPECS[frozenset({KeyPart.GENERIC})]
+_ALL_PARTS: CacheSpec = _CANONICAL_SPECS[frozenset(KeyPart)]
 
 
 class _SupportsDunderFaithful(typing.Protocol):
@@ -477,42 +557,255 @@ def _has_dunder_faithful(x: type, /) -> TypeGuard[_SupportsDunderFaithful]:
     return hasattr(x, "__faithful__")
 
 
-def _is_faithful(x: object, /) -> bool:
-    if _is_hint(x):
+class _Identity:
+    """Wrap an object so that it hashes by `id` and compares by identity.
+
+    The hash and equality of a class come from its metaclass, which can make distinct
+    classes compare equal or make a class unhashable. Likewise, the hash and equality
+    of an instance of a subclass of `int`, `str` or `bytes` are user code. Holding `obj`
+    ensures that its `id` is not reused while the wrapper exists.
+
+    Args:
+        obj (object): Object to wrap.
+    """
+
+    __slots__ = ("obj",)
+
+    def __init__(self, obj: object, /) -> None:
+        self.obj = obj
+
+    def __hash__(self) -> int:
+        return id(self.obj)
+
+    def __eq__(self, other: object, /) -> bool:
+        return type(other) is _Identity and self.obj is other.obj
+
+
+def _identity(x: object, /) -> object | None:
+    """Get the `IDENTITY` part of `cache_key(x)`.
+
+    This is `None` if `x` is not a class. A class whose metaclass is `type` already
+    hashes by `id` and compares by identity, so it is not wrapped in `_Identity`.
+    """
+    if not isinstance(x, type):
+        return None
+    return x if type(x) is type else _Identity(x)
+
+
+_LITERAL_TYPES: frozenset[type] = frozenset({bool, int, str, bytes, type(None)})
+"""The exact types PEP 586 allows a `Literal` to hold; a value of one of these is
+keyed by its own value. Instances of *subclasses* also match a `Literal`, and are
+keyed differently; see `_value`."""
+
+_LITERAL_BASES: tuple[type, ...] = (int, str, bytes, enum.Enum)
+"""Bases whose instances can also match a `Literal`: an `int` subclass and an
+`Enum` member both do. `bool` and `NoneType` cannot be subclassed, so they need no
+entry here."""
+
+
+def _value(x: object, /) -> object | None:
+    """The value component of `cache_key` for `x`.
+
+    `beartype` matches `x` against `Literal[v]` if and only if `isinstance(x, type(v))`
+    and `x == v`. `type(x)` is already in the key, so this component only has to
+    determine `x == v`.
+
+    If the type of `x` is exactly one of the types that a `Literal` may hold, then `x`
+    is its own component. An instance of a subclass can also match a `Literal`, but its
+    `__eq__` and `__hash__` are user code, so equal keys need not imply equal matches.
+    Such an `x` is keyed on its identity instead. Any other `x` matches no `Literal`,
+    so its component is `None`, which also keeps unhashable arguments out of the key.
+
+    Args:
+        x (object): Value.
+
+    Returns:
+        object or None: The value component of the cache key for `x`.
+    """
+    if type(x) in _LITERAL_TYPES:
+        return x
+    if isinstance(x, _LITERAL_BASES):
+        # Note: this caches per object rather than per value. `Enum` members are
+        # singletons, so for them the two coincide.
+        return _Identity(x)
+    return None
+
+
+def _generic(x: object, /) -> object | None:
+    """The generic component of `cache_key` for `x`: its `__orig_class__`, or `None`.
+
+    Together with `type(x)`, this settles a match by
+    :func:`._bear.is_bearable_with_orig`. Like :func:`_value`, an unhashable
+    parametrisation, e.g. `Box[Annotated[int, {"a": 1}]]`, is keyed on its identity.
+
+    Args:
+        x (object): Value.
+
+    Returns:
+        object or None: The generic component of the cache key for `x`.
+    """
+    orig = getattr(x, "__orig_class__", None)
+    if orig is None or _hashable(orig):
+        return orig
+    return _Identity(orig)
+
+
+def cache_key(x: object, /, spec: CacheSpec = _ALL_PARTS) -> tuple[object, ...]:
+    """Get a cache key for `x` with the parts in `spec`.
+
+    If `is_cacheable(t)`, then whether `x` matches `t` depends only on `cache_key(x)`.
+    The layout of the key is an implementation detail. The `IDENTITY`, `VALUE` and
+    `GENERIC` parts can hold a reference to `x` or to its parametrisation.
+
+    Args:
+        x (object): Value.
+        spec (CacheSpec, optional): Parts to include. Defaults to all parts.
+
+    Returns:
+        tuple: Cache key.
+    """
+    key: tuple[object, ...] = (type(x),)
+    if KeyPart.IDENTITY in spec:
+        key += (_identity(x),)
+    if KeyPart.VALUE in spec:
+        key += (_value(x),)
+    if KeyPart.GENERIC in spec:
+        key += (_generic(x),)
+    return key
+
+
+_ARG_KEYS: "dict[CacheSpec, Callable[[object], object]]" = {
+    _NO_PARTS: type,
+    _IDENTITY: lambda x: (type(x), _identity(x)),
+    _VALUE: lambda x: (type(x), _value(x)),
+    _GENERIC: lambda x: (type(x), _generic(x)),
+    _IDENTITY | _VALUE: lambda x: (type(x), _identity(x), _value(x)),
+    _IDENTITY | _GENERIC: lambda x: (type(x), _identity(x), _generic(x)),
+    _VALUE | _GENERIC: lambda x: (type(x), _value(x), _generic(x)),
+    _IDENTITY | _VALUE | _GENERIC: lambda x: (
+        type(x),
+        _identity(x),
+        _value(x),
+        _generic(x),
+    ),
+}
+"""dict: `cache_key` specialised to every :obj:`CacheSpec`, for :class:`.Resolver`.
+
+Checking which key parts are in the spec on every call, which hashes `KeyPart`
+members, would be most of the cost of a cache hit."""
+
+
+def is_faithful(x: object, /) -> bool:
+    """Check whether a type hint is faithful.
+
+    A type or type hint `t` is _faithful_ if, for all `x`::
+
+        isinstance(x, t) == issubclass(type(x), t)
+
+    You can control whether types are faithful or not by setting the attribute
+    `__faithful__`::
+
+        class UnfaithfulType:
+            __faithful__ = False
+
+    See also :func:`is_cacheable`.
+
+    Args:
+        x (type or type hint): Type hint.
+
+    Returns:
+        bool: Whether `x` is faithful or not.
+    """
+    return _cache_spec(resolve_type_hint(x)) == _NO_PARTS
+
+
+def is_cacheable(x: object, /) -> bool:
+    """Check whether a type hint is cacheable.
+
+    A type or type hint `t` is _cacheable_ if, for all `x`, whether `x` matches `t`
+    depends only on `cache_key(x)`. Every faithful type is cacheable. `type[X]` and
+    `Literal[...]` are cacheable, but not faithful.
+    So is a parametrised user generic such as `Box[int]`. A parametrised built-in such
+    as `list[int]` is not cacheable, because matching it inspects the elements.
+
+    Args:
+        x (type or type hint): Type hint.
+
+    Returns:
+        bool: Whether `x` is cacheable or not.
+    """
+    return _cache_spec(resolve_type_hint(x)) is not None
+
+
+def _combine(items: Iterable[object], /) -> CacheSpec | None:
+    """Union the specs of `items`, or `None` if any item is not cacheable."""
+    acc = _NO_PARTS
+    for item in items:
+        sub = _cache_spec(resolve_type_hint(item))
+        if sub is None:
+            return None
+        # `acc` is a shared instance, so a repeated spec skips the union.
+        if sub is not acc:
+            acc = _CANONICAL_SPECS[acc | sub]
+    return acc
+
+
+def _cache_spec(x: object, /) -> CacheSpec | None:
+    """Determine the parts of the cache key that a type hint needs.
+
+    Args:
+        x (type or type hint): Resolved type hint.
+
+    Returns:
+        CacheSpec or None: Parts of the cache key, or `None` if `x` is not cacheable.
+    """
+    if _is_generic_hint(x):
+        # Matched by `__orig_class__`, see `is_bearable_with_orig`.
+        return _GENERIC
+
+    elif _is_hint(x):
         origin = get_origin(x)
         args = get_args(x)
         if args == ():
-            # Unsubscripted type hints tend to be faithful. For example, `Any`,
-            # `List`, `Tuple`, `Dict`, `Callable`, and `Generator` are. When we
-            # come across a counter-example, we will refine this logic.
-            return True
-
+            if origin is tuple and hasattr(x, "__args__"):
+                # `tuple[()]` matches only the empty tuple, but from Python 3.11
+                # `get_args` returns `()` for it. Unlike `typing.Tuple`, it has
+                # `__args__`.
+                return None
+            # Unsubscripted hints tend to be faithful: `Any`, `List`, `Callable`, ...
+            return _NO_PARTS
+        if origin is type:
+            # `issubclass(x, X)` depends only on `x` if `X` is faithful.
+            return _IDENTITY if _combine(args) is _NO_PARTS else None
+        if origin is Literal:
+            return _VALUE
         if origin in UNION_TYPES:
-            return all(is_faithful(arg) for arg in args)
+            return _combine(args)
+        return None
 
-        return False
-
-    elif x is None or x == Ellipsis:
-        return True
+    elif x is None or x is Ellipsis:
+        return _NO_PARTS
 
     elif isinstance(x, (tuple, list)):
-        return all(is_faithful(arg) for arg in x)
+        return _combine(x)
+
     elif isinstance(x, type):
         if _has_dunder_faithful(x):
-            return x.__faithful__
-        else:
-            # This is the fallback method. Check whether `__instancecheck__` is default
-            # or not. If it is, assume that it is faithful.
-            return type(x).__instancecheck__ in {
-                type.__instancecheck__,
-                abc.ABCMeta.__instancecheck__,
-            }
+            return _NO_PARTS if x.__faithful__ else None
+        # This is the fallback method. Check whether `__instancecheck__` is default or
+        # not. If it is, assume that it is faithful.
+        faithful = type(x).__instancecheck__ in {
+            type.__instancecheck__,
+            abc.ABCMeta.__instancecheck__,
+        }
+        return _NO_PARTS if faithful else None
+
     else:
         warnings.warn(
-            f"Could not determine whether `{x}` is faithful or not. "
-            f"I have concluded that the type is not faithful, so your code might run "
+            f"Could not determine whether `{x}` is faithful or cacheable. "
+            f"I have concluded that it is neither, so your code might run "
             f"with subpar performance. "
             f"Please open an issue at https://github.com/beartype/plum.",
             stacklevel=2,
         )
-    return False
+    return None
