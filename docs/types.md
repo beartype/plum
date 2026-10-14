@@ -92,7 +92,17 @@ For example, this means that `list[T1]` is a subtype of `list[T2]` whenever
 
 Plum achieves performance by caching the dispatch process.
 Unfortunately, efficient caching is not always possible.
-Efficient caching is possible for so-called _faithful_ types.
+Efficient caching is possible for so-called _cacheable_ types.
+The dispatch result for an argument `x` is cached under a key `cache_key(x)`, which captures `type(x)` and, if some method needs it, the identity of `x` if `x` is a class and the value of `x` if a `Literal` could match it.
+Equal keys imply the same match result, but do not depend on the layout of the key, which may change.
+
+````{admonition} Definition: cacheable type
+A type `t` is _cacheable_ if, for all `x`, whether `x` matches `t` is a function of
+`cache_key(x)` alone.
+````
+
+The most important cacheable types are the _faithful_ ones, whose match depends only on
+`type(x)`:
 
 % skip: next "Definition"
 
@@ -103,13 +113,26 @@ isinstance(x, t) == issubclass(type(x), t)
 ```
 ````
 
-For example, `int` is faithful, since `type(1) == int`;
-but `Literal[1]` is not faithful, since `issubclass(int, Literal[1])` is false.
+Every faithful type is cacheable.
+Two kinds of types are cacheable but _not_ faithful:
 
-Methods which have signatures that depend only on faithful types will
+- `type[X]` (or `typing.Type[X]`): `issubclass(x, X)` depends on the identity of the class `x`, which `cache_key` captures.
+- `Literal[...]`: the match depends on the *value* of `x`, likewise captured.
+
+For example, `int` is faithful, since `type(1) == int`.
+`Literal[1]` is not faithful, since `issubclass(int, Literal[1])` is false, but it is cacheable.
+
+```{admonition} Cache growth
+:class: warning
+The cache holds strong references to the classes and values that a function is called with.
+A function that dispatches on `type[X]` therefore keeps every class it is called with alive until `f.clear_cache()` or `plum.clear_all_cache()` is called.
+A function that dispatches on `Literal` stops caching after 4096 entries, since `Literal["ready"]` next to a `str` fallback would otherwise add an entry for every new string.
+```
+
+Methods which have signatures that depend only on cacheable types will
 be performant.
 On the other hand, methods which have one or more signatures with one or more
-unfaithful types cannot use caching and will therefore be less performant.
+uncacheable types cannot use caching and will therefore be less performant.
 
 Example:
 
@@ -125,28 +148,40 @@ def add_5_faithful(x: int):
 
 
 @dispatch
-def add_5_unfaithful(x: Literal[1]):
-    return x + 5
+def add_5_uncacheable(x: list[int]):
+    return x + [5]
 ```
 
 ```python
 >>> %timeit add_5_faithful(1)  # doctest:+SKIP
-585 ns ± 6.2 ns per loop (mean ± std. dev. of 7 runs, 1,000,000 loops each)
+382 ns ± 10.2 ns per loop (mean ± std. dev. of 7 runs, 1,000,000 loops each)
 
->>> %timeit add_5_unfaithful(1)  # doctest:+SKIP
-6.24 µs ± 68.9 ns per loop (mean ± std. dev. of 7 runs, 100,000 loops each)
+>>> %timeit add_5_uncacheable([1])  # doctest:+SKIP
+2.49 µs ± 31.1 ns per loop (mean ± std. dev. of 7 runs, 100,000 loops each)
 ```
 
 Plum implements `is_faithful`, which is a function that attempts to establish whether
 a type is faithful or not:
 
 ```python
->>> from plum import is_faithful
+>>> from plum import is_faithful, is_cacheable
 
 >>> is_faithful(int)
 True
 
 >>> is_faithful(Literal[1])
+False
+
+>>> is_faithful(type[int])
+False
+
+>>> is_cacheable(type[int])
+True
+
+>>> is_cacheable(Literal[1])
+True
+
+>>> is_cacheable(list[int])
 False
 ```
 
