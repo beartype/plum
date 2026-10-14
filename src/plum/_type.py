@@ -499,8 +499,9 @@ class _Identity:
     """Wrap an object so that it hashes by `id` and compares by identity.
 
     The hash and equality of a class come from its metaclass, which can make distinct
-    classes compare equal or make a class unhashable. A value can be unhashable too.
-    Holding `obj` ensures that its `id` is not reused while the wrapper exists.
+    classes compare equal or make a class unhashable. Likewise, the hash and equality
+    of an instance of a subclass of `int`, `str` or `bytes` are user code. Holding `obj`
+    ensures that its `id` is not reused while the wrapper exists.
 
     Args:
         obj (object): Object to wrap.
@@ -532,7 +533,7 @@ def _identity(x: object, /) -> object | None:
 _LITERAL_TYPES: frozenset[type] = frozenset({bool, int, str, bytes, type(None)})
 """The exact types PEP 586 allows a `Literal` to hold; a value of one of these is
 keyed by its own value. Instances of *subclasses* also match a `Literal`, and are
-keyed differently -- see `_value`."""
+keyed differently; see `_value`."""
 
 _LITERAL_BASES: tuple[type, ...] = (int, str, bytes, enum.Enum)
 """Bases whose instances can also match a `Literal`: an `int` subclass and an
@@ -543,22 +544,15 @@ entry here."""
 def _value(x: object, /) -> object | None:
     """The value component of `cache_key` for `x`.
 
-    Beartype matches `x` against `Literal[v]` exactly when `isinstance(x, type(v))`
-    and `x == v`. The first half is settled by `type(x)`, which the key already
-    carries; this slot settles the second half.
+    `beartype` matches `x` against `Literal[v]` if and only if `isinstance(x, type(v))`
+    and `x == v`. `type(x)` is already in the key, so this component only has to
+    determine `x == v`.
 
-    An `x` that is not an instance of any legal `Literal` type can never match any
-    `Literal`, so `type(x)` alone determines the answer and the slot is `None` — this
-    is also what keeps unhashable arguments (a `list`, say) out of the key.
-
-    Only an `x` of one of those types *exactly* is keyed on its value. Such an `x`
-    has the built-in `__eq__` and `__hash__`, under which equal keys really do imply
-    equal `x == literal` for every literal. A *subclass* instance can also match
-    (`is_bearable(MyInt(1), Literal[1])` is `True`), but its `__eq__` and `__hash__`
-    are user code and may be non-transitive, so two arguments could share a key while
-    matching different literals. It is therefore keyed on its identity instead, which
-    is strictly finer than its value and so never collides. This is the same
-    precaution :class:`_Identity` already takes for classes.
+    If the type of `x` is exactly one of the types that a `Literal` may hold, then `x`
+    is its own component. An instance of a subclass can also match a `Literal`, but its
+    `__eq__` and `__hash__` are user code, so equal keys need not imply equal matches.
+    Such an `x` is keyed on its identity instead. Any other `x` matches no `Literal`,
+    so its component is `None`, which also keeps unhashable arguments out of the key.
 
     Args:
         x (object): Value.
@@ -603,11 +597,10 @@ _ARG_KEYS: "dict[CacheSpec, Callable[[object], object]]" = {
     _VALUE: lambda x: (type(x), _value(x)),
     _IDENTITY | _VALUE: lambda x: (type(x), _identity(x), _value(x)),
 }
-"""`cache_key` specialised to each combination of spec, for :class:`.Resolver` to
-bind on the hot path. Testing `KeyPart` membership per call costs ~80 ns per key part
-(hashing an `Enum` member is not cheap), which is the bulk of a cached dispatch; these
-do the same work with the spec already decided. One entry per subset of `KeyPart`;
-`test_arg_keys_agree_with_cache_key` holds them to `cache_key`."""
+"""dict: `cache_key` specialised to every :obj:`CacheSpec`, for :class:`.Resolver`.
+
+Checking which key parts are in the spec on every call, which hashes `KeyPart`
+members, would be most of the cost of a cache hit."""
 
 
 def is_faithful(x: object, /) -> bool:

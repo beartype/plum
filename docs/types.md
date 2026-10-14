@@ -116,25 +116,17 @@ isinstance(x, t) == issubclass(type(x), t)
 Every faithful type is cacheable.
 Two kinds of types are cacheable but _not_ faithful:
 
-- `type[X]` (or `typing.Type[X]`): `issubclass(x, X)` depends on the identity of the
-  class `x`, which `cache_key` captures.
+- `type[X]` (or `typing.Type[X]`): `issubclass(x, X)` depends on the identity of the class `x`, which `cache_key` captures.
 - `Literal[...]`: the match depends on the *value* of `x`, likewise captured.
 
-For example, `int` is faithful, since `type(1) == int`; but `Literal[1]` is not
-faithful, since `issubclass(int, Literal[1])` is false. It is still cacheable, so
-dispatching on it is fast.
+For example, `int` is faithful, since `type(1) == int`.
+`Literal[1]` is not faithful, since `issubclass(int, Literal[1])` is false, but it is cacheable.
 
-```{admonition} Caching a `Literal` is bounded; caching `type[X]` is not
+```{admonition} Cache growth
 :class: warning
-A key slot holds a strong reference to what it captures -- that is what makes
-identity-based keying sound. A function dispatching on `Literal` therefore gets one
-entry per distinct *value* ever passed, which for `Literal["ready"]` beside a `str`
-fallback would grow with the caller's data, so that cache stops growing at 4096
-entries; beyond it, arguments simply resolve as they did before `Literal` was cacheable
-at all. A function dispatching on `type[X]` gets one entry per distinct argument class
-and is *not* capped, since classes are bounded in practice -- but dynamically created
-classes stay alive for the function's lifetime. Call `f.clear_cache()` or
-`plum.clear_all_cache()` to release them.
+The cache holds strong references to the classes and values that a function is called with.
+A function that dispatches on `type[X]` therefore keeps every class it is called with alive until `f.clear_cache()` or `plum.clear_all_cache()` is called.
+A function that dispatches on `Literal` stops caching after 4096 entries, since `Literal["ready"]` next to a `str` fallback would otherwise add an entry for every new string.
 ```
 
 Methods which have signatures that depend only on cacheable types will
@@ -162,10 +154,10 @@ def add_5_uncacheable(x: list[int]):
 
 ```python
 >>> %timeit add_5_faithful(1)  # doctest:+SKIP
-585 ns ± 6.2 ns per loop (mean ± std. dev. of 7 runs, 1,000,000 loops each)
+382 ns ± 10.2 ns per loop (mean ± std. dev. of 7 runs, 1,000,000 loops each)
 
 >>> %timeit add_5_uncacheable([1])  # doctest:+SKIP
-6.24 µs ± 68.9 ns per loop (mean ± std. dev. of 7 runs, 100,000 loops each)
+2.49 µs ± 31.1 ns per loop (mean ± std. dev. of 7 runs, 100,000 loops each)
 ```
 
 Plum implements `is_faithful`, which is a function that attempts to establish whether
