@@ -191,35 +191,31 @@ class _LiveFunctions:
     the handle's entry then drops out.
     """
 
-    _handles: "weakref.WeakSet[_Handle]"
-    _lock: threading.Lock
+    _refs: "set[weakref.ref[_Handle]]"
 
     def __init__(self) -> None:
-        self._handles = weakref.WeakSet()
-        # A `WeakSet` must not change size while it is iterated, and functions can be
-        # created in other threads.
-        self._lock = threading.Lock()
+        # Not a `weakref.WeakSet`, which raises if a weak reference's callback removes
+        # an entry while another thread iterates it. Every operation below is a single
+        # call on the `set`, so it is atomic, and iteration goes over a copy.
+        self._refs = set()
 
     def add(self, f: "Function", /) -> None:
         f._handle = _Handle(f)
-        with self._lock:
-            self._handles.add(f._handle)
+        self._refs.add(weakref.ref(f._handle, self._refs.discard))
 
     def discard(self, f: "Function", /) -> None:
-        with self._lock:
-            self._handles.discard(f._handle)
+        self._refs.discard(weakref.ref(f._handle))
 
     def __iter__(self) -> "Iterator[Function]":
-        # Iterate over a snapshot, so the loop body can create or drop functions.
-        with self._lock:
-            handles = list(self._handles)
+        handles = [h for h in (r() for r in self._refs.copy()) if h is not None]
         return (h.function for h in handles)
 
     def __contains__(self, f: object) -> bool:
-        return getattr(f, "_handle", None) in self._handles
+        handle = getattr(f, "_handle", None)
+        return handle is not None and weakref.ref(handle) in self._refs
 
     def __len__(self) -> int:
-        return len(self._handles)
+        return len(self._refs)
 
 
 class Function(NativeBase):
