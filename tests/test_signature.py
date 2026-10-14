@@ -2,10 +2,8 @@ import inspect
 import operator
 import weakref
 from collections.abc import Callable, Iterable
-from contextlib import contextmanager
 from numbers import Number as Num, Real as Re
 from typing import Annotated, Any, Literal, Optional, Union
-from unittest.mock import patch
 
 import pytest
 
@@ -342,6 +340,12 @@ def test_comparison():
     assert Sig(float, int, varargs=int) <= Sig(float, Re, varargs=Re)
     assert Sig(float, int, int, varargs=int) <= Sig(float, Re, varargs=Re)
 
+    # Comparability:
+    assert Sig(int).is_comparable(Sig(Num))
+    assert Sig(Num).is_comparable(Sig(int))
+    assert not Sig(int).is_comparable(Sig(str))
+    assert not Sig(int).is_comparable(1)
+
 
 def test_match():
     assert Sig(int).match((1,))
@@ -574,64 +578,28 @@ def test_might_match_arity_and_varargs():
     assert not s.match((1, ["a"]))
 
 
-@contextmanager
-def count_comparisons():
-    """Count the hint comparisons :mod:`plum._signature` asks `_type` for."""
-    calls: list[tuple[str, object, object]] = []
-    real_eq, real_le = plum._signature._type_hint_eq, plum._signature._type_hint_le
-
-    def eq(x, y):
-        calls.append(("eq", x, y))
-        return real_eq(x, y)
-
-    def le(x, y):
-        calls.append(("le", x, y))
-        return real_le(x, y)
-
-    with (
-        patch.object(plum._signature, "_type_hint_eq", eq),
-        patch.object(plum._signature, "_type_hint_le", le),
-    ):
-        yield calls
-
-
-# These two assert on *how* the comparison is reached, by intercepting the calls it
-# makes. A `mypyc`-compiled `_signature` binds those references at compile time, so
-# the patches do not take effect and the assertions cannot mean anything there.
 @pytest.mark.incompatible_with_mypyc
-def test_eq_settles_the_scalars_before_comparing_types():
-    """A difference in arity, varargs or precedence must not wrap any type."""
-    for other in (
-        Sig(int, int),  # arity
-        Sig(int, varargs=int),  # varargs presence
-        Sig(int, precedence=1),  # precedence
-    ):
-        with count_comparisons() as calls:
-            assert Sig(int) != other
-        assert calls == [], calls
+def test_eq_compares_scalars_first(monkeypatch):
+    """Test that `__eq__` compares no types if arity, varargs or precedence differ."""
 
-    # A genuine type comparison still happens when the scalars all agree.
-    with count_comparisons() as calls:
+    def fail(x, y):
+        raise AssertionError("Compared types.")
+
+    monkeypatch.setattr(plum._signature, "_type_hint_eq", fail)
+    assert Sig(int) != Sig(int, int)
+    assert Sig(int) != Sig(int, varargs=int)
+    assert Sig(int) != Sig(int, precedence=1)
+    # Otherwise the types are compared, so the above cannot pass vacuously.
+    with pytest.raises(AssertionError, match="Compared types."):
         assert Sig(int) == Sig(int)
-    assert calls != []
 
 
 @pytest.mark.incompatible_with_mypyc
-def test_is_comparable_does_not_detour_via_eq():
-    """`is_comparable` must decide with `__le__` alone.
+def test_is_comparable_does_not_call_eq(monkeypatch):
+    """Test that `is_comparable` does not call `__eq__`, which compares all types."""
 
-    The inherited implementation asks `self < other or self == other or self > other`,
-    which runs `Signature.__eq__` twice on top of the comparisons.
-    """
-    calls: list[object] = []
-    real = Sig.__eq__
+    def fail(self, other):
+        raise AssertionError("Called `__eq__`.")
 
-    def counting(self, other, /):
-        calls.append(other)
-        return real(self, other)
-
-    with patch.object(Sig, "__eq__", counting):
-        assert Sig(int).is_comparable(Sig(int))
-    assert calls == [], calls
-
-    assert not Sig(int).is_comparable(1)
+    monkeypatch.setattr(Sig, "__eq__", fail)
+    assert Sig(int).is_comparable(Sig(int))

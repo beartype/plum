@@ -198,8 +198,7 @@ class Signature(Comparable):
         if not isinstance(other, Signature):
             return False
 
-        # Settle the scalar properties first: any of them differing rules equality
-        # out, and wrapping the types is the expensive part.
+        # Comparing types is expensive, so first rule out the cheap differences.
         if (
             len(self.types) != len(other.types)
             or (self.varargs is Missing) != (other.varargs is Missing)
@@ -215,8 +214,7 @@ class Signature(Comparable):
         types_equal = all(
             _type_hint_eq(x, y) for x, y in zip(self.types, other.types, strict=True)
         )
-        # The guard above settled precedence, and that the two agree on *whether* they
-        # have varargs; all that is left is comparing them when both do.
+        # By the check above, either both have varargs or neither does.
         varargs_equal = self.varargs is Missing or _type_hint_eq(
             self.varargs, other.varargs
         )
@@ -318,17 +316,14 @@ class Signature(Comparable):
     def is_comparable(self, other: object, /) -> bool:
         """Check whether this signature is comparable with another one.
 
-        Two signatures are comparable exactly when one is below the other, so one
-        `__le__` per direction settles it, and the first direction short-circuits.
-        The inherited implementation spells the same question as `self < other or
-        self == other or self > other`, which additionally runs :meth:`__eq__` twice.
-
         Args:
             other (object): Object to check comparability with.
 
         Returns:
             bool: Whether this signature is comparable with `other`.
         """
+        # Same as `Comparable.is_comparable`, but without the two calls of `__eq__`
+        # that `<` and `>` make there.
         return isinstance(other, Signature) and (self <= other or other <= self)
 
     def match(self, values: tuple[object, ...], /) -> bool:
