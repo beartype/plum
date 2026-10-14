@@ -13,7 +13,7 @@ from rich.text import Text
 from ._util import argsort
 from plum._method import Method, MethodList
 from plum._signature import Signature
-from plum._type import _NO_PARTS, CacheSpec, _canonical, cache_key
+from plum._type import _CANONICAL_SPECS, _NO_PARTS, CacheSpec, cache_key
 from plum.repr import repr_source_path, rich_repr
 
 
@@ -242,8 +242,8 @@ class Resolver:
 
     Attributes:
         methods (list[:class:`.method.Method`]): Registered methods.
-        cache_spec (frozenset | None): Union of all methods' spec, or `None` if any
-            method is uncacheable. Drives caching. See :func:`plum.is_cacheable`.
+        cache_spec (frozenset | None): Union of the methods' cache specs, or `None` if
+            any method is uncacheable. See :func:`plum.is_cacheable`.
         warn_redefinition (bool): Throw a warning whenever a method is redefined.
     """
 
@@ -274,7 +274,6 @@ class Resolver:
     @property
     def is_faithful(self) -> bool:
         """Whether all methods only use faithful types."""
-        # `not` rather than `== frozenset()`, which allocates on every access.
         return self.cache_spec is not None and not self.cache_spec
 
     @property
@@ -346,10 +345,9 @@ class Resolver:
         else:
             self.methods.append(method)
 
-        # Union the methods' cache specs; `None` if any method is uncacheable. The
-        # argument-key callable is bound once here, so the hot path is a branchless
-        # map. Faithful (`∅`) or uncacheable (`None`) → plain `type`; a non-empty
-        # spec → `cache_key` specialised to exactly its key parts.
+        # Update the cache spec. Bind the function that computes the cache key of an
+        # argument now, so dispatch need not check the spec on every call. `type`
+        # suffices when no key parts are needed, and is unused when uncacheable.
         acc: CacheSpec = _NO_PARTS
         for m in self.methods:
             sub = m.signature.cache_spec
@@ -358,11 +356,7 @@ class Resolver:
                 self._arg_key = type
                 return
             if sub is not acc:
-                # `acc` starts canonical and stays so, which is what lets the check
-                # above skip the union -- and so the allocation -- for the methods
-                # that agree, which is nearly all of them.
-                acc = _canonical(acc | sub)
-        # Interned, so all resolvers agreeing on a spec share one instance.
+                acc = _CANONICAL_SPECS[acc | sub]
         self.cache_spec = acc
         self._arg_key = type if not acc else partial(cache_key, spec=acc)
 

@@ -10,7 +10,6 @@ from beartype.door import TypeHint
 
 import plum
 from plum import Signature as Sig
-from plum._type import KeyPart
 from plum._util import Missing
 
 
@@ -466,49 +465,28 @@ def test_append_default_args():
     assert len(plum.append_default_args(Sig.from_callable(f), f)) == 1
 
 
-def test_signature_cache_spec_and_derived_flags():
-    # Faithful signature: empty spec, is_faithful.
-    s = Sig(int, int)
-    assert s.cache_spec == frozenset()
-    assert s.is_faithful
-
-    # type[X] signature: non-empty spec, cacheable but not faithful.
-    s = Sig(type[int], int)
-    assert s.cache_spec and not s.is_faithful
-
-    # varargs participate.
-    assert Sig(int, varargs=type[int]).cache_spec
-    assert not Sig(int, varargs=type[int]).is_faithful
-
-    # Uncacheable: spec is None.
-    s = Sig(list[int])
-    assert s.cache_spec is None
-    assert not s.is_faithful
+@pytest.mark.parametrize(
+    "sig, spec",
+    [
+        (Sig(int, int), frozenset()),
+        (Sig(type[int], int), frozenset({plum.KeyPart.IDENTITY})),
+        (Sig(int, varargs=type[int]), frozenset({plum.KeyPart.IDENTITY})),
+        (Sig(list[int]), None),
+    ],
+)
+def test_signature_cache_spec(sig, spec):
+    """Test `cache_spec`, and the flags derived from it, on types and varargs."""
+    assert sig.cache_spec == spec
+    assert sig.is_faithful == (spec == frozenset())
+    assert sig.is_cacheable == (spec is not None)
 
 
-def test_is_cacheable_matches_the_spec():
-    """`is_cacheable` reads the same classifier as `cache_spec`, on both classes."""
-    assert Sig(int).is_cacheable
-    assert Sig(type[int]).is_cacheable
-    assert not Sig(list[int]).is_cacheable
-    assert Sig(int).is_faithful
-    assert not Sig(type[int]).is_faithful
-    assert not Sig(list[int]).is_faithful
-
-
-def test_default_args_signatures_recompute_their_derived_fields():
-    """Truncating a copy must recompute `cache_spec`, not inherit the original's.
-
-    `append_default_args` drops the trailing defaulted argument. A `type[X]` there
-    puts `IDENTITY` in the spec, which the shorter signature does not need:
-    inheriting it would key the shorter one more widely than it has to.
-    """
-    from plum._signature import append_default_args
+def test_append_default_args_cache_spec():
+    """Test that `append_default_args` recomputes `cache_spec` after truncating."""
 
     def f(x: int, y: type[int] = int):
         pass
 
-    full, truncated = append_default_args(Sig(int, type[int]), f)
-    assert full.cache_spec == frozenset({KeyPart.IDENTITY})
-    assert truncated.types == (int,)
-    assert truncated.cache_spec == frozenset(), truncated.cache_spec
+    full, truncated = plum.append_default_args(Sig(int, type[int]), f)
+    assert full.cache_spec == frozenset({plum.KeyPart.IDENTITY})
+    assert truncated.cache_spec == frozenset()
