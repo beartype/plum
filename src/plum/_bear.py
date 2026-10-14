@@ -18,25 +18,15 @@ is_bearable = partial(_is_bearable, conf=_BeartypeConf(strategy=_BeartypeStrateg
 
 
 def is_bearable_with_orig(v: object, t: object, /) -> bool:
-    """Like :func:`is_bearable`, but decide parametrised user generics by intent.
+    """Like :func:`is_bearable`, but match user generics by `__orig_class__`.
 
-    `Box[int](1)` and `Box[str]("a")` are both plain `Box` instances at runtime, so
-    :func:`is_bearable` cannot tell them apart and every parametrisation matches
-    equally. Python does record the intent: instantiating a subscripted generic sets
-    `__orig_class__` on the instance once `__init__` returns. When the *hint* is a
-    parametrised user generic, this decides by beartype's subtype ordering over that
-    recorded type rather than by an instance check.
-
-    A value without `__orig_class__` falls back to its runtime class. That is what
-    makes `class IntBox(Box[int])` satisfy `Box[int]` — beartype reads
-    `__orig_bases__` — while a bare `Box(1)`, which records no parameter, satisfies
-    only the unparametrised `Box`.
-
-    The hint decides whether this path is taken, never the value: a hint that is not
-    a user generic is handed to :func:`is_bearable` unchanged, so faithful,
-    `type[X]` and `Literal` matching is untouched.
-
-    Variance is beartype's decision throughout; plum holds no opinion on it.
+    `Box[int](1)` and `Box[str]("a")` are both plain `Box` instances, so
+    :func:`is_bearable` cannot tell them apart. Python does record the
+    parametrisation on the instance as `__orig_class__`, so, for a parametrised user
+    generic `t`, check whether that is a subhint of `t`. A value without
+    `__orig_class__`, like `Box(1)` or an instance of `class IntBox(Box[int])`, is
+    checked by its type instead. Unions and `Annotated` are checked member by member,
+    and any other hint is passed to :func:`is_bearable`.
 
     Args:
         v (object): Value.
@@ -48,9 +38,7 @@ def is_bearable_with_orig(v: object, t: object, /) -> bool:
     if _is_generic_hint(t):
         orig = getattr(v, "__orig_class__", None)
         if orig == t:
-            # The commonest case by far: the value was instantiated at exactly this
-            # parametrisation. Subtyping is reflexive, so answer without building a
-            # single `TypeHint`.
+            # The common case. Avoid building `TypeHint`s.
             return True
         return bool(_TypeHint(type(v) if orig is None else orig) <= _TypeHint(t))
 
