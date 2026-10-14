@@ -75,14 +75,7 @@ class Signature(Comparable):
         self._derive()
 
     def _derive(self) -> None:
-        """(Re)compute everything determined by `types` and `varargs`.
-
-        `append_default_args` copies a signature and then truncates `types` and drops
-        `varargs`, so the copy's derived fields describe the *original*. Carrying them
-        is conservative rather than wrong -- truncation can only remove key parts,
-        never add them -- but the shorter signature can end up keyed more widely than
-        it needs, and so capped or pushed to a slower tier for no reason.
-        """
+        """Compute the fields that depend on `types` and `varargs`."""
         types = self.types
         all_types = types if self.varargs is Missing else (*types, self.varargs)
         self.cache_spec = _combine(all_types)
@@ -112,7 +105,6 @@ class Signature(Comparable):
     @property
     def is_faithful(self) -> bool:
         """Whether every type is faithful (the cache can key on `type(x)` alone)."""
-        # `not` rather than `== frozenset()`, which allocates on every access.
         return self.cache_spec is not None and not self.cache_spec
 
     @property
@@ -470,8 +462,7 @@ def append_default_args(signature: Signature, f: Callable[..., Any]) -> list[Sig
         # Remove the last positional argument.
         signature_copy.types = signature_copy.types[:-1]
 
-        # `types` and `varargs` both changed, so everything derived from them has to
-        # be recomputed rather than inherited from the signature copied above.
+        # The copy has the cache spec of the longer signature, which may be too wide.
         signature_copy._derive()
 
         signatures.append(signature_copy)
