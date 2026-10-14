@@ -537,7 +537,7 @@ _MIGHT_MATCH_VALUES = [
 
 @pytest.mark.parametrize("hint", _MIGHT_MATCH_HINTS)
 def test_might_match_is_implied_by_match(hint):
-    # Under-inclusion is a wrong answer: whatever matches must be kept.
+    """Test that `might_match` is `True` whenever `match` is."""
     s = Sig(hint)
     for group in _MIGHT_MATCH_VALUES:
         for v in group:
@@ -546,14 +546,14 @@ def test_might_match_is_implied_by_match(hint):
 
 @pytest.mark.parametrize("hint", _MIGHT_MATCH_HINTS)
 def test_might_match_depends_only_on_the_runtime_type(hint):
-    # The verify cache is keyed on `tuple(map(type, args))`, so `might_match` must
-    # not distinguish two values of the same type.
+    """Test that `might_match` gives the same answer for values of the same type."""
     s = Sig(hint)
     for group in _MIGHT_MATCH_VALUES:
         assert len({s.might_match((v,)) for v in group}) == 1
 
 
 def test_might_match_arity_and_varargs():
+    """Test that `might_match` checks the arity and the varargs."""
     s = Sig(int, varargs=list[int])
     assert s.might_match((1,))
     assert s.might_match((1, [1]))
