@@ -247,7 +247,9 @@ def unbox(b: Box):
 ```
 
 An instance created without a parameter records nothing, so it matches only the
-unparametrised method:
+unparametrised method.
+The same holds for an instance of a class with `__slots__`, on which Python cannot set
+`__orig_class__`:
 
 ```python
 >>> unbox(Box(1.0))
@@ -266,17 +268,15 @@ A subclass of a parametrised generic records its parameter statically, in
 'an integer'
 ```
 
-Whether one parametrisation is a subtype of another — that is, how a `TypeVar`'s
-variance is interpreted — is Beartype's decision, not Plum's.
+Whether `Box[bool]` matches `Box[int]`, i.e. how the variance of a `TypeVar` is
+interpreted, is up to Beartype.
 
-A parametrised *user* generic is cacheable, though not faithful: whether an argument
-matches depends on its `__orig_class__`, and the pair `(type(x), x.__orig_class__)` is
-a bounded key, so dispatch on it is cached like any other. The unparametrised class
-stays faithful.
-
-Parametrised *builtins* are the ones that are not cacheable. Beartype decides
-`list[int]` by inspecting the elements, which no key derived from the argument can
-capture, so a function dispatching on one uses the **verify** cache described above.
+A parametrised user generic is cacheable but not faithful: dispatch on it is cached on
+`type(x)` and `x.__orig_class__`.
+The unparametrised class stays faithful.
+A parametrised builtin such as `list[int]` is not cacheable, because Beartype checks
+its elements, so a function that dispatches on one uses the verify cache described
+above.
 
 ```python
 >>> from plum import is_cacheable
