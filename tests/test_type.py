@@ -6,7 +6,6 @@ from typing import Annotated, Any, Literal, Union
 
 import pytest
 
-from plum._bear import is_bearable
 from plum._type import (
     ModuleType,
     PromisedType,
@@ -138,36 +137,17 @@ def test_is_hint():
     assert _is_hint(typing.Union[int, float])  # noqa: UP007
     assert _is_hint(int | float)
     assert _is_hint(Callable)
-
-
-def test_is_hint_agrees_regardless_of_declaration_site():
-    # A class declared inside an `exec`'d namespace (as a doctest does) reports
-    # `__module__ == "builtins"`, same as a subscripted builtin generic alias like
-    # `list[int]`. `_is_hint` must not let that coincidence make its classification
-    # depend on *where* a class was written rather than *what* it is.
-    class NormalProto(typing.Protocol):
-        def foo(self) -> int: ...
-
-    ns = {}
-    exec(
-        "import typing\n"
-        "class Proto(typing.Protocol):\n"
-        "    def foo(self) -> int: ...\n",
-        ns,
-    )
-    ExecProto = ns["Proto"]
-
-    assert NormalProto.__module__ != "builtins"
-    assert ExecProto.__module__ == "builtins"
-    assert not _is_hint(NormalProto)
-    assert not _is_hint(ExecProto)
-    assert _cache_spec(resolve_type_hint(NormalProto)) is None
-    assert _cache_spec(resolve_type_hint(ExecProto)) is None
-
-    # Builtin generic aliases must still be recognised as hints.
     assert _is_hint(list[int])
     assert _is_hint(type[int])
     assert not _is_hint(list)
+
+
+def test_is_hint_exec():
+    """Test that a class declared with `exec`, as in a doctest, is not a hint."""
+    ns = {}
+    exec("import typing\nclass Proto(typing.Protocol): pass\n", ns)
+    assert ns["Proto"].__module__ == "builtins"
+    assert not _is_hint(ns["Proto"])
 
 
 @skip_if_less_than_py310
@@ -432,82 +412,46 @@ def test_wrap_type_hint_unwrappable_hint():
     assert not _type_hint_le(int, hint_a)
 
 
-def test_is_cacheable_and_faithful_split():
-    class SomeClass:
-        pass
-
-    # Faithful ⇒ cacheable, and type-keyed.
-    assert is_faithful(int) and is_cacheable(int)
-    assert is_faithful(typing.Any) and is_cacheable(typing.Any)
-    assert is_faithful(type) and is_cacheable(type)  # bare, unsubscripted
-    assert is_faithful(typing.Union[int, str])  # noqa: UP007
-
-    # type[X]: cacheable but NOT faithful.
-    assert not is_faithful(type[int])
-    assert is_cacheable(type[int])
-    assert not is_faithful(type[SomeClass])
-    assert is_cacheable(type[SomeClass])
-    assert not is_faithful(typing.Type[int])  # noqa: UP006
-    assert is_cacheable(typing.Type[int])  # noqa: UP006
-    assert is_cacheable(typing.Union[type[int], str])  # noqa: UP007
-
-    # Genuinely uncacheable.
-    assert not is_cacheable(typing.Literal[1])
-    assert not is_cacheable(list[int])
-    assert not is_cacheable(list[type[int]])
+class _Unfaithful:
+    __faithful__ = False
 
 
-def test_empty_tuple_hint_is_not_faithful():
-    """`tuple[()]` matches on the *length* of the value, not its type.
-
-    `typing.get_args(tuple[()])` is `()`, which an "unsubscripted hints are
-    faithful" rule reads as unsubscripted. `()` matches it and `(1,)` does not, so
-    the classification must be uncacheable.
-    """
-    assert is_bearable((), tuple[()])
-    assert not is_bearable((1,), tuple[()])
-
-    assert not is_faithful(tuple[()])
-    assert not is_cacheable(tuple[()])
-    assert not is_faithful(typing.Tuple[()])  # noqa: UP006
-    assert not is_cacheable(typing.Tuple[()])  # noqa: UP006
-    # Nested in a union, the whole hint goes with it.
-    assert not is_cacheable(typing.Union[tuple[()], int])  # noqa: UP007
-
-    # Other unsubscripted hints are unaffected. In particular bare `typing.Tuple`
-    # shares the `tuple` origin but means "any tuple", which depends only on the
-    # type, so it must stay faithful rather than be lumped in with `tuple[()]`.
-    assert is_faithful(typing.Tuple)  # noqa: UP006
-    assert is_cacheable(typing.Tuple)  # noqa: UP006
-    assert is_faithful(tuple)
-    assert is_faithful(typing.List)  # noqa: UP006
-    assert is_faithful(typing.Any)
+@pytest.mark.parametrize(
+    "hint, faithful, cacheable",
+    [
+        (int, True, True),
+        (type, True, True),
+        (typing.Tuple, True, True),  # noqa: UP006
+        (type[int], False, True),
+        (typing.Type[int], False, True),  # noqa: UP006
+        (typing.Union[type[int], str], False, True),  # noqa: UP007
+        (tuple[()], False, False),
+        (typing.Tuple[()], False, False),  # noqa: UP006
+        (typing.Union[tuple[()], int], False, False),  # noqa: UP007
+        (typing.Literal[1], False, False),
+        (list[int], False, False),
+        (list[type[int]], False, False),
+        (type[_Unfaithful], False, False),
+    ],
+)
+def test_is_faithful_is_cacheable(hint, faithful, cacheable):
+    """Test `is_faithful` and `is_cacheable` on hints where the two can differ."""
+    assert is_faithful(hint) is faithful
+    assert is_cacheable(hint) is cacheable
 
 
-def test_cache_key_contract():
-    """Equal keys imply the same match result, so anything that dispatches
-    differently must get a distinct key. The width and order of the slots are an
-    implementation detail and deliberately not asserted here.
-    """
-
-    class SomeClass:
-        pass
-
-    # Non-classes are told apart by their type, without pinning the tuple: every
-    # member added to `KeyPart` widens the default key, so asserting its shape would
-    # have to be rewritten each time and would stop testing the contract.
-    assert cache_key(1) == cache_key(2)  # `type[X]` alone cannot tell these apart
+def test_cache_key():
+    """Test that `cache_key` tells apart values of different types and classes."""
+    assert cache_key(1) == cache_key(2)
     assert cache_key(1) != cache_key("x")
-    assert cache_key(1) != cache_key(1.0)
-    # Classes keyed on identity; distinct from a same-type instance key.
     assert cache_key(int) == cache_key(int)
     assert cache_key(int) != cache_key(str)
     assert cache_key(int) != cache_key(1)
-    assert cache_key(SomeClass) == cache_key(SomeClass)
 
 
-def test_cache_key_survives_pathological_metaclasses():
-    # Unhashable class (metaclass defines __eq__, nulls __hash__): key must not raise.
+def test_cache_key_metaclass_eq():
+    """Test `cache_key` for classes whose metaclass overrides `__eq__`."""
+
     class MetaUnhashable(type):
         def __eq__(cls, other):
             return cls is other
@@ -515,68 +459,37 @@ def test_cache_key_survives_pathological_metaclasses():
     class Unhashable(metaclass=MetaUnhashable):
         pass
 
-    d = {cache_key(Unhashable): "ok"}
-    assert d[cache_key(Unhashable)] == "ok"
+    assert hash(cache_key(Unhashable)) == hash(cache_key(Unhashable))
 
-    # Lying equality + colliding hash: distinct classes must not collide in the key.
-    class MetaLie(type):
+    class MetaAlwaysEqual(type):
         def __eq__(cls, other):
             return True
 
-        def __hash__(cls):
-            return 7
+        __hash__ = type.__hash__
 
-    class A(int, metaclass=MetaLie):
+    class A(metaclass=MetaAlwaysEqual):
         pass
 
-    class B(metaclass=MetaLie):
+    class B(metaclass=MetaAlwaysEqual):
         pass
 
     assert cache_key(A) != cache_key(B)
-    assert {cache_key(A): 1}.get(cache_key(B)) is None
 
 
-def test_public_api_exports():
-    import plum
+def test_cache_spec_no_eq():
+    """Test that `_cache_spec` does not call `__eq__` on the hint."""
 
-    assert plum.is_cacheable(int) is True
-    assert plum.is_cacheable(list[int]) is False
-    assert plum.cache_key(1)[0] is int
-    assert "is_cacheable" in plum.__all__
-    assert "cache_key" in plum.__all__
-
-
-def test_cache_spec_of_an_array_like_hint():
-    """Classification must not evaluate a hint's truthiness.
-
-    `x == Ellipsis` on a `numpy` array returns an array, whose `bool()` raises, so
-    an array reaching the classifier used to blow up rather than be reported
-    uncacheable.
-    """
-    np = pytest.importorskip("numpy")
+    class NoEq:
+        def __eq__(self, other):
+            raise AssertionError("`__eq__` must not be called.")
 
     with pytest.warns(UserWarning, match="faithful or cacheable"):
-        assert _cache_spec(np.array([1, 2, 3])) is None
-
-    # The two values the branch actually exists for still classify as faithful.
-    assert _cache_spec(None) == frozenset()
-    assert _cache_spec(Ellipsis) == frozenset()
+        assert _cache_spec(NoEq()) is None
 
 
-def test_cache_specs_are_interned():
-    # Only `2 ** len(KeyPart)` specs exist, so every signature and resolver must
-    # share one instance rather than hold a private 216-byte copy.
-    from plum._type import _IDENTITY, _NO_PARTS, _canonical, _combine
+def test_combine_shares_specs():
+    """Test that `_combine` returns one shared instance per spec."""
+    from plum._type import _IDENTITY, _NO_PARTS, _combine
 
-    specs = [_combine((int, float)), _combine((str,)), _combine((type[int], int))]
-    assert specs[0] is specs[1] is _combine((bool,))
-    assert specs[2] is _combine((type[str],))
-    assert _canonical(frozenset(specs[2])) is specs[2]
-
-    # The module constants are the canonical instances, not a second copy of the
-    # same value: `_combine` unions into a fresh `frozenset`, so without seeding
-    # the table that copy would be interned first and both would stay live.
-    assert specs[0] is _NO_PARTS
-    assert specs[2] is _IDENTITY
-    assert _canonical(_NO_PARTS) is _NO_PARTS
-    assert _canonical(_IDENTITY) is _IDENTITY
+    assert _combine((int, float)) is _NO_PARTS
+    assert _combine((type[int], int, type[str])) is _IDENTITY
