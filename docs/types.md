@@ -132,19 +132,11 @@ A function that dispatches on `Literal` also keeps instances of subclasses of `i
 `str` and `bytes` alive, and empties its cache when it reaches 4096 entries.
 ```
 
-Whether a function's types are cacheable decides which of two caches it uses.
-
-* **Trust.** If every method uses only cacheable types, then the cache key
-  determines which method matches, so the method is memoised under that key. A
-  repeated call is one dictionary lookup and no type checking at all.
-* **Verify.** If any method uses an uncacheable type, then no key determines the
-  method, and nothing may be trusted without checking. The runtime types of the
-  arguments do, however, determine which methods could *possibly* match, so those
-  are memoised instead, and every call verifies that narrowed list against the
-  actual arguments. This is much slower than a trusted hit, but the methods ruled
-  out by the argument types are never checked again.
-
-Both caches are cleared by `f.clear_cache()` and `clear_all_cache()`.
+If every method of a function uses only cacheable types, then Plum caches which method the arguments match, and a repeated call is a single dictionary lookup.
+If any method uses an uncacheable type, then Plum cannot cache the method.
+It instead caches which methods arguments of the given types could match, and checks only those on every call.
+This is slower, but faster than checking every method.
+Both caches are cleared by `f.clear_cache()` and `plum.clear_all_cache()`.
 
 Example:
 
