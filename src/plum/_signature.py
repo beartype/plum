@@ -6,6 +6,7 @@ import inspect
 import operator
 from collections.abc import Callable, Iterable
 from copy import copy
+from types import WrapperDescriptorType
 from typing import Annotated, Any, ClassVar, get_args, get_origin, get_type_hints
 from typing_extensions import Self
 
@@ -35,21 +36,21 @@ from .repr import repr_short, rich_repr
 
 
 def _class_is_honest(t: type, /) -> bool:
-    """Whether instances of `t` report `type(self)` as their `__class__`.
+    """Check whether instances of `t` cannot fake their `__class__`.
 
-    A class that overrides `__class__` -- with a property, say -- makes `isinstance`
-    depend on the *value* rather than on its type. Anything keyed on `type(v)` has to
-    treat such a type as unable to rule anything out. Only asked while a bucket is
-    being built, once per distinct tuple of runtime types, so a short walk is fine.
+    `isinstance` consults `__class__`, which a class can override directly or through
+    `__getattribute__`. For instances of such a class, `isinstance` depends on the value
+    and not only on its type.
     """
-    return all("__class__" not in vars(c) for c in t.__mro__ if c is not object)
+    return isinstance(t.__getattribute__, WrapperDescriptorType) and all(
+        "__class__" not in vars(c) for c in t.__mro__ if c is not object
+    )
 
 
 def _might_match_hint(v: object, t: TypeHint, /) -> bool:
     """Check whether *any* object with the runtime type of `v` could match hint `t`.
 
-    Never `False` when `is_bearable(v, t)` is `True`, and never `False` for a `v` of
-    this type when it is `True` for another. See :meth:`Signature.might_match`.
+    See :meth:`Signature.might_match`.
 
     Args:
         v (object): Value.
@@ -59,12 +60,7 @@ def _might_match_hint(v: object, t: TypeHint, /) -> bool:
         bool: `False` only if no object with the runtime type of `v` matches `t`.
     """
     if is_faithful(t):
-        # A faithful hint is *defined* by `isinstance(x, t) == issubclass(type(x), t)`,
-        # so matching depends on nothing but `type(v)` and this is exact -- except for
-        # the values that break that very equality. An object overriding `__class__`
-        # is matched by `isinstance` while `issubclass(type(v), t)` says otherwise, so
-        # for such a type the hint is not faithful about *this* value and nothing can
-        # be ruled out. See `_class_is_honest`.
+        # A faithful hint matches on `type(v)` alone, unless `v` can fake `__class__`.
         return not _class_is_honest(type(v)) or bool(is_bearable(v, t))
 
     origin = get_origin(t)
@@ -76,16 +72,9 @@ def _might_match_hint(v: object, t: TypeHint, /) -> bool:
         # underlying hint could match decides.
         return _might_match_hint(v, get_args(t)[0])
 
-    # Otherwise only the origin of the hint is settled by `type(v)`: whatever matches
-    # `list[int]` is at any rate a `list`. That is a necessary condition when the
-    # origin is a faithful class. Anything else (`Literal[...]`, an origin with a
-    # custom `__instancecheck__`, a hint without an origin) cannot be ruled out.
-    #
-    # `issubclass(type(v), origin)`, not `isinstance(v, origin)`: the latter consults
-    # `v.__class__`, so two values with the same runtime type can answer differently,
-    # and a bucket keyed on `type(v)` would then be built from one of them and reused
-    # for the other. Ruling a method out on that basis is a wrong dispatch, so a type
-    # whose instances can lie about `__class__` rules nothing out at all.
+    # Otherwise, `type(v)` can only rule out a hint whose origin is a faithful class:
+    # whatever matches `list[int]` is a `list`. Use `issubclass` rather than
+    # `isinstance`, since the latter consults `v.__class__`.
     return (
         not isinstance(origin, type)
         or not is_faithful(origin)
@@ -347,11 +336,8 @@ class Signature(Comparable):
     def might_match(self, values: tuple[object, ...], /) -> bool:
         """Check whether *any* values with the runtime types of `values` could match.
 
-        This is :meth:`match` weakened to depend only on `tuple(map(type, values))`.
-        It may be `True` where :meth:`match` is `False`, but it is never `False`
-        where :meth:`match` is `True`. That is what makes it sound to bucket methods
-        by the bare runtime types of the arguments: a method left out of a bucket
-        cannot match any arguments with those types.
+        Depends only on `tuple(map(type, values))`, and is `True` whenever :meth:`match`
+        is `True`.
 
         Args:
             values (tuple): Values.

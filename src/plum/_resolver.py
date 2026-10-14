@@ -373,12 +373,10 @@ class Resolver:
         Args:
             target (:class:`.signature.Signature` or tuple[object]): Target to resolve.
                 Must be either a signature to be encompassed or a tuple of arguments.
-            methods (list[:class:`.method.Method`], optional): Consider only these
-                methods, in registration order. Must contain every method that can
-                match `target`, since only the methods that match contribute to the
-                selection; passing a narrowed superset therefore selects exactly the
-                same method as the default of all methods. Errors still report all
-                methods.
+            methods (list[:class:`.method.Method`], optional): Methods to consider, in
+                registration order. Must include every method that matches `target`,
+                in which case the result is the same as for all methods. Defaults to
+                all methods. A :class:`NotFoundLookupError` always lists all methods.
 
         Returns:
             :class:`.signature.Signature`: The most specific signature satisfying

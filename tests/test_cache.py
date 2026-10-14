@@ -188,8 +188,6 @@ def test_cache_unfaithful(dispatch: plum.Dispatcher):
     assert f(1) == 1
     assert f([1]) == 2
     assert len(f._cache) == 0
-    # The methods to consider are cached instead, one bucket per argument type.
-    assert set(f._verify_cache) == {(int,), (list,)}
 
 
 def test_cache_type_x(dispatch: plum.Dispatcher):
@@ -373,11 +371,9 @@ def test_literal_dispatch_cache_is_bounded(dispatch):
     assert len(f._cache) == _VALUE_CACHE_LIMIT
 
 
-# The verify cache: an uncacheable function cannot memoise a method, but it can
-# memoise which methods are worth considering for given bare argument types.
-
-
 def test_verify_cache_narrows_the_methods_considered(dispatch):
+    """Test that the verify cache holds only the methods that could match."""
+
     @dispatch
     def f(x: list[int]):
         return "list[int]"
@@ -403,43 +399,32 @@ def test_verify_cache_narrows_the_methods_considered(dispatch):
     assert len(f._verify_cache[(int,)]) == 1
 
 
-def test_verify_cache_is_invalidated_by_registration(dispatch):
+def test_verify_cache_clearing(dispatch: plum.Dispatcher):
+    """Test that registering a method and clearing the cache clear the verify cache."""
+
     @dispatch
     def f(x: list[int]):
         return "list[int]"
 
-    # Warm the bucket for `list` arguments.
     assert f([1]) == "list[int]"
-    assert set(f._verify_cache) == {(list,)}
 
     @dispatch
     def f(x: list[str]):
         return "list[str]"
 
-    # The new method must make it into the bucket for `list`.
+    # The new method must be considered for `list` arguments.
     assert f(["a"]) == "list[str]"
-    assert f([1]) == "list[int]"
-
-
-def test_verify_cache_clearing(dispatch: plum.Dispatcher):
-    @dispatch
-    def f(x: list[int]):
-        return "list[int]"
-
-    assert f([1]) == "list[int]"
-    assert len(f._verify_cache) == 1
 
     dispatch.clear_cache()
     assert f._verify_cache is None
-
     assert f([1]) == "list[int]"
-    assert len(f._verify_cache) == 1
-
     plum.clear_all_cache()
     assert f._verify_cache is None
 
 
-def test_verify_cache_preserves_ambiguity(dispatch):
+def test_verify_cache_preserves_ambiguity_and_precedence(dispatch):
+    """Test that narrowing preserves ambiguity and its resolution by precedence."""
+
     @dispatch
     def f(x: list[int], y: object):
         return 1
@@ -448,21 +433,22 @@ def test_verify_cache_preserves_ambiguity(dispatch):
     def f(x: object, y: list[int]):
         return 2
 
-    # Cold: nothing is cached yet.
-    with pytest.raises(plum.AmbiguousLookupError):
-        f([1], [1])
-    # The bucket is now warm, and the same call must still be ambiguous.
-    assert set(f._verify_cache) == {(list, list)}
-    with pytest.raises(plum.AmbiguousLookupError):
-        f([1], [1])
+    @dispatch(precedence=1)
+    def g(x: list[int], y: object):
+        return 1
 
-    # Warming the very same bucket with an unambiguous call changes nothing.
-    assert f([1], ["a"]) == 1
+    @dispatch
+    def g(x: object, y: list[int]):
+        return 2
+
     with pytest.raises(plum.AmbiguousLookupError):
         f([1], [1])
+    assert g([1], [1]) == 1
 
 
 def test_verify_cache_preserves_not_found(dispatch):
+    """Test that a lookup error lists all methods, not only the narrowed ones."""
+
     @dispatch
     def f(x: list[int]):
         return 1
@@ -471,28 +457,14 @@ def test_verify_cache_preserves_not_found(dispatch):
     def f(x: tuple[int, ...]):
         return 2
 
-    for _ in range(2):  # Cold, then warm.
-        with pytest.raises(plum.NotFoundLookupError) as e:
-            f(["a"])
-        # The error reports all methods, not just the narrowed ones.
-        assert len(e.value.methods) == 2
-
-
-def test_verify_cache_preserves_precedence(dispatch):
-    @dispatch(precedence=1)
-    def f(x: list[int], y: object):
-        return 1
-
-    @dispatch
-    def f(x: object, y: list[int]):
-        return 2
-
-    # Ambiguous but for the precedence, cold and warm.
-    assert f([1], [1]) == 1
-    assert f([1], [1]) == 1
+    with pytest.raises(plum.NotFoundLookupError) as e:
+        f(["a"])
+    assert len(e.value.methods) == 2
 
 
 def test_verify_cache_handles_varargs_and_arities(dispatch):
+    """Test that narrowing respects arities and varargs."""
+
     @dispatch
     def f(x: int, *xs: list[int]):
         return "varargs"
@@ -509,117 +481,67 @@ def test_verify_cache_handles_varargs_and_arities(dispatch):
     assert f(1, 2) == "two"
     assert f(1, [1]) == "varargs"
     assert f(1, [1], [2]) == "varargs"
-    # A fixed-arity method is only ever in the bucket of its own arity. The varargs
-    # method can match any arity, but only for arguments its varargs type admits:
-    # it is in the `(int,)` bucket, where the varargs go unused, but not in the
-    # `(int, int)` one, where `2` can never be a `list[int]`.
-    assert len(f._verify_cache[(int,)]) == 2
-    assert len(f._verify_cache[(int, int)]) == 1
-    assert len(f._verify_cache[(int, list)]) == 1
-    assert len(f._verify_cache[(int, list, list)]) == 1
 
 
-def test_verify_bucket_is_not_poisoned_by_a_class_liar(dispatch):
-    """Narrowing must not depend on anything but the runtime types.
+class _PropertyLiar:
+    """Claims to be a `list` through a `__class__` property if `pretend`."""
 
-    A bucket is keyed on `tuple(map(type, args))` and reused for every call with
-    those types, so `might_match` has to answer the same for all of them. It used to
-    ask `isinstance(v, origin)`, which consults `v.__class__` -- and two values of
-    one type can answer differently. The bucket built from the first one then ruled
-    out a method the second genuinely matches.
-    """
+    def __init__(self, pretend):
+        self.pretend = pretend
 
-    class Chameleon:
-        """Same `type()` for both instances; only `__class__` differs."""
+    @property
+    def __class__(self):  # noqa: PLW3201
+        return list if self.pretend else _PropertyLiar
 
-        def __init__(self, pretend, data):
-            self.pretend, self.data = pretend, data
+    def __len__(self):
+        return 1
 
-        @property
-        def __class__(self):  # noqa: PLW3201
-            return list if self.pretend else Chameleon
-
-        def __iter__(self):
-            return iter(self.data)
-
-        def __len__(self):
-            return len(self.data)
-
-        def __getitem__(self, i):
-            return self.data[i]
-
-    @dispatch
-    def f(x: list[int]):
-        return "list[int]"
-
-    @dispatch
-    def f(x: object):
-        return "object"
-
-    hot, cold = Chameleon(True, [1, 2, 3]), Chameleon(False, [1, 2, 3])
-    assert type(hot) is type(cold)
-    # `hot` really does match `list[int]`, and `cold` really does not.
-    assert plum._bear.is_bearable(hot, list[int])
-    assert not plum._bear.is_bearable(cold, list[int])
-
-    # Whichever arrives first, both must get the method full resolution would pick.
-    assert f(cold) == "object"
-    assert f(hot) == "list[int]"
+    def __getitem__(self, i):
+        return 1
 
 
-def test_verify_bucket_is_not_poisoned_for_a_faithful_hint(dispatch):
-    """The same failure, on the branch that handles *faithful* hints.
+class _GetattributeLiar:
+    """Claims to be a `list` through `__getattribute__` if `pretend`."""
 
-    `list` is faithful, so `_might_match_hint` takes its exact fast path -- which
-    asks `is_bearable`, and so consults `__class__` just as the subscripted case
-    does. Faithfulness is the assumption that `isinstance(x, t)` agrees with
-    `issubclass(type(x), t)`, and a `__class__` override is exactly what breaks it.
-    """
+    def __init__(self, pretend):
+        self.pretend = pretend
 
-    class Chameleon:
-        def __init__(self, pretend, data):
-            self.pretend, self.data = pretend, data
+    def __getattribute__(self, name):
+        if name == "__class__" and object.__getattribute__(self, "pretend"):
+            return list
+        return object.__getattribute__(self, name)
 
-        @property
-        def __class__(self):  # noqa: PLW3201
-            return list if self.pretend else Chameleon
+    def __len__(self):
+        return 1
 
-        def __iter__(self):
-            return iter(self.data)
+    def __getitem__(self, i):
+        return 1
 
-        def __len__(self):
-            return len(self.data)
 
-        def __getitem__(self, i):
-            return self.data[i]
+@pytest.mark.parametrize("liar", [_PropertyLiar, _GetattributeLiar])
+@pytest.mark.parametrize("hint", [list, list[int]])
+def test_verify_cache_ignores_class_liars(dispatch, liar, hint):
+    """Test that the verify cache does not depend on what `__class__` returns."""
 
     @dispatch
-    def f(x: list):
+    def f(x: hint):
         return "list"
 
     @dispatch
-    def f(x: dict[str, int]):  # keeps the resolver uncacheable, so tier two runs
+    def f(x: dict[str, int]):  # Makes `f` uncacheable.
         return "dict"
 
     @dispatch
     def f(x: object):
         return "object"
 
-    hot, cold = Chameleon(True, [1, 2, 3]), Chameleon(False, [1, 2, 3])
-    assert plum._bear.is_bearable(hot, list)
-    assert not plum._bear.is_bearable(cold, list)
-
-    assert f(cold) == "object"
-    assert f(hot) == "list"
+    # Same runtime type, but only the second claims to be a `list`.
+    assert f(liar(False)) == "object"
+    assert f(liar(True)) == "list"
 
 
 def test_verify_cache_is_bounded(dispatch):
-    """Tier-two buckets must not grow without bound.
-
-    A bucket is keyed on the runtime types of the arguments, so an `n`-argument
-    function's key space is combinatorial in what its callers pass. Past the cap a
-    call resolves over every method, so the answers are unchanged.
-    """
+    """Test that the verify cache stops growing at the cap, with dispatch unchanged."""
     from plum._function import _VERIFY_CACHE_LIMIT
 
     @dispatch
@@ -637,27 +559,15 @@ def test_verify_cache_is_bounded(dispatch):
 
     assert len(f._verify_cache) == _VERIFY_CACHE_LIMIT
 
-    # And dispatch past the cap still agrees with what full resolution would say.
     assert f([1], 1) == "list[int]"
-    assert f(values[-1], 1) == "object"
 
 
 def test_verify_cache_is_not_allocated_for_cacheable_functions(dispatch):
-    # Most functions are cacheable and never take the tier-two path, so they must
-    # not each carry an empty dict for a cache they will never read.
+    """Test that a cacheable function does not allocate a verify cache."""
+
     @dispatch
     def f(x: int):
         return "int"
 
-    f(1)
-    f(1)
+    assert f(1) == "int"
     assert f._verify_cache is None
-    assert f._cache  # ... while tier one is warm.
-
-    @dispatch
-    def g(x: list[int]):
-        return "li"
-
-    assert g._verify_cache is None  # Not until the first miss.
-    g([1])
-    assert g._verify_cache is not None

@@ -27,13 +27,11 @@ arguments are resolved without caching. The cache of a function that dispatches 
 on `type[X]` is not limited, since a program defines only so many classes."""
 
 _VERIFY_CACHE_LIMIT = 4096
-"""Maximum number of tier-two buckets kept for one function.
+"""Maximum number of entries in the verify cache of a function.
 
-A bucket is keyed on the runtime types of the arguments, so the key space of an
-`n`-argument function is combinatorial in what its callers pass: twenty types across
-three arguments is eight thousand buckets, and a bucket costs several times what a
-method-cache entry does. Past the cap a call resolves over every method instead: the
-cap costs time, never correctness."""
+The verify cache is keyed on the runtime types of the arguments, so it can grow with
+the product of the numbers of types passed for each argument. Past the cap, a call
+considers every method: the cap costs time, never correctness."""
 
 # Annotated (not left to inference as `None`) so a `mypyc`-compiled `_function` accepts
 # the external assignment `plum._function._promised_convert = convert` in `_promotion`.
@@ -172,7 +170,7 @@ class Function(NativeBase):
     # Instance attributes are declared so `Function` can be a `mypyc` native class.
     _f: Callable[..., Any]
     _cache: dict[tuple[TypeHint, ...], tuple[Callable[..., Any], TypeHint]]
-    _verify_cache: "dict[tuple[TypeHint, ...], MethodList] | None"
+    _verify_cache: dict[tuple[TypeHint, ...], MethodList] | None
     _doc: str
     _owner_name: str | None
     _owner: type | None
@@ -199,15 +197,9 @@ class Function(NativeBase):
         # `__call__`, where each element is `self._resolver._arg_key(arg)`, or from
         # `invoke`, where each element is a `TypeHint`.
         self._cache = {}
-        # Verify cache, used only when the resolver is uncacheable. It maps the bare
-        # runtime types of the arguments to the methods that arguments with those
-        # types could possibly match, which is all a `type(x)` key can settle. The
-        # methods still have to be verified against the actual arguments, hence the
-        # name; see `_resolve_miss`.
-        #
-        # `None` until the first tier-two miss, rather than an empty dict: most
-        # functions are cacheable and so never read this at all, and an unused dict
-        # is 64 bytes each across every function a program defines.
+        # For an uncacheable resolver, the methods that arguments of given runtime types
+        # could match. See `_resolve_miss`. `None` until first needed, since most
+        # functions are cacheable and never use it.
         self._verify_cache = None
 
         # Guards the lazy resolution of pending registrations, which mutates each
