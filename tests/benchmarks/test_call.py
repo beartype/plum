@@ -83,10 +83,8 @@ def union_arg(x: float):
     return x
 
 
-# The same uncacheable dispatch, but on a function that also carries methods a
-# `tuple` argument can never match. Full resolution costs one match test per
-# method, so this is the case where narrowing the candidates can pay; two methods
-# alone leave nothing to narrow and hide the effect entirely.
+# Uncacheable like `parametric`, but with methods that a `tuple` argument cannot
+# match, so that narrowing the methods to consider has something to remove.
 
 
 @_dispatch
