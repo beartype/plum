@@ -1,4 +1,4 @@
-"""Infer `__orig_class__` for bare instantiations of a user generic."""
+"""Infer `__orig_class__` for bare instantiations of a `typing.Generic` subclass."""
 
 __all__ = ["generic"]
 
@@ -11,19 +11,15 @@ T = TypeVar("T")
 
 
 def _can_carry_orig_class(cls: type, /) -> bool:
-    """Whether instances of `cls` can take an `__orig_class__` attribute.
+    """Check whether instances of `cls` can have an `__orig_class__` attribute.
 
-    Not just `"__orig_class__" in cls.__slots__`. Instances may have a `__dict__`,
-    and so accept any attribute, either because no class in the MRO uses `__slots__`
-    or because one names `"__dict__"` in it; `__dictoffset__` is the settled answer
-    to that and needs no instance to ask. Failing that, any base may already declare
-    the slot. `__slots__` may also be a bare string rather than a sequence, where a
-    substring test would answer wrongly.
+    They can if they have a `__dict__` or if a class in the MRO declares the slot.
     """
     if cls.__dictoffset__:
         return True
     for base in cls.__mro__:
         slots = base.__dict__.get("__slots__")
+        # `__slots__` may be a single string.
         if isinstance(slots, str):
             slots = (slots,)
         if slots is not None and "__orig_class__" in slots:
@@ -32,46 +28,16 @@ def _can_carry_orig_class(cls: type, /) -> bool:
 
 
 def generic(cls: type[T], /) -> type[T]:
-    """Make bare instantiation of a :class:`typing.Generic` subclass record its
-    parametrisation.
+    """Set `__orig_class__` on bare instantiations of a `typing.Generic` subclass.
 
-    Plum dispatches on a parametrised user generic through `__orig_class__`, the
-    attribute Python sets when you write `Box[int](1)`. A *bare* `Box(1)` sets
-    nothing, so it can only ever match the unparametrised `Box`. This decorator
-    closes that gap: after decoration, `Box(1)` behaves like `Box[T](1)`, where `T`
-    is whatever the class's `__infer_type_parameter__` returns for the
-    freshly-constructed instance.
+    After decoration, `Box(1)` dispatches like `Box[T](1)`, where `T` is what
+    `Box.__infer_type_parameter__(instance)` returns for the constructed instance: a
+    type parameter, or a tuple of them for several parameters. Define it as a
+    `classmethod`. An explicit subscript, as in `Box[str](1)`, still wins.
 
-    The class **must** define `__infer_type_parameter__` so that
-    `cls.__infer_type_parameter__(instance)` returns the type parameter, or a tuple of
-    them for a multi-parameter generic. A :func:`classmethod` is the natural spelling
-    and the one used throughout these docs; a :func:`staticmethod` taking the instance
-    works too. A plain method does not -- accessed on the class it is unbound, so the
-    instance would arrive as `self` and the call would fail at construction. It is the
-    class's own business how it infers: reading the value's type, as below, is only
-    the obvious choice.
-
-    Explicit subscription still wins. Python assigns `__orig_class__` *after*
-    `__init__` returns, so `Box[str](1)` overwrites the inferred `Box[int]`.
-
-    The parametrisation is built from `type(self)`, so a generic subclass of a
-    decorated class infers its own class rather than the decorated one.
-
-    Two situations are reported rather than raised, because neither is worth
-    breaking a constructor over:
-
-    - A class whose `__slots__` omit `'__orig_class__'`, and which inherits no
-      `__dict__` either, cannot carry the attribute at all. That is a
-      :class:`RuntimeWarning` at decoration time, and another on each construction
-      that fails to set it -- `warnings` collapses those to one per call site.
-    - `__infer_type_parameter__` returning something the class cannot be
-      subscripted by is a :class:`RuntimeWarning` at construction time. The
-      instance is returned intact, unparametrised.
-
-    Note that this moves work into the constructor: every instantiation now runs
-    the inference and builds a parametrisation. Dispatch on the result is
-    :class:`~plum.KeyPart`-cacheable and so as fast as any other generic dispatch,
-    but construction itself is not free.
+    If instances cannot carry `__orig_class__`, because `__slots__` omits it, or if
+    `cls` cannot be subscripted by the inferred parameter, a `RuntimeWarning` is
+    raised and the instance is left unparametrised.
 
     Args:
         cls (type): Class to decorate.
@@ -97,12 +63,6 @@ def generic(cls: type[T], /) -> type[T]:
         True
     """
     if not issubclass(cls, typing.Generic):
-        # Without this, a class that happens to define `__infer_type_parameter__`
-        # but is not itself a `Generic` subclass would pass the check below, only
-        # to fail on every construction: `actual[parameter]` raises `TypeError`
-        # because `cls` cannot be subscripted, and that only ever surfaced as a
-        # `RuntimeWarning` from the `except` in `__init__`, not a clear error here
-        # at decoration time.
         raise TypeError(
             f"`@generic` requires `{cls.__name__}` to be a `typing.Generic` "
             f"subclass, since it works by subscripting `type(self)`."
@@ -130,17 +90,16 @@ def generic(cls: type[T], /) -> type[T]:
 
     @functools.wraps(original_init)
     def __init__(self: Any, *args: Any, **kw_args: Any) -> Any:
-        # Annotated: `original_init` is typed as returning `None`, so `mypyc` infers
-        # `None` here and refuses to compile a function that returns it.
+        # `mypyc` would otherwise infer `None` and refuse to return `result`.
         result: Any = original_init(self, *args, **kw_args)
         if result is not None:
-            # Hand it back rather than returning `None` in its place: CPython raises
-            # `__init__() should return None` on it, and swallowing that would hide
-            # the user's bug. Nothing is inferred -- the instance is about to be
-            # rejected anyway.
+            # Pass it on, so that Python raises as it would without the decorator.
             return result
         # Use `type(self)`, not `cls`: a subclass must infer its own class.
         actual = type(self)
+        # A subclass such as `class IntBox(Box[int])` has nothing left to infer.
+        if not actual.__parameters__:
+            return None
         try:
             parameter = actual.__infer_type_parameter__(self)
             # `object.__setattr__` so that a frozen dataclass, or any class with a
