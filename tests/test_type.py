@@ -6,6 +6,7 @@ from typing import Annotated, Any, Literal, Union
 
 import pytest
 
+import plum
 from plum._type import (
     ModuleType,
     PromisedType,
@@ -395,3 +396,45 @@ def test_wrap_type_hint_unwrappable_hint():
     assert not _type_hint_eq(hint_a, int)
     assert not _type_hint_le(hint_a, int)
     assert not _type_hint_le(int, hint_a)
+
+
+_T = typing.TypeVar("_T")
+
+
+class _Base(typing.Generic[_T]):
+    pass
+
+
+class _Sub(_Base[_T]):
+    pass
+
+
+class _Unrelated(typing.Generic[_T]):
+    pass
+
+
+def test_type_hint_eq_generic_origin():
+    """Generic aliases with equal arguments but different origins must differ.
+
+    `beartype` 0.23's `TypeHint.__eq__` ignores the origin of subscripted generics,
+    which made registering `f(x: _Sub[int])` silently replace `f(x: _Base[int])`.
+    See https://github.com/beartype/beartype/issues/745.
+    """
+    assert not _type_hint_eq(_Base[int], _Sub[int])
+    assert not _type_hint_eq(_Base[int], _Unrelated[int])
+    assert not _type_hint_eq(list[_Base[int]], list[_Sub[int]])
+    assert _type_hint_eq(_Base[int], _Base[int])
+
+    dispatch = plum.Dispatcher()
+
+    @dispatch
+    def f(x: _Base[int]):
+        return "base"
+
+    @dispatch
+    def f(x: _Sub[int]):
+        return "sub"
+
+    assert len(f.methods) == 2
+    assert f(_Base[int]()) == "base"
+    assert f(_Sub[int]()) == "sub"
