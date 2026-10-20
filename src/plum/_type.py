@@ -15,6 +15,7 @@ from functools import lru_cache, reduce
 from operator import or_
 from types import UnionType
 from typing import (
+    Annotated,
     Any,
     Literal,
     TypeGuard,
@@ -248,8 +249,11 @@ def resolve_type_hint(x: object, /) -> object:
         if origin is UnionType:  # The new union syntax was used.
             return reduce(or_, (resolve_type_hint(arg) for arg in args))
         else:
+            # Annotated metadata describes a hint; it is not itself a type hint.
+            if origin is Annotated:
+                args = (resolve_type_hint(args[0]), *args[1:])
             # Do not resolve the arguments for `Literal`s.
-            if origin is not Literal:
+            elif origin is not Literal:
                 resolved_args = resolve_type_hint(args)
                 assert isinstance(resolved_args, tuple)
                 args = resolved_args
