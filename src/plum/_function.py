@@ -390,6 +390,9 @@ class Function(NativeBase):
 
         Either `signature` or `precedence` must be given.
 
+        Registration is serialized with pending-method resolution, so methods added
+        by another thread are retained for subsequent calls.
+
         Args:
             f (function): Function that implements the method.
             signature (:class:`.signature.Signature`, optional): Signature. If it is
@@ -397,7 +400,8 @@ class Function(NativeBase):
             precedence (int, optional): Precedence of the function. If `signature` is
                 given, then this argument will not be used. Defaults to `0`.
         """
-        self._pending.append((f, signature, precedence))
+        with self._lock:
+            self._pending.append((f, signature, precedence))
 
     def _resolve_pending_registrations(self) -> None:
         # Fast path: nothing pending. This unlocked check keeps the common
