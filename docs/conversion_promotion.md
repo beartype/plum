@@ -38,6 +38,29 @@ You can tell Plum how the conversion should be done with `add_conversion_method`
 1
 ```
 
+For `async def` methods, conversion applies to the result after it is awaited,
+rather than to the coroutine object. Both regular dispatch and `invoke` support
+this:
+
+```python
+import asyncio
+
+
+@dispatch
+async def as_tuple(x: int) -> tuple:
+    return x
+```
+
+```python
+>>> asyncio.run(as_tuple(2))
+(2,)
+
+>>> asyncio.run(as_tuple.invoke(int)(3))
+(3,)
+```
+
+Synchronous methods returning an `Awaitable` are not automatically awaited.
+
 ## Conversion With `convert`
 
 The function `convert` can be used to convert objects of one type to another.
