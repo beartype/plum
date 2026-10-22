@@ -68,5 +68,17 @@ def pytest(s: nox.Session, /) -> None:
 
 @session(uv_groups=["test_runtime"], reuse_venv=True)
 def benchmark(s: nox.Session, /) -> None:
-    """Run the benchmarks."""
-    s.run("python", "tests/benchmark.py", *s.posargs)
+    """Run the benchmarks.
+
+    Pass `--benchmark-save=NAME` to record a run and `--benchmark-compare=NUM` to
+    compare against run `NUM`, or against the last recorded one when `NUM` is omitted;
+    see `tests/benchmarks/README.md`.
+    """
+    s.run(
+        "pytest",
+        "tests/benchmarks",
+        "--benchmark-enable",
+        "--benchmark-columns=min,median,stddev,rounds",
+        "--benchmark-group-by=group",
+        *s.posargs,
+    )
