@@ -437,9 +437,13 @@ def _type_hint_eq(x: object, y: object, /) -> bool:
     # `_substitute_any` maps a root `Any` to `object`, so `Any` must be compared here.
     if x is Any or y is Any:
         return x is y
-    # Do not derive this from `_type_hint_le`: `TypeHintWrapper.__eq__` already checks
-    # both directions in one pass.
-    return bool(_wrap_type_hint(x) == _wrap_type_hint(y))
+    wx, wy = _wrap_type_hint(x), _wrap_type_hint(y)
+    # `TypeHintWrapper.__eq__` alone is too loose since `beartype` 0.23: it ignores the
+    # origin of subscripted generics, so `B[int] == Sub[int]`, also when nested, as in
+    # `list[B[int]] == list[Sub[int]]`. Keep `==` as the fast rejection and confirm
+    # with `<=` both ways, which does compare origins. See
+    # https://github.com/beartype/beartype/issues/745.
+    return bool(wx == wy and wx <= wy and wy <= wx)
 
 
 def is_faithful(x: object, /) -> bool:
