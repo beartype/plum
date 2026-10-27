@@ -58,7 +58,7 @@ def test_defaults(dispatch: plum.Dispatcher):
 
     # Remove this function from global tracking. Otherwise, it might interfere with
     # other tests.
-    plum.Function._instances.pop(-1)
+    plum.Function._instances.discard(f_wrong_default)
 
     # Try multiple arguments.
 
