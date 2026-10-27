@@ -463,3 +463,30 @@ def test_append_default_args():
     # Test that `itemgetter` is supported.
     f = operator.itemgetter(0)
     assert len(plum.append_default_args(Sig.from_callable(f), f)) == 1
+
+
+@pytest.mark.parametrize(
+    "sig, spec",
+    [
+        (Sig(int, int), frozenset()),
+        (Sig(type[int], int), frozenset({plum.KeyPart.IDENTITY})),
+        (Sig(int, varargs=type[int]), frozenset({plum.KeyPart.IDENTITY})),
+        (Sig(list[int]), None),
+    ],
+)
+def test_signature_cache_spec(sig, spec):
+    """Test `cache_spec`, and the flags derived from it, on types and varargs."""
+    assert sig.cache_spec == spec
+    assert sig.is_faithful == (spec == frozenset())
+    assert sig.is_cacheable == (spec is not None)
+
+
+def test_append_default_args_cache_spec():
+    """Test that `append_default_args` recomputes `cache_spec` after truncating."""
+
+    def f(x: int, y: type[int] = int):
+        pass
+
+    full, truncated = plum.append_default_args(Sig(int, type[int]), f)
+    assert full.cache_spec == frozenset({plum.KeyPart.IDENTITY})
+    assert truncated.cache_spec == frozenset()
