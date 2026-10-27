@@ -13,6 +13,7 @@ from rich.text import Text
 from ._util import argsort
 from plum._method import Method, MethodList
 from plum._signature import Signature
+from plum._type import _ARG_KEYS, _CANONICAL_SPECS, _NO_PARTS, CacheSpec
 from plum.repr import repr_source_path, rich_repr
 
 
@@ -241,14 +242,16 @@ class Resolver:
 
     Attributes:
         methods (list[:class:`.method.Method`]): Registered methods.
-        is_faithful (bool): Whether all methods are faithful or not.
+        cache_spec (frozenset | None): Union of the methods' cache specs, or `None` if
+            any method is uncacheable. See :func:`plum.is_cacheable`.
         warn_redefinition (bool): Throw a warning whenever a method is redefined.
     """
 
     __slots__ = (
         "function_name",
         "methods",
-        "is_faithful",
+        "cache_spec",
+        "_arg_key",
         "warn_redefinition",
     )
 
@@ -264,8 +267,19 @@ class Resolver:
         """
         self.function_name = function_name
         self.methods: MethodList = MethodList()
-        self.is_faithful: bool = True
+        self.cache_spec: CacheSpec | None = _NO_PARTS
+        self._arg_key: Callable[[object], object] = type
         self.warn_redefinition = warn_redefinition
+
+    @property
+    def is_faithful(self) -> bool:
+        """Whether all methods only use faithful types."""
+        return self.cache_spec is not None and not self.cache_spec
+
+    @property
+    def is_cacheable(self) -> bool:
+        """Whether dispatch on this resolver can be cached."""
+        return self.cache_spec is not None
 
     def doc(self, exclude: Callable[..., object] | None = None) -> str:
         """Concatenate the docstrings of all methods of this function. Remove duplicate
@@ -331,8 +345,20 @@ class Resolver:
         else:
             self.methods.append(method)
 
-        # Use a double negation for slightly better performance.
-        self.is_faithful = not any(not s.signature.is_faithful for s in self.methods)
+        # Update the cache spec. Bind the function that computes the cache key of an
+        # argument now, so dispatch need not check the spec on every call. `type`
+        # suffices when no key parts are needed, and is unused when uncacheable.
+        acc: CacheSpec = _NO_PARTS
+        for m in self.methods:
+            sub = m.signature.cache_spec
+            if sub is None:
+                self.cache_spec = None
+                self._arg_key = type
+                return
+            if sub is not acc:
+                acc = _CANONICAL_SPECS[acc | sub]
+        self.cache_spec = acc
+        self._arg_key = _ARG_KEYS[acc]
 
     def __len__(self) -> int:
         return len(self.methods)

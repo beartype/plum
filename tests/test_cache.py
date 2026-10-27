@@ -1,4 +1,5 @@
 import sys
+from typing import Literal
 
 import pytest
 
@@ -183,7 +184,188 @@ def test_cache_unfaithful(dispatch: plum.Dispatcher):
     def f(x: list[int]):
         return 2
 
-    # Since `f` is not faithful, no cache should be accumulated.
+    # Since `f` is not cacheable, no cache should be accumulated.
     assert f(1) == 1
     assert f([1]) == 2
     assert len(f._cache) == 0
+
+
+def test_cache_type_x(dispatch: plum.Dispatcher):
+    """Test that dispatch on `type[X]` is cached per class, also when added later."""
+
+    @dispatch
+    def f(x: object):
+        return "object"
+
+    assert f(int) == "object"
+    assert f(str) == "object"
+    # `f` is faithful, so both calls share the entry for `type`.
+    assert set(f._cache) == {(type,)}
+
+    @dispatch
+    def f(x: type[int]):
+        return "type[int]"
+
+    assert f(int) == "type[int]"
+    assert f(str) == "object"
+    # One entry per class, and the entry for `type` is gone.
+    assert len(f._cache) == 2
+    assert (type,) not in f._cache
+
+
+def test_literal_dispatch_is_cached(dispatch):
+    """Test that a function dispatching on `Literal` caches one entry per value."""
+
+    @dispatch
+    def f(x: Literal[1]):
+        return "one"
+
+    @dispatch
+    def f(x: Literal[2]):
+        return "two"
+
+    @dispatch
+    def f(x: int):
+        return "int"
+
+    f._resolve_pending_registrations()
+    assert f._resolver.is_cacheable and not f._resolver.is_faithful
+    assert len(f._cache) == 0
+
+    assert f(1) == "one"
+    assert f(2) == "two"
+    assert f(3) == "int"
+    # Distinct literal values must not collide: one entry each.
+    assert len(f._cache) == 3
+    # And the cached answers must still be the right ones.
+    assert (f(1), f(2), f(3)) == ("one", "two", "int")
+    assert len(f._cache) == 3
+
+
+def test_literal_dispatch_keeps_bool_and_int_apart(dispatch):
+    """Test that `True` and `1`, which are equal, are cached separately."""
+
+    @dispatch
+    def f(x: Literal[True]):
+        return "true"
+
+    @dispatch
+    def f(x: int):
+        return "int"
+
+    assert f(True) == "true"
+    assert f(1) == "int"
+    assert f(0) == "int"
+    # `True == 1`, so only the type slot of the key keeps these entries apart.
+    assert len(f._cache) == 3
+
+
+def test_literal_dispatch_unhashable_argument(dispatch):
+    """Test that an unhashable argument does not make the cache key raise."""
+
+    @dispatch
+    def f(x: Literal[1]):
+        return "one"
+
+    @dispatch
+    def f(x: object):
+        return "object"
+
+    assert f([1, 2]) == "object"
+    assert f(1) == "one"
+
+
+def test_literal_and_type_dispatch_mixed(dispatch):
+    """Test caching of a function that dispatches on both `Literal` and `type[X]`."""
+    from plum._type import KeyPart
+
+    @dispatch
+    def f(x: Literal[1]):
+        return "one"
+
+    @dispatch
+    def f(x: type[int]):
+        return "type[int]"
+
+    @dispatch
+    def f(x: object):
+        return "object"
+
+    f._resolve_pending_registrations()
+    assert f._resolver.cache_spec == {KeyPart.IDENTITY, KeyPart.VALUE}
+
+    assert f(1) == "one"
+    assert f(int) == "type[int]"
+    assert f(2) == "object"
+    assert f(str) == "object"
+    assert len(f._cache) == 4
+
+
+def test_literal_dispatch_subclass_with_untrustworthy_equality(dispatch):
+    """Test that a subclass with a non-transitive `__eq__` is dispatched correctly."""
+
+    class W(int):
+        def __hash__(self):
+            return 0
+
+        def __eq__(self, other):
+            if type(other) is W:
+                return True
+            return int.__eq__(self, other)
+
+    @dispatch
+    def f(x: Literal[1]):
+        return "one"
+
+    @dispatch
+    def f(x: int):
+        return "int"
+
+    assert f(W(1)) == "one"
+    assert f(W(2)) == "int"
+    # And in the other warm-up order.
+    f.clear_cache()
+    assert f(W(2)) == "int"
+    assert f(W(1)) == "one"
+
+
+def test_literal_dispatch_and_identity_for_subclasses(dispatch):
+    """Test dispatch and per-object caching of an instance of a subclass."""
+
+    class MyInt(int):
+        pass
+
+    @dispatch
+    def f(x: Literal[1]):
+        return "one"
+
+    @dispatch
+    def f(x: int):
+        return "int"
+
+    assert f(MyInt(1)) == "one"
+    assert f(MyInt(2)) == "int"
+    assert f(MyInt(1)) == "one"
+    assert len(f._cache) == 3
+
+
+def test_literal_dispatch_cache_is_bounded(dispatch):
+    """Test that the cache of a function dispatching on `Literal` is limited."""
+    from plum._function import _VALUE_CACHE_LIMIT
+
+    @dispatch
+    def f(x: Literal["ready"]):
+        return "ready"
+
+    @dispatch
+    def f(x: str):
+        return "other"
+
+    for i in range(_VALUE_CACHE_LIMIT + 100):
+        assert f(f"v{i}") == "other"
+
+    assert len(f._cache) == _VALUE_CACHE_LIMIT
+    # Beyond the limit, resolution still gives the right answer.
+    assert f("ready") == "ready"
+    assert f("v0") == "other"
+    assert len(f._cache) == _VALUE_CACHE_LIMIT
