@@ -378,12 +378,13 @@ document.write(`
 
 
 <span class="n">_identity_conversions</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">,</span> <span class="n">TypeHint</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="sd">&quot;&quot;&quot;dict[tuple[type, TypeHint], bool]: Whether conversion is the identity for a</span>
-<span class="sd">`(type(obj), target_type)` pair.</span>
+<span class="sd">&quot;&quot;&quot;dict[tuple[type, TypeHint], bool]: Whether :func:`convert` can be skipped for a</span>
+<span class="sd">`(type(obj), target_type)` pair. `False` means that this cannot be decided from the</span>
+<span class="sd">types alone, and a missing entry means that the pair has not been analysed yet.</span>
 
 <span class="sd">Written by :func:`plum.convert`, which decides what is recordable; read here because</span>
-<span class="sd">this is the hot path. Missing means &quot;not yet analysed&quot;. Same staleness contract as</span>
-<span class="sd">:attr:`Function._cache`: mutating a type&#39;s meaning in place needs `clear_all_cache`.&quot;&quot;&quot;</span>
+<span class="sd">this is the hot path. Same staleness contract as :attr:`Function._cache`: mutating a</span>
+<span class="sd">type&#39;s meaning in place needs `clear_all_cache`.&quot;&quot;&quot;</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_convert</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">target_type</span><span class="p">:</span> <span class="n">TypeHint</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
