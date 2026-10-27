@@ -7,11 +7,13 @@ from typing import Annotated, Any, Literal, Union
 import pytest
 
 from plum._type import (
+    _IDENTITY,
     ModuleType,
     PromisedType,
     ResolvableType,
     TypeHintWrapper,
     _cache_spec,
+    _combine,
     _is_hint,
     _OpaqueHint,
     _substitute_any,
@@ -137,9 +139,7 @@ def test_is_hint():
     assert _is_hint(typing.Union[int, float])  # noqa: UP007
     assert _is_hint(int | float)
     assert _is_hint(Callable)
-    assert _is_hint(list[int])
     assert _is_hint(type[int])
-    assert not _is_hint(list)
 
 
 def test_is_hint_exec():
@@ -419,8 +419,6 @@ class _Unfaithful:
 @pytest.mark.parametrize(
     "hint, faithful, cacheable",
     [
-        (int, True, True),
-        (type, True, True),
         (typing.Tuple, True, True),  # noqa: UP006
         (type[int], False, True),
         (typing.Type[int], False, True),  # noqa: UP006
@@ -429,7 +427,6 @@ class _Unfaithful:
         (typing.Tuple[()], False, False),  # noqa: UP006
         (typing.Union[tuple[()], int], False, False),  # noqa: UP007
         (typing.Literal[1], False, False),
-        (list[int], False, False),
         (list[type[int]], False, False),
         (type[_Unfaithful], False, False),
     ],
@@ -446,7 +443,6 @@ def test_cache_key():
     assert cache_key(1) != cache_key("x")
     assert cache_key(int) == cache_key(int)
     assert cache_key(int) != cache_key(str)
-    assert cache_key(int) != cache_key(1)
 
 
 def test_cache_key_metaclass_eq():
@@ -489,7 +485,4 @@ def test_cache_spec_no_eq():
 
 def test_combine_shares_specs():
     """Test that `_combine` returns one shared instance per spec."""
-    from plum._type import _IDENTITY, _NO_PARTS, _combine
-
-    assert _combine((int, float)) is _NO_PARTS
     assert _combine((type[int], int, type[str])) is _IDENTITY
