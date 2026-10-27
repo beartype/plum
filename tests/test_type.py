@@ -1,4 +1,5 @@
 import abc
+import enum
 import sys
 import typing
 from numbers import Number
@@ -6,17 +7,25 @@ from typing import Annotated, Any, Literal, Union
 
 import pytest
 
+from plum._bear import is_bearable
 from plum._type import (
+    _ARG_KEYS,
+    _IDENTITY,
+    KeyPart,
     ModuleType,
     PromisedType,
     ResolvableType,
     TypeHintWrapper,
+    _cache_spec,
+    _combine,
     _is_hint,
     _OpaqueHint,
     _substitute_any,
     _type_hint_eq,
     _type_hint_le,
     _wrap_type_hint,
+    cache_key,
+    is_cacheable,
     is_faithful,
     resolve_type_hint,
     type_mapping,
@@ -134,6 +143,15 @@ def test_is_hint():
     assert _is_hint(typing.Union[int, float])  # noqa: UP007
     assert _is_hint(int | float)
     assert _is_hint(Callable)
+    assert _is_hint(type[int])
+
+
+def test_is_hint_exec():
+    """Test that a class declared with `exec`, as in a doctest, is not a hint."""
+    ns = {}
+    exec("import typing\nclass Proto(typing.Protocol): pass\n", ns)
+    assert ns["Proto"].__module__ == "builtins"
+    assert not _is_hint(ns["Proto"])
 
 
 @skip_if_less_than_py310
@@ -237,7 +255,8 @@ def test_is_faithful():
 
     # Test warning.
     with pytest.warns(
-        Warning, match=r"(?i)could not determine whether `(.*)` is faithful or not"
+        Warning,
+        match=r"(?i)could not determine whether `(.*)` is faithful or cacheable",
     ):
         assert not is_faithful(1)
 
@@ -395,3 +414,164 @@ def test_wrap_type_hint_unwrappable_hint():
     assert not _type_hint_eq(hint_a, int)
     assert not _type_hint_le(hint_a, int)
     assert not _type_hint_le(int, hint_a)
+
+
+class _Unfaithful:
+    __faithful__ = False
+
+
+@pytest.mark.parametrize(
+    "hint, faithful, cacheable",
+    [
+        (typing.Tuple, True, True),  # noqa: UP006
+        (type[int], False, True),
+        (typing.Type[int], False, True),  # noqa: UP006
+        (typing.Union[type[int], str], False, True),  # noqa: UP007
+        (tuple[()], False, False),
+        (typing.Tuple[()], False, False),  # noqa: UP006
+        (typing.Union[tuple[()], int], False, False),  # noqa: UP007
+        (typing.Literal[1], False, True),
+        (typing.Literal["a", None], False, True),
+        (typing.Union[typing.Literal[1], type[int]], False, True),  # noqa: UP007
+        (list[typing.Literal[1]], False, False),
+        (list[type[int]], False, False),
+        (type[_Unfaithful], False, False),
+    ],
+)
+def test_is_faithful_is_cacheable(hint, faithful, cacheable):
+    """Test `is_faithful` and `is_cacheable` on hints where the two can differ."""
+    assert is_faithful(hint) is faithful
+    assert is_cacheable(hint) is cacheable
+
+
+def test_cache_key():
+    """Test that `cache_key` tells apart values that can match differently."""
+    assert cache_key(1) == cache_key(1)
+    assert cache_key(1) != cache_key(2)
+    assert cache_key(1) != cache_key(1.0)
+    assert cache_key(True) != cache_key(1)
+    assert cache_key(int) == cache_key(int)
+    assert cache_key(int) != cache_key(str)
+
+
+def test_cache_key_metaclass_eq():
+    """Test `cache_key` for classes whose metaclass overrides `__eq__`."""
+
+    class MetaUnhashable(type):
+        def __eq__(cls, other):
+            return cls is other
+
+    class Unhashable(metaclass=MetaUnhashable):
+        pass
+
+    assert hash(cache_key(Unhashable)) == hash(cache_key(Unhashable))
+
+    class MetaAlwaysEqual(type):
+        def __eq__(cls, other):
+            return True
+
+        __hash__ = type.__hash__
+
+    class A(metaclass=MetaAlwaysEqual):
+        pass
+
+    class B(metaclass=MetaAlwaysEqual):
+        pass
+
+    assert cache_key(A) != cache_key(B)
+
+
+def test_cache_spec_no_eq():
+    """Test that `_cache_spec` does not call `__eq__` on the hint."""
+
+    class NoEq:
+        def __eq__(self, other):
+            raise AssertionError("`__eq__` must not be called.")
+
+    with pytest.warns(UserWarning, match="faithful or cacheable"):
+        assert _cache_spec(NoEq()) is None
+
+
+def test_cache_key_value_part_is_opt_in():
+    """Test that `cache_key` captures the value only if `spec` contains `VALUE`."""
+    identity_only = frozenset({KeyPart.IDENTITY})
+    value_only = frozenset({KeyPart.VALUE})
+
+    # A `type[X]`-only resolver's key is unchanged: `(type(x), identity(x))`.
+    assert cache_key(1, spec=identity_only) == (int, None)
+    assert len(cache_key(int, spec=identity_only)) == 2
+
+    # A `Literal`-only resolver captures the value and nothing else.
+    assert cache_key(1, spec=value_only) == (int, 1)
+    assert cache_key(2, spec=value_only) == (int, 2)
+    assert cache_key(1, spec=value_only) != cache_key(2, spec=value_only)
+    # `True` and `1` are equal but not interchangeable for `Literal`: the type slot
+    # keeps them apart.
+    assert cache_key(True, spec=value_only) != cache_key(1, spec=value_only)
+    # A value that can never match any `Literal` gets an empty slot.
+    assert cache_key(1.5, spec=value_only) == (float, None)
+    assert cache_key([1], spec=value_only) == (list, None)
+
+
+def test_cache_key_value_covers_literal_matching_subclasses():
+    """Subclass instances match `Literal`s, so their value must be captured."""
+    value_only = frozenset({KeyPart.VALUE})
+
+    class MyInt(int):
+        pass
+
+    assert is_bearable(MyInt(1), Literal[1])
+    assert not is_bearable(MyInt(2), Literal[1])
+    assert cache_key(MyInt(1), spec=value_only) != cache_key(MyInt(2), spec=value_only)
+
+    class MyEnum(enum.IntEnum):
+        A = 1
+        B = 2
+
+    assert is_bearable(MyEnum.A, Literal[1])
+    assert cache_key(MyEnum.A, spec=value_only) != cache_key(MyEnum.B, spec=value_only)
+
+
+def test_cache_key_value_survives_unhashable_values():
+    """An unhashable argument must not make the key raise."""
+    value_only = frozenset({KeyPart.VALUE})
+
+    class Unhashable(str):
+        def __eq__(self, other):
+            return str(self) == str(other)
+
+        __hash__ = None  # type: ignore[assignment]
+
+    a, b = Unhashable("a"), Unhashable("b")
+    assert is_bearable(a, Literal["a"])
+    assert not is_bearable(b, Literal["a"])
+
+    d = {cache_key(a, spec=value_only): 1, cache_key(b, spec=value_only): 2}
+    assert len(d) == 2
+    assert d[cache_key(a, spec=value_only)] == 1
+
+
+def test_arg_keys_agree_with_cache_key():
+    """Test that `_ARG_KEYS` covers every spec and agrees with `cache_key`."""
+    from plum._type import _CANONICAL_SPECS
+
+    subsets = list(_CANONICAL_SPECS)
+    assert set(_ARG_KEYS) == set(subsets)
+
+    class SomeClass:
+        pass
+
+    values = [1, True, "x", b"x", None, 1.5, [1], SomeClass, int, SomeClass()]
+    for spec in subsets:
+        for x in values:
+            expected = cache_key(x, spec=spec)
+            actual = _ARG_KEYS[spec](x)
+            if spec:
+                assert actual == expected, (spec, x)
+            else:
+                assert (actual,) == expected, (spec, x)
+
+
+def test_combine_shares_specs():
+    """Test that `_combine` returns one shared instance per spec."""
+    assert _combine((type[int], int, type[str])) is _IDENTITY
