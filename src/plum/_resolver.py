@@ -3,7 +3,7 @@ __all__ = ("AmbiguousLookupError", "NotFoundLookupError")
 import pydoc
 import sys
 import warnings
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 from functools import wraps
 
 from rich.console import Console, ConsoleOptions
@@ -13,6 +13,7 @@ from rich.text import Text
 from ._util import argsort
 from plum._method import Method, MethodList
 from plum._signature import Signature
+from plum._type import _ARG_KEYS, _CANONICAL_SPECS, _NO_PARTS, CacheSpec
 from plum.repr import repr_source_path, rich_repr
 
 
@@ -241,14 +242,16 @@ class Resolver:
 
     Attributes:
         methods (list[:class:`.method.Method`]): Registered methods.
-        is_faithful (bool): Whether all methods are faithful or not.
+        cache_spec (frozenset | None): Union of the methods' cache specs, or `None` if
+            any method is uncacheable. See :func:`plum.is_cacheable`.
         warn_redefinition (bool): Throw a warning whenever a method is redefined.
     """
 
     __slots__ = (
         "function_name",
         "methods",
-        "is_faithful",
+        "cache_spec",
+        "_arg_key",
         "warn_redefinition",
     )
 
@@ -264,8 +267,19 @@ class Resolver:
         """
         self.function_name = function_name
         self.methods: MethodList = MethodList()
-        self.is_faithful: bool = True
+        self.cache_spec: CacheSpec | None = _NO_PARTS
+        self._arg_key: Callable[[object], object] = type
         self.warn_redefinition = warn_redefinition
+
+    @property
+    def is_faithful(self) -> bool:
+        """Whether all methods only use faithful types."""
+        return self.cache_spec is not None and not self.cache_spec
+
+    @property
+    def is_cacheable(self) -> bool:
+        """Whether dispatch on this resolver can be cached."""
+        return self.cache_spec is not None
 
     def doc(self, exclude: Callable[..., object] | None = None) -> str:
         """Concatenate the docstrings of all methods of this function. Remove duplicate
@@ -331,23 +345,45 @@ class Resolver:
         else:
             self.methods.append(method)
 
-        # Use a double negation for slightly better performance.
-        self.is_faithful = not any(not s.signature.is_faithful for s in self.methods)
+        # Update the cache spec. Bind the function that computes the cache key of an
+        # argument now, so dispatch need not check the spec on every call. `type`
+        # suffices when no key parts are needed, and is unused when uncacheable.
+        acc: CacheSpec = _NO_PARTS
+        for m in self.methods:
+            sub = m.signature.cache_spec
+            if sub is None:
+                self.cache_spec = None
+                self._arg_key = type
+                return
+            if sub is not acc:
+                acc = _CANONICAL_SPECS[acc | sub]
+        self.cache_spec = acc
+        self._arg_key = _ARG_KEYS[acc]
 
     def __len__(self) -> int:
         return len(self.methods)
 
-    def resolve(self, target: tuple[object, ...] | Signature) -> Method:
+    def resolve(
+        self,
+        target: tuple[object, ...] | Signature,
+        methods: list[Method] | None = None,
+    ) -> Method:
         """Find the most specific signature that satisfies a target.
 
         Args:
             target (:class:`.signature.Signature` or tuple[object]): Target to resolve.
                 Must be either a signature to be encompassed or a tuple of arguments.
+            methods (list[:class:`.method.Method`], optional): Methods to consider, in
+                registration order. Must include every method that matches `target`,
+                in which case the result is the same as for all methods. Defaults to
+                all methods. A :class:`NotFoundLookupError` always lists all methods.
 
         Returns:
-            :class:`.signature.Signature`: The most specific signature satisfying
-                `target`.
+            :class:`.method.Method`: The method whose signature most specifically
+                satisfies `target`.
         """
+        if methods is None:
+            methods = self.methods
         if isinstance(target, tuple):
 
             def check(m: Method, /) -> bool:
@@ -361,7 +397,7 @@ class Resolver:
                 return bool(target <= m.signature)
 
         candidates: list[Method] = []
-        for method in [m for m in self.methods if check(m)]:
+        for method in [m for m in methods if check(m)]:
             # If none of the candidates are comparable, then add the method as
             # a new candidate and continue.
             if not any(c.signature.is_comparable(method.signature) for c in candidates):
@@ -400,3 +436,64 @@ class Resolver:
                 raise AmbiguousLookupError(
                     self.function_name, target, MethodList(candidates)
                 )
+
+
+_MAX_ORDERED_METHODS = 10
+"""Largest number of methods :func:`resolution_order` attempts to order.
+
+Ordering takes a quadratic number of signature comparisons, which are not cheap, and
+a call that is never repeated should not pay for an order it will not use."""
+
+
+def resolution_order(methods: Sequence[Method], /) -> list[Method] | None:
+    """Order `methods` so that the first match is what `Resolver.resolve` selects.
+
+    The returned list `s` satisfies
+
+    1. `s[i].signature <= s[j].signature` for all `i < j`, and
+    2. if also `s[j].signature <= s[i].signature`, then `s[i]` was registered later.
+
+    Why this suffices: by 1, all signatures are comparable, so a matching method
+    either replaces the single candidate of `Resolver.resolve` or is dropped. It
+    replaces it if it is strictly more specific, or if the two are below each other,
+    since no two methods of a function are equal. The candidate is therefore never
+    ambiguous and precedence never comes into it, and by 1 and 2 the survivor is
+    the first method in `s` that matches.
+
+    Both conditions are checked rather than assumed, since `<=` need not be
+    transitive and comparing two signatures can fail.
+
+    Args:
+        methods (sequence[:class:`.method.Method`]): Methods, in registration order.
+
+    Returns:
+        list[:class:`.method.Method`] or None: The methods in resolution order, or
+            `None` if there is no such order.
+    """
+    n = len(methods)
+    if n > _MAX_ORDERED_METHODS:
+        return None
+    signatures = [m.signature for m in methods]
+    # `le[i][j]` is whether `signatures[i]` is at least as specific as
+    # `signatures[j]`. Computing it once keeps this to `n * (n - 1)` comparisons,
+    # which is the expensive part.
+    try:
+        le = [
+            [i == j or bool(s <= t) for j, t in enumerate(signatures)]
+            for i, s in enumerate(signatures)
+        ]
+    except Exception:
+        # `beartype` cannot always compare two hints. `Resolver.resolve` compares
+        # only signatures that both match, so it might never compare this pair.
+        return None
+
+    # A more specific method is at least as specific as more methods. The sort is
+    # stable, so listing later registrations first breaks ties as 2 asks.
+    order = sorted(range(n - 1, -1, -1), key=lambda i: -sum(le[i]))
+
+    for position, i in enumerate(order):
+        for j in order[position + 1 :]:
+            if not le[i][j] or (le[j][i] and i < j):
+                return None
+
+    return [methods[i] for i in order]

@@ -50,9 +50,6 @@ Some cautions:
   the timer to resolve, and a comparison can report a double-digit change that is not
   there.
 - **Confirm a surprising result with `timeit`** before believing it.
-- **Pass `--benchmark-enable` only for this directory**, as `nox -s benchmark` does.
-  `test_register` creates a `plum.Function` per round, and `Function._instances` keeps
-  them all, which makes the per-call setup in `tests/test_cache.py` far too slow.
 - **Check what you are measuring after building a wheel.**
   A `mypyc` build leaves `.so` files in `src/plum/`, and they shadow the editable
   install, so a later run silently measures the compiled build.
