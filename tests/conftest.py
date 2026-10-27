@@ -14,7 +14,8 @@ def pytest_configure(config: pytest.Config) -> None:
     This has to live in the root `conftest.py`. A `tests/benchmarks/conftest.py` is
     loaded during collection, after `pytest-benchmark` has read its options.
     """
-    if not hasattr(config.option, "benchmark_enable"):  # plugin not installed
+    # Without the plugin, there are no benchmark options to set.
+    if not hasattr(config.option, "benchmark_enable"):
         return
 
     # A sub-microsecond benchmark needs at least this much time per round for the timer

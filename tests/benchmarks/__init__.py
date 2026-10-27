@@ -8,6 +8,17 @@ apart. This module depends on `plum` only, so `tests/test_benchmark.py` does not
 
 import plum
 
+__all__ = [
+    "Base",
+    "Derived",
+    "R1",
+    "R2",
+    "annotated_return",
+    "annotated_union_return",
+    "method_on",
+    "unannotated_return",
+]
+
 _dispatch = plum.Dispatcher()
 
 
@@ -19,12 +30,13 @@ class Derived(Base):
     pass
 
 
-def _method_on(t):
-    def many(x):
+def method_on(t):
+    """Build a function of one argument with type hint `t`."""
+
+    def f(x: t):
         return x
 
-    many.__annotations__ = {"x": t}
-    return many
+    return f
 
 
 class R1:

@@ -9,14 +9,14 @@ from typing import Literal
 import pytest
 
 import plum
-from . import Base, _method_on
+from . import Base, method_on
 
 
 def _register_and_resolve(hints):
     """Register a method per hint on a fresh function and resolve the registrations."""
     dispatch = plum.Dispatcher()
     for hint in hints:
-        f = dispatch(_method_on(hint))
+        f = dispatch(method_on(hint))
     f._resolve_pending_registrations()
     return f
 

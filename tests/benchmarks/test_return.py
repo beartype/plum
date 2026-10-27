@@ -1,7 +1,7 @@
 """Benchmarks for return annotations.
 
-An annotated return runs `convert` on every call; an unannotated one is
-short-circuited. The union is the case that costs the most to check.
+The unannotated case is the baseline. A satisfied annotation, plain or a union, should
+add little to it, which `tests/test_benchmark.py` asserts.
 """
 
 import pytest

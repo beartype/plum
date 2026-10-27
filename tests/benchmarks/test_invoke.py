@@ -24,5 +24,5 @@ def test_invoke_and_call(benchmark):
 @pytest.mark.benchmark(group="convert")
 def test_convert(benchmark):
     """Time `plum.convert` on a pair that needs no conversion."""
-    plum.convert(1, int)  # Warm the method cache and the identity-conversion memo.
+    plum.convert(1, int)  # Warm the method cache and the identity-conversion cache.
     benchmark(plum.convert, 1, int)

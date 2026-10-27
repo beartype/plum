@@ -9,7 +9,7 @@ from typing import Literal
 import pytest
 
 import plum
-from . import Base, Derived, _method_on
+from . import Base, Derived, method_on
 
 _dispatch = plum.Dispatcher()
 
@@ -115,7 +115,7 @@ _many_types = [type(f"Many{i}", (object,), {}) for i in range(32)]
 
 
 for _t in _many_types:
-    many = _many_dispatch(_method_on(_t))
+    many = _many_dispatch(method_on(_t))
 
 
 @_dispatch
