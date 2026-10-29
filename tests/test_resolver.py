@@ -91,6 +91,41 @@ def test_document_sphinx(monkeypatch):
     assert _document(f, "f") == textwrap.dedent(expected_doc).strip()
 
 
+@pytest.mark.parametrize("sphinx", [False, True])
+@pytest.mark.parametrize("with_docstring", [False, True])
+def test_document_long_signature(monkeypatch, sphinx, with_docstring):
+    if sphinx:
+        monkeypatch.setitem(sys.modules, "sphinx", None)
+    else:
+        monkeypatch.delitem(sys.modules, "sphinx", raising=False)
+
+    def f(
+        first_parameter: int,
+        second_parameter: str,
+        *,
+        keyword_parameter: tuple = ("a)", " -> "),
+    ) -> bool:
+        """Summary.
+
+        More details.
+        """
+
+    if not with_docstring:
+        f.__doc__ = None
+
+    signature = (
+        "f(first_parameter: int, second_parameter: str, *, "
+        "keyword_parameter: tuple = ('a)', ' -> ')) -> bool"
+    )
+    if sphinx:
+        expected = ".. py:function:: " + signature + "\n   :noindex:"
+    else:
+        expected = "<separator>\n\n" + signature
+    if with_docstring:
+        expected += "\n\nSummary.\n\nMore details."
+    assert _document(f) == expected
+
+
 @pytest.mark.incompatible_with_mypyc
 def test_doc(monkeypatch):
     # Let the `pydoc` documenter simply return the docstring. This makes testing
