@@ -45,6 +45,8 @@ __all__ = (
     "type_mapping",
     "resolve_type_hint",
     "is_faithful",
+    "is_cacheable",
+    "cache_key",
     # util
     "Callable",  # TODO: deprecate
     "TypeHint",
@@ -92,6 +94,8 @@ from ._signature import Signature, append_default_args, inspect_signature
 from ._type import (
     ModuleType,
     PromisedType,
+    cache_key,
+    is_cacheable,
     is_faithful,
     resolve_type_hint,
     type_mapping,
