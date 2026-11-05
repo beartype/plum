@@ -187,3 +187,18 @@ def test_cache_unfaithful(dispatch: plum.Dispatcher):
     assert f(1) == 1
     assert f([1]) == 2
     assert len(f._cache) == 0
+
+
+def test_cache_empty_tuple(dispatch: plum.Dispatcher):
+    """Test that `tuple[()]` is not cached on `type(x)` alone."""
+
+    @dispatch
+    def f(x: tuple[()]):
+        return "empty"
+
+    @dispatch
+    def f(x: tuple):
+        return "tuple"
+
+    assert f(()) == "empty"
+    assert f((1,)) == "tuple"

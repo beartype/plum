@@ -234,6 +234,11 @@ def test_is_faithful():
     assert not is_faithful(typing.Union[int, t_nf])  # noqa: UP007
     assert is_faithful(int | float)  # noqa: UP007
     assert not is_faithful(int | t_nf)
+    # `tuple[()]` matches only the empty tuple:
+    assert not is_faithful(tuple[()])
+    assert not is_faithful(typing.Tuple[()])  # noqa: UP006
+    assert is_faithful(tuple)
+    assert is_faithful(typing.Tuple)  # noqa: UP006
 
     # Test warning.
     with pytest.warns(
