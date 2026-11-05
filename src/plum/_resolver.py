@@ -13,6 +13,7 @@ from rich.text import Text
 from ._util import argsort
 from plum._method import Method, MethodList
 from plum._signature import Signature
+from plum._type import _literal_key, cache_key
 from plum.repr import repr_source_path, rich_repr
 
 
@@ -242,6 +243,9 @@ class Resolver:
     Attributes:
         methods (list[:class:`.method.Method`]): Registered methods.
         is_faithful (bool): Whether all methods are faithful or not.
+        is_cacheable (bool): Whether all methods are cacheable or not. See
+            :func:`plum.is_cacheable`.
+        literals (frozenset): All `Literal` values in the methods.
         warn_redefinition (bool): Throw a warning whenever a method is redefined.
     """
 
@@ -249,6 +253,9 @@ class Resolver:
         "function_name",
         "methods",
         "is_faithful",
+        "is_cacheable",
+        "literals",
+        "_arg_key",
         "warn_redefinition",
     )
 
@@ -265,6 +272,9 @@ class Resolver:
         self.function_name = function_name
         self.methods: MethodList = MethodList()
         self.is_faithful: bool = True
+        self.is_cacheable: bool = True
+        self.literals: frozenset[object] = frozenset()
+        self._arg_key: Callable[[object], object] = type
         self.warn_redefinition = warn_redefinition
 
     def doc(self, exclude: Callable[..., object] | None = None) -> str:
@@ -333,21 +343,44 @@ class Resolver:
 
         # Use a double negation for slightly better performance.
         self.is_faithful = not any(not s.signature.is_faithful for s in self.methods)
+        self.is_cacheable = self.is_faithful or not any(
+            not s.signature.is_cacheable for s in self.methods
+        )
+        # Bind the function that computes the cache key of an argument now, so dispatch
+        # need not check the flags on every call. `type` suffices if the resolver is
+        # faithful, and is unused if it is not cacheable.
+        self.literals = frozenset().union(*(s.signature.literals for s in self.methods))
+        if self.is_faithful or not self.is_cacheable:
+            self._arg_key = type
+        elif self.literals:
+            self._arg_key = _literal_key(self.literals)
+        else:
+            self._arg_key = cache_key
 
     def __len__(self) -> int:
         return len(self.methods)
 
-    def resolve(self, target: tuple[object, ...] | Signature) -> Method:
+    def resolve(
+        self,
+        target: tuple[object, ...] | Signature,
+        methods: list[Method] | None = None,
+    ) -> Method:
         """Find the most specific signature that satisfies a target.
 
         Args:
             target (:class:`.signature.Signature` or tuple[object]): Target to resolve.
                 Must be either a signature to be encompassed or a tuple of arguments.
+            methods (list[:class:`.method.Method`], optional): Methods to consider, in
+                registration order. Must include every method that matches `target`,
+                in which case the result is the same as for all methods. Defaults to
+                all methods. A :class:`NotFoundLookupError` always lists all methods.
 
         Returns:
             :class:`.signature.Signature`: The most specific signature satisfying
                 `target`.
         """
+        if methods is None:
+            methods = self.methods
         if isinstance(target, tuple):
 
             def check(m: Method, /) -> bool:
@@ -361,7 +394,7 @@ class Resolver:
                 return bool(target <= m.signature)
 
         candidates: list[Method] = []
-        for method in [m for m in self.methods if check(m)]:
+        for method in [m for m in methods if check(m)]:
             # If none of the candidates are comparable, then add the method as
             # a new candidate and continue.
             if not any(c.signature.is_comparable(method.signature) for c in candidates):
