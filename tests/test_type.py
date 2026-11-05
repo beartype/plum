@@ -234,12 +234,28 @@ def test_is_faithful():
     assert not is_faithful(typing.Union[int, t_nf])  # noqa: UP007
     assert is_faithful(int | float)  # noqa: UP007
     assert not is_faithful(int | t_nf)
+    # `tuple[()]` matches only the empty tuple:
+    assert not is_faithful(tuple[()])
+    assert not is_faithful(typing.Tuple[()])  # noqa: UP006
+    assert is_faithful(tuple)
+    assert is_faithful(typing.Tuple)  # noqa: UP006
 
     # Test warning.
     with pytest.warns(
         Warning, match=r"(?i)could not determine whether `(.*)` is faithful or not"
     ):
         assert not is_faithful(1)
+
+
+def test_is_faithful_does_not_call_eq():
+    """Test that `is_faithful` does not call `__eq__` on the hint."""
+
+    class NoEq:
+        def __eq__(self, other):
+            raise AssertionError("`__eq__` must not be called.")
+
+    with pytest.warns(Warning, match="(?i)could not determine"):
+        assert not is_faithful(NoEq())
 
 
 def test_is_faithful_custom_metaclass():

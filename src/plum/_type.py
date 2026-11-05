@@ -485,14 +485,18 @@ def _is_faithful(x: object, /) -> bool:
             # Unsubscripted type hints tend to be faithful. For example, `Any`,
             # `List`, `Tuple`, `Dict`, `Callable`, and `Generator` are. When we
             # come across a counter-example, we will refine this logic.
-            return True
+            #
+            # The exception is `tuple[()]`, which matches only the empty tuple, but
+            # from Python 3.11 `get_args` returns `()` for it. Unlike `typing.Tuple`,
+            # it has `__args__`.
+            return not (origin is tuple and hasattr(x, "__args__"))
 
         if origin in UNION_TYPES:
             return all(is_faithful(arg) for arg in args)
 
         return False
 
-    elif x is None or x == Ellipsis:
+    elif x is None or x is Ellipsis:
         return True
 
     elif isinstance(x, (tuple, list)):
