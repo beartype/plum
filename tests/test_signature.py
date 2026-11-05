@@ -1,12 +1,15 @@
 import inspect
 import operator
+import typing
 import weakref
+from collections.abc import Callable, Iterable
 from numbers import Number as Num, Real as Re
-from typing import Any, Union
+from typing import Annotated, Any, Literal, Optional, Union
 
 import pytest
 
 from beartype.door import TypeHint
+from beartype.vale import Is
 
 import plum
 from plum import Signature as Sig
@@ -338,6 +341,12 @@ def test_comparison():
     assert Sig(float, int, varargs=int) <= Sig(float, Re, varargs=Re)
     assert Sig(float, int, int, varargs=int) <= Sig(float, Re, varargs=Re)
 
+    # Comparability:
+    assert Sig(int).is_comparable(Sig(Num))
+    assert Sig(Num).is_comparable(Sig(int))
+    assert not Sig(int).is_comparable(Sig(str))
+    assert not Sig(int).is_comparable(1)
+
 
 def test_match():
     assert Sig(int).match((1,))
@@ -463,3 +472,150 @@ def test_append_default_args():
     # Test that `itemgetter` is supported.
     f = operator.itemgetter(0)
     assert len(plum.append_default_args(Sig.from_callable(f), f)) == 1
+
+
+@pytest.mark.parametrize(
+    "sig, faithful, cacheable",
+    [
+        (Sig(int, int), True, True),
+        (Sig(type[int], int), False, True),
+        (Sig(int, varargs=type[int]), False, True),
+        (Sig(list[int]), False, False),
+        (Sig(type[int], varargs=list[int]), False, False),
+    ],
+)
+def test_signature_is_cacheable(sig, faithful, cacheable):
+    """Test `is_faithful` and `is_cacheable` on types and varargs."""
+    assert sig.is_faithful is faithful
+    assert sig.is_cacheable is cacheable
+
+
+def test_append_default_args_derives_fields():
+    """Test that `append_default_args` derives the fields again after truncating."""
+    from plum._bear import is_bearable
+
+    T = typing.TypeVar("T")
+
+    class G(typing.Generic[T]):
+        pass
+
+    def f(x: int, y: type[int] = int, z: G[int] = None):
+        pass
+
+    full, _, truncated = plum.append_default_args(Sig(int, type[int], G[int]), f)
+    assert not full.is_faithful and full.is_cacheable
+    assert full.has_generic and full._check is not is_bearable
+    assert truncated.is_faithful
+    assert not truncated.has_generic and truncated._check is is_bearable
+
+
+def test_signature_literals():
+    """Test that `literals` collects the values of all `Literal`s, also in varargs."""
+    assert Sig(int).literals == frozenset()
+    assert Sig(Literal[1], int).literals == {1}
+    assert Sig(int, varargs=Literal["a", "b"]).literals == {"a", "b"}
+
+
+# A grid of hints and values wide enough to exercise every branch of
+# `_might_match_hint`: faithful and unfaithful, subscripted and bare, unions,
+# `Literal`, `Annotated`, and hints without an origin.
+
+_MIGHT_MATCH_HINTS = [
+    Any,
+    int,
+    str,
+    object,
+    list,
+    list[int],
+    list[str],
+    tuple[int, ...],
+    dict[str, int],
+    Callable[[int], int],
+    Iterable[int],
+    type[int],
+    Literal[1],
+    Literal["a"],
+    int | list[int],
+    Optional[list[str]],  # noqa: UP007, UP045
+    Annotated[int, Is[lambda x: x > 0]],
+    Annotated[list[int], Is[lambda x: len(x) > 0]],
+]
+
+# Grouped by runtime type, since that is all `might_match` may depend on.
+_MIGHT_MATCH_VALUES = [
+    [1, 2, -1],
+    [1.0, 2.5],
+    ["a", "b"],
+    [True, False],
+    [None],
+    [[1], ["a"], [], [1, 2]],
+    [(1, 2), ()],
+    [{"a": 1}, {1: "a"}, {}],
+    [int, str],
+    [lambda x: x],
+    [object()],
+]
+
+
+@pytest.mark.parametrize("hint", _MIGHT_MATCH_HINTS)
+def test_might_match_is_implied_by_match(hint):
+    """Test that `might_match` is `True` whenever `match` is."""
+    s = Sig(hint)
+    for group in _MIGHT_MATCH_VALUES:
+        for v in group:
+            assert not s.match((v,)) or s.might_match((v,))
+
+
+@pytest.mark.parametrize("hint", _MIGHT_MATCH_HINTS)
+def test_might_match_depends_only_on_the_runtime_type(hint):
+    """Test that `might_match` gives the same answer for values of the same type."""
+    s = Sig(hint)
+    for group in _MIGHT_MATCH_VALUES:
+        assert len({s.might_match((v,)) for v in group}) == 1
+
+
+def test_might_match_arity_and_varargs():
+    """Test that `might_match` checks the arity and the varargs."""
+    s = Sig(int, varargs=list[int])
+    assert s.might_match((1,))
+    assert s.might_match((1, [1]))
+    assert s.might_match((1, [1], [2]))
+    assert not s.might_match(())
+    assert not s.might_match(("a",))
+    # The varargs must be checked too, not just the fixed types.
+    assert not s.might_match((1, "a"))
+
+    s = Sig(int, list[int])
+    assert not s.might_match((1,))
+    assert not s.might_match((1, [1], [2]))
+    assert s.might_match((1, [1]))
+    # A list of the wrong element type cannot be ruled out by the runtime type.
+    assert s.might_match((1, ["a"]))
+    assert not s.match((1, ["a"]))
+
+
+@pytest.mark.incompatible_with_mypyc
+def test_eq_compares_scalars_first(monkeypatch):
+    """Test that `__eq__` compares no types if arity, varargs or precedence differ."""
+
+    def fail(x, y):
+        raise AssertionError("Compared types.")
+
+    monkeypatch.setattr(plum._signature, "_type_hint_eq", fail)
+    assert Sig(int) != Sig(int, int)
+    assert Sig(int) != Sig(int, varargs=int)
+    assert Sig(int) != Sig(int, precedence=1)
+    # Otherwise the types are compared, so the above cannot pass vacuously.
+    with pytest.raises(AssertionError, match="Compared types."):
+        assert Sig(int) == Sig(int)
+
+
+@pytest.mark.incompatible_with_mypyc
+def test_is_comparable_does_not_call_eq(monkeypatch):
+    """Test that `is_comparable` does not call `__eq__`, which compares all types."""
+
+    def fail(self, other):
+        raise AssertionError("Called `__eq__`.")
+
+    monkeypatch.setattr(Sig, "__eq__", fail)
+    assert Sig(int).is_comparable(Sig(int))

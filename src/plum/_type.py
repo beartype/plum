@@ -4,16 +4,19 @@ __all__ = (
     "type_mapping",
     "resolve_type_hint",
     "is_faithful",
+    "is_cacheable",
+    "cache_key",
 )
 
 import abc
+import enum
 import sys
 import typing
 import warnings
 from collections.abc import Callable, Hashable
 from functools import lru_cache, reduce
 from operator import or_
-from types import UnionType
+from types import GenericAlias, UnionType
 from typing import (
     Any,
     Literal,
@@ -191,9 +194,10 @@ def _is_hint(x: object) -> bool:
         bool: `True` if `x` is a type hint and `False` otherwise.
     """
     try:
-        if x.__module__ == "builtins":
-            # Check if `x` is a subscripted built-in. We do this by checking the module
-            # of the type of `x`.
+        if x.__module__ == "builtins" and type(x) is GenericAlias:
+            # `x` is a subscripted built-in, e.g. `list[int]`, so check the module of
+            # its type instead. A class declared with `exec`, e.g. in a doctest, also
+            # has `__module__ == "builtins"`, hence the check on `type(x)`.
             x = type(x)
         return x.__module__ in {
             "types",  # E.g., `tuple[int]`
@@ -203,6 +207,56 @@ def _is_hint(x: object) -> bool:
         }
     except AttributeError:
         return False
+
+
+def _is_generic_hint(x: object, /) -> bool:
+    """Check if an object is a parametrised user generic, like `Box[int]`.
+
+    Such a hint is matched by `__orig_class__`; see
+    :func:`._bear.is_bearable_with_orig`. Parametrised builtins, ABCs and protocols,
+    like `list[int]`, `Sequence[int]` and `SupportsAbs[int]`, are matched by structure
+    instead, so they are excluded, as are special forms like `Union` and `Literal`.
+
+    This does not look at `__module__`, as :func:`_is_hint` does: a class declared by
+    `exec`, as in a doctest, reports its module as `builtins`.
+
+    Args:
+        x (object): Object.
+
+    Returns:
+        bool: `True` if `x` is a parametrised user generic and `False` otherwise.
+    """
+    origin = get_origin(x)
+    return (
+        isinstance(origin, type)
+        and issubclass(origin, typing.Generic)
+        and not getattr(origin, "_is_protocol", False)
+        and get_args(x) != ()
+    )
+
+
+def _has_generic_hint(x: object, /) -> bool:
+    """Check whether :func:`._bear.is_bearable_with_orig` treats the hint `x`
+    differently from :func:`._bear.is_bearable`.
+
+    That is, whether `x` is a parametrised user generic, or a union or `Annotated` of
+    one.
+
+    Args:
+        x (object): Type hint.
+
+    Returns:
+        bool: `True` if `x` contains a parametrised user generic.
+    """
+    if isinstance(x, type):
+        # A class is not parametrised and has no arguments.
+        return False
+    if _is_generic_hint(x):
+        return True
+    origin = get_origin(x)
+    if origin in UNION_TYPES or origin is typing.Annotated:
+        return any(_has_generic_hint(a) for a in get_args(x))
+    return False
 
 
 def _hashable(x: object | type) -> TypeGuard[Hashable]:
@@ -276,6 +330,14 @@ def resolve_type_hint(x: object, /) -> object:
             return x
 
         return resolve_type_hint(x.resolve())
+
+    # Below the `type` case, so a plain type does not pay for `get_origin`.
+    elif _is_generic_hint(x):
+        # Rebuild `Box[int]` so that a `ResolvableType` in its arguments is resolved.
+        origin = get_origin(x)
+        assert origin is not None
+        resolved_args = tuple(resolve_type_hint(arg) for arg in get_args(x))
+        return origin[resolved_args]
 
     # For example, `Is[lambda x: x > 0]` is an example of a `BeartypeValidator`.
     # We shouldn't resolve those.
@@ -445,16 +507,17 @@ def _type_hint_eq(x: object, y: object, /) -> bool:
 def is_faithful(x: object, /) -> bool:
     """Check whether a type hint is faithful.
 
-    A type or type hint `t` is defined _faithful_ if, for all `x`, the following holds
-    true::
+    A type or type hint `t` is _faithful_ if, for all `x`::
 
-        isinstance(x, x) == issubclass(type(x), t)
+        isinstance(x, t) == issubclass(type(x), t)
 
     You can control whether types are faithful or not by setting the attribute
     `__faithful__`::
 
         class UnfaithfulType:
             __faithful__ = False
+
+    Every faithful type is cacheable. See :func:`is_cacheable`.
 
     Args:
         x (type or type hint): Type hint.
@@ -485,14 +548,18 @@ def _is_faithful(x: object, /) -> bool:
             # Unsubscripted type hints tend to be faithful. For example, `Any`,
             # `List`, `Tuple`, `Dict`, `Callable`, and `Generator` are. When we
             # come across a counter-example, we will refine this logic.
-            return True
+            #
+            # The exception is `tuple[()]`, which matches only the empty tuple, but
+            # from Python 3.11 `get_args` returns `()` for it. Unlike `typing.Tuple`,
+            # it has `__args__`.
+            return not (origin is tuple and hasattr(x, "__args__"))
 
         if origin in UNION_TYPES:
             return all(is_faithful(arg) for arg in args)
 
         return False
 
-    elif x is None or x == Ellipsis:
+    elif x is None or x is Ellipsis:
         return True
 
     elif isinstance(x, (tuple, list)):
@@ -507,6 +574,10 @@ def _is_faithful(x: object, /) -> bool:
                 type.__instancecheck__,
                 abc.ABCMeta.__instancecheck__,
             }
+    elif _is_generic_hint(x):
+        # A parametrised user generic, like `Box[int]`, is not faithful, but it is
+        # cacheable. See `_is_cacheable`.
+        return False
     else:
         warnings.warn(
             f"Could not determine whether `{x}` is faithful or not. "
@@ -516,3 +587,166 @@ def _is_faithful(x: object, /) -> bool:
             stacklevel=2,
         )
     return False
+
+
+def is_cacheable(x: object, /) -> bool:
+    """Check whether a type hint is cacheable.
+
+    A type or type hint `t` is _cacheable_ if, for all `x`, whether `x` matches `t`
+    depends only on `cache_key(x, literals, generic)`, where `literals` holds the
+    all `Literal` values in `t` and `generic` is whether `t` contains a parametrised
+    user generic. Every faithful type is cacheable, and so are `type[X]` for a faithful
+    `X`, `Literal[...]` and a parametrised user generic such as `Box[int]`. A
+    parametrised built-in such as `list[int]` is not cacheable, because matching it
+    inspects the elements.
+
+    Args:
+        x (type or type hint): Type hint.
+
+    Returns:
+        bool: Whether `x` is cacheable or not.
+    """
+    return _is_cacheable(resolve_type_hint(x))
+
+
+def _is_cacheable(x: object, /) -> bool:
+    if _is_hint(x) and get_args(x) != ():
+        origin = get_origin(x)
+        if origin is type:
+            # Matching `type[X]` is `issubclass(x, X)`, which depends only on the class
+            # `x` if `X` is faithful, and `cache_key` captures the class.
+            return all(_is_faithful(arg) for arg in get_args(x))
+        if origin is Literal:
+            # `cache_key` captures the values that a `Literal` names.
+            return True
+        if origin in UNION_TYPES:
+            return all(_is_cacheable(arg) for arg in get_args(x))
+    if isinstance(x, (tuple, list)):
+        return all(_is_cacheable(arg) for arg in x)
+    if _is_generic_hint(x):
+        # Matched by `__orig_class__`, which `cache_key` captures, or else by `type(x)`.
+        # See `is_bearable_with_orig`.
+        return True
+    return _is_faithful(x)
+
+
+class _Identity:
+    """Wrap an object so that it hashes by `id` and compares by identity.
+
+    The hash and equality of a class come from its metaclass, which can make distinct
+    classes compare equal or make a class unhashable. Likewise, the hash and equality
+    of an instance of a subclass of `int`, `str` or `bytes` are user code. Holding `obj`
+    ensures that its `id` is not reused while the wrapper exists.
+
+    Args:
+        obj (object): Object to wrap.
+    """
+
+    __slots__ = ("obj",)
+
+    def __init__(self, obj: object, /) -> None:
+        self.obj = obj
+
+    def __hash__(self) -> int:
+        return id(self.obj)
+
+    def __eq__(self, other: object, /) -> bool:
+        return type(other) is _Identity and self.obj is other.obj
+
+
+def _literals(x: object, /) -> frozenset[object]:
+    """Collect all `Literal` values in a resolved type hint.
+
+    Args:
+        x (type or type hint): Resolved type hint.
+
+    Returns:
+        frozenset: All `Literal` values in `x`.
+    """
+    if _is_hint(x):
+        if get_origin(x) is Literal:
+            return frozenset(get_args(x))
+        return frozenset().union(*map(_literals, get_args(x)))
+    if isinstance(x, (tuple, list)):
+        return frozenset().union(*map(_literals, x))
+    return frozenset()
+
+
+_LITERAL_TYPES: frozenset[type] = frozenset({bool, int, str, bytes, type(None)})
+"""frozenset: Exact types whose values a `Literal` can hold."""
+
+_LITERAL_BASES: tuple[type, ...] = (int, str, bytes, enum.Enum)
+"""tuple: Bases whose instances can match a `Literal`. `bool` and `NoneType` cannot be
+subclassed."""
+
+
+def cache_key(
+    x: object, /, literals: frozenset[object] = frozenset(), generic: bool = False
+) -> tuple[object, ...]:
+    """Get a cache key for `x`.
+
+    If `is_cacheable(t)`, `literals` contains all `Literal` values in `t`, and
+    `generic` is true if `t` contains a parametrised user generic, then whether `x`
+    matches `t` depends only on `cache_key(x, literals, generic)`. The layout of the key
+    is an implementation detail, and the key can hold a reference to `x` or to its
+    parametrisation.
+
+    Args:
+        x (object): Value.
+        literals (frozenset, optional): All `Literal` values to account for.
+        generic (bool, optional): Whether to account for parametrised user generics.
+
+    Returns:
+        tuple: Cache key.
+    """
+    tx = type(x)
+    # Key a class by identity, since matching `type[X]` depends on the class itself. A
+    # class whose metaclass is `type` already hashes by `id` and compares by identity.
+    if isinstance(x, type):
+        return tx, (x if tx is type else _Identity(x))
+    if literals:
+        # `x` matches `Literal[v]` if and only if `isinstance(x, type(v))` and `x == v`.
+        # If `type(x)` is a type that a `Literal` can hold, `x` can only match `v` of a
+        # built-in type, so `x == v` implies equal hashes, and `x in literals` tells
+        # whether `x` matches any `Literal`. Key `x` by itself only if it does, so that
+        # all other values of `type(x)` share one entry.
+        if tx in _LITERAL_TYPES:
+            return tx, (x if x in literals else None)
+        # The equality of an instance of a subclass is user code, so key it by
+        # identity.
+        if isinstance(x, _LITERAL_BASES):
+            return tx, _Identity(x)
+    if generic:
+        # A parametrised user generic is matched by `__orig_class__`, or by `type(x)` if
+        # `x` has none. See `is_bearable_with_orig`. A parametrisation with unhashable
+        # arguments, like `Box[Annotated[int, {"a": 1}]]`, is keyed by identity.
+        orig = getattr(x, "__orig_class__", None)
+        if orig is not None:
+            return tx, (orig if _hashable(orig) else _Identity(orig))
+    return tx, None
+
+
+def _bound_key(
+    literals: frozenset[object], generic: bool, /
+) -> Callable[[object], tuple[object, ...]]:
+    """Get `cache_key` with `literals` and `generic` bound, for :class:`.Resolver`.
+
+    This repeats the body of `cache_key` rather than calling it, which would cost an
+    extra call per argument on every cache hit.
+    """
+
+    def key(x: object, /) -> tuple[object, ...]:
+        tx = type(x)
+        if tx in _LITERAL_TYPES:
+            return tx, (x if x in literals else None)
+        if isinstance(x, type):
+            return tx, (x if tx is type else _Identity(x))
+        if literals and isinstance(x, _LITERAL_BASES):
+            return tx, _Identity(x)
+        if generic:
+            orig = getattr(x, "__orig_class__", None)
+            if orig is not None:
+                return tx, (orig if _hashable(orig) else _Identity(orig))
+        return tx, None
+
+    return key
