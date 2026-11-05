@@ -17,6 +17,8 @@ from plum._type import (
     _type_hint_eq,
     _type_hint_le,
     _wrap_type_hint,
+    cache_key,
+    is_cacheable,
     is_faithful,
     resolve_type_hint,
     type_mapping,
@@ -134,6 +136,23 @@ def test_is_hint():
     assert _is_hint(typing.Union[int, float])  # noqa: UP007
     assert _is_hint(int | float)
     assert _is_hint(Callable)
+    assert _is_hint(type[int])
+
+
+def test_is_hint_class_declared_with_exec():
+    """Test that a class declared with `exec` is not a hint.
+
+    Such a class has `__module__ == "builtins"`, like `list[int]`.
+    """
+    ns = {}
+    exec("import typing\nclass Proto(typing.Protocol):\n    def foo(self): ...\n", ns)
+    assert ns["Proto"].__module__ == "builtins"
+    assert not _is_hint(ns["Proto"])
+    assert not is_faithful(ns["Proto"])
+    # Subscripted built-ins are still hints.
+    assert _is_hint(list[int])
+    assert _is_hint(type[int])
+    assert not _is_hint(list)
 
 
 @skip_if_less_than_py310
@@ -234,12 +253,28 @@ def test_is_faithful():
     assert not is_faithful(typing.Union[int, t_nf])  # noqa: UP007
     assert is_faithful(int | float)  # noqa: UP007
     assert not is_faithful(int | t_nf)
+    # `tuple[()]` matches only the empty tuple:
+    assert not is_faithful(tuple[()])
+    assert not is_faithful(typing.Tuple[()])  # noqa: UP006
+    assert is_faithful(tuple)
+    assert is_faithful(typing.Tuple)  # noqa: UP006
 
     # Test warning.
     with pytest.warns(
         Warning, match=r"(?i)could not determine whether `(.*)` is faithful or not"
     ):
         assert not is_faithful(1)
+
+
+def test_is_faithful_does_not_call_eq():
+    """Test that `is_faithful` does not call `__eq__` on the hint."""
+
+    class NoEq:
+        def __eq__(self, other):
+            raise AssertionError("`__eq__` must not be called.")
+
+    with pytest.warns(Warning, match="(?i)could not determine"):
+        assert not is_faithful(NoEq())
 
 
 def test_is_faithful_custom_metaclass():
@@ -395,3 +430,66 @@ def test_wrap_type_hint_unwrappable_hint():
     assert not _type_hint_eq(hint_a, int)
     assert not _type_hint_le(hint_a, int)
     assert not _type_hint_le(int, hint_a)
+
+
+class _Unfaithful:
+    __faithful__ = False
+
+
+@pytest.mark.parametrize(
+    "hint, faithful, cacheable",
+    [
+        (int, True, True),
+        (typing.Tuple, True, True),  # noqa: UP006
+        (type[int], False, True),
+        (typing.Type[int], False, True),  # noqa: UP006
+        (typing.Union[type[int], str], False, True),  # noqa: UP007
+        ((type[int], int), False, True),
+        (tuple[()], False, False),
+        (typing.Union[tuple[()], int], False, False),  # noqa: UP007
+        (typing.Literal[1], False, False),
+        (list[type[int]], False, False),
+        (type[_Unfaithful], False, False),
+        (type[list[int]], False, False),
+    ],
+)
+def test_is_faithful_is_cacheable(hint, faithful, cacheable):
+    """Test `is_faithful` and `is_cacheable` on hints where the two can differ."""
+    assert is_faithful(hint) is faithful
+    assert is_cacheable(hint) is cacheable
+
+
+def test_cache_key():
+    """Test that `cache_key` tells apart values of different types and classes."""
+    assert cache_key(1) == cache_key(2)
+    assert cache_key(1) != cache_key("x")
+    assert cache_key(True) != cache_key(1)
+    assert cache_key(int) == cache_key(int)
+    assert cache_key(int) != cache_key(str)
+
+
+def test_cache_key_metaclass_eq():
+    """Test `cache_key` for classes whose metaclass overrides `__eq__`."""
+
+    class MetaUnhashable(type):
+        def __eq__(cls, other):
+            return cls is other
+
+    class Unhashable(metaclass=MetaUnhashable):
+        pass
+
+    assert hash(cache_key(Unhashable)) == hash(cache_key(Unhashable))
+
+    class MetaAlwaysEqual(type):
+        def __eq__(cls, other):
+            return True
+
+        __hash__ = type.__hash__
+
+    class A(metaclass=MetaAlwaysEqual):
+        pass
+
+    class B(metaclass=MetaAlwaysEqual):
+        pass
+
+    assert cache_key(A) != cache_key(B)

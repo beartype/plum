@@ -4,6 +4,8 @@ __all__ = (
     "type_mapping",
     "resolve_type_hint",
     "is_faithful",
+    "is_cacheable",
+    "cache_key",
 )
 
 import abc
@@ -13,7 +15,7 @@ import warnings
 from collections.abc import Callable, Hashable
 from functools import lru_cache, reduce
 from operator import or_
-from types import UnionType
+from types import GenericAlias, UnionType
 from typing import (
     Any,
     Literal,
@@ -191,9 +193,10 @@ def _is_hint(x: object) -> bool:
         bool: `True` if `x` is a type hint and `False` otherwise.
     """
     try:
-        if x.__module__ == "builtins":
-            # Check if `x` is a subscripted built-in. We do this by checking the module
-            # of the type of `x`.
+        if x.__module__ == "builtins" and type(x) is GenericAlias:
+            # `x` is a subscripted built-in, e.g. `list[int]`, so check the module of
+            # its type instead. A class declared with `exec`, e.g. in a doctest, also
+            # has `__module__ == "builtins"`, hence the check on `type(x)`.
             x = type(x)
         return x.__module__ in {
             "types",  # E.g., `tuple[int]`
@@ -445,16 +448,17 @@ def _type_hint_eq(x: object, y: object, /) -> bool:
 def is_faithful(x: object, /) -> bool:
     """Check whether a type hint is faithful.
 
-    A type or type hint `t` is defined _faithful_ if, for all `x`, the following holds
-    true::
+    A type or type hint `t` is _faithful_ if, for all `x`::
 
-        isinstance(x, x) == issubclass(type(x), t)
+        isinstance(x, t) == issubclass(type(x), t)
 
     You can control whether types are faithful or not by setting the attribute
     `__faithful__`::
 
         class UnfaithfulType:
             __faithful__ = False
+
+    Every faithful type is cacheable. See :func:`is_cacheable`.
 
     Args:
         x (type or type hint): Type hint.
@@ -485,14 +489,18 @@ def _is_faithful(x: object, /) -> bool:
             # Unsubscripted type hints tend to be faithful. For example, `Any`,
             # `List`, `Tuple`, `Dict`, `Callable`, and `Generator` are. When we
             # come across a counter-example, we will refine this logic.
-            return True
+            #
+            # The exception is `tuple[()]`, which matches only the empty tuple, but
+            # from Python 3.11 `get_args` returns `()` for it. Unlike `typing.Tuple`,
+            # it has `__args__`.
+            return not (origin is tuple and hasattr(x, "__args__"))
 
         if origin in UNION_TYPES:
             return all(is_faithful(arg) for arg in args)
 
         return False
 
-    elif x is None or x == Ellipsis:
+    elif x is None or x is Ellipsis:
         return True
 
     elif isinstance(x, (tuple, list)):
@@ -516,3 +524,76 @@ def _is_faithful(x: object, /) -> bool:
             stacklevel=2,
         )
     return False
+
+
+def is_cacheable(x: object, /) -> bool:
+    """Check whether a type hint is cacheable.
+
+    A type or type hint `t` is _cacheable_ if, for all `x`, whether `x` matches `t`
+    depends only on `cache_key(x)`. Every faithful type is cacheable, and so is
+    `type[X]` for a faithful `X`.
+
+    Args:
+        x (type or type hint): Type hint.
+
+    Returns:
+        bool: Whether `x` is cacheable or not.
+    """
+    return _is_cacheable(resolve_type_hint(x))
+
+
+def _is_cacheable(x: object, /) -> bool:
+    if _is_hint(x) and get_args(x) != ():
+        origin = get_origin(x)
+        if origin is type:
+            # Matching `type[X]` is `issubclass(x, X)`, which depends only on the class
+            # `x` if `X` is faithful, and `cache_key` captures the class.
+            return all(_is_faithful(arg) for arg in get_args(x))
+        if origin in UNION_TYPES:
+            return all(_is_cacheable(arg) for arg in get_args(x))
+    if isinstance(x, (tuple, list)):
+        return all(_is_cacheable(arg) for arg in x)
+    return _is_faithful(x)
+
+
+class _Identity:
+    """Wrap an object so that it hashes by `id` and compares by identity.
+
+    The hash and equality of a class come from its metaclass, which can make distinct
+    classes compare equal or make a class unhashable. Holding `obj` ensures that its
+    `id` is not reused while the wrapper exists.
+
+    Args:
+        obj (object): Object to wrap.
+    """
+
+    __slots__ = ("obj",)
+
+    def __init__(self, obj: object, /) -> None:
+        self.obj = obj
+
+    def __hash__(self) -> int:
+        return id(self.obj)
+
+    def __eq__(self, other: object, /) -> bool:
+        return type(other) is _Identity and self.obj is other.obj
+
+
+def cache_key(x: object, /) -> tuple[object, ...]:
+    """Get a cache key for `x`.
+
+    If `is_cacheable(t)`, then whether `x` matches `t` depends only on `cache_key(x)`.
+    The layout of the key is an implementation detail, and the key can hold a reference
+    to `x`.
+
+    Args:
+        x (object): Value.
+
+    Returns:
+        tuple: Cache key.
+    """
+    # Key a class by identity, since matching `type[X]` depends on the class itself. A
+    # class whose metaclass is `type` already hashes by `id` and compares by identity.
+    if isinstance(x, type):
+        return type(x), (x if type(x) is type else _Identity(x))
+    return type(x), None

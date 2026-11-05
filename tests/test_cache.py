@@ -183,7 +183,148 @@ def test_cache_unfaithful(dispatch: plum.Dispatcher):
     def f(x: list[int]):
         return 2
 
-    # Since `f` is not faithful, no cache should be accumulated.
+    # Since `f` is not cacheable, no cache should be accumulated.
     assert f(1) == 1
     assert f([1]) == 2
     assert len(f._cache) == 0
+
+
+def test_cache_empty_tuple(dispatch: plum.Dispatcher):
+    """Test that `tuple[()]` is not cached on `type(x)` alone."""
+
+    @dispatch
+    def f(x: tuple[()]):
+        return "empty"
+
+    @dispatch
+    def f(x: tuple):
+        return "tuple"
+
+    assert f(()) == "empty"
+    assert f((1,)) == "tuple"
+
+
+def test_cache_protocol_declared_with_exec(dispatch: plum.Dispatcher):
+    """Test that a `Protocol` declared with `exec` is not cached on `type(x)` alone.
+
+    Whether `x` matches a runtime-checkable `Protocol` can depend on attributes of the
+    instance, so it is not faithful wherever the class was declared.
+    """
+    ns = {}
+    exec(
+        "import typing\n"
+        "@typing.runtime_checkable\n"
+        "class HasFoo(typing.Protocol):\n"
+        "    def foo(self): ...\n",
+        ns,
+    )
+    has_foo = ns["HasFoo"]
+
+    @dispatch
+    def f(x: has_foo):
+        return "foo"
+
+    @dispatch
+    def f(x: object):
+        return "object"
+
+    class A:
+        pass
+
+    with_foo, without_foo = A(), A()
+    with_foo.foo = lambda: 1
+    assert f(with_foo) == "foo"
+    assert f(without_foo) == "object"
+
+
+def test_cache_type_x(dispatch: plum.Dispatcher):
+    """Test that dispatch on `type[X]` is cached per class, also when added later."""
+
+    @dispatch
+    def f(x: object):
+        return "object"
+
+    assert f(int) == "object"
+    assert f(str) == "object"
+    # `f` is faithful, so both calls share the entry for `type`.
+    assert set(f._cache) == {(type,)}
+
+    @dispatch
+    def f(x: type[int]):
+        return "type[int]"
+
+    assert f(int) == "type[int]"
+    assert f(bool) == "type[int]"
+    assert f(str) == "object"
+    assert f(1) == "object"
+    # One entry per class and one for `int` instances. The entry for `type` is gone.
+    assert len(f._cache) == 4
+    assert (type,) not in f._cache
+
+
+def test_cache_type_x_and_int(dispatch: plum.Dispatcher):
+    """Test caching of `type[X]` next to a faithful argument."""
+
+    @dispatch
+    def f(x: type[int], n: int):
+        return "int"
+
+    @dispatch
+    def f(x: type[str], n: int):
+        return "str"
+
+    assert f(int, 1) == "int"
+    assert f(str, 1) == "str"
+    assert f(int, 2) == "int"
+    assert len(f._cache) == 2
+
+
+def test_cache_type_x_metaclass(dispatch: plum.Dispatcher):
+    """Test dispatch on classes whose metaclass makes them equal or unhashable."""
+
+    class MetaAlwaysEqual(type):
+        def __eq__(cls, other):
+            return True
+
+        __hash__ = type.__hash__
+
+    class A(metaclass=MetaAlwaysEqual):
+        pass
+
+    class B(metaclass=MetaAlwaysEqual):
+        pass
+
+    class MetaUnhashable(type):
+        __hash__ = None
+
+    class C(metaclass=MetaUnhashable):
+        pass
+
+    @dispatch
+    def f(x: type[A]):
+        return "A"
+
+    @dispatch
+    def f(x: object):
+        return "object"
+
+    assert f(A) == "A"
+    assert f(B) == "object"
+    assert f(C) == "object"
+    assert f(A) == "A"
+
+
+def test_invoke_type_x(dispatch: plum.Dispatcher):
+    """Test that `invoke` works for a function that dispatches on `type[X]`."""
+
+    @dispatch
+    def f(x: type[int]):
+        return "type[int]"
+
+    @dispatch
+    def f(x: object):
+        return "object"
+
+    assert f.invoke(type[int])(int) == "type[int]"
+    assert f.invoke(object)(int) == "object"
+    assert f(int) == "type[int]"
