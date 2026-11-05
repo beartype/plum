@@ -5,7 +5,6 @@ import textwrap
 import threading
 from collections.abc import Callable
 from copy import copy
-from functools import partial
 from types import MethodType
 from typing import Any, ClassVar, Protocol, TypeVar, overload
 from typing_extensions import Self
@@ -64,9 +63,8 @@ a function (see :meth:`Function.owner`), make the corresponding value the owner.
 class _InvokedMethod(NativeBase):
     """Run the resolved `method` and convert the result.
 
-    Callable returned by :meth:`Function.invoke`. A class rather than a closure,
-    which `mypyc` cannot compile (mypyc/mypyc#1205); `NativeBase` for the `__dict__`
-    :func:`update_wrapper` writes into.
+    Callable returned by :meth:`Function.invoke`. Subclasses `NativeBase` for the
+    `__dict__` :func:`update_wrapper` writes into.
     """
 
     def __init__(
@@ -300,8 +298,10 @@ class Function(NativeBase):
             function: Decorator.
         """
         if method is None:
-            return partial(self._register_one, precedence=precedence)
-        return self._register_one(method, precedence=precedence)
+            return lambda m: self.dispatch(m, precedence=precedence)  # type: ignore[return-value]
+
+        self.register(method, precedence=precedence)
+        return self
 
     def dispatch_multi(
         self: Self, *signatures: Signature | tuple[TypeHint, ...]
@@ -328,32 +328,14 @@ class Function(NativeBase):
                     f"Signature `{signature}` must be a tuple or of type "
                     f"`plum.signature.Signature`."
                 )
-        return partial(self._register_multiple, signatures=resolved_signatures)
 
-    def _register_one(
-        self: Self, method: Callable[..., Any], /, *, precedence: int = 0
-    ) -> Self:
-        """Register `method` by `precedence` and return the function itself.
+        def decorator(method: Callable[..., Any], /) -> "Function":
+            # The precedence will not be used, so we can safely set it to `None`.
+            for signature in resolved_signatures:
+                self.register(method, signature=signature, precedence=None)
+            return self
 
-        Registration path for :meth:`dispatch`. A bound method so the decorator form
-        can be built with :func:`functools.partial` rather than a `self`-capturing
-        closure, which `mypyc` cannot compile (mypyc/mypyc#1205).
-        """
-        self.register(method, precedence=precedence)
-        return self
-
-    def _register_multiple(
-        self: Self, method: Callable[..., Any], /, *, signatures: list[Signature]
-    ) -> Self:
-        """Register `method` for every signature and return the function itself.
-
-        Registration path for :meth:`dispatch_multi`. See :meth:`_register_one` for
-        why this is a bound method.
-        """
-        for signature in signatures:
-            # `precedence` is derived from each signature, so it is left as `None`.
-            self.register(method, signature=signature, precedence=None)
-        return self
+        return decorator  # type: ignore[return-value]
 
     def clear_cache(self, reregister: bool = True) -> None:
         """Clear cache.
