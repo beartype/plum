@@ -136,6 +136,22 @@ def test_is_hint():
     assert _is_hint(Callable)
 
 
+def test_is_hint_class_declared_with_exec():
+    """Test that a class declared with `exec` is not a hint.
+
+    Such a class has `__module__ == "builtins"`, like `list[int]`.
+    """
+    ns = {}
+    exec("import typing\nclass Proto(typing.Protocol):\n    def foo(self): ...\n", ns)
+    assert ns["Proto"].__module__ == "builtins"
+    assert not _is_hint(ns["Proto"])
+    assert not is_faithful(ns["Proto"])
+    # Subscripted built-ins are still hints.
+    assert _is_hint(list[int])
+    assert _is_hint(type[int])
+    assert not _is_hint(list)
+
+
 @skip_if_less_than_py310
 def test_is_hint_new_union():
     assert int | float
