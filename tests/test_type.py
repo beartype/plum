@@ -263,6 +263,17 @@ def test_is_faithful():
         assert not is_faithful(1)
 
 
+def test_is_faithful_does_not_call_eq():
+    """Test that `is_faithful` does not call `__eq__` on the hint."""
+
+    class NoEq:
+        def __eq__(self, other):
+            raise AssertionError("`__eq__` must not be called.")
+
+    with pytest.warns(Warning, match="(?i)could not determine"):
+        assert not is_faithful(NoEq())
+
+
 def test_is_faithful_custom_metaclass():
     class A:
         pass
