@@ -2,7 +2,7 @@ import inspect
 import operator
 import weakref
 from numbers import Number as Num, Real as Re
-from typing import Any, Union
+from typing import Any, Literal, Union
 
 import pytest
 
@@ -479,3 +479,10 @@ def test_signature_is_cacheable(sig, faithful, cacheable):
     """Test `is_faithful` and `is_cacheable` on types and varargs."""
     assert sig.is_faithful is faithful
     assert sig.is_cacheable is cacheable
+
+
+def test_signature_literals():
+    """Test that `literals` collects the values of all `Literal`s, also in varargs."""
+    assert Sig(int).literals == frozenset()
+    assert Sig(Literal[1], int).literals == {1}
+    assert Sig(int, varargs=Literal["a", "b"]).literals == {"a", "b"}

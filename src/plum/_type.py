@@ -9,6 +9,7 @@ __all__ = (
 )
 
 import abc
+import enum
 import sys
 import typing
 import warnings
@@ -530,8 +531,9 @@ def is_cacheable(x: object, /) -> bool:
     """Check whether a type hint is cacheable.
 
     A type or type hint `t` is _cacheable_ if, for all `x`, whether `x` matches `t`
-    depends only on `cache_key(x)`. Every faithful type is cacheable, and so is
-    `type[X]` for a faithful `X`.
+    depends only on `cache_key(x, literals)`, where `literals` holds the values of all
+    `Literal`s in `t`. Every faithful type is cacheable, and so are `type[X]` for a
+    faithful `X` and `Literal[...]`.
 
     Args:
         x (type or type hint): Type hint.
@@ -549,6 +551,9 @@ def _is_cacheable(x: object, /) -> bool:
             # Matching `type[X]` is `issubclass(x, X)`, which depends only on the class
             # `x` if `X` is faithful, and `cache_key` captures the class.
             return all(_is_faithful(arg) for arg in get_args(x))
+        if origin is Literal:
+            # `cache_key` captures the values that a `Literal` names.
+            return True
         if origin in UNION_TYPES:
             return all(_is_cacheable(arg) for arg in get_args(x))
     if isinstance(x, (tuple, list)):
@@ -560,8 +565,9 @@ class _Identity:
     """Wrap an object so that it hashes by `id` and compares by identity.
 
     The hash and equality of a class come from its metaclass, which can make distinct
-    classes compare equal or make a class unhashable. Holding `obj` ensures that its
-    `id` is not reused while the wrapper exists.
+    classes compare equal or make a class unhashable. Likewise, the hash and equality
+    of an instance of a subclass of `int`, `str` or `bytes` are user code. Holding `obj`
+    ensures that its `id` is not reused while the wrapper exists.
 
     Args:
         obj (object): Object to wrap.
@@ -579,21 +585,85 @@ class _Identity:
         return type(other) is _Identity and self.obj is other.obj
 
 
-def cache_key(x: object, /) -> tuple[object, ...]:
+def _literals(x: object, /) -> frozenset[object]:
+    """Collect all `Literal` values in a resolved type hint.
+
+    Args:
+        x (type or type hint): Resolved type hint.
+
+    Returns:
+        frozenset: All `Literal` values in `x`.
+    """
+    if _is_hint(x):
+        if get_origin(x) is Literal:
+            return frozenset(get_args(x))
+        return frozenset().union(*map(_literals, get_args(x)))
+    if isinstance(x, (tuple, list)):
+        return frozenset().union(*map(_literals, x))
+    return frozenset()
+
+
+_LITERAL_TYPES: frozenset[type] = frozenset({bool, int, str, bytes, type(None)})
+"""frozenset: Exact types whose values a `Literal` can hold."""
+
+_LITERAL_BASES: tuple[type, ...] = (int, str, bytes, enum.Enum)
+"""tuple: Bases whose instances can match a `Literal`. `bool` and `NoneType` cannot be
+subclassed."""
+
+
+def cache_key(
+    x: object, /, literals: frozenset[object] = frozenset()
+) -> tuple[object, ...]:
     """Get a cache key for `x`.
 
-    If `is_cacheable(t)`, then whether `x` matches `t` depends only on `cache_key(x)`.
-    The layout of the key is an implementation detail, and the key can hold a reference
-    to `x`.
+    If `is_cacheable(t)` and `literals` contains all `Literal` values in `t`,
+    then whether `x` matches `t` depends only on `cache_key(x, literals)`. The layout
+    of the key is an implementation detail, and the key can hold a reference to `x`.
 
     Args:
         x (object): Value.
+        literals (frozenset, optional): All `Literal` values to account for.
 
     Returns:
         tuple: Cache key.
     """
+    tx = type(x)
     # Key a class by identity, since matching `type[X]` depends on the class itself. A
     # class whose metaclass is `type` already hashes by `id` and compares by identity.
     if isinstance(x, type):
-        return type(x), (x if type(x) is type else _Identity(x))
-    return type(x), None
+        return tx, (x if tx is type else _Identity(x))
+    if literals:
+        # `x` matches `Literal[v]` if and only if `isinstance(x, type(v))` and `x == v`.
+        # If `type(x)` is a type that a `Literal` can hold, `x` can only match `v` of a
+        # built-in type, so `x == v` implies equal hashes, and `x in literals` tells
+        # whether `x` matches any `Literal`. Key `x` by itself only if it does, so that
+        # all other values of `type(x)` share one entry.
+        if tx in _LITERAL_TYPES:
+            return tx, (x if x in literals else None)
+        # The equality of an instance of a subclass is user code, so key it by
+        # identity.
+        if isinstance(x, _LITERAL_BASES):
+            return tx, _Identity(x)
+    return tx, None
+
+
+def _literal_key(
+    literals: frozenset[object], /
+) -> Callable[[object], tuple[object, ...]]:
+    """Get `cache_key` with `literals` bound, for :class:`.Resolver`.
+
+    This repeats the body of `cache_key` rather than calling it, which would cost an
+    extra call per argument on every cache hit.
+    """
+
+    def key(x: object, /) -> tuple[object, ...]:
+        tx = type(x)
+        if tx in _LITERAL_TYPES:
+            return tx, (x if x in literals else None)
+        if isinstance(x, type):
+            return tx, (x if tx is type else _Identity(x))
+        if isinstance(x, _LITERAL_BASES):
+            return tx, _Identity(x)
+        return tx, None
+
+    return key

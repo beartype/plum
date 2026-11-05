@@ -13,7 +13,7 @@ from rich.text import Text
 from ._util import argsort
 from plum._method import Method, MethodList
 from plum._signature import Signature
-from plum._type import cache_key
+from plum._type import _literal_key, cache_key
 from plum.repr import repr_source_path, rich_repr
 
 
@@ -245,6 +245,7 @@ class Resolver:
         is_faithful (bool): Whether all methods are faithful or not.
         is_cacheable (bool): Whether all methods are cacheable or not. See
             :func:`plum.is_cacheable`.
+        literals (frozenset): All `Literal` values in the methods.
         warn_redefinition (bool): Throw a warning whenever a method is redefined.
     """
 
@@ -253,6 +254,7 @@ class Resolver:
         "methods",
         "is_faithful",
         "is_cacheable",
+        "literals",
         "_arg_key",
         "warn_redefinition",
     )
@@ -271,6 +273,7 @@ class Resolver:
         self.methods: MethodList = MethodList()
         self.is_faithful: bool = True
         self.is_cacheable: bool = True
+        self.literals: frozenset[object] = frozenset()
         self._arg_key: Callable[[object], object] = type
         self.warn_redefinition = warn_redefinition
 
@@ -346,8 +349,11 @@ class Resolver:
         # Bind the function that computes the cache key of an argument now, so dispatch
         # need not check the flags on every call. `type` suffices if the resolver is
         # faithful, and is unused if it is not cacheable.
+        self.literals = frozenset().union(*(s.signature.literals for s in self.methods))
         if self.is_faithful or not self.is_cacheable:
             self._arg_key = type
+        elif self.literals:
+            self._arg_key = _literal_key(self.literals)
         else:
             self._arg_key = cache_key
 

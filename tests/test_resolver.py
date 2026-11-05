@@ -360,3 +360,18 @@ def test_resolver_is_cacheable():
 
     r.register(Method(f, plum.Signature(list[int])))
     assert not r.is_cacheable and r._arg_key is type
+
+
+def test_resolver_literals():
+    """Test that `literals` is the union over the methods and sets `_arg_key`."""
+    from typing import Literal
+
+    def f(x):
+        return x
+
+    r = Resolver()
+    r.register(Method(f, plum.Signature(Literal[1])))
+    r.register(Method(f, plum.Signature(Literal["a"])))
+    assert r.literals == {1, "a"}
+    assert r._arg_key(1) == (int, 1)
+    assert r._arg_key(2) == (int, None)
