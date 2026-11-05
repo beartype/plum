@@ -202,3 +202,36 @@ def test_cache_empty_tuple(dispatch: plum.Dispatcher):
 
     assert f(()) == "empty"
     assert f((1,)) == "tuple"
+
+
+def test_cache_protocol_declared_with_exec(dispatch: plum.Dispatcher):
+    """Test that a `Protocol` declared with `exec` is not cached on `type(x)` alone.
+
+    Whether `x` matches a runtime-checkable `Protocol` can depend on attributes of the
+    instance, so it is not faithful wherever the class was declared.
+    """
+    ns = {}
+    exec(
+        "import typing\n"
+        "@typing.runtime_checkable\n"
+        "class HasFoo(typing.Protocol):\n"
+        "    def foo(self): ...\n",
+        ns,
+    )
+    has_foo = ns["HasFoo"]
+
+    @dispatch
+    def f(x: has_foo):
+        return "foo"
+
+    @dispatch
+    def f(x: object):
+        return "object"
+
+    class A:
+        pass
+
+    with_foo, without_foo = A(), A()
+    with_foo.foo = lambda: 1
+    assert f(with_foo) == "foo"
+    assert f(without_foo) == "object"
