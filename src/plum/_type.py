@@ -496,7 +496,7 @@ def _is_faithful(x: object, /) -> bool:
 
         return False
 
-    elif x is None or x == Ellipsis:
+    elif x is None or x is Ellipsis:
         return True
 
     elif isinstance(x, (tuple, list)):
