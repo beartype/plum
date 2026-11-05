@@ -119,6 +119,15 @@ Every faithful type is cacheable.
 In addition, `type[t2]` is cacheable whenever `t2` is faithful, but it is not faithful:
 a class `t1` matches `type[t2]` if `issubclass(t1, t2)`, which depends on `t1` itself
 and not only on `type(t1)`.
+`Literal[...]` is cacheable as well, since `cache_key` captures the values that the
+`Literal`s of a function name.
+
+```{admonition} Cache growth
+:class: warning
+The cache holds strong references to the classes and values that a function is called with.
+A function that dispatches on `type[t]` therefore keeps every class it is called with alive until `f.clear_cache()` or `plum.clear_all_cache()` is called.
+A function that dispatches on `Literal` keys an instance of a subclass of `int`, `str` or `bytes` by identity, and stops caching after 4096 entries, since it would otherwise add an entry for every such instance.
+```
 
 Methods which have signatures that depend only on cacheable types will
 be performant.
@@ -139,16 +148,16 @@ def add_5_faithful(x: int):
 
 
 @dispatch
-def add_5_unfaithful(x: Literal[1]):
-    return x + 5
+def add_5_uncacheable(x: list[int]):
+    return x + [5]
 ```
 
 ```python
 >>> %timeit add_5_faithful(1)  # doctest:+SKIP
-585 ns ± 6.2 ns per loop (mean ± std. dev. of 7 runs, 1,000,000 loops each)
+382 ns ± 10.2 ns per loop (mean ± std. dev. of 7 runs, 1,000,000 loops each)
 
->>> %timeit add_5_unfaithful(1)  # doctest:+SKIP
-6.24 µs ± 68.9 ns per loop (mean ± std. dev. of 7 runs, 100,000 loops each)
+>>> %timeit add_5_uncacheable([1])  # doctest:+SKIP
+2.49 µs ± 31.1 ns per loop (mean ± std. dev. of 7 runs, 100,000 loops each)
 ```
 
 Plum implements `is_faithful` and `is_cacheable`, which are functions that attempt to
@@ -168,6 +177,12 @@ False
 
 >>> is_cacheable(type[int])
 True
+
+>>> is_cacheable(Literal[1])
+True
+
+>>> is_cacheable(list[int])
+False
 ```
 
 If you implement, e.g., a type with a custom `__instancecheck__`, then `is_faithful`

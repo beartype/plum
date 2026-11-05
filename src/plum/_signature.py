@@ -18,6 +18,7 @@ from ._bear import is_bearable
 from ._type import (
     _is_cacheable,
     _is_faithful,
+    _literals,
     _type_hint_eq,
     _type_hint_le,
     resolve_type_hint,
@@ -52,6 +53,7 @@ class Signature(Comparable):
         precedence (int): Precedence.
         is_faithful (bool): Whether this signature only uses faithful types.
         is_cacheable (bool): Whether this signature only uses cacheable types.
+        literals (frozenset): All `Literal` values in the types.
     """
 
     _default_varargs: ClassVar = Missing
@@ -63,6 +65,7 @@ class Signature(Comparable):
         "precedence",
         "is_faithful",
         "is_cacheable",
+        "literals",
     )
 
     def __init__(
@@ -88,6 +91,12 @@ class Signature(Comparable):
         self.is_faithful = all(_is_faithful(t) for t in resolved)
         # A faithful signature is cacheable, so only look at the types again if not.
         self.is_cacheable = self.is_faithful or all(_is_cacheable(t) for t in resolved)
+        # Only the cache key uses `literals`.
+        self.literals: frozenset[object] = (
+            frozenset().union(*(_literals(t) for t in resolved))
+            if self.is_cacheable and not self.is_faithful
+            else frozenset()
+        )
 
     @staticmethod
     def from_callable(f: Callable[..., Any], precedence: int = 0) -> "Signature":
