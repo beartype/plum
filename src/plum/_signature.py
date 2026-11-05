@@ -15,7 +15,14 @@ from rich.segment import Segment
 from beartype.peps import resolve_pep563 as beartype_resolve_pep563
 
 from ._bear import is_bearable
-from ._type import _type_hint_eq, _type_hint_le, is_faithful, resolve_type_hint
+from ._type import (
+    _is_cacheable,
+    _is_faithful,
+    _literals,
+    _type_hint_eq,
+    _type_hint_le,
+    resolve_type_hint,
+)
 from ._util import (
     Comparable,
     Missing,
@@ -45,12 +52,21 @@ class Signature(Comparable):
         has_varargs (bool): Whether `varargs` is not :class:`.util.Missing`.
         precedence (int): Precedence.
         is_faithful (bool): Whether this signature only uses faithful types.
+        is_cacheable (bool): Whether this signature only uses cacheable types.
+        literals (frozenset): All `Literal` values in the types.
     """
 
     _default_varargs: ClassVar = Missing
     _default_precedence: ClassVar[int] = 0
 
-    __slots__: tuple[str, ...] = ("types", "varargs", "precedence", "is_faithful")
+    __slots__: tuple[str, ...] = (
+        "types",
+        "varargs",
+        "precedence",
+        "is_faithful",
+        "is_cacheable",
+        "literals",
+    )
 
     def __init__(
         self,
@@ -70,9 +86,17 @@ class Signature(Comparable):
         self.varargs = varargs
         self.precedence = precedence
 
-        types_are_faithful = all(is_faithful(t) for t in types)
-        varargs_are_faithful = self.varargs is Missing or is_faithful(self.varargs)
-        self.is_faithful = types_are_faithful and varargs_are_faithful
+        all_types = types if self.varargs is Missing else (*types, self.varargs)
+        resolved = [resolve_type_hint(t) for t in all_types]
+        self.is_faithful = all(_is_faithful(t) for t in resolved)
+        # A faithful signature is cacheable, so only look at the types again if not.
+        self.is_cacheable = self.is_faithful or all(_is_cacheable(t) for t in resolved)
+        # Only the cache key uses `literals`.
+        self.literals: frozenset[object] = (
+            frozenset().union(*(_literals(t) for t in resolved))
+            if self.is_cacheable and not self.is_faithful
+            else frozenset()
+        )
 
     @staticmethod
     def from_callable(f: Callable[..., Any], precedence: int = 0) -> "Signature":

@@ -2,7 +2,7 @@ import inspect
 import operator
 import weakref
 from numbers import Number as Num, Real as Re
-from typing import Any, Union
+from typing import Any, Literal, Union
 
 import pytest
 
@@ -463,3 +463,26 @@ def test_append_default_args():
     # Test that `itemgetter` is supported.
     f = operator.itemgetter(0)
     assert len(plum.append_default_args(Sig.from_callable(f), f)) == 1
+
+
+@pytest.mark.parametrize(
+    "sig, faithful, cacheable",
+    [
+        (Sig(int, int), True, True),
+        (Sig(type[int], int), False, True),
+        (Sig(int, varargs=type[int]), False, True),
+        (Sig(list[int]), False, False),
+        (Sig(type[int], varargs=list[int]), False, False),
+    ],
+)
+def test_signature_is_cacheable(sig, faithful, cacheable):
+    """Test `is_faithful` and `is_cacheable` on types and varargs."""
+    assert sig.is_faithful is faithful
+    assert sig.is_cacheable is cacheable
+
+
+def test_signature_literals():
+    """Test that `literals` collects the values of all `Literal`s, also in varargs."""
+    assert Sig(int).literals == frozenset()
+    assert Sig(Literal[1], int).literals == {1}
+    assert Sig(int, varargs=Literal["a", "b"]).literals == {"a", "b"}
