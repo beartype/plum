@@ -210,6 +210,14 @@ def test_resolve_type_hint_new_union():
     assert resolve_type_hint(float | int) == float | int
 
 
+def test_resolve_type_hint_annotated(recwarn):
+    # The metadata must be left alone, even when it looks like a resolvable type.
+    metadata = ModuleType("builtins", "float")
+    hint = Annotated[ModuleType("builtins", "int"), "units", metadata]
+    assert resolve_type_hint(hint) == Annotated[int, "units", metadata]
+    assert len(recwarn) == 0
+
+
 def test_is_faithful():
     # Example of a not faithful type.
     t_nf = Callable[[int], int]
