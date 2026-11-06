@@ -400,6 +400,8 @@ class Function(NativeBase):
             precedence (int, optional): Precedence of the function. If `signature` is
                 given, then this argument will not be used. Defaults to `0`.
         """
+        # Serialise against concurrent resolution, which iterates over `_pending` and
+        # then replaces it: an append in between would go into the discarded list.
         with self._lock:
             self._pending.append((f, signature, precedence))
 

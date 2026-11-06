@@ -5,6 +5,7 @@ import pickle
 import sys
 import textwrap
 import threading
+import time
 import typing
 import weakref
 from concurrent.futures import ThreadPoolExecutor
@@ -771,6 +772,45 @@ def test_method_replaced_during_resolution_is_not_cached(monkeypatch, dispatch):
         assert call.result(5) == "v1"
 
     assert f(1) == "v2"
+
+
+@pytest.mark.incompatible_with_mypyc
+def test_registration_during_resolution_is_not_lost(dispatch):
+    """Test that a method registered while another thread is resolving is not lost.
+
+    `_resolve_pending_registrations` iterates over `_pending` and then replaces it. A
+    registration appended in between goes into the discarded list, so `register` must
+    wait for the resolution to finish. See PR #343.
+    """
+
+    @dispatch
+    def f(x: int):
+        return "int"
+
+    def g(x: str):
+        return "str"
+
+    exhausted = threading.Event()
+
+    class PausedList(list):
+        def __iter__(self):
+            yield from super().__iter__()
+            # Hold the window between the iteration and the replacement of `_pending`
+            # open for the registration below. Native list iteration bypasses this
+            # hook, hence the `mypyc` marker.
+            exhausted.set()
+            time.sleep(0.1)
+
+    f._pending = PausedList(f._pending)
+    with ThreadPoolExecutor(1) as pool:
+        call = pool.submit(f, 1)
+        assert exhausted.wait(5), "The call never reached the pause."
+        # Without the lock, this lands in the discarded list. With the lock, it blocks
+        # until the resolution finishes.
+        f.register(g)
+        assert call.result(5) == "int"
+
+    assert f("x") == "str"
 
 
 @pytest.mark.parametrize(
