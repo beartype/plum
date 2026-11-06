@@ -1,4 +1,9 @@
-"""Interpreted coroutine adapter, preserving Python's cancellation behavior."""
+"""Await the result of an `async def` method before converting it.
+
+This module must stay out of the `mypyc` compile set: a compiled `await` throws
+exceptions into the inner coroutine with the three-argument `throw`, which Python 3.12
+deprecates (`CPy_YieldFromErrorHandle` in `mypyc/lib-rt/misc_ops.c`).
+"""
 
 __all__ = ()
 
@@ -14,15 +19,22 @@ def _async_return_conversion(
     return_type: TypeHint,
     convert: Callable[..., Any],
 ) -> Callable[..., Any]:
-    """Await a resolved async method before converting its annotated result.
+    """Wrap an `async def` method to convert its awaited result.
 
-    Keep this adapter outside the mypyc compile set: compiled coroutine
-    delegation uses the deprecated three-argument ``throw`` on Python 3.12.
+    Args:
+        method (function): Method to wrap.
+        return_type (type): Type to convert the awaited result to.
+        convert (function): Conversion function, passed in to avoid a circular import
+            of `_function`.
+
+    Returns:
+        function: `method`, converting its awaited result to `return_type`.
     """
 
-    async def converted(*args: Any, **kw: Any) -> Any:
+    async def wrapper(*args: Any, **kw: Any) -> Any:
         return convert(await method(*args, **kw), return_type)
 
-    update_wrapper(converted, method)
-    converted.__dict__["__wrapped_by_plum__"] = method
-    return converted
+    update_wrapper(wrapper, method)
+    # Written into `__dict__`, since `mypy` rejects a new attribute on a function.
+    wrapper.__dict__["__wrapped_by_plum__"] = method
+    return wrapper

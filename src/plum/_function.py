@@ -581,13 +581,16 @@ class Function(NativeBase):
             # which nothing reads any more, so storing into it is harmless.
             cache = self._cache
             method, return_type = self.resolve_method(args)
-            # Adapt at resolution time, not on the synchronous cached-call path.
-            # Invoked methods can wrap an async implementation too.
-            if return_type is not Any and inspect.iscoroutinefunction(
-                _unwrap_invoked_methods(method)
-            ):
+
+            # An `async def` method returns a coroutine, so convert its awaited result
+            # instead. The wrapper converts, so `return_type` becomes `Any`. Do it here
+            # rather than in `__call__` to keep cache hits cheap. Unwrap first, since an
+            # invoked method can wrap an `async def` too.
+            impl = _unwrap_invoked_methods(method)
+            if return_type is not Any and inspect.iscoroutinefunction(impl):
                 method = _async_return_conversion(method, return_type, _convert)
                 return_type = Any
+
             # If the resolver is faithful, then we can perform caching using the types
             # of the arguments. If the resolver is not faithful, then we cannot.
             if self._resolver.is_faithful:

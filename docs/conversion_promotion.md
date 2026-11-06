@@ -38,9 +38,7 @@ You can tell Plum how the conversion should be done with `add_conversion_method`
 1
 ```
 
-For `async def` methods, conversion applies to the result after it is awaited,
-rather than to the coroutine object. Both regular dispatch and `invoke` support
-this:
+For an `async def` method, the awaited result is converted, not the coroutine object:
 
 ```python
 import asyncio
@@ -54,12 +52,7 @@ async def as_tuple(x: int) -> tuple:
 ```python
 >>> asyncio.run(as_tuple(2))
 (2,)
-
->>> asyncio.run(as_tuple.invoke(int)(3))
-(3,)
 ```
-
-Synchronous methods returning an `Awaitable` are not automatically awaited.
 
 ## Conversion With `convert`
 
