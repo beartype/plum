@@ -68,8 +68,8 @@ def convert(obj: object, type_to: typeTypeTo) -> TypeTo:
     # Resolve and call the method directly. `_convert.invoke` would read better, but
     # it builds an `_InvokedMethod` per call that is used once and dropped, which costs
     # more than the resolution itself, on every call that misses the cache above.
-    method, return_type = _convert._resolve_method_with_cache(
-        types=(type_from, type_to_resolved)
+    method, return_type = _convert._resolve_method_for_types(
+        (type_from, type_to_resolved)
     )
     # As `invoke` does, convert the result per the method's own return annotation.
     # That annotation is `Any` for every conversion method, so this is free.
