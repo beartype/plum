@@ -504,14 +504,15 @@ def test_cache_key_metaclass_eq():
 def test_cache_key_literals():
     """Test that `cache_key` keys a value by itself only if `literals` names it."""
     literals = frozenset({1, "a"})
-    assert cache_key(1, literals) == (int, 1)
-    assert cache_key(2, literals) == cache_key(3, literals) == (int, None)
+    assert cache_key(1, literals) != cache_key(2, literals)
+    assert cache_key(2, literals) == cache_key(3, literals)
     assert cache_key("a", literals) != cache_key("b", literals)
     # `True == 1`, so `True in literals`, but the type keeps them apart.
     assert cache_key(True, literals) != cache_key(1, literals)
-    # A value that can match no `Literal` gets an empty slot, even if unhashable.
-    assert cache_key(1.5, literals) == (float, None)
-    assert cache_key([1], literals) == (list, None)
+    # Values that can match no `Literal` share a key, even if they are unhashable.
+    assert cache_key(1.5, literals) == cache_key(2.5, literals)
+    assert cache_key([1], literals) == cache_key([2], literals)
+    assert hash(cache_key([1], literals)) == hash(cache_key([2], literals))
     # Without literals, values are not captured.
     assert cache_key(1) == cache_key(2)
 
