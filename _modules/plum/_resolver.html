@@ -364,6 +364,7 @@ document.write(`
 <span class="kn">from</span><span class="w"> </span><span class="nn">._util</span><span class="w"> </span><span class="kn">import</span> <span class="n">argsort</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">plum._method</span><span class="w"> </span><span class="kn">import</span> <span class="n">Method</span><span class="p">,</span> <span class="n">MethodList</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">plum._signature</span><span class="w"> </span><span class="kn">import</span> <span class="n">Signature</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">plum._type</span><span class="w"> </span><span class="kn">import</span> <span class="n">cache_key</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">plum.repr</span><span class="w"> </span><span class="kn">import</span> <span class="n">repr_source_path</span><span class="p">,</span> <span class="n">rich_repr</span>
 
 
@@ -599,6 +600,9 @@ document.write(`
 <span class="sd">    Attributes:</span>
 <span class="sd">        methods (list[:class:`.method.Method`]): Registered methods.</span>
 <span class="sd">        is_faithful (bool): Whether all methods are faithful or not.</span>
+<span class="sd">        is_cacheable (bool): Whether all methods are cacheable or not.</span>
+<span class="sd">        cache_key (Callable[[object], object]): Function that computes the cache key of</span>
+<span class="sd">            an argument.</span>
 <span class="sd">        warn_redefinition (bool): Throw a warning whenever a method is redefined.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -606,6 +610,8 @@ document.write(`
         <span class="s2">&quot;function_name&quot;</span><span class="p">,</span>
         <span class="s2">&quot;methods&quot;</span><span class="p">,</span>
         <span class="s2">&quot;is_faithful&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;is_cacheable&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;cache_key&quot;</span><span class="p">,</span>
         <span class="s2">&quot;warn_redefinition&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
@@ -622,6 +628,8 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">function_name</span> <span class="o">=</span> <span class="n">function_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="p">:</span> <span class="n">MethodList</span> <span class="o">=</span> <span class="n">MethodList</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">is_faithful</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_cacheable</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cache_key</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">object</span><span class="p">],</span> <span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="nb">type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">warn_redefinition</span> <span class="o">=</span> <span class="n">warn_redefinition</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">doc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exclude</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -690,6 +698,14 @@ document.write(`
 
         <span class="c1"># Use a double negation for slightly better performance.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">is_faithful</span> <span class="o">=</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="ow">not</span> <span class="n">s</span><span class="o">.</span><span class="n">signature</span><span class="o">.</span><span class="n">is_faithful</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_cacheable</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">signature</span><span class="o">.</span><span class="n">is_cacheable</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="p">)</span>
+        <span class="c1"># Bind the function that computes the cache key of an argument now, so dispatch</span>
+        <span class="c1"># need not check the flags on every call. `type` suffices if the resolver is</span>
+        <span class="c1"># faithful, and is unused if it is not cacheable.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_faithful</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_cacheable</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cache_key</span> <span class="o">=</span> <span class="nb">type</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cache_key</span> <span class="o">=</span> <span class="n">cache_key</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="p">)</span>

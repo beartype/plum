@@ -401,6 +401,8 @@ document.write(`
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._type.PromisedType"><code class="docutils literal notranslate"><span class="pre">PromisedType</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._type.cache_key"><code class="docutils literal notranslate"><span class="pre">cache_key()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._type.is_cacheable"><code class="docutils literal notranslate"><span class="pre">is_cacheable()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._type.is_faithful"><code class="docutils literal notranslate"><span class="pre">is_faithful()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._type.resolve_type_hint"><code class="docutils literal notranslate"><span class="pre">resolve_type_hint()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._type.type_mapping"><code class="docutils literal notranslate"><span class="pre">type_mapping</span></code></a></li>
@@ -413,6 +415,7 @@ document.write(`
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._signature.Signature.has_varargs"><code class="docutils literal notranslate"><span class="pre">Signature.has_varargs</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._signature.Signature.precedence"><code class="docutils literal notranslate"><span class="pre">Signature.precedence</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._signature.Signature.is_faithful"><code class="docutils literal notranslate"><span class="pre">Signature.is_faithful</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._signature.Signature.is_cacheable"><code class="docutils literal notranslate"><span class="pre">Signature.is_cacheable</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._signature.Signature.compute_distance"><code class="docutils literal notranslate"><span class="pre">Signature.compute_distance()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._signature.Signature.compute_mismatches"><code class="docutils literal notranslate"><span class="pre">Signature.compute_mismatches()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._signature.Signature.expand_varargs"><code class="docutils literal notranslate"><span class="pre">Signature.expand_varargs()</span></code></a></li>
@@ -593,12 +596,49 @@ this value upon retrieval.</p></li>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="plum._type.cache_key">
+<span class="sig-prename descclassname"><span class="pre">plum._type.</span></span><span class="sig-name descname"><span class="pre">cache_key</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">object</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">object</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/plum/_type.html#cache_key"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum._type.cache_key" title="Link to this definition">#</a></dt>
+<dd><p>Get a cache key for <cite>x</cite>.</p>
+<p>If <cite>is_cacheable(t)</cite>, then whether <cite>x</cite> matches <cite>t</cite> depends only on <cite>cache_key(x)</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>object</em>) – Object.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Cache key.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="plum._type.is_cacheable">
+<span class="sig-prename descclassname"><span class="pre">plum._type.</span></span><span class="sig-name descname"><span class="pre">is_cacheable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">object</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/plum/_type.html#is_cacheable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum._type.is_cacheable" title="Link to this definition">#</a></dt>
+<dd><p>Check whether a type hint is cacheable.</p>
+<p>A type or type hint <cite>t</cite> is defined _cacheable_ if, for all <cite>x</cite>, whether <cite>x</cite> matches
+<cite>t</cite> depends only on <cite>cache_key(x)</cite>. Every faithful type is cacheable.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>type</em><em> or </em><em>type hint</em>) – Type hint.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether <cite>x</cite> is cacheable or not.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="plum._type.is_faithful">
 <span class="sig-prename descclassname"><span class="pre">plum._type.</span></span><span class="sig-name descname"><span class="pre">is_faithful</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">object</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/plum/_type.html#is_faithful"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#plum._type.is_faithful" title="Link to this definition">#</a></dt>
 <dd><p>Check whether a type hint is faithful.</p>
 <p>A type or type hint <cite>t</cite> is defined _faithful_ if, for all <cite>x</cite>, the following holds
 true:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="nb">issubclass</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">t</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="o">==</span> <span class="nb">issubclass</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">t</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>You can control whether types are faithful or not by setting the attribute
@@ -607,6 +647,7 @@ true:</p>
     <span class="n">__faithful__</span> <span class="o">=</span> <span class="kc">False</span>
 </pre></div>
 </div>
+<p>Every faithful type is cacheable. See <a class="reference internal" href="#plum._type.is_cacheable" title="plum._type.is_cacheable"><code class="xref py py-func docutils literal notranslate"><span class="pre">is_cacheable()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>x</strong> (<em>type</em><em> or </em><em>type hint</em>) – Type hint.</p>
@@ -712,6 +753,17 @@ arguments.</p>
 <dt class="sig sig-object py" id="plum._signature.Signature.is_faithful">
 <span class="sig-name descname"><span class="pre">is_faithful</span></span><a class="headerlink" href="#plum._signature.Signature.is_faithful" title="Link to this definition">#</a></dt>
 <dd><p>Whether this signature only uses faithful types.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="plum._signature.Signature.is_cacheable">
+<span class="sig-name descname"><span class="pre">is_cacheable</span></span><a class="headerlink" href="#plum._signature.Signature.is_cacheable" title="Link to this definition">#</a></dt>
+<dd><p>Whether this signature only uses cacheable types.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>bool</p>
@@ -1855,6 +1907,8 @@ scope of the function.</p>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._type.PromisedType"><code class="docutils literal notranslate"><span class="pre">PromisedType</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._type.cache_key"><code class="docutils literal notranslate"><span class="pre">cache_key()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._type.is_cacheable"><code class="docutils literal notranslate"><span class="pre">is_cacheable()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._type.is_faithful"><code class="docutils literal notranslate"><span class="pre">is_faithful()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._type.resolve_type_hint"><code class="docutils literal notranslate"><span class="pre">resolve_type_hint()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._type.type_mapping"><code class="docutils literal notranslate"><span class="pre">type_mapping</span></code></a></li>
@@ -1867,6 +1921,7 @@ scope of the function.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._signature.Signature.has_varargs"><code class="docutils literal notranslate"><span class="pre">Signature.has_varargs</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._signature.Signature.precedence"><code class="docutils literal notranslate"><span class="pre">Signature.precedence</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._signature.Signature.is_faithful"><code class="docutils literal notranslate"><span class="pre">Signature.is_faithful</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._signature.Signature.is_cacheable"><code class="docutils literal notranslate"><span class="pre">Signature.is_cacheable</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._signature.Signature.compute_distance"><code class="docutils literal notranslate"><span class="pre">Signature.compute_distance()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._signature.Signature.compute_mismatches"><code class="docutils literal notranslate"><span class="pre">Signature.compute_mismatches()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#plum._signature.Signature.expand_varargs"><code class="docutils literal notranslate"><span class="pre">Signature.expand_varargs()</span></code></a></li>

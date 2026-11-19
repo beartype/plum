@@ -530,8 +530,9 @@ document.write(`
         <span class="n">Function</span><span class="o">.</span><span class="n">_instances</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_f</span> <span class="o">=</span> <span class="n">f</span>
-        <span class="c1"># Cache maps type tuples to `(method, return_type)`. Keys can be either</span>
-        <span class="c1"># actual types (from `__call__`) or `TypeHints` (from `invoke`).</span>
+        <span class="c1"># Cache maps argument keys to `(method, return_type)`. Keys come either from</span>
+        <span class="c1"># `__call__`, where each element is `self._resolver.cache_key(arg)`, or from</span>
+        <span class="c1"># `invoke`, where each element is a `TypeHint`.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="c1"># Guards the lazy resolution of pending registrations, which mutates each</span>
@@ -728,7 +729,7 @@ document.write(`
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
             <span class="c1"># Replace the dictionary rather than emptying it in place: a call that is</span>
             <span class="c1"># still resolving a method must not store its result in the live cache. See</span>
-            <span class="c1"># `_resolve_method_with_cache` for why.</span>
+            <span class="c1"># `_resolve_and_cache` for why.</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span> <span class="o">=</span> <span class="p">{}</span>
 
             <span class="k">if</span> <span class="n">reregister</span><span class="p">:</span>
@@ -898,56 +899,62 @@ document.write(`
             <span class="k">raise</span> <span class="n">ex</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
         <span class="k">return</span> <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_and_cache</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">target</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="n">Signature</span><span class="p">,</span>
+        <span class="n">key</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+        <span class="n">cache</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">TypeHint</span><span class="p">]],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">TypeHint</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve `target` and cache the result under `key`, if cacheable.&quot;&quot;&quot;</span>
+        <span class="n">__tracebackhide__</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="c1"># If `clear_cache` runs while the method is being resolved, the result may be</span>
+        <span class="c1"># outdated and must not end up in the cache. Holding `self._lock` during</span>
+        <span class="c1"># resolution would prevent this. However, resolution can run user code, e.g. a</span>
+        <span class="c1"># custom `__instancecheck__`, and the lock would then block `clear_cache` and</span>
+        <span class="c1"># every other call that misses the cache for as long as that code runs. Instead,</span>
+        <span class="c1"># `clear_cache` replaces `self._cache` with a new dictionary, and the caller</span>
+        <span class="c1"># takes `self._cache` before computing the key: afterwards, `cache` is either</span>
+        <span class="c1"># still the live cache, or the old dictionary, which nothing reads any more, so</span>
+        <span class="c1"># storing into it is harmless.</span>
+        <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve_method</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="o">.</span><span class="n">is_cacheable</span><span class="p">:</span>
+            <span class="n">cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span>
+        <span class="k">return</span> <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span>
+
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
         <span class="n">__tracebackhide__</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_method_with_cache</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">)</span>
+        <span class="c1"># Resolve pending registrations before the lookup, since `register` leaves</span>
+        <span class="c1"># outdated entries in the cache until then.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pending</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_pending_registrations</span><span class="p">()</span>
+        <span class="c1"># Take the cache before computing the key. `cache_key` changes before the cache</span>
+        <span class="c1"># is replaced, so a key from an outdated `cache_key` can only end up in an old</span>
+        <span class="c1"># dictionary, which nothing reads any more.</span>
+        <span class="n">cache</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="o">.</span><span class="n">cache_key</span><span class="p">,</span> <span class="n">args</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span> <span class="o">=</span> <span class="n">cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_and_cache</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">cache</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">_convert</span><span class="p">(</span><span class="n">method</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">),</span> <span class="n">return_type</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_method_with_cache</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="n">Signature</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">types</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TypeHint</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_method_for_types</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">types</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TypeHint</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">TypeHint</span><span class="p">]:</span>
-        <span class="k">if</span> <span class="n">args</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">types</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Arguments `args` and `types` cannot both be `None`. &quot;</span>
-                <span class="s2">&quot;This should never happen!&quot;</span>
-            <span class="p">)</span>
-
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Find the method and return type for types, using the cache.&quot;&quot;&quot;</span>
         <span class="c1"># Before attempting to use the cache, resolve any unresolved registrations. Use</span>
         <span class="c1"># an `if`-statement to speed up the common case.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pending</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_pending_registrations</span><span class="p">()</span>
 
-        <span class="c1"># Compute cache key. When called from `__call__`, types will be actual</span>
-        <span class="c1"># runtime types from `map(type, args)`. When called from `invoke`, types</span>
-        <span class="c1"># may be `TypeHints` like `Union[int, str]`. Both are hashable and work</span>
-        <span class="c1"># as cache keys.</span>
-        <span class="k">if</span> <span class="n">types</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># Attempt to use the cache based on the types of the arguments.</span>
-            <span class="c1"># At this point, `args` must be a tuple (not `Signature` or `None`).</span>
-            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span>
-            <span class="n">types</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">args</span><span class="p">))</span>
+        <span class="n">cache</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">types</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">cache</span><span class="p">[</span><span class="n">types</span><span class="p">]</span>
         <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
             <span class="n">__tracebackhide__</span> <span class="o">=</span> <span class="kc">True</span>
-
-            <span class="k">if</span> <span class="n">args</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">args</span> <span class="o">=</span> <span class="n">Signature</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">types</span><span class="p">))</span>
-
-            <span class="c1"># Cache miss. If `clear_cache` runs while the method is being resolved, the</span>
-            <span class="c1"># result may be outdated and must not end up in the cache. `clear_cache`</span>
-            <span class="c1"># replaces `self._cache` with a new dictionary, so take `self._cache` now:</span>
-            <span class="c1"># afterwards, `cache` is either still the live cache, or the old dictionary,</span>
-            <span class="c1"># which nothing reads any more, so storing into it is harmless.</span>
-            <span class="n">cache</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span>
-            <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve_method</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
-            <span class="c1"># If the resolver is faithful, then we can perform caching using the types</span>
-            <span class="c1"># of the arguments. If the resolver is not faithful, then we cannot.</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolver</span><span class="o">.</span><span class="n">is_faithful</span><span class="p">:</span>
-                <span class="n">cache</span><span class="p">[</span><span class="n">types</span><span class="p">]</span> <span class="o">=</span> <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span>
-            <span class="k">return</span> <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span>
+            <span class="n">signature</span> <span class="o">=</span> <span class="n">Signature</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">types</span><span class="p">))</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_and_cache</span><span class="p">(</span><span class="n">signature</span><span class="p">,</span> <span class="n">types</span><span class="p">,</span> <span class="n">cache</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Function.invoke">
 <a class="viewcode-back" href="../../api.html#plum._function.Function.invoke">[docs]</a>
@@ -960,7 +967,7 @@ document.write(`
 <span class="sd">        Returns:</span>
 <span class="sd">            function: Method.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_method_with_cache</span><span class="p">(</span><span class="n">types</span><span class="o">=</span><span class="n">types</span><span class="p">)</span>
+        <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_method_for_types</span><span class="p">(</span><span class="n">types</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">_InvokedMethod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_f</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">return_type</span><span class="p">)</span></div>
 
 

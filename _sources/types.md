@@ -92,7 +92,16 @@ For example, this means that `list[T1]` is a subtype of `list[T2]` whenever
 
 Plum achieves performance by caching the dispatch process.
 Unfortunately, efficient caching is not always possible.
-Efficient caching is possible for so-called _faithful_ types.
+Efficient caching is possible for so-called _cacheable_ types.
+The dispatch result for an argument `x` is cached under a key `cache_key(x)`.
+
+````{admonition} Definition: cacheable type
+A type `t` is _cacheable_ if, for all `x`, whether `x` matches `t` depends only on
+`cache_key(x)`.
+````
+
+The most important cacheable types are the _faithful_ ones, whose match depends only on
+`type(x)`:
 
 % skip: next "Definition"
 
@@ -106,10 +115,15 @@ isinstance(x, t) == issubclass(type(x), t)
 For example, `int` is faithful, since `type(1) == int`;
 but `Literal[1]` is not faithful, since `issubclass(int, Literal[1])` is false.
 
-Methods which have signatures that depend only on faithful types will
+Every faithful type is cacheable.
+In addition, `type[t2]` is cacheable whenever `t2` is faithful, but it is not faithful:
+a class `t1` matches `type[t2]` if `issubclass(t1, t2)`, which depends on `t1` itself
+and not only on `type(t1)`.
+
+Methods which have signatures that depend only on cacheable types will
 be performant.
 On the other hand, methods which have one or more signatures with one or more
-unfaithful types cannot use caching and will therefore be less performant.
+uncacheable types cannot use caching and will therefore be less performant.
 
 Example:
 
@@ -137,17 +151,23 @@ def add_5_unfaithful(x: Literal[1]):
 6.24 µs ± 68.9 ns per loop (mean ± std. dev. of 7 runs, 100,000 loops each)
 ```
 
-Plum implements `is_faithful`, which is a function that attempts to establish whether
-a type is faithful or not:
+Plum implements `is_faithful` and `is_cacheable`, which are functions that attempt to
+establish whether a type is faithful or cacheable:
 
 ```python
->>> from plum import is_faithful
+>>> from plum import is_faithful, is_cacheable
 
 >>> is_faithful(int)
 True
 
 >>> is_faithful(Literal[1])
 False
+
+>>> is_faithful(type[int])
+False
+
+>>> is_cacheable(type[int])
+True
 ```
 
 If you implement, e.g., a type with a custom `__instancecheck__`, then `is_faithful`

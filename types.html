@@ -496,7 +496,15 @@ For example, this means that <code class="docutils literal notranslate"><span cl
 <h2>Performance and Faithful Types<a class="headerlink" href="#performance-and-faithful-types" title="Link to this heading">#</a></h2>
 <p>Plum achieves performance by caching the dispatch process.
 Unfortunately, efficient caching is not always possible.
-Efficient caching is possible for so-called <em>faithful</em> types.</p>
+Efficient caching is possible for so-called <em>cacheable</em> types.
+The dispatch result for an argument <code class="docutils literal notranslate"><span class="pre">x</span></code> is cached under a key <code class="docutils literal notranslate"><span class="pre">cache_key(x)</span></code>.</p>
+<div class="admonition-definition-cacheable-type admonition">
+<p class="admonition-title">Definition: cacheable type</p>
+<p>A type <code class="docutils literal notranslate"><span class="pre">t</span></code> is <em>cacheable</em> if, for all <code class="docutils literal notranslate"><span class="pre">x</span></code>, whether <code class="docutils literal notranslate"><span class="pre">x</span></code> matches <code class="docutils literal notranslate"><span class="pre">t</span></code> depends only on
+<code class="docutils literal notranslate"><span class="pre">cache_key(x)</span></code>.</p>
+</div>
+<p>The most important cacheable types are the <em>faithful</em> ones, whose match depends only on
+<code class="docutils literal notranslate"><span class="pre">type(x)</span></code>:</p>
 <div class="admonition-definition-faithful-type admonition">
 <p class="admonition-title">Definition: faithful type</p>
 <p>A type <code class="docutils literal notranslate"><span class="pre">t</span></code> is <em>faithful</em> if, for all <code class="docutils literal notranslate"><span class="pre">x</span></code>, the following is true:</p>
@@ -506,10 +514,14 @@ Efficient caching is possible for so-called <em>faithful</em> types.</p>
 </div>
 <p>For example, <code class="docutils literal notranslate"><span class="pre">int</span></code> is faithful, since <code class="docutils literal notranslate"><span class="pre">type(1)</span> <span class="pre">==</span> <span class="pre">int</span></code>;
 but <code class="docutils literal notranslate"><span class="pre">Literal[1]</span></code> is not faithful, since <code class="docutils literal notranslate"><span class="pre">issubclass(int,</span> <span class="pre">Literal[1])</span></code> is false.</p>
-<p>Methods which have signatures that depend only on faithful types will
+<p>Every faithful type is cacheable.
+In addition, <code class="docutils literal notranslate"><span class="pre">type[t2]</span></code> is cacheable whenever <code class="docutils literal notranslate"><span class="pre">t2</span></code> is faithful, but it is not faithful:
+a class <code class="docutils literal notranslate"><span class="pre">t1</span></code> matches <code class="docutils literal notranslate"><span class="pre">type[t2]</span></code> if <code class="docutils literal notranslate"><span class="pre">issubclass(t1,</span> <span class="pre">t2)</span></code>, which depends on <code class="docutils literal notranslate"><span class="pre">t1</span></code> itself
+and not only on <code class="docutils literal notranslate"><span class="pre">type(t1)</span></code>.</p>
+<p>Methods which have signatures that depend only on cacheable types will
 be performant.
 On the other hand, methods which have one or more signatures with one or more
-unfaithful types cannot use caching and will therefore be less performant.</p>
+uncacheable types cannot use caching and will therefore be less performant.</p>
 <p>Example:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
 
@@ -533,15 +545,21 @@ unfaithful types cannot use caching and will therefore be less performant.</p>
 <span class="go">6.24 µs ± 68.9 ns per loop (mean ± std. dev. of 7 runs, 100,000 loops each)</span>
 </pre></div>
 </div>
-<p>Plum implements <code class="docutils literal notranslate"><span class="pre">is_faithful</span></code>, which is a function that attempts to establish whether
-a type is faithful or not:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_faithful</span>
+<p>Plum implements <code class="docutils literal notranslate"><span class="pre">is_faithful</span></code> and <code class="docutils literal notranslate"><span class="pre">is_cacheable</span></code>, which are functions that attempt to
+establish whether a type is faithful or cacheable:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">plum</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_faithful</span><span class="p">,</span> <span class="n">is_cacheable</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">is_faithful</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
 <span class="go">True</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="n">is_faithful</span><span class="p">(</span><span class="n">Literal</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
 <span class="go">False</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">is_faithful</span><span class="p">(</span><span class="nb">type</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span>
+<span class="go">False</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">is_cacheable</span><span class="p">(</span><span class="nb">type</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span>
+<span class="go">True</span>
 </pre></div>
 </div>
 <p>If you implement, e.g., a type with a custom <code class="docutils literal notranslate"><span class="pre">__instancecheck__</span></code>, then <code class="docutils literal notranslate"><span class="pre">is_faithful</span></code>

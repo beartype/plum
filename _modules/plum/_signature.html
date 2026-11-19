@@ -366,7 +366,13 @@ document.write(`
 <span class="kn">from</span><span class="w"> </span><span class="nn">beartype.peps</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_pep563</span> <span class="k">as</span> <span class="n">beartype_resolve_pep563</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">._bear</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_bearable</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">._type</span><span class="w"> </span><span class="kn">import</span> <span class="n">_type_hint_eq</span><span class="p">,</span> <span class="n">_type_hint_le</span><span class="p">,</span> <span class="n">is_faithful</span><span class="p">,</span> <span class="n">resolve_type_hint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._type</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_is_cacheable</span><span class="p">,</span>
+    <span class="n">_is_faithful</span><span class="p">,</span>
+    <span class="n">_type_hint_eq</span><span class="p">,</span>
+    <span class="n">_type_hint_le</span><span class="p">,</span>
+    <span class="n">resolve_type_hint</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">._util</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Comparable</span><span class="p">,</span>
     <span class="n">Missing</span><span class="p">,</span>
@@ -398,12 +404,19 @@ document.write(`
 <span class="sd">        has_varargs (bool): Whether `varargs` is not :class:`.util.Missing`.</span>
 <span class="sd">        precedence (int): Precedence.</span>
 <span class="sd">        is_faithful (bool): Whether this signature only uses faithful types.</span>
+<span class="sd">        is_cacheable (bool): Whether this signature only uses cacheable types.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_default_varargs</span><span class="p">:</span> <span class="n">ClassVar</span> <span class="o">=</span> <span class="n">Missing</span>
     <span class="n">_default_precedence</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
 
-    <span class="vm">__slots__</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;types&quot;</span><span class="p">,</span> <span class="s2">&quot;varargs&quot;</span><span class="p">,</span> <span class="s2">&quot;precedence&quot;</span><span class="p">,</span> <span class="s2">&quot;is_faithful&quot;</span><span class="p">)</span>
+    <span class="vm">__slots__</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;types&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;varargs&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;precedence&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;is_faithful&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;is_cacheable&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -423,9 +436,11 @@ document.write(`
         <span class="bp">self</span><span class="o">.</span><span class="n">varargs</span> <span class="o">=</span> <span class="n">varargs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">precedence</span> <span class="o">=</span> <span class="n">precedence</span>
 
-        <span class="n">types_are_faithful</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span><span class="n">is_faithful</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">types</span><span class="p">)</span>
-        <span class="n">varargs_are_faithful</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">varargs</span> <span class="ow">is</span> <span class="n">Missing</span> <span class="ow">or</span> <span class="n">is_faithful</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">varargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">is_faithful</span> <span class="o">=</span> <span class="n">types_are_faithful</span> <span class="ow">and</span> <span class="n">varargs_are_faithful</span>
+        <span class="n">all_types</span> <span class="o">=</span> <span class="n">types</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">varargs</span> <span class="ow">is</span> <span class="n">Missing</span> <span class="k">else</span> <span class="p">(</span><span class="o">*</span><span class="n">types</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">varargs</span><span class="p">)</span>
+        <span class="n">resolved</span> <span class="o">=</span> <span class="p">[</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">all_types</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_faithful</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span><span class="n">_is_faithful</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">resolved</span><span class="p">)</span>
+        <span class="c1"># A faithful signature is cacheable, so only look at the types again if not.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_cacheable</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_faithful</span> <span class="ow">or</span> <span class="nb">all</span><span class="p">(</span><span class="n">_is_cacheable</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">resolved</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Signature.from_callable">
 <a class="viewcode-back" href="../../api.html#plum._signature.Signature.from_callable">[docs]</a>

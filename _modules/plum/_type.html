@@ -355,6 +355,8 @@ document.write(`
     <span class="s2">&quot;type_mapping&quot;</span><span class="p">,</span>
     <span class="s2">&quot;resolve_type_hint&quot;</span><span class="p">,</span>
     <span class="s2">&quot;is_faithful&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;is_cacheable&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;cache_key&quot;</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">abc</span>
@@ -364,7 +366,7 @@ document.write(`
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Hashable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">lru_cache</span><span class="p">,</span> <span class="n">reduce</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">operator</span><span class="w"> </span><span class="kn">import</span> <span class="n">or_</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnionType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">GenericAlias</span><span class="p">,</span> <span class="n">UnionType</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Any</span><span class="p">,</span>
     <span class="n">Literal</span><span class="p">,</span>
@@ -554,12 +556,11 @@ document.write(`
 <span class="sd">        bool: `True` if `x` is a type hint and `False` otherwise.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">==</span> <span class="s2">&quot;builtins&quot;</span><span class="p">:</span>
-            <span class="c1"># Check if `x` is a subscripted built-in. We do this by checking the module</span>
-            <span class="c1"># of the type of `x`.</span>
-            <span class="n">x</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">==</span> <span class="s2">&quot;builtins&quot;</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">is</span> <span class="n">GenericAlias</span><span class="p">:</span>
+            <span class="c1"># `x` is a subscripted built-in, e.g. `list[int]`.</span>
+            <span class="k">return</span> <span class="kc">True</span>
         <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="vm">__module__</span> <span class="ow">in</span> <span class="p">{</span>
-            <span class="s2">&quot;types&quot;</span><span class="p">,</span>  <span class="c1"># E.g., `tuple[int]`</span>
+            <span class="s2">&quot;types&quot;</span><span class="p">,</span>  <span class="c1"># E.g., `int | float`</span>
             <span class="s2">&quot;typing&quot;</span><span class="p">,</span>
             <span class="s2">&quot;collections.abc&quot;</span><span class="p">,</span>  <span class="c1"># E.g., `Callable`</span>
             <span class="s2">&quot;typing_extensions&quot;</span><span class="p">,</span>
@@ -816,13 +817,15 @@ document.write(`
 <span class="sd">    A type or type hint `t` is defined _faithful_ if, for all `x`, the following holds</span>
 <span class="sd">    true::</span>
 
-<span class="sd">        isinstance(x, x) == issubclass(type(x), t)</span>
+<span class="sd">        isinstance(x, t) == issubclass(type(x), t)</span>
 
 <span class="sd">    You can control whether types are faithful or not by setting the attribute</span>
 <span class="sd">    `__faithful__`::</span>
 
 <span class="sd">        class UnfaithfulType:</span>
 <span class="sd">            __faithful__ = False</span>
+
+<span class="sd">    Every faithful type is cacheable. See :func:`is_cacheable`.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        x (type or type hint): Type hint.</span>
@@ -854,14 +857,18 @@ document.write(`
             <span class="c1"># Unsubscripted type hints tend to be faithful. For example, `Any`,</span>
             <span class="c1"># `List`, `Tuple`, `Dict`, `Callable`, and `Generator` are. When we</span>
             <span class="c1"># come across a counter-example, we will refine this logic.</span>
-            <span class="k">return</span> <span class="kc">True</span>
+            <span class="c1">#</span>
+            <span class="c1"># The exception is `tuple[()]`, which matches only the empty tuple, but</span>
+            <span class="c1"># from Python 3.11 `get_args` returns `()` for it. Unlike `typing.Tuple`,</span>
+            <span class="c1"># it has `__args__`.</span>
+            <span class="k">return</span> <span class="ow">not</span> <span class="p">(</span><span class="n">origin</span> <span class="ow">is</span> <span class="nb">tuple</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s2">&quot;__args__&quot;</span><span class="p">))</span>
 
         <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="n">UNION_TYPES</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">is_faithful</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="kc">False</span>
 
-    <span class="k">elif</span> <span class="n">x</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">x</span> <span class="o">==</span> <span class="bp">Ellipsis</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">x</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">x</span> <span class="ow">is</span> <span class="bp">Ellipsis</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">True</span>
 
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
@@ -885,6 +892,81 @@ document.write(`
             <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="kc">False</span>
+
+
+<div class="viewcode-block" id="is_cacheable">
+<a class="viewcode-back" href="../../api.html#plum._type.is_cacheable">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_cacheable</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check whether a type hint is cacheable.</span>
+
+<span class="sd">    A type or type hint `t` is defined _cacheable_ if, for all `x`, whether `x` matches</span>
+<span class="sd">    `t` depends only on `cache_key(x)`. Every faithful type is cacheable.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x (type or type hint): Type hint.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bool: Whether `x` is cacheable or not.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_is_cacheable</span><span class="p">(</span><span class="n">resolve_type_hint</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_cacheable</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">_is_hint</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">and</span> <span class="n">get_args</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">!=</span> <span class="p">():</span>
+        <span class="n">origin</span> <span class="o">=</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">origin</span> <span class="ow">is</span> <span class="nb">type</span><span class="p">:</span>
+            <span class="c1"># A class `t1` matches `type[t2]` if `issubclass(t1, t2)`. If `t2` is</span>
+            <span class="c1"># faithful, this depends only on `t1`, which `cache_key` captures.</span>
+            <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">_is_faithful</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">get_args</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">origin</span> <span class="ow">in</span> <span class="n">UNION_TYPES</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">_is_cacheable</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">get_args</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">_is_cacheable</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_is_faithful</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_Identity</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrapper that hashes by `id` and compares by identity.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        obj (object): Object to wrap.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;obj&quot;</span><span class="p">,)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Hold `obj` itself, so that its `id` is not reused while the wrapper exists.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obj</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="ow">is</span> <span class="n">_Identity</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj</span> <span class="ow">is</span> <span class="n">other</span><span class="o">.</span><span class="n">obj</span>
+
+
+<div class="viewcode-block" id="cache_key">
+<a class="viewcode-back" href="../../api.html#plum._type.cache_key">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">cache_key</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">object</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get a cache key for `x`.</span>
+
+<span class="sd">    If `is_cacheable(t)`, then whether `x` matches `t` depends only on `cache_key(x)`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x (object): Object.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple: Cache key.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Key a class by identity, since matching `type[t]` depends on the class itself. A</span>
+    <span class="c1"># class whose metaclass is `type` already hashes by `id` and compares by identity.</span>
+    <span class="c1"># Any other metaclass can make distinct classes compare equal or make a class</span>
+    <span class="c1"># unhashable, so wrap such a class in `_Identity`.</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="p">(</span><span class="n">x</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">type</span> <span class="k">else</span> <span class="n">_Identity</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+    <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="kc">None</span></div>
+
 </pre></div>
 
                 </article>
