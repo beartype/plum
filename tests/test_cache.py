@@ -678,6 +678,36 @@ def test_verify_cache_ignores_class_liars(dispatch, liar, hint):
     assert f(liar(True)) == "list"
 
 
+def test_verify_cache_weakref_proxies(dispatch):
+    """Test that the verify cache does not narrow on the type of a weak proxy.
+
+    All proxies have the same type, but `isinstance` sees the class of the referent.
+    """
+    import weakref
+
+    class A:
+        pass
+
+    class B:
+        pass
+
+    @dispatch
+    def f(x: A):
+        return "A"
+
+    @dispatch
+    def f(x: B):
+        return "B"
+
+    @dispatch
+    def f(x: list[int]):  # Makes `f` uncacheable.
+        return "list[int]"
+
+    a, b = A(), B()
+    pa, pb = weakref.proxy(a), weakref.proxy(b)
+    assert (f(pa), f(pb), f(pa), f(pb)) == ("A", "B", "A", "B")
+
+
 def test_verify_cache_is_bounded(dispatch):
     """Test that the verify cache stops growing at the cap, with dispatch unchanged."""
     from plum._function import _VERIFY_CACHE_LIMIT

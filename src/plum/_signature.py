@@ -4,6 +4,7 @@ __all__ = ("Signature", "append_default_args", "inspect_signature")
 
 import inspect
 import operator
+import weakref
 from collections.abc import Callable, Iterable
 from copy import copy
 from types import WrapperDescriptorType
@@ -35,6 +36,12 @@ from ._util import (
 )
 from .repr import repr_short, rich_repr
 
+_PROXY_TYPES: frozenset[type] = frozenset(
+    {weakref.ProxyType, weakref.CallableProxyType}
+)
+"""frozenset: Types whose instances report the class of another object as `__class__`
+from C, which the checks in `_class_is_honest` cannot see."""
+
 
 def _class_is_honest(t: type, /) -> bool:
     """Check whether instances of `t` cannot fake their `__class__`.
@@ -43,8 +50,10 @@ def _class_is_honest(t: type, /) -> bool:
     `__getattribute__`. For instances of such a class, `isinstance` depends on the value
     and not only on its type.
     """
-    return isinstance(t.__getattribute__, WrapperDescriptorType) and all(
-        "__class__" not in vars(c) for c in t.__mro__ if c is not object
+    return (
+        t not in _PROXY_TYPES
+        and isinstance(t.__getattribute__, WrapperDescriptorType)
+        and all("__class__" not in vars(c) for c in t.__mro__ if c is not object)
     )
 
 
