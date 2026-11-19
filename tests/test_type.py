@@ -479,6 +479,7 @@ def test_cache_key_metaclass_eq():
         pass
 
     assert hash(cache_key(Unhashable)) == hash(cache_key(Unhashable))
+    assert cache_key(Unhashable) == cache_key(Unhashable)
 
     class MetaAlwaysEqual(type):
         def __eq__(cls, other):

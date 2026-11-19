@@ -178,7 +178,7 @@ class Function(NativeBase):
 
         self._f = f
         # Cache maps argument keys to `(method, return_type)`. Keys come either from
-        # `__call__`, where each element is `self._resolver._arg_key(arg)`, or from
+        # `__call__`, where each element is `self._resolver.cache_key(arg)`, or from
         # `invoke`, where each element is a `TypeHint`.
         self._cache = {}
 
@@ -532,14 +532,24 @@ class Function(NativeBase):
         return method, return_type
 
     def _resolve_and_cache(
-        self, args: tuple[object, ...] | Signature, key: tuple[object, ...]
+        self,
+        target: tuple[object, ...] | Signature,
+        key: tuple[object, ...],
+        cache: dict[tuple[object, ...], tuple[Callable[..., Any], TypeHint]],
     ) -> tuple[Callable[..., Any], TypeHint]:
-        """Resolve `args` and cache the result under `key`, if cacheable."""
-        # Take the cache before resolving. The store below does not hold the lock, so if
-        # `clear_cache` runs during resolution, the outdated result goes into the old
-        # dictionary, which nothing reads any more.
-        cache = self._cache
-        method, return_type = self.resolve_method(args)
+        """Resolve `target` and cache the result under `key`, if cacheable."""
+        __tracebackhide__ = True
+
+        # If `clear_cache` runs while the method is being resolved, the result may be
+        # outdated and must not end up in the cache. Holding `self._lock` during
+        # resolution would prevent this. However, resolution can run user code, e.g. a
+        # custom `__instancecheck__`, and the lock would then block `clear_cache` and
+        # every other call that misses the cache for as long as that code runs. Instead,
+        # `clear_cache` replaces `self._cache` with a new dictionary, and the caller
+        # takes `self._cache` before computing the key: afterwards, `cache` is either
+        # still the live cache, or the old dictionary, which nothing reads any more, so
+        # storing into it is harmless.
+        method, return_type = self.resolve_method(target)
         if self._resolver.is_cacheable:
             cache[key] = method, return_type
         return method, return_type
@@ -550,29 +560,33 @@ class Function(NativeBase):
         # outdated entries in the cache until then.
         if self._pending:
             self._resolve_pending_registrations()
-        key = tuple(map(self._resolver._arg_key, args))
-        # Only the lookup is in the `try`: a `KeyError` from the method must propagate.
+        # Take the cache before computing the key. `cache_key` changes before the cache
+        # is replaced, so a key from an outdated `cache_key` can only end up in an old
+        # dictionary, which nothing reads any more.
+        cache = self._cache
+        key = tuple(map(self._resolver.cache_key, args))
         try:
-            method, return_type = self._cache[key]
+            method, return_type = cache[key]
         except KeyError:
-            # Not `_resolve_method_with_cache`, which would look up `key` again.
-            method, return_type = self._resolve_and_cache(args, key)
+            method, return_type = self._resolve_and_cache(args, key, cache)
         return _convert(method(*args, **kw), return_type)
 
-    def _resolve_method_with_cache(
+    def _resolve_method_for_types(
         self, types: tuple[TypeHint, ...]
     ) -> tuple[Callable[..., Any], TypeHint]:
+        """Find the method and return type for types, using the cache."""
         # Before attempting to use the cache, resolve any unresolved registrations. Use
         # an `if`-statement to speed up the common case.
         if self._pending:
             self._resolve_pending_registrations()
 
+        cache = self._cache
         try:
-            return self._cache[types]
+            return cache[types]
         except KeyError:
             __tracebackhide__ = True
             signature = Signature(*(resolve_type_hint(t) for t in types))
-            return self._resolve_and_cache(signature, types)
+            return self._resolve_and_cache(signature, types, cache)
 
     def invoke(self, *types: TypeHint) -> Callable[..., Any]:
         """Invoke a particular method.
@@ -583,7 +597,7 @@ class Function(NativeBase):
         Returns:
             function: Method.
         """
-        method, return_type = self._resolve_method_with_cache(types=types)
+        method, return_type = self._resolve_method_for_types(types)
         return _InvokedMethod(self._f, method, return_type)
 
     @overload

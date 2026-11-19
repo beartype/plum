@@ -93,12 +93,11 @@ For example, this means that `list[T1]` is a subtype of `list[T2]` whenever
 Plum achieves performance by caching the dispatch process.
 Unfortunately, efficient caching is not always possible.
 Efficient caching is possible for so-called _cacheable_ types.
-The dispatch result for an argument `x` is cached under a key `cache_key(x)`, which captures `type(x)` and, if some method dispatches on a class, the identity of `x`.
-Equal keys imply the same match result, but do not depend on the layout of the key, which may change.
+The dispatch result for an argument `x` is cached under a key `cache_key(x)`.
 
 ````{admonition} Definition: cacheable type
-A type `t` is _cacheable_ if, for all `x`, whether `x` matches `t` is a function of
-`cache_key(x)` alone.
+A type `t` is _cacheable_ if, for all `x`, whether `x` matches `t` depends only on
+`cache_key(x)`.
 ````
 
 The most important cacheable types are the _faithful_ ones, whose match depends only on
@@ -113,11 +112,13 @@ isinstance(x, t) == issubclass(type(x), t)
 ```
 ````
 
-Every faithful type is cacheable.
-Dispatching on a class via `type[X]` (or `typing.Type[X]`) is cacheable but _not_ faithful: `issubclass(x, X)` depends on the identity of the class `x`, which `cache_key` captures.
-
 For example, `int` is faithful, since `type(1) == int`;
 but `Literal[1]` is not faithful, since `issubclass(int, Literal[1])` is false.
+
+Every faithful type is cacheable.
+In addition, `type[t2]` is cacheable whenever `t2` is faithful, but it is not faithful:
+a class `t1` matches `type[t2]` if `issubclass(t1, t2)`, which depends on `t1` itself
+and not only on `type(t1)`.
 
 Methods which have signatures that depend only on cacheable types will
 be performant.
@@ -150,8 +151,8 @@ def add_5_unfaithful(x: Literal[1]):
 6.24 µs ± 68.9 ns per loop (mean ± std. dev. of 7 runs, 100,000 loops each)
 ```
 
-Plum implements `is_faithful`, which is a function that attempts to establish whether
-a type is faithful or not:
+Plum implements `is_faithful` and `is_cacheable`, which are functions that attempt to
+establish whether a type is faithful or cacheable:
 
 ```python
 >>> from plum import is_faithful, is_cacheable

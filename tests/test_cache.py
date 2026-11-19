@@ -238,7 +238,7 @@ def test_cache_protocol_declared_with_exec(dispatch: plum.Dispatcher):
 
 
 def test_cache_type_x(dispatch: plum.Dispatcher):
-    """Test that dispatch on `type[X]` is cached per class, also when added later."""
+    """Test that dispatch on `type[t]` is cached per class, also when added later."""
 
     @dispatch
     def f(x: object):
@@ -263,7 +263,7 @@ def test_cache_type_x(dispatch: plum.Dispatcher):
 
 
 def test_cache_type_x_and_int(dispatch: plum.Dispatcher):
-    """Test caching of `type[X]` next to a faithful argument."""
+    """Test caching of `type[t]` next to a faithful argument."""
 
     @dispatch
     def f(x: type[int], n: int):
@@ -315,7 +315,7 @@ def test_cache_type_x_metaclass(dispatch: plum.Dispatcher):
 
 
 def test_invoke_type_x(dispatch: plum.Dispatcher):
-    """Test that `invoke` works for a function that dispatches on `type[X]`."""
+    """Test that `invoke` works for a function that dispatches on `type[t]`."""
 
     @dispatch
     def f(x: type[int]):
