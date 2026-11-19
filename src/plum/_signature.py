@@ -4,9 +4,11 @@ __all__ = ("Signature", "append_default_args", "inspect_signature")
 
 import inspect
 import operator
+import weakref
 from collections.abc import Callable, Iterable
 from copy import copy
-from typing import Any, ClassVar, get_type_hints
+from types import WrapperDescriptorType
+from typing import Annotated, Any, ClassVar, get_args, get_origin, get_type_hints
 from typing_extensions import Self
 
 from rich.console import Console, ConsoleOptions
@@ -16,10 +18,13 @@ from beartype.peps import resolve_pep563 as beartype_resolve_pep563
 
 from ._bear import is_bearable
 from ._type import (
+    UNION_TYPES,
     _is_cacheable,
     _is_faithful,
+    _literals,
     _type_hint_eq,
     _type_hint_le,
+    is_faithful,
     resolve_type_hint,
 )
 from ._util import (
@@ -30,6 +35,62 @@ from ._util import (
     wrap_lambda,
 )
 from .repr import repr_short, rich_repr
+
+_PROXY_TYPES: frozenset[type] = frozenset(
+    {weakref.ProxyType, weakref.CallableProxyType}
+)
+"""frozenset: Types whose instances report the class of another object as `__class__`
+from C, which the checks in `_class_is_honest` cannot see."""
+
+
+def _class_is_honest(t: type, /) -> bool:
+    """Check whether instances of `t` cannot fake their `__class__`.
+
+    `isinstance` consults `__class__`, which a class can override directly or through
+    `__getattribute__`. For instances of such a class, `isinstance` depends on the value
+    and not only on its type.
+    """
+    return (
+        t not in _PROXY_TYPES
+        and isinstance(t.__getattribute__, WrapperDescriptorType)
+        and all("__class__" not in vars(c) for c in t.__mro__ if c is not object)
+    )
+
+
+def _might_match_hint(v: object, t: TypeHint, /) -> bool:
+    """Check whether *any* object with the runtime type of `v` could match hint `t`.
+
+    See :meth:`Signature.might_match`.
+
+    Args:
+        v (object): Value.
+        t (:obj:`.TypeHint`): Type hint.
+
+    Returns:
+        bool: `False` only if no object with the runtime type of `v` matches `t`.
+    """
+    if is_faithful(t):
+        # A faithful hint matches on `type(v)` alone, unless `v` can fake `__class__`.
+        return not _class_is_honest(type(v)) or bool(is_bearable(v, t))
+
+    origin = get_origin(t)
+    if origin in UNION_TYPES:
+        # A union is matched precisely if one of its members is.
+        return any(_might_match_hint(v, arg) for arg in get_args(t))
+    if origin is Annotated:
+        # The metadata of an `Annotated` can only reject further, so whether the
+        # underlying hint could match decides.
+        return _might_match_hint(v, get_args(t)[0])
+
+    # Otherwise, `type(v)` can only rule out a hint whose origin is a faithful class:
+    # whatever matches `list[int]` is a `list`. Use `issubclass` rather than
+    # `isinstance`, since the latter consults `v.__class__`.
+    return (
+        not isinstance(origin, type)
+        or not is_faithful(origin)
+        or not _class_is_honest(type(v))
+        or issubclass(type(v), origin)
+    )
 
 
 @rich_repr
@@ -52,6 +113,7 @@ class Signature(Comparable):
         precedence (int): Precedence.
         is_faithful (bool): Whether this signature only uses faithful types.
         is_cacheable (bool): Whether this signature only uses cacheable types.
+        literals (frozenset): All `Literal` values in the types.
     """
 
     _default_varargs: ClassVar = Missing
@@ -63,6 +125,7 @@ class Signature(Comparable):
         "precedence",
         "is_faithful",
         "is_cacheable",
+        "literals",
     )
 
     def __init__(
@@ -88,6 +151,12 @@ class Signature(Comparable):
         self.is_faithful = all(_is_faithful(t) for t in resolved)
         # A faithful signature is cacheable, so only look at the types again if not.
         self.is_cacheable = self.is_faithful or all(_is_cacheable(t) for t in resolved)
+        # Only the cache key uses `literals`.
+        self.literals: frozenset[object] = (
+            frozenset().union(*(_literals(t) for t in resolved))
+            if self.is_cacheable and not self.is_faithful
+            else frozenset()
+        )
 
     @staticmethod
     def from_callable(f: Callable[..., Any], precedence: int = 0) -> "Signature":
@@ -274,6 +343,31 @@ class Signature(Comparable):
         else:
             types = self.expand_varargs(len(values))
             return all(is_bearable(v, t) for v, t in zip(values, types, strict=True))
+
+    def might_match(self, values: tuple[object, ...], /) -> bool:
+        """Check whether *any* values with the runtime types of `values` could match.
+
+        Depends only on `tuple(map(type, values))`, and is `True` whenever :meth:`match`
+        is `True`.
+
+        Args:
+            values (tuple): Values.
+
+        Returns:
+            bool: `False` only if no values with these runtime types can match this
+                signature.
+        """
+        # Arity is settled by the number of values alone, so this is exact.
+        if not (
+            len(self.types) == len(values)
+            or (len(self.types) < len(values) and self.has_varargs)
+        ):
+            return False
+
+        return all(
+            _might_match_hint(v, t)
+            for v, t in zip(values, self.expand_varargs(len(values)), strict=True)
+        )
 
     def compute_distance(self, values: tuple[object, ...], /) -> int:
         """For given values, computes the edit distance between these vales and this

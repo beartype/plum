@@ -18,6 +18,20 @@ from ._type import resolve_type_hint
 from ._util import TypeHint
 from ._wraps import update_wrapper, update_wrapper_names
 
+_LITERAL_CACHE_LIMIT = 4096
+"""int: Maximum number of cache entries of a function that dispatches on `Literal`.
+
+Such a function keys an instance of a subclass of `int`, `str` or `bytes` by identity,
+so a new entry could be added for every call. Past the limit, arguments are resolved
+without caching."""
+
+_VERIFY_CACHE_LIMIT = 4096
+"""Maximum number of entries in the verify cache of a function.
+
+The verify cache is keyed on the runtime types of the arguments, so it can grow with
+the product of the numbers of types passed for each argument. Past the cap, a call
+considers every method: the cap costs time, never correctness."""
+
 # Annotated (not left to inference as `None`) so a `mypyc`-compiled `_function` accepts
 # the external assignment `plum._function._promised_convert = convert` in `_promotion`.
 _promised_convert: Callable[..., Any] | None = None
@@ -155,6 +169,7 @@ class Function(NativeBase):
     # Instance attributes are declared so `Function` can be a `mypyc` native class.
     _f: Callable[..., Any]
     _cache: dict[tuple[TypeHint, ...], tuple[Callable[..., Any], TypeHint]]
+    _verify_cache: dict[tuple[TypeHint, ...], MethodList] | None
     _doc: str
     _owner_name: str | None
     _owner: type | None
@@ -181,6 +196,10 @@ class Function(NativeBase):
         # `__call__`, where each element is `self._resolver.cache_key(arg)`, or from
         # `invoke`, where each element is a `TypeHint`.
         self._cache = {}
+        # For an uncacheable resolver, the methods that arguments of given runtime types
+        # could match. See `_resolve_miss`. `None` until first needed, since most
+        # functions are cacheable and never use it.
+        self._verify_cache = None
 
         # Guards the lazy resolution of pending registrations, which mutates each
         # registered function's `__annotations__` in place (via beartype's
@@ -368,8 +387,9 @@ class Function(NativeBase):
         with self._lock:
             # Replace the dictionary rather than emptying it in place: a call that is
             # still resolving a method must not store its result in the live cache. See
-            # `_resolve_and_cache` for why.
+            # `_resolve_miss` for why.
             self._cache = {}
+            self._verify_cache = None
 
             if reregister:
                 # Add all resolved to pending.
@@ -446,12 +466,16 @@ class Function(NativeBase):
                 self.clear_cache(reregister=False)
 
     def resolve_method(
-        self, target: tuple[object, ...] | Signature
+        self,
+        target: tuple[object, ...] | Signature,
+        methods: MethodList | None = None,
     ) -> tuple[Callable[..., Any], TypeHint]:
         """Find the method and return type for arguments.
 
         Args:
             target (object): Target.
+            methods (:class:`.method.MethodList`, optional): Narrowed list of methods
+                to consider. See :meth:`.resolver.Resolver.resolve`.
 
         Returns:
             `tuple[function, type]`:
@@ -462,7 +486,7 @@ class Function(NativeBase):
 
         try:
             # Attempt to find the method using the resolver.
-            method = self._resolver.resolve(target)
+            method = self._resolver.resolve(target, methods)
             impl = method.implementation
             return_type = method.return_type
 
@@ -531,29 +555,6 @@ class Function(NativeBase):
             raise ex from None
         return method, return_type
 
-    def _resolve_and_cache(
-        self,
-        target: tuple[object, ...] | Signature,
-        key: tuple[object, ...],
-        cache: dict[tuple[object, ...], tuple[Callable[..., Any], TypeHint]],
-    ) -> tuple[Callable[..., Any], TypeHint]:
-        """Resolve `target` and cache the result under `key`, if cacheable."""
-        __tracebackhide__ = True
-
-        # If `clear_cache` runs while the method is being resolved, the result may be
-        # outdated and must not end up in the cache. Holding `self._lock` during
-        # resolution would prevent this. However, resolution can run user code, e.g. a
-        # custom `__instancecheck__`, and the lock would then block `clear_cache` and
-        # every other call that misses the cache for as long as that code runs. Instead,
-        # `clear_cache` replaces `self._cache` with a new dictionary, and the caller
-        # takes `self._cache` before computing the key: afterwards, `cache` is either
-        # still the live cache, or the old dictionary, which nothing reads any more, so
-        # storing into it is harmless.
-        method, return_type = self.resolve_method(target)
-        if self._resolver.is_cacheable:
-            cache[key] = method, return_type
-        return method, return_type
-
     def __call__(self, *args: object, **kw: object) -> object:
         __tracebackhide__ = True
         # Resolve pending registrations before the lookup, since `register` leaves
@@ -568,7 +569,7 @@ class Function(NativeBase):
         try:
             method, return_type = cache[key]
         except KeyError:
-            method, return_type = self._resolve_and_cache(args, key, cache)
+            method, return_type = self._resolve_miss(args, key, cache)
         return _convert(method(*args, **kw), return_type)
 
     def _resolve_method_for_types(
@@ -586,7 +587,66 @@ class Function(NativeBase):
         except KeyError:
             __tracebackhide__ = True
             signature = Signature(*(resolve_type_hint(t) for t in types))
-            return self._resolve_and_cache(signature, types, cache)
+            return self._resolve_miss(signature, types, cache)
+
+    def _resolve_miss(
+        self,
+        target: tuple[object, ...] | Signature,
+        key: tuple[object, ...],
+        cache: dict[tuple[object, ...], tuple[Callable[..., Any], TypeHint]],
+        /,
+    ) -> tuple[Callable[..., Any], TypeHint]:
+        """Resolve `target` after `key` missed the method cache `cache`.
+
+        If the resolver is uncacheable, the method cannot be cached. Instead, the
+        methods that arguments of these runtime types could match are cached under
+        `key`, and resolution considers only those. They include every method that
+        matches, so the result, or the error, is the same as when considering all
+        methods. A `Signature` from `invoke` has no runtime types to narrow on, so it is
+        resolved over all methods.
+
+        Args:
+            target (tuple or :class:`.signature.Signature`): Arguments, or a signature
+                from `invoke`.
+            key (tuple): Key that missed the method cache.
+            cache (dict): Method cache that `key` missed.
+
+        Returns:
+            tuple[function, type]: Method and return type.
+        """
+        __tracebackhide__ = True
+        if isinstance(target, tuple) and not self._resolver.is_cacheable:
+            verify_cache = self._verify_cache
+            if verify_cache is None:
+                verify_cache = self._verify_cache = {}
+            try:
+                methods = verify_cache[key]
+            except KeyError:
+                if len(verify_cache) >= _VERIFY_CACHE_LIMIT:
+                    # The narrowed methods could not be cached, so narrowing would
+                    # cost more than it saves.
+                    return self.resolve_method(target)
+                verify_cache[key] = methods = MethodList(
+                    m for m in self._resolver.methods if m.signature.might_match(target)
+                )
+            return self.resolve_method(target, methods)
+
+        # If `clear_cache` runs while the method is being resolved, the result may be
+        # outdated and must not end up in the cache. Holding `self._lock` during
+        # resolution would prevent this. However, resolution can run user code, e.g. a
+        # custom `__instancecheck__`, and the lock would then block `clear_cache` and
+        # every other call that misses the cache for as long as that code runs. Instead,
+        # `clear_cache` replaces `self._cache` with a new dictionary, and the caller
+        # takes `self._cache` before computing the key: afterwards, `cache` is either
+        # still the live cache, or the old dictionary, which nothing reads any more, so
+        # storing into it is harmless.
+        method, return_type = self.resolve_method(target)
+        resolver = self._resolver
+        if resolver.is_cacheable and not (
+            resolver.literals and len(cache) >= _LITERAL_CACHE_LIMIT
+        ):
+            cache[key] = method, return_type
+        return method, return_type
 
     def invoke(self, *types: TypeHint) -> Callable[..., Any]:
         """Invoke a particular method.
