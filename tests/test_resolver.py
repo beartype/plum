@@ -373,5 +373,6 @@ def test_resolver_literals():
     r.register(Method(f, plum.Signature(Literal[1])))
     r.register(Method(f, plum.Signature(Literal["a"])))
     assert r.literals == {1, "a"}
-    assert r.cache_key(1) == (int, 1)
-    assert r.cache_key(2) == (int, None)
+    # A named value has its own key, and all unnamed values of a type share one.
+    assert r.cache_key(1) != r.cache_key(2) == r.cache_key(3)
+    assert r.cache_key("a") != r.cache_key("b")
