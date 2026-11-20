@@ -350,8 +350,12 @@ An explicit subscript still wins, because Python assigns `__orig_class__` *after
 ```
 
 Return a tuple from `__infer_type_parameter__` for a generic with several parameters.
-The attribute is written with `object.__setattr__`, so frozen dataclasses work too, and
-the parametrisation is built from `type(instance)`, so a generic subclass infers itself:
+The attribute is written with `object.__setattr__`, so frozen dataclasses work too.
+On a frozen dataclass, though, an explicit subscript does not win, since Python cannot
+set the attribute after `__init__` returns.
+The parameter is inferred once the outermost `__init__` returns, so a subclass that sets
+attributes after `super().__init__()` can infer from them.
+The parametrisation is built from `type(instance)`, so a generic subclass infers itself:
 
 ```python
 >>> class SubCrate(Crate[S]):
