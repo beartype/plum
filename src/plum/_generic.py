@@ -35,9 +35,16 @@ def generic(cls: type[T], /) -> type[T]:
     type parameter, or a tuple of them for several parameters. Define it as a
     `classmethod`. An explicit subscript, as in `Box[str](1)`, still wins.
 
+    The parameter is inferred once the outermost `__init__` returns, so the
+    `__infer_type_parameter__` of a subclass can use attributes that the subclass sets
+    after `super().__init__()`.
+
     If instances cannot carry `__orig_class__`, because `__slots__` omits it, or if
-    `cls` cannot be subscripted by the inferred parameter, a `RuntimeWarning` is
-    raised and the instance is left unparametrised.
+    inferring or subscripting fails, a `RuntimeWarning` is raised and the instance is
+    left unparametrised.
+
+    On a frozen dataclass, an explicit subscript does not win: Python cannot set
+    `__orig_class__` on it, so the inferred parameter stays.
 
     Args:
         cls (type): Class to decorate.
@@ -86,7 +93,38 @@ def generic(cls: type[T], /) -> type[T]:
             stacklevel=2,
         )
 
-    original_init = cls.__init__
+    _wrap_init(cls)
+
+    # A subclass that defines its own `__init__` sets its own attributes after
+    # `super().__init__()` returns, and its `__infer_type_parameter__` may need them.
+    # So wrap its `__init__` too, and let only the outermost wrapper infer.
+    original_init_subclass = cls.__dict__.get("__init_subclass__")
+
+    def __init_subclass__(subclass: Any, /, **kw_args: Any) -> None:
+        if original_init_subclass is None:
+            super(cls, subclass).__init_subclass__(**kw_args)
+        else:
+            original_init_subclass.__get__(None, subclass)(**kw_args)
+        if "__init__" in subclass.__dict__:
+            _wrap_init(subclass)
+
+    cls.__init_subclass__ = classmethod(__init_subclass__)  # type: ignore[assignment]
+    return cls
+
+
+_WRAPPED_INITS: set[Any] = set()
+"""set: The `__init__`s that :func:`_wrap_init` made, so that none is wrapped twice."""
+
+
+def _wrap_init(klass: type, /) -> None:
+    """Wrap `klass.__init__` to set `__orig_class__` once the instance is built.
+
+    Args:
+        klass (type): Class whose `__init__` to wrap.
+    """
+    original_init = getattr(klass, "__init__")  # noqa: B009
+    if original_init in _WRAPPED_INITS:
+        return
 
     @functools.wraps(original_init)
     def __init__(self: Any, *args: Any, **kw_args: Any) -> Any:
@@ -95,8 +133,15 @@ def generic(cls: type[T], /) -> type[T]:
         if result is not None:
             # Pass it on, so that Python raises as it would without the decorator.
             return result
-        # Use `type(self)`, not `cls`: a subclass must infer its own class.
+        # Use `type(self)`, not `klass`: a subclass must infer its own class.
         actual = type(self)
+        # Only the outermost `__init__` infers, once the instance is complete. An
+        # inner one runs for `super().__init__()` of a subclass. This finds the class
+        # rather than comparing `actual.__init__` with this function, since `mypyc`
+        # does not support a decorated nested function that refers to itself.
+        owner = next(c for c in actual.__mro__ if "__init__" in c.__dict__)
+        if owner is not klass:
+            return None
         # A subclass such as `class IntBox(Box[int])` has nothing left to infer.
         if not actual.__parameters__:
             return None
@@ -105,7 +150,8 @@ def generic(cls: type[T], /) -> type[T]:
             # `object.__setattr__` so that a frozen dataclass, or any class with a
             # custom `__setattr__`, still gets the attribute.
             object.__setattr__(self, "__orig_class__", actual[parameter])
-        except (TypeError, AttributeError) as e:
+        except Exception as e:
+            # The instance itself is fine, so do not fail its construction.
             warnings.warn(
                 f"`@generic` could not set `__orig_class__` on a "
                 f"`{actual.__name__}` instance: {type(e).__name__}: {e}. Dispatch "
@@ -115,5 +161,5 @@ def generic(cls: type[T], /) -> type[T]:
             )
         return None
 
-    cls.__init__ = __init__  # type: ignore[method-assign]
-    return cls
+    _WRAPPED_INITS.add(__init__)
+    setattr(klass, "__init__", __init__)  # noqa: B010

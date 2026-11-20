@@ -503,6 +503,70 @@ def test_inheritance_infers_the_subclass() -> None:
     assert f(InferredBox(1)) == "InferredBox"
 
 
+def test_subclass_infers_after_its_own_init() -> None:
+    """Test that a subclass can infer from what it sets after `super().__init__`."""
+
+    class Tagged(InferredBox[T]):
+        def __init__(self, value: Any, tag: Any) -> None:
+            super().__init__(value)
+            self.tag = tag
+
+        @classmethod
+        def __infer_type_parameter__(cls, instance: Any) -> type:
+            return type(instance.tag)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        instance = Tagged(1, "a")
+    assert instance.__orig_class__ == Tagged[str]
+    # The base class still infers on its own.
+    assert InferredBox(1).__orig_class__ == InferredBox[int]
+
+
+def test_init_subclass_is_kept() -> None:
+    """Test that `@generic` keeps an `__init_subclass__` of the decorated class."""
+    seen = []
+
+    @generic
+    class Base(Generic[T]):
+        def __init__(self, value: Any) -> None:
+            self.value = value
+
+        def __init_subclass__(cls, /, label: str = "", **kw_args: Any) -> None:
+            super().__init_subclass__(**kw_args)
+            seen.append((cls.__name__, label))
+
+        @classmethod
+        def __infer_type_parameter__(cls, instance: Any) -> type:
+            return type(instance.value)
+
+    class Child(Base[T], label="child"):
+        def __init__(self, value: Any) -> None:
+            super().__init__(value)
+
+    assert seen == [("Child", "child")]
+    assert Child(1).__orig_class__ == Child[int]
+
+
+def test_failing_inference_warns_but_constructs() -> None:
+    """Test that any error from `__infer_type_parameter__` warns but constructs."""
+
+    @generic
+    class Seq(Generic[T]):
+        def __init__(self, items: Any) -> None:
+            self.items = list(items)
+
+        @classmethod
+        def __infer_type_parameter__(cls, instance: Any) -> type:
+            return type(instance.items[0])
+
+    with pytest.warns(RuntimeWarning, match="IndexError"):
+        instance = Seq([])
+    assert instance.items == []
+    assert not hasattr(instance, "__orig_class__")
+    assert Seq([1]).__orig_class__ == Seq[int]
+
+
 def test_init_metadata_is_preserved() -> None:
     """Test that the wrapped `__init__` keeps its name and docstring."""
 
