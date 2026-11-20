@@ -665,8 +665,9 @@ class Function(NativeBase):
         Args:
             args (tuple[object, ...]): Arguments that missed the cache.
             types (tuple[:obj:`.TypeHint`, ...]): Key to store the bucket under.
-            cache (dict): :attr:`_verify_cache` as captured before resolving, for the
-                reason given in `_store`.
+            cache (dict): :attr:`_verify_cache` as the caller took it. If
+                `clear_cache` replaces it in the meantime, the bucket goes into the old
+                dictionary, which nothing reads any more.
 
         Returns:
             :obj:`_VerifyBucket`: The bucket.
