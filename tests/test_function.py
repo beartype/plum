@@ -720,7 +720,7 @@ def test_resolve_pending_registrations_is_thread_safe():
 def test_method_replaced_during_resolution_is_not_cached(monkeypatch, dispatch):
     """Test that a method replaced while a call is resolving it is not cached.
 
-    `_resolve_and_cache` resolves and then writes to the cache without holding the lock.
+    `_resolve_miss` resolves and then writes to the cache without holding the lock.
     If a method is registered in between, the cache is cleared before the write, so the
     old method would be written into the cleared cache and, since nothing is pending any
     more, be returned by every later call. See PR #316.
