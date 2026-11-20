@@ -1,4 +1,4 @@
-"""Fixtures for testing."""
+"""Fixtures for testing, and the benchmark defaults."""
 
 from unittest.mock import patch
 
@@ -6,6 +6,25 @@ import pytest
 
 import plum
 from plum._promotion import _convert, _promotion_rule
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    """Time the benchmarks only when asked to, and set their minimum time per round.
+
+    This has to live in the root `conftest.py`. A `tests/benchmarks/conftest.py` is
+    loaded during collection, after `pytest-benchmark` has read its options.
+    """
+    # Without the plugin, there are no benchmark options to set.
+    if not hasattr(config.option, "benchmark_enable"):
+        return
+
+    # A sub-microsecond benchmark needs at least this much time per round for the timer
+    # to resolve it; see `benchmarks/README.md`. A higher `--benchmark-min-time` wins.
+    min_time = max(float(config.option.benchmark_min_time), 0.0005)
+    config.option.benchmark_min_time = str(min_time)
+    # An ordinary run still executes every benchmark once, so a broken one is caught.
+    if not config.option.benchmark_enable:
+        config.option.benchmark_disable = True
 
 
 @pytest.fixture(autouse=True)
