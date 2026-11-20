@@ -21,25 +21,20 @@ jobs:
         value:
           - name: "3.10"
             python-version: "3.10"
-            extra-install: ""
           - name: "3.11"
             python-version: "3.11"
-            extra-install: ""
           - name: "3.12"
             python-version: "3.12"
-            extra-install: ""
           - name: "3.13"
             python-version: "3.13"
-            extra-install: ""
           - name: "3.13-pre-beartype"
             python-version: "3.13"
-            extra-install: "uv pip install --upgrade --pre beartype"
+            pre-beartype: true
           - name: "3.14"
             python-version: "3.14"
-            extra-install: ""
           - name: "3.14-pre-beartype"
             python-version: "3.14"
-            extra-install: "uv pip install --upgrade --pre beartype"
+            pre-beartype: true
 
     name: Test ${{ matrix.value.name }}
     steps:
@@ -48,16 +43,29 @@ jobs:
         uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
         with:
           python-version: ${{ matrix.value.python-version }}
+      # `uv run` and nox's `uv sync` both reset the environment to `uv.lock`, so
+      # every `uv run` below uses `--no-sync`, and the pre-release beartype is
+      # installed into nox's own venv as well.
       - name: Install dependencies
         run: |
           uv sync --group dev --locked
-          ${{ matrix.value.extra-install }}
+          if [ "${{ matrix.value.pre-beartype }}" = "true" ]; then
+            uv pip install --upgrade --pre beartype
+          fi
       - name: Test linter assertions
-        run: uv run --frozen nox -s typecheck
+        run: |
+          uv run --no-sync nox -s typecheck --install-only
+          if [ "${{ matrix.value.pre-beartype }}" = "true" ]; then
+            uv pip install --python .nox/typecheck/bin/python --upgrade --pre beartype
+          fi
+          .nox/typecheck/bin/python -c "import beartype; print('beartype', beartype.__version__)"
+          uv run --no-sync nox -R -s typecheck
+      - name: Show beartype version
+        run: uv run --no-sync python -c "import beartype; print('beartype', beartype.__version__)"
       - name: Run tests
         run: |
-          PRAGMA_VERSION=`uv run python -c "import sys; print('.'.join(map(str, sys.version_info[:2])))"` \
-          uv run --frozen pytest -v --cov=src/plum --cov-report term-missing --cov-report lcov:coverage.lcov
+          PRAGMA_VERSION=`uv run --no-sync python -c "import sys; print('.'.join(map(str, sys.version_info[:2])))"` \
+          uv run --no-sync pytest -v --cov=src/plum --cov-report term-missing --cov-report lcov:coverage.lcov
       - name: Coveralls parallel
         uses: coverallsapp/github-action@v2
         with:
