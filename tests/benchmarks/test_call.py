@@ -4,6 +4,7 @@
 the same call with no dispatch at all.
 """
 
+from collections.abc import Callable
 from typing import Literal
 
 import pytest
@@ -82,6 +83,50 @@ def union_arg(x: float):
     return x
 
 
+# Uncacheable like `parametric`, but with methods that a `tuple` argument cannot
+# match, so that narrowing the methods to consider has something to remove.
+
+
+@_dispatch
+def parametric_wide(x: tuple[int]):
+    return x
+
+
+@_dispatch
+def parametric_wide(x: tuple[str]):
+    return x
+
+
+@_dispatch
+def parametric_wide(x: list[int]):
+    return x
+
+
+@_dispatch
+def parametric_wide(x: list[str]):
+    return x
+
+
+@_dispatch
+def parametric_wide(x: dict[str, int]):
+    return x
+
+
+@_dispatch
+def parametric_wide(x: set[int]):
+    return x
+
+
+@_dispatch
+def parametric_wide(x: frozenset[str]):
+    return x
+
+
+@_dispatch
+def parametric_wide(x: Callable[[int], int]):
+    return x
+
+
 @pytest.mark.benchmark(group="call")
 @pytest.mark.parametrize(
     ("f", "args"),
@@ -94,6 +139,7 @@ def union_arg(x: float):
         pytest.param(on_literal, ("a",), id="Literal"),
         pytest.param(parametric, ((1,),), id="parametric"),
         pytest.param(union_arg, (1,), id="union-arg"),
+        pytest.param(parametric_wide, ((1,),), id="parametric-8-methods"),
     ],
 )
 def test_call(benchmark, f, args):
