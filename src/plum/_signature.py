@@ -91,12 +91,7 @@ class Signature(Comparable):
         self.is_faithful = all(_is_faithful(t) for t in resolved)
         # A faithful signature is cacheable, so only look at the types again if not.
         self.is_cacheable = self.is_faithful or all(_is_cacheable(t) for t in resolved)
-        # Only the cache key uses `literals`.
-        self.literals: frozenset[object] = (
-            frozenset().union(*(_literals(t) for t in resolved))
-            if self.is_cacheable and not self.is_faithful
-            else frozenset()
-        )
+        self.literals: frozenset[object] = frozenset().union(*map(_literals, resolved))
 
     @staticmethod
     def from_callable(f: Callable[..., Any], precedence: int = 0) -> "Signature":

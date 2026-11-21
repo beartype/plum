@@ -5,6 +5,7 @@ import pytest
 
 import plum
 from .util import benchmark
+from plum._function import _LITERAL_CACHE_LIMIT
 
 
 def _traced():
@@ -331,7 +332,7 @@ def test_invoke_type_x(dispatch: plum.Dispatcher):
     assert f(int) == "type[int]"
 
 
-def test_literal_dispatch_is_cached(dispatch):
+def test_cache_literal(dispatch: plum.Dispatcher):
     """Test that a function dispatching on `Literal` caches one entry per value."""
 
     @dispatch
@@ -360,7 +361,7 @@ def test_literal_dispatch_is_cached(dispatch):
     assert len(f._cache) == 3
 
 
-def test_literal_dispatch_keeps_bool_and_int_apart(dispatch):
+def test_cache_literal_bool_and_int(dispatch: plum.Dispatcher):
     """Test that `True` and `1`, which are equal, are cached separately."""
 
     @dispatch
@@ -374,11 +375,11 @@ def test_literal_dispatch_keeps_bool_and_int_apart(dispatch):
     assert f(True) == "true"
     assert f(1) == "int"
     assert f(0) == "int"
-    # `True == 1`, so only the type slot of the key keeps these entries apart.
+    # `True == 1`, so only their types keep these entries apart.
     assert len(f._cache) == 3
 
 
-def test_literal_dispatch_unhashable_argument(dispatch):
+def test_cache_literal_unhashable_argument(dispatch: plum.Dispatcher):
     """Test that an unhashable argument does not make the cache key raise."""
 
     @dispatch
@@ -393,7 +394,7 @@ def test_literal_dispatch_unhashable_argument(dispatch):
     assert f(1) == "one"
 
 
-def test_literal_and_type_dispatch_mixed(dispatch):
+def test_cache_literal_and_type_x(dispatch: plum.Dispatcher):
     """Test caching of a function that dispatches on both `Literal` and `type[t]`."""
 
     @dispatch
@@ -415,7 +416,7 @@ def test_literal_and_type_dispatch_mixed(dispatch):
     assert len(f._cache) == 4
 
 
-def test_literal_dispatch_subclass_with_untrustworthy_equality(dispatch):
+def test_cache_literal_subclass_eq(dispatch: plum.Dispatcher):
     """Test that a subclass with a non-transitive `__eq__` is dispatched correctly."""
 
     class W(int):
@@ -443,7 +444,7 @@ def test_literal_dispatch_subclass_with_untrustworthy_equality(dispatch):
     assert f(W(1)) == "one"
 
 
-def test_literal_dispatch_and_identity_for_subclasses(dispatch):
+def test_cache_literal_subclass(dispatch: plum.Dispatcher):
     """Test dispatch and per-object caching of an instance of a subclass."""
 
     class MyInt(int):
@@ -463,7 +464,7 @@ def test_literal_dispatch_and_identity_for_subclasses(dispatch):
     assert len(f._cache) == 3
 
 
-def test_literal_dispatch_shares_entries_for_unnamed_values(dispatch):
+def test_cache_literal_and_int(dispatch: plum.Dispatcher):
     """Test that values no `Literal` names share one entry, in every argument."""
 
     @dispatch
@@ -480,13 +481,12 @@ def test_literal_dispatch_shares_entries_for_unnamed_values(dispatch):
     assert len(f._cache) == 2
 
 
-def test_literal_dispatch_cache_is_bounded(dispatch):
+def test_cache_literal_limit(dispatch: plum.Dispatcher):
     """Test that the cache of a function dispatching on `Literal` is limited.
 
     An instance of a subclass of `str` is keyed by identity, so it would otherwise add
     an entry for every call.
     """
-    from plum._function import _LITERAL_CACHE_LIMIT
 
     class Tag(str):
         pass
@@ -502,8 +502,9 @@ def test_literal_dispatch_cache_is_bounded(dispatch):
     for i in range(_LITERAL_CACHE_LIMIT + 100):
         assert f(Tag(f"v{i}")) == "other"
 
-    assert len(f._cache) == _LITERAL_CACHE_LIMIT
-    # Beyond the limit, resolution still gives the right answer.
+    n = len(f._cache)
+    assert n < _LITERAL_CACHE_LIMIT
+    # Values that are first seen after the cache filled up are still cached.
     assert f(Tag("ready")) == "ready"
     assert f("ready") == "ready"
-    assert len(f._cache) == _LITERAL_CACHE_LIMIT
+    assert len(f._cache) == n + 2

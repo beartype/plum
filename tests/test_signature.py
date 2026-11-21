@@ -486,3 +486,4 @@ def test_signature_literals():
     assert Sig(int).literals == frozenset()
     assert Sig(Literal[1], int).literals == {1}
     assert Sig(int, varargs=Literal["a", "b"]).literals == {"a", "b"}
+    assert Sig(Literal[1], list[int]).literals == {1}

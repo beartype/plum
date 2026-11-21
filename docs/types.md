@@ -124,9 +124,12 @@ and not only on `type(t1)`.
 
 ```{admonition} Cache growth
 :class: warning
-The cache holds strong references to the classes and values that a function is called with.
-A function that dispatches on `type[t]` therefore keeps every class it is called with alive until `f.clear_cache()` or `plum.clear_all_cache()` is called.
-A function that dispatches on `Literal` keys an instance of a subclass of `int`, `str` or `bytes` by identity, and stops caching after 4096 entries, since it would otherwise add an entry for every such instance.
+The cache holds strong references to the classes and values that a function is called
+with.
+A function that dispatches on `type[t]` therefore keeps every class it is called with
+alive until `f.clear_cache()` or `plum.clear_all_cache()` is called.
+A function that dispatches on `Literal` also keeps instances of subclasses of `int`,
+`str` and `bytes` alive, and empties its cache when it reaches 4096 entries.
 ```
 
 Methods which have signatures that depend only on cacheable types will

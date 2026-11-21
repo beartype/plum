@@ -13,7 +13,6 @@ from plum._type import (
     ResolvableType,
     TypeHintWrapper,
     _is_hint,
-    _literal_key,
     _literals,
     _OpaqueHint,
     _substitute_any,
@@ -567,11 +566,13 @@ def test_cache_key_literals_subclass():
     a = Unhashable("a")
     assert hash(cache_key(a, literals)) == hash(cache_key(a, literals))
 
-    class MyEnum(enum.IntEnum):
+    class MyEnum(enum.Enum):
         A = 1
         B = 2
 
     assert cache_key(MyEnum.A, literals) != cache_key(MyEnum.B, literals)
+    # Without literals, an instance of a subclass is not keyed by identity.
+    assert cache_key(one) == cache_key(MyInt(1))
 
 
 def test_literals():
@@ -580,26 +581,3 @@ def test_literals():
     assert _literals(Literal[1, "a"]) == {1, "a"}
     assert _literals(Union[Literal[1], Literal[2], int]) == {1, 2}  # noqa: UP007
     assert _literals((Literal[1], Literal[True])) == {1}
-
-
-def test_literal_key_agrees_with_cache_key():
-    """Test that `_literal_key` gives the same keys as `cache_key`."""
-    literals = frozenset({1, "a", None})
-
-    class MyInt(int):
-        pass
-
-    class Color(enum.Enum):
-        RED = 1
-
-    class Meta(type):
-        pass
-
-    class WithMeta(metaclass=Meta):
-        pass
-
-    key = _literal_key(literals)
-    one = MyInt(1)
-    for x in [1, 2, True, False, "a", "b", b"a", None, 1.5, [1], int, WithMeta, one]:
-        assert key(x) == cache_key(x, literals), x
-    assert key(Color.RED) == cache_key(Color.RED, literals)

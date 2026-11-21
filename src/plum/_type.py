@@ -622,49 +622,46 @@ def cache_key(
 
     Args:
         x (object): Object.
-        literals (frozenset, optional): All `Literal` values to account for.
+        literals (frozenset, optional): All `Literal` values to account for. Defaults to
+            `frozenset()`.
 
     Returns:
         tuple: Cache key.
     """
-    tx = type(x)
-    # Key a class by identity, since matching `type[t]` depends on the class itself. A
-    # class whose metaclass is `type` already hashes by `id` and compares by identity.
-    # Any other metaclass can make distinct classes compare equal or make a class
-    # unhashable, so wrap such a class in `_Identity`.
-    if isinstance(x, type):
-        return tx, (x if tx is type else _Identity(x))
-    if literals:
-        # `x` matches `Literal[v]` if and only if `isinstance(x, type(v))` and `x == v`.
-        # If `type(x)` is a type that a `Literal` can hold, `x` can only match `v` of a
-        # built-in type, so `x == v` implies equal hashes, and `x in literals` tells
-        # whether `x` matches any `Literal`. Key `x` by itself only if it does, so that
-        # all other values of `type(x)` share one entry.
-        if tx in _LITERAL_TYPES:
-            return tx, (x if x in literals else None)
-        # The equality of an instance of a subclass is user code, so key it by
-        # identity.
-        if isinstance(x, _LITERAL_BASES):
-            return tx, _Identity(x)
-    return tx, None
+    return _literal_key(literals)(x)
 
 
 def _literal_key(
     literals: frozenset[object], /
 ) -> Callable[[object], tuple[object, ...]]:
-    """Get `cache_key` with `literals` bound, for :class:`.Resolver`.
+    """Get `cache_key` with `literals` bound.
 
-    This repeats the body of `cache_key` rather than calling it, which would cost an
-    extra call per argument on every cache hit.
+    Args:
+        literals (frozenset): All `Literal` values to account for.
+
+    Returns:
+        Callable[[object], tuple]: Function that computes `cache_key(x, literals)`.
     """
 
     def key(x: object, /) -> tuple[object, ...]:
         tx = type(x)
+        # `x` can only match a `Literal` that holds a value equal to `x`. For the
+        # built-in types that a `Literal` can hold, equal values have equal hashes, so
+        # `x in literals` tells whether `x` can match any `Literal`. Key `x` by itself
+        # only if it can, so that all other values of `type(x)` share one entry. If
+        # `literals` is empty, this gives `(tx, None)`, so it needs no check.
         if tx in _LITERAL_TYPES:
             return tx, (x if x in literals else None)
+        # Key a class by identity, since matching `type[t]` depends on the class itself.
+        # A class whose metaclass is `type` already hashes by `id` and compares by
+        # identity. Any other metaclass can make distinct classes compare equal or make
+        # a class unhashable, so wrap such a class in `_Identity`.
         if isinstance(x, type):
             return tx, (x if tx is type else _Identity(x))
-        if isinstance(x, _LITERAL_BASES):
+        # An enum member or an instance of a subclass of `int`, `str` or `bytes` can
+        # match a `Literal` too, but its `__eq__` and `__hash__` are user code, so key
+        # it by identity.
+        if literals and isinstance(x, _LITERAL_BASES):
             return tx, _Identity(x)
         return tx, None
 

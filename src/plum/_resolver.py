@@ -13,7 +13,7 @@ from rich.text import Text
 from ._util import argsort
 from plum._method import Method, MethodList
 from plum._signature import Signature
-from plum._type import _literal_key, cache_key
+from plum._type import _literal_key
 from plum.repr import repr_source_path, rich_repr
 
 
@@ -345,16 +345,14 @@ class Resolver:
         # Use a double negation for slightly better performance.
         self.is_faithful = not any(not s.signature.is_faithful for s in self.methods)
         self.is_cacheable = all(s.signature.is_cacheable for s in self.methods)
+        self.literals = frozenset().union(*(s.signature.literals for s in self.methods))
         # Bind the function that computes the cache key of an argument now, so dispatch
         # need not check the flags on every call. `type` suffices if the resolver is
         # faithful, and is unused if it is not cacheable.
-        self.literals = frozenset().union(*(s.signature.literals for s in self.methods))
         if self.is_faithful or not self.is_cacheable:
             self.cache_key = type
-        elif self.literals:
-            self.cache_key = _literal_key(self.literals)
         else:
-            self.cache_key = cache_key
+            self.cache_key = _literal_key(self.literals)
 
     def __len__(self) -> int:
         return len(self.methods)

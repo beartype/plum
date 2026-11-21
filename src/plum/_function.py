@@ -21,8 +21,8 @@ _LITERAL_CACHE_LIMIT = 4096
 """int: Maximum number of cache entries of a function that dispatches on `Literal`.
 
 Such a function keys an instance of a subclass of `int`, `str` or `bytes` by identity,
-so a new entry could be added for every call. Past the limit, arguments are resolved
-without caching."""
+so a new entry could be added for every call. When the limit is reached, the cache is
+emptied."""
 
 # Annotated (not left to inference as `None`) so a `mypyc`-compiled `_function` accepts
 # the external assignment `plum._function._promised_convert = convert` in `_promotion`.
@@ -539,9 +539,11 @@ class Function(NativeBase):
         # storing into it is harmless.
         method, return_type = self.resolve_method(target)
         resolver = self._resolver
-        if resolver.is_cacheable and not (
-            resolver.literals and len(cache) >= _LITERAL_CACHE_LIMIT
-        ):
+        if resolver.is_cacheable:
+            # Empty a full cache rather than stop caching, so that arguments that are
+            # first seen later are still cached.
+            if resolver.literals and len(cache) >= _LITERAL_CACHE_LIMIT:
+                cache.clear()
             cache[key] = method, return_type
         return method, return_type
 
