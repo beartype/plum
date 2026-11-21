@@ -63,8 +63,7 @@ a function (see :meth:`Function.owner`), make the corresponding value the owner.
 class _InvokedMethod(NativeBase):
     """Run the resolved `method` and convert the result.
 
-    Callable returned by :meth:`Function.invoke`. Subclasses `NativeBase` for the
-    `__dict__` :func:`update_wrapper` writes into.
+    Callable returned by :meth:`Function.invoke`.
     """
 
     def __init__(
