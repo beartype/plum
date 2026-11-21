@@ -43,23 +43,19 @@ jobs:
         uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
         with:
           python-version: ${{ matrix.value.python-version }}
-      # `uv run` and nox's `uv sync` both reset the environment to `uv.lock`, so
-      # every `uv run` below uses `--no-sync`, and the pre-release beartype is
-      # installed into nox's own venv as well.
       - name: Install dependencies
+        run: uv sync --group dev --locked
+      # `uv run` and `nox`'s `uv sync` both reset the environment to `uv.lock`, so every
+      # `uv run` below uses `--no-sync`, and the pre-release beartype is installed into
+      # `nox`'s own venv as well, which `-R` below then reuses without syncing it again.
+      - name: Install pre-release beartype
+        if: ${{ matrix.value.pre-beartype }}
         run: |
-          uv sync --group dev --locked
-          if [ "${{ matrix.value.pre-beartype }}" = "true" ]; then
-            uv pip install --upgrade --pre beartype
-          fi
-      - name: Test linter assertions
-        run: |
+          uv pip install --upgrade --pre beartype
           uv run --no-sync nox -s typecheck --install-only
-          if [ "${{ matrix.value.pre-beartype }}" = "true" ]; then
-            uv pip install --python .nox/typecheck/bin/python --upgrade --pre beartype
-          fi
-          .nox/typecheck/bin/python -c "import beartype; print('beartype', beartype.__version__)"
-          uv run --no-sync nox -R -s typecheck
+          uv pip install --python .nox/typecheck/bin/python --upgrade --pre beartype
+      - name: Test linter assertions
+        run: uv run --no-sync nox -R -s typecheck
       - name: Show beartype version
         run: uv run --no-sync python -c "import beartype; print('beartype', beartype.__version__)"
       - name: Run tests
