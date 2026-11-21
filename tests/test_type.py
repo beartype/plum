@@ -137,6 +137,7 @@ def test_is_hint():
     assert _is_hint(int | float)
     assert _is_hint(Callable)
     assert _is_hint(type[int])
+    assert _is_hint(Annotated[Number, "units"])
 
 
 def test_is_hint_class_declared_with_exec():

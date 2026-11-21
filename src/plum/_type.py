@@ -29,7 +29,6 @@ from typing import (
 )
 
 from beartype.door import TypeHint as TypeHintWrapper
-from beartype.vale._core._valecore import BeartypeValidator
 
 from ._mypyc import mypyc_attr
 
@@ -193,6 +192,9 @@ def _is_hint(x: object) -> bool:
     Returns:
         bool: `True` if `x` is a type hint and `False` otherwise.
     """
+    # On Python 3.10 and 3.11, `Annotated[t, ...]` has the module of `t`.
+    if get_origin(x) is Annotated:
+        return True
     try:
         if x.__module__ == "builtins" and type(x) is GenericAlias:
             # `x` is a subscripted built-in, e.g. `list[int]`.
@@ -231,6 +233,8 @@ values."""
 def resolve_type_hint(x: object, /) -> object:
     """Resolve all :class:`ResolvableType` in a type or type hint.
 
+    The metadata of `Annotated` are left as they are.
+
     Args:
         x (type or type hint): Type hint.
 
@@ -239,7 +243,7 @@ def resolve_type_hint(x: object, /) -> object:
     """
     if _hashable(x) and isinstance(x, type) and x in type_mapping:
         return resolve_type_hint(type_mapping[x])
-    elif get_origin(x) is Annotated or _is_hint(x):
+    elif _is_hint(x):
         origin = get_origin(x)
         args = get_args(x)
         if args == ():
@@ -281,11 +285,6 @@ def resolve_type_hint(x: object, /) -> object:
             return x
 
         return resolve_type_hint(x.resolve())
-
-    # For example, `Is[lambda x: x > 0]` is an example of a `BeartypeValidator`.
-    # We shouldn't resolve those.
-    elif isinstance(x, BeartypeValidator):
-        return x
 
     else:
         warnings.warn(
