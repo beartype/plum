@@ -312,7 +312,7 @@ def test_generic_varargs():
 
 
 def test_unhashable_parametrisation():
-    """Test that an unhashable parametrisation dispatches, and its cache is capped."""
+    """Test that an unhashable parametrisation dispatches, and its cache is bounded."""
     from plum._function import _LITERAL_CACHE_LIMIT
 
     dispatch = Dispatcher()
@@ -333,8 +333,11 @@ def test_unhashable_parametrisation():
     # `typing` does not cache an unhashable parametrisation, so each one is a new key.
     for i in range(_LITERAL_CACHE_LIMIT):
         assert f(Box[Annotated[int, {"a": i}]](i)) == "box"
-    assert len(f._cache) == _LITERAL_CACHE_LIMIT
+    n = len(f._cache)
+    assert n < _LITERAL_CACHE_LIMIT
+    # Arguments that are first seen after the cache filled up are still cached.
     assert f(Box[str]("a")) == "object"
+    assert len(f._cache) == n + 1
 
 
 def test_parametrised_protocol_is_matched_by_structure():
