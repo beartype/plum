@@ -6,7 +6,6 @@ from typing import Annotated, Any, Literal, Union
 
 import pytest
 
-import plum
 from plum._type import (
     ModuleType,
     PromisedType,
@@ -497,43 +496,35 @@ def test_cache_key_metaclass_eq():
     assert cache_key(A) != cache_key(B)
 
 
-_T = typing.TypeVar("_T")
+def test_type_hint_eq_generic_origin(dispatch):
+    """Regression test for https://github.com/beartype/beartype/issues/745.
 
-
-class _Base(typing.Generic[_T]):
-    pass
-
-
-class _Sub(_Base[_T]):
-    pass
-
-
-class _Unrelated(typing.Generic[_T]):
-    pass
-
-
-def test_type_hint_eq_generic_origin():
-    """Generic aliases with equal arguments but different origins must differ.
-
-    `beartype` 0.23's `TypeHint.__eq__` ignores the origin of subscripted generics,
-    which made registering `f(x: _Sub[int])` silently replace `f(x: _Base[int])`.
-    See https://github.com/beartype/beartype/issues/745.
+    Generic aliases with equal arguments but different origins must differ.
     """
-    assert not _type_hint_eq(_Base[int], _Sub[int])
-    assert not _type_hint_eq(_Base[int], _Unrelated[int])
-    assert not _type_hint_eq(list[_Base[int]], list[_Sub[int]])
-    assert _type_hint_eq(_Base[int], _Base[int])
+    T = typing.TypeVar("T")
 
-    dispatch = plum.Dispatcher()
+    class Base(typing.Generic[T]):
+        pass
+
+    class Sub(Base[T]):
+        pass
+
+    class Unrelated(typing.Generic[T]):
+        pass
+
+    assert not _type_hint_eq(Base[int], Sub[int])
+    assert not _type_hint_eq(Base[int], Unrelated[int])
+    assert not _type_hint_eq(list[Base[int]], list[Sub[int]])
+    assert _type_hint_eq(Base[int], Base[int])
 
     @dispatch
-    def f(x: _Base[int]):
+    def f(x: Base[int]):
         return "base"
 
     @dispatch
-    def f(x: _Sub[int]):
+    def f(x: Sub[int]):
         return "sub"
 
     assert len(f.methods) == 2
-    assert f(_Base[int]()) == "base"
-    assert f(_Sub[int]()) == "sub"
+    assert f(Base[int]()) == "base"
+    assert f(Sub[int]()) == "sub"
