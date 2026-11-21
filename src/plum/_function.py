@@ -557,12 +557,15 @@ class Function(NativeBase):
         # still the live cache, or the old dictionary, which nothing reads any more, so
         # storing into it is harmless.
         method, return_type = self.resolve_method(target)
-        # Convert the awaited result for async implementations. Adapt only on
-        # resolution, so synchronous cache hits retain their existing path.
+
+        # An `async def` method returns a coroutine, so convert its awaited result
+        # instead. The wrapper converts, so `return_type` becomes `Any`. Unwrap first,
+        # since an invoked method can wrap an `async def` too.
         impl = _unwrap_invoked_methods(method)
         if return_type is not Any and inspect.iscoroutinefunction(impl):
             method = _async_return_conversion(method, return_type, _convert)
             return_type = Any
+
         if self._resolver.is_cacheable:
             cache[key] = method, return_type
         return method, return_type

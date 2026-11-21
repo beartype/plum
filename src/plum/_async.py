@@ -24,13 +24,13 @@ def _async_return_conversion(
     Args:
         method (function): Method to wrap.
         return_type (type): Type to convert the awaited result to.
-        convert (function): Conversion function, passed in to avoid a circular import
-            of `_function`.
+        convert (function): Conversion function.
 
     Returns:
         function: `method`, converting its awaited result to `return_type`.
     """
 
+    # `convert` is passed in, since importing it from `_function` would be circular.
     async def wrapper(*args: Any, **kw: Any) -> Any:
         return convert(await method(*args, **kw), return_type)
 
