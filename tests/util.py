@@ -1,3 +1,4 @@
+import gc
 from time import time
 
 import rich
@@ -23,13 +24,18 @@ def benchmark(f, args, n=1000, burn=0, setup=lambda: None):
     for _ in range(burn):
         setup()
         f(*args)
-    # Perform timing.
+    # Perform timing. Disable GC so that a single collection does not dominate
+    # the mean.
     durations = []
-    for _ in range(n):
-        setup()
-        start = time()
-        f(*args)
-        durations.append(time() - start)
+    gc.disable()
+    try:
+        for _ in range(n):
+            setup()
+            start = time()
+            f(*args)
+            durations.append(time() - start)
+    finally:
+        gc.enable()
     return sum(durations) * 1e6 / n
 
 
