@@ -60,24 +60,6 @@ _owner_transfer: dict[type, type] = {}
 a function (see :meth:`Function.owner`), make the corresponding value the owner."""
 
 
-class _InvokedMethod(NativeBase):
-    """Run the resolved `method` and convert the result.
-
-    Callable returned by :meth:`Function.invoke`.
-    """
-
-    def __init__(
-        self, f: Callable[..., Any], method: Callable[..., Any], return_type: TypeHint
-    ) -> None:
-        self._method = method
-        self._return_type = return_type
-        update_wrapper(self, f)
-        self.__wrapped_by_plum__ = method
-
-    def __call__(self, *args: Any, **kw: Any) -> Any:
-        return _convert(self._method(*args, **kw), self._return_type)
-
-
 class _DocDescriptor:
     """Serve `__doc__`: `_class_doc` on class access, `_compute_doc()` on instances.
 
@@ -579,7 +561,13 @@ class Function(NativeBase):
             function: Method.
         """
         method, return_type = self._resolve_method_for_types(types)
-        return _InvokedMethod(self._f, method, return_type)
+
+        def wrapped_method(*args: Any, **kw: Any) -> Any:
+            return _convert(method(*args, **kw), return_type)
+
+        update_wrapper(wrapped_method, self._f)
+        wrapped_method.__wrapped_by_plum__ = method  # type: ignore[attr-defined]
+        return wrapped_method
 
     @overload
     def __get__(self, instance: None, owner: type, /) -> "Function": ...
@@ -674,9 +662,19 @@ class _BoundFunction(NativeBase):
 
     def invoke(self, *types: TypeHint) -> Callable[..., Any]:
         """See :meth:`.Function.invoke`."""
-        # Unlike `Function.invoke`, `_BoundInvokedMethod` sets no `__wrapped_by_plum__`:
-        # it prepends `self._instance`, so there is no extendable method to unwrap to.
-        return _BoundInvokedMethod(self, types)
+        f = self._f
+        instance = self._instance
+
+        def wrapped_method(*args: Any, **kw: Any) -> Any:
+            # TODO: Can we do this without `type` here?
+            method = f.invoke(type(instance), *types)
+            return method(instance, *args, **kw)
+
+        # `self.__wrapped__` is the underlying function (`f._f`), set in `__init__`.
+        update_wrapper(wrapped_method, self.__wrapped__)
+        # Unlike `Function.invoke`, this sets no `__wrapped_by_plum__`: it prepends
+        # `instance`, so there is no extendable method to unwrap to.
+        return wrapped_method
 
     @property
     def methods(self) -> MethodList:
@@ -692,19 +690,3 @@ class _BoundFunction(NativeBase):
 # See `Function` above: the descriptors serve `__doc__`/`__module__` on instances.
 setattr(_BoundFunction, "__doc__", _DocDescriptor())  # noqa: B010
 setattr(_BoundFunction, "__module__", _ModuleDescriptor(__name__))  # noqa: B010
-
-
-class _BoundInvokedMethod(NativeBase):
-    """Callable returned by :meth:`_BoundFunction.invoke` (see there)."""
-
-    def __init__(self, bound: "_BoundFunction", types: tuple[TypeHint, ...]) -> None:
-        self._bound = bound
-        self._types = types
-        # `bound.__wrapped__` is the underlying function (`f._f`), set in
-        # `_BoundFunction.__init__`.
-        update_wrapper(self, bound.__wrapped__)
-
-    def __call__(self, *args: Any, **kw: Any) -> Any:
-        # TODO: Can we do this without `type` here?
-        method = self._bound._f.invoke(type(self._bound._instance), *self._types)
-        return method(self._bound._instance, *args, **kw)
