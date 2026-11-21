@@ -137,6 +137,7 @@ def test_is_hint():
     assert _is_hint(int | float)
     assert _is_hint(Callable)
     assert _is_hint(type[int])
+    assert _is_hint(Annotated[Number, "units"])
 
 
 def test_is_hint_class_declared_with_exec():
@@ -227,6 +228,14 @@ def test_resolve_type_hint_moduletype_recursion():
 @skip_if_less_than_py310
 def test_resolve_type_hint_new_union():
     assert resolve_type_hint(float | int) == float | int
+
+
+def test_resolve_type_hint_annotated(recwarn):
+    # The metadata must be left alone, even when it looks like a resolvable type.
+    metadata = ModuleType("builtins", "float")
+    hint = Annotated[ModuleType("builtins", "int"), "units", metadata]
+    assert resolve_type_hint(hint) == Annotated[int, "units", metadata]
+    assert len(recwarn) == 0
 
 
 def test_is_faithful():
