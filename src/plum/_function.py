@@ -1,5 +1,6 @@
 __all__ = ("Function",)
 
+import inspect
 import os
 import textwrap
 import threading
@@ -10,9 +11,15 @@ from types import MethodType
 from typing import Any, ClassVar, Protocol, TypeVar, overload
 from typing_extensions import Self
 
+from ._async import _async_return_conversion
 from ._method import Method, MethodList
 from ._mypyc import NativeBase, mypyc_attr
-from ._resolver import AmbiguousLookupError, NotFoundLookupError, Resolver
+from ._resolver import (
+    AmbiguousLookupError,
+    NotFoundLookupError,
+    Resolver,
+    _unwrap_invoked_methods,
+)
 from ._signature import Signature, append_default_args
 from ._type import resolve_type_hint
 from ._util import TypeHint
@@ -550,6 +557,15 @@ class Function(NativeBase):
         # still the live cache, or the old dictionary, which nothing reads any more, so
         # storing into it is harmless.
         method, return_type = self.resolve_method(target)
+
+        # An `async def` method returns a coroutine, so convert its awaited result
+        # instead. The wrapper converts, so `return_type` becomes `Any`. Unwrap first,
+        # since an invoked method can wrap an `async def` too.
+        impl = _unwrap_invoked_methods(method)
+        if return_type is not Any and inspect.iscoroutinefunction(impl):
+            method = _async_return_conversion(method, return_type, _convert)
+            return_type = Any
+
         if self._resolver.is_cacheable:
             cache[key] = method, return_type
         return method, return_type
