@@ -805,8 +805,6 @@ def test_registration_during_resolution_is_not_lost(dispatch):
     with ThreadPoolExecutor(1) as pool:
         call = pool.submit(f, 1)
         assert exhausted.wait(5), "The call never reached the pause."
-        # Without the lock, this lands in the discarded list. With the lock, it blocks
-        # until the resolution finishes.
         f.register(g)
         assert call.result(5) == "int"
 

@@ -390,9 +390,6 @@ class Function(NativeBase):
 
         Either `signature` or `precedence` must be given.
 
-        Registration is serialized with pending-method resolution, so methods added
-        by another thread are retained for subsequent calls.
-
         Args:
             f (function): Function that implements the method.
             signature (:class:`.signature.Signature`, optional): Signature. If it is
