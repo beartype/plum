@@ -66,7 +66,7 @@ def convert(obj: object, type_to: typeTypeTo) -> TypeTo:
 
     type_to_resolved = resolve_type_hint(type_to)
     # Resolve and call the method directly. `_convert.invoke` would read better, but
-    # it builds an `_InvokedMethod` per call that is used once and dropped, which costs
+    # it builds a wrapper per call that is used once and dropped, which costs
     # more than the resolution itself, on every call that misses the cache above.
     method, return_type = _convert._resolve_method_for_types(
         (type_from, type_to_resolved)
