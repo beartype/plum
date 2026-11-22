@@ -69,10 +69,15 @@ jobs:
           parallel: true
           file: coverage.lcov
 
-  # Test that `mypyc`-compiled wheels work.
+  # Test that `mypyc`-compiled wheels work, built with the newest mypy (as the release
+  # wheels are) and with the lowest one the mypyc hook allows.
   test-mypyc:
-    name: Test mypyc wheel
+    name: Test mypyc wheel${{ matrix.mypy == 'lowest' && ' (lowest mypy)' || '' }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mypy: [newest, lowest]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -87,7 +92,21 @@ jobs:
         run: uv sync --locked --no-install-project --no-default-groups --group build --group wheels --group test_static --group test_runtime
 
       - name: Build mypyc wheel
+        if: ${{ matrix.mypy == 'newest' }}
         run: uv run --no-sync python -m build --wheel
+        env:
+          HATCH_BUILD_HOOKS_ENABLE: "1"
+
+      # An isolated build would install the newest mypy, so install the hook's lowest
+      # allowed version here and build without isolation.
+      - name: Build mypyc wheel with the lowest mypy
+        if: ${{ matrix.mypy == 'lowest' }}
+        run: |
+          MYPY=`uv run --no-sync python -c "import re, tomllib; deps = tomllib.load(open('pyproject.toml', 'rb'))['tool']['hatch']['build']['targets']['wheel']['hooks']['mypyc']['dependencies']; print(next(re.sub(r'^mypy>=', 'mypy==', d) for d in deps if d.startswith('mypy>=')))"`
+          echo "Building with $MYPY"
+          uv pip install "$MYPY"
+          uv run --no-sync python -m mypy --version
+          uv run --no-sync python -m build --wheel --no-isolation
         env:
           HATCH_BUILD_HOOKS_ENABLE: "1"
 
