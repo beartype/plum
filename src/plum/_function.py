@@ -17,6 +17,13 @@ from ._type import resolve_type_hint
 from ._util import TypeHint
 from ._wraps import update_wrapper, update_wrapper_names
 
+_LITERAL_CACHE_LIMIT = 4096
+"""int: Maximum number of cache entries of a function that dispatches on `Literal`.
+
+Such a function keys an instance of a subclass of `int`, `str` or `bytes` by identity,
+so a new entry could be added for every call. When the limit is reached, the cache is
+emptied."""
+
 # Annotated (not left to inference as `None`) so a `mypyc`-compiled `_function` accepts
 # the external assignment `plum._function._promised_convert = convert` in `_promotion`.
 _promised_convert: Callable[..., Any] | None = None
@@ -531,7 +538,12 @@ class Function(NativeBase):
         # still the live cache, or the old dictionary, which nothing reads any more, so
         # storing into it is harmless.
         method, return_type = self.resolve_method(target)
-        if self._resolver.is_cacheable:
+        resolver = self._resolver
+        if resolver.is_cacheable:
+            # Empty a full cache rather than stop caching, so that arguments that are
+            # first seen later are still cached.
+            if resolver.literals and len(cache) >= _LITERAL_CACHE_LIMIT:
+                cache.clear()
             cache[key] = method, return_type
         return method, return_type
 
