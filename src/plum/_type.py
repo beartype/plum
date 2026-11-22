@@ -246,9 +246,6 @@ def _has_generic_hint(x: object, /) -> bool:
     Returns:
         bool: `True` if `x` contains a parametrised user generic.
     """
-    if isinstance(x, type):
-        # A class is not parametrised and has no arguments.
-        return False
     if _is_generic_hint(x):
         return True
     origin = get_origin(x)
