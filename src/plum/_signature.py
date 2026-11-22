@@ -68,8 +68,10 @@ class Signature(Comparable):
     def __init__(
         self,
         *types: TypeHint,
-        varargs: TypeHint | _MissingType = _default_varargs,
-        precedence: int = _default_precedence,
+        # Not `_default_varargs`/`_default_precedence`: built with mypy 1.18 or 1.19,
+        # the compiled module fails on import with a `KeyError` for those names.
+        varargs: TypeHint | _MissingType = Missing,
+        precedence: int = 0,
     ) -> None:
         """Instantiate a signature, which contains exactly the information necessary for
         dispatch.
