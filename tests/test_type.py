@@ -494,3 +494,37 @@ def test_cache_key_metaclass_eq():
         pass
 
     assert cache_key(A) != cache_key(B)
+
+
+def test_type_hint_eq_generic_origin(dispatch):
+    """Regression test for https://github.com/beartype/beartype/issues/745.
+
+    Generic aliases with equal arguments but different origins must differ.
+    """
+    T = typing.TypeVar("T")
+
+    class Base(typing.Generic[T]):
+        pass
+
+    class Sub(Base[T]):
+        pass
+
+    class Unrelated(typing.Generic[T]):
+        pass
+
+    assert not _type_hint_eq(Base[int], Sub[int])
+    assert not _type_hint_eq(Base[int], Unrelated[int])
+    assert not _type_hint_eq(list[Base[int]], list[Sub[int]])
+    assert _type_hint_eq(Base[int], Base[int])
+
+    @dispatch
+    def f(x: Base[int]):
+        return "base"
+
+    @dispatch
+    def f(x: Sub[int]):
+        return "sub"
+
+    assert len(f.methods) == 2
+    assert f(Base[int]()) == "base"
+    assert f(Sub[int]()) == "sub"
