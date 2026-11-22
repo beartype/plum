@@ -804,9 +804,16 @@ document.write(`
     <span class="c1"># `_substitute_any` maps a root `Any` to `object`, so `Any` must be compared here.</span>
     <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="n">Any</span> <span class="ow">or</span> <span class="n">y</span> <span class="ow">is</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">x</span> <span class="ow">is</span> <span class="n">y</span>
-    <span class="c1"># Do not derive this from `_type_hint_le`: `TypeHintWrapper.__eq__` already checks</span>
-    <span class="c1"># both directions in one pass.</span>
-    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">_wrap_type_hint</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="n">_wrap_type_hint</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+    <span class="c1"># Equal hints share one cached wrapper, unless they are unhashable.</span>
+    <span class="n">wx</span><span class="p">,</span> <span class="n">wy</span> <span class="o">=</span> <span class="n">_wrap_type_hint</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">_wrap_type_hint</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">wx</span> <span class="ow">is</span> <span class="n">wy</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="c1"># In `beartype` 0.23.0 and 0.23.1, `TypeHintWrapper.__eq__` ignores the origin of</span>
+    <span class="c1"># subscripted generics, so `B[int] == Sub[int]`, also when nested, as in</span>
+    <span class="c1"># `list[B[int]] == list[Sub[int]]`. Confirm with `&lt;=` both ways, which does compare</span>
+    <span class="c1"># origins. Remove this once those versions are no longer supported. See</span>
+    <span class="c1"># https://github.com/beartype/beartype/issues/745.</span>
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">wx</span> <span class="o">==</span> <span class="n">wy</span> <span class="ow">and</span> <span class="n">wx</span> <span class="o">&lt;=</span> <span class="n">wy</span> <span class="ow">and</span> <span class="n">wy</span> <span class="o">&lt;=</span> <span class="n">wx</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="is_faithful">
