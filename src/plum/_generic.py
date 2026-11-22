@@ -13,18 +13,12 @@ T = TypeVar("T")
 def _can_carry_orig_class(cls: type, /) -> bool:
     """Check whether instances of `cls` can have an `__orig_class__` attribute.
 
-    They can if they have a `__dict__` or if a class in the MRO declares the slot.
+    They can if they have a `__dict__` or if a class in the MRO declares the slot, which
+    then appears in the `__dict__` of that class.
     """
-    if cls.__dictoffset__:
-        return True
-    for base in cls.__mro__:
-        slots = base.__dict__.get("__slots__")
-        # `__slots__` may be a single string.
-        if isinstance(slots, str):
-            slots = (slots,)
-        if slots is not None and "__orig_class__" in slots:
-            return True
-    return False
+    return bool(cls.__dictoffset__) or any(
+        "__orig_class__" in vars(c) for c in cls.__mro__
+    )
 
 
 def generic(cls: type[T], /) -> type[T]:
