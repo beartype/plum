@@ -88,7 +88,7 @@ system, which is *invariant*.
 For example, this means that `list[T1]` is a subtype of `list[T2]` whenever
 `T1` is a subtype of `T2`.
 
-## Performance and Faithful Types
+## Performance, Cacheable and Faithful Types
 
 Plum achieves performance by caching the dispatch process.
 Unfortunately, efficient caching is not always possible.
@@ -119,11 +119,24 @@ Every faithful type is cacheable.
 In addition, `type[t2]` is cacheable whenever `t2` is faithful, but it is not faithful:
 a class `t1` matches `type[t2]` if `issubclass(t1, t2)`, which depends on `t1` itself
 and not only on `type(t1)`.
+`Literal[...]` is cacheable as well, since `cache_key` captures the values that the
+`Literal`s of a function name.
 
-Methods which have signatures that depend only on cacheable types will
-be performant.
-On the other hand, methods which have one or more signatures with one or more
-uncacheable types cannot use caching and will therefore be less performant.
+```{admonition} Cache growth
+:class: warning
+The cache holds strong references to the classes and values that a function is called
+with.
+A function that dispatches on `type[t]` therefore keeps every class it is called with
+alive until `f.clear_cache()` or `plum.clear_all_cache()` is called.
+A function that dispatches on `Literal` also keeps instances of subclasses of `int`,
+`str` and `bytes` alive, and empties its cache when it reaches 4096 entries.
+```
+
+If every method of a function uses only cacheable types, then Plum caches which method the arguments match, and a repeated call is a single dictionary lookup.
+If any method uses an uncacheable type, then Plum cannot cache the method.
+It instead caches which methods arguments of the given types could match, and checks only those on every call.
+This is slower, but faster than checking every method.
+Both caches are cleared by `f.clear_cache()` and `plum.clear_all_cache()`.
 
 Example:
 
@@ -139,16 +152,16 @@ def add_5_faithful(x: int):
 
 
 @dispatch
-def add_5_unfaithful(x: Literal[1]):
-    return x + 5
+def add_5_uncacheable(x: list[int]):
+    return x + [5]
 ```
 
 ```python
 >>> %timeit add_5_faithful(1)  # doctest:+SKIP
-585 ns ± 6.2 ns per loop (mean ± std. dev. of 7 runs, 1,000,000 loops each)
+382 ns ± 10.2 ns per loop (mean ± std. dev. of 7 runs, 1,000,000 loops each)
 
->>> %timeit add_5_unfaithful(1)  # doctest:+SKIP
-6.24 µs ± 68.9 ns per loop (mean ± std. dev. of 7 runs, 100,000 loops each)
+>>> %timeit add_5_uncacheable([1])  # doctest:+SKIP
+2.49 µs ± 31.1 ns per loop (mean ± std. dev. of 7 runs, 100,000 loops each)
 ```
 
 Plum implements `is_faithful` and `is_cacheable`, which are functions that attempt to
@@ -168,6 +181,12 @@ False
 
 >>> is_cacheable(type[int])
 True
+
+>>> is_cacheable(Literal[1])
+True
+
+>>> is_cacheable(list[int])
+False
 ```
 
 If you implement, e.g., a type with a custom `__instancecheck__`, then `is_faithful`

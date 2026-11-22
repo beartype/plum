@@ -1,4 +1,5 @@
 import abc
+import enum
 import sys
 import typing
 from numbers import Number
@@ -12,6 +13,7 @@ from plum._type import (
     ResolvableType,
     TypeHintWrapper,
     _is_hint,
+    _literals,
     _OpaqueHint,
     _substitute_any,
     _type_hint_eq,
@@ -447,7 +449,9 @@ class _Unfaithful:
         ((type[int], int), False, True),
         (tuple[()], False, False),
         (typing.Union[tuple[()], int], False, False),  # noqa: UP007
-        (typing.Literal[1], False, False),
+        (typing.Literal[1], False, True),
+        (typing.Union[typing.Literal[1], type[int]], False, True),  # noqa: UP007
+        (list[typing.Literal[1]], False, False),
         (list[type[int]], False, False),
         (type[_Unfaithful], False, False),
         (type[list[int]], False, False),
@@ -528,3 +532,52 @@ def test_type_hint_eq_generic_origin(dispatch):
     assert len(f.methods) == 2
     assert f(Base[int]()) == "base"
     assert f(Sub[int]()) == "sub"
+
+
+def test_cache_key_literals():
+    """Test that `cache_key` keys a value by itself only if `literals` names it."""
+    literals = frozenset({1, "a"})
+    assert cache_key(1, literals) != cache_key(2, literals)
+    assert cache_key(2, literals) == cache_key(3, literals)
+    assert cache_key("a", literals) != cache_key("b", literals)
+    # `True == 1`, so `True in literals`, but the type keeps them apart.
+    assert cache_key(True, literals) != cache_key(1, literals)
+    # Values that can match no `Literal` share a key, even if they are unhashable.
+    assert cache_key(1.5, literals) == cache_key(2.5, literals)
+    assert cache_key([1], literals) == cache_key([2], literals)
+    assert hash(cache_key([1], literals)) == hash(cache_key([2], literals))
+    # Without literals, values are not captured.
+    assert cache_key(1) == cache_key(2)
+
+
+def test_cache_key_literals_subclass():
+    """Test that an instance of a subclass is keyed by identity."""
+    literals = frozenset({1, "a"})
+
+    class MyInt(int):
+        pass
+
+    class Unhashable(str):
+        __hash__ = None  # type: ignore[assignment]
+
+    one = MyInt(1)
+    assert cache_key(one, literals) == cache_key(one, literals)
+    assert cache_key(one, literals) != cache_key(MyInt(1), literals)
+    a = Unhashable("a")
+    assert hash(cache_key(a, literals)) == hash(cache_key(a, literals))
+
+    class MyEnum(enum.Enum):
+        A = 1
+        B = 2
+
+    assert cache_key(MyEnum.A, literals) != cache_key(MyEnum.B, literals)
+    # Without literals, an instance of a subclass is not keyed by identity.
+    assert cache_key(one) == cache_key(MyInt(1))
+
+
+def test_literals():
+    """Test that `_literals` collects the values of nested `Literal`s."""
+    assert _literals(int) == frozenset()
+    assert _literals(Literal[1, "a"]) == {1, "a"}
+    assert _literals(Union[Literal[1], Literal[2], int]) == {1, 2}  # noqa: UP007
+    assert _literals((Literal[1], Literal[True])) == {1}
